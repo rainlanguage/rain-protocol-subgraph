@@ -1,0 +1,94 @@
+type TrustFactory @entity{
+    id: ID! #address of the TrustFactory
+    trusts: BigInt!
+}
+
+type Trust @entity{
+    id: ID! #address of trust contract - from TrustFactory NewContract events
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    creator: Bytes! #Trust.creator()
+    contracts: Contract!
+    distributionProgress: DistributionProgress!
+}
+
+type Contract @entity {
+    id: ID!
+    reserveERC20: Bytes! #Trust.getContracts() => address reserveERC20
+    redeemableERC20: Bytes! #Trust.getContracts() => address redeemableERC20
+    redeemableERC20Pool: Bytes! #Trust.getContracts() => address redeemableERC20Pool
+    seeder: Bytes! #Trust.getContracts() => address seeder
+    tier: Bytes! #Trust.getContracts() => address tier
+    crp: Bytes! #Trust.getContracts() => address crp
+    pool: Bytes! #Trust.getContracts() => address pool
+}
+
+type DistributionProgress @entity {
+    id:ID!
+    distributionStatus: Int! #Trust.getDistributionProgress() => DistributionStatus distributionStatus
+    distributionStartBlock: BigInt! #Trust.getDistributionProgress() => uint32 distributionStartBlock
+    distributionEndBlock: BigInt! #Trust.getDistributionProgress() => uint32 distributionEndBlock
+    minimumTradingDuration: BigInt! #RedeemableERC20Pool.minimumTradingDuration()
+    poolReserveBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolReserveBalance
+    poolTokenBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolTokenBalance
+    minimumCreatorRaise: BigInt! #Trust.getDistributionProgress() => uint256 minimumCreatorRaise
+    finalWeight: BigInt! #RedeemableERC20Pool.finalWeight()
+    finalValuation: BigInt! #RedeemableERC20Pool.finalValuation()
+    successBalance: BigInt! #Trust.successBalance()
+    finalBalance: BigInt! #Trust.finalBalance()
+    reserveInit: BigInt! #Trust.getDistributionProgress() => uint256 reserveInit
+    redeemInit: BigInt! #Trust.getDistributionProgress() => uint256 redeemInit
+    amountRaised: BigInt! # = poolReserveBalance - reserveInit
+    percentRaised: BigInt! # = amountRaised / successBalance
+    percentAvailable: BigInt! # = poolTokenBalance / RedeemableERC20.totalSupply
+}
+
+type CRP @entity{
+     id:ID!
+}
+
+type RedeemableERC20Pool @entity{
+    id: ID!
+}
+
+type ReserveERC20 @entity{
+    id: ID!
+    symbol: String!
+    totalSupply: BigInt!
+    decimals: Int!
+    name: String!
+}
+
+type Redeemable @entity{
+    id: ID!
+    symbol: String!
+    totalSupply: BigInt!
+    decimals: Int!
+    name: String!
+}
+
+type Pool @entity{
+    id: ID!
+    trust: Trust! #the trust that is the owner of this pool
+    spotPriceOfReserve: BigInt! #Pool.getSpotPrice(RedeemableERC20.address, ReserveERC20.address)
+    spotPriceOfToken: BigInt! #Pool.getSpotPrice(ReserveERC20.address, RedeemableERC20.address)
+    reserve: ReserveERC20! #the reserve token for this trust
+    redeemable: Bytes! #the redeemable token for this trust
+    poolBalanceReserve: BigInt! #Trust.getDistributionProgress() => uint256 poolReserveBalance
+    poolTokenBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolTokenBalance
+    numberOfSwaps: BigInt!
+}
+
+type Swap @entity{
+    id: ID!
+    caller: Bytes!
+    tokenIn: Bytes!
+    tokenInSym: String!
+    tokenOut: Bytes!
+    tokenOutSym: String!
+    tokenAmountIn: BigInt!
+    tokenAmountOut: BigInt!
+    poolId: Pool!
+    userAddress: Bytes!
+    timestamp: BigInt!
+}

@@ -1,0 +1,98 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: RainProtocol
+    network: mumbai
+    source:
+      address: "0xFEf11a9B450334C8f255E2bb839fF7AB226368de"
+      abi: RainProtocol
+      startBlock: 20059114
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - NewContract
+      abis:
+        - name: RainProtocol
+          file: ./abis/RainProtocol.json
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: BPool
+          file: ./abis/BPool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+        - name: RedeemableERC20Pool
+          file: ./abis/RedeemableERC20Pool.json  
+      eventHandlers:
+        - event: NewContract(indexed address)
+          handler: handleNewContract
+      file: ./src/mapping.ts
+templates:
+  - kind: ethereum/contract
+    name: Trust
+    network: mumbai
+    source:
+      abi: Trust
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Block
+      abis:
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: BPool
+          file: ./abis/BPool.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+        - name: RedeemableERC20Pool
+          file: ./abis/RedeemableERC20Pool.json
+      blockHandlers:
+        - handler: handleBlock
+      file: ./src/mapping.ts
+  - kind: ethereum/contract
+    name: ReserveERC20
+    network: mumbai
+    source:
+      abi: ERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Block
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+      blockHandlers:
+        - handler: handleBlock
+          filter:
+            kind: call
+      file: ./src/ReserveERC20.ts
+  - kind: ethereum/contract
+    name: BalancerPool
+    network: mumbai
+    source:
+      abi: BPool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - event
+      abis:
+        - name: BPool
+          file: ./abis/BPool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleSwaps
+      file: ./src/BPool.ts
+      
