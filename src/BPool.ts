@@ -9,7 +9,7 @@ export function handleSwaps(event: LOG_SWAP):void {
     let poolAddress = dataSource.address()
     let pool = Pool.load(poolAddress.toHex())
     pool.numberOfSwaps = pool.numberOfSwaps.plus(ONE_BI)
-    pool.save()
+    
 
     let swap = new Swap(event.transaction.hash.toHex())
     swap.poolId = pool.id
@@ -25,4 +25,9 @@ export function handleSwaps(event: LOG_SWAP):void {
     let tokenOut = ERC20.bind(event.params.tokenIn)
     swap.tokenOutSym = tokenOut.symbol()
     swap.save()
+
+    let swaps = pool.swaps
+    swaps.push(swap.id)
+    pool.swaps = swaps
+    pool.save()
 }

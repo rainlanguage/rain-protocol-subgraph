@@ -71,6 +71,7 @@ export function handleNewContract(event: NewContract): void {
       bpool.poolBalanceReserve = _distributionProgress.poolReserveBalance
       bpool.poolTokenBalance = _distributionProgress.poolTokenBalance
       bpool.numberOfSwaps = ZERO_BI
+      bpool.swaps = []
       bpool.save()
       BP.create(_contracts.pool)
     }
@@ -131,6 +132,9 @@ export function handleNewContract(event: NewContract): void {
 }
 
 export function handleBlock(block: ethereum.Block): void {
+  if(block.number.mod(BigInt.fromI32(5)) != ZERO_BI){
+    return
+  }
   let trust = dataSource.address()
   let trustContract = TrustContract.bind(trust)
   
@@ -188,6 +192,7 @@ export function handleBlock(block: ethereum.Block): void {
       bpool.poolBalanceReserve = _distributionProgress.poolReserveBalance
       bpool.poolTokenBalance = _distributionProgress.poolTokenBalance
       bpool.numberOfSwaps = ZERO_BI
+      bpool.swaps = []
       bpool.save()
       BP.create(_contracts.pool)
     }
