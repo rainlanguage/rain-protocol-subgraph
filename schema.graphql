@@ -93,3 +93,24 @@ type Swap @entity{
     userAddress: Bytes!
     timestamp: BigInt!
 }
+
+type RedeemableERC20 @entity {
+    id: ID!
+    redeems: [Redeem!]! #Redeem event in RedeemableERC20.sol
+    maxRedeemables: Int! #RedeemableERC20.MAX_REDEEMABLES()
+    # redeemables: [Redeemable!]! #RedeemableERC20.getRedeemables() => returns max 8 addresses for tokens
+    #...Token interface fields
+    symbol: String!
+    totalSupply: BigInt!
+    decimals: Int!
+    name: String!
+}
+
+type Redeem @entity {
+    id: ID!
+    caller: Bytes! #address indexed redeemer
+    redeemable: RedeemableERC20! #address indexed redeemable
+    redeemAmount: BigInt! #redeemAmounts[0]
+    tokenAmount: BigInt! #redeemAmounts[1]
+    block: BigInt! #block of transaction
+}

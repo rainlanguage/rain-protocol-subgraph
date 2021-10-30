@@ -2,10 +2,10 @@ import { BigInt, dataSource, ethereum, log } from "@graphprotocol/graph-ts"
 import { NewContract } from "../generated/RainProtocol/RainProtocol"
 import { Trust as TrustContract } from "../generated/RainProtocol/Trust"
 import { RedeemableERC20Pool } from "../generated/RainProtocol/RedeemableERC20Pool"
-import { RedeemableERC20 } from "../generated/RainProtocol/RedeemableERC20"
+import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
 import { BPool } from "../generated/templates/BalancerPool/BPool"
-import { TrustFactory, Trust, Contract, DistributionProgress, ReserveERC20, CRP, RedeemableERC20Pool as RERC20P, Pool} from "../generated/schema"
-import { Trust as T, ReserveERC20 as R, BalancerPool as BP} from "../generated/templates"
+import { TrustFactory, Trust, Contract, DistributionProgress, ReserveERC20, CRP, RedeemableERC20Pool as RERC20P, Pool, RedeemableERC20 } from "../generated/schema"
+import { TrustTemplate, ReserveERC20Template, BalancerPoolTemplate, RedeemableERC20Template} from "../generated/templates"
 // import { Trust as T, ReserveERC20 as R, BalancerPool as BP} from "../generated/templates"
 import { ERC20 } from "../generated/templates/ReserveERC20/ERC20"
 
@@ -21,7 +21,6 @@ export function handleNewContract(event: NewContract): void {
   }
   TF.trusts = TF.trusts.plus(ONE_BI)
   TF.save()
-  log.warning("Trusts added.", []);
   let trustContract = TrustContract.bind(event.params._contract)
   let trust = new Trust(event.params._contract.toHex())
   trust.deployBlock = event.block.number
@@ -42,6 +41,7 @@ export function handleNewContract(event: NewContract): void {
   contracts.pool = _contracts.pool
 
   let _distributionProgress = trustContract.getDistributionProgress()
+
   // Creating reserveERC20
   let reserveERC20 = ReserveERC20.load(contracts.reserveERC20.toHex())
   if(reserveERC20 == null){
@@ -53,7 +53,25 @@ export function handleNewContract(event: NewContract): void {
   reserveERC20.totalSupply = reserveERC20Contract.totalSupply()
   reserveERC20.decimals = reserveERC20Contract.decimals()
   reserveERC20.save()
-  R.create(_contracts.reserveERC20)
+  ReserveERC20Template.create(_contracts.reserveERC20)
+  // end
+
+  // Creating RedeemableERC20
+  let redeemableERC20 = RedeemableERC20.load(contracts.redeemableERC20.toHex())
+  if(redeemableERC20 == null){
+    redeemableERC20 = new RedeemableERC20(contracts.redeemableERC20.toHex())
+  }
+  let redeemableERC20Contract = RERC20.bind(_contracts.redeemableERC20)
+  redeemableERC20.redeems = []
+  redeemableERC20.symbol = redeemableERC20Contract.symbol()
+  redeemableERC20.name = redeemableERC20Contract.name()
+  redeemableERC20.totalSupply = redeemableERC20Contract.totalSupply()
+  redeemableERC20.decimals = redeemableERC20Contract.decimals()
+  redeemableERC20.maxRedeemables = redeemableERC20Contract.MAX_REDEEMABLES()
+
+
+  redeemableERC20.save()
+  RedeemableERC20Template.create(_contracts.redeemableERC20)
   // end
 
   // creating balancer Pool
@@ -73,7 +91,7 @@ export function handleNewContract(event: NewContract): void {
       bpool.numberOfSwaps = ZERO_BI
       bpool.swaps = []
       bpool.save()
-      BP.create(_contracts.pool)
+      BalancerPoolTemplate.create(_contracts.pool)
     }
   }
   // end
@@ -117,7 +135,7 @@ export function handleNewContract(event: NewContract): void {
     distributionProgress.finalValuation = redeemableERC20Pool.finalValuation()
   }
   if(_contracts.redeemableERC20.toHex() != ZERO_ADDRESS){
-    let redeemableERC20 = RedeemableERC20.bind(_contracts.redeemableERC20)
+    let redeemableERC20 = RERC20.bind(_contracts.redeemableERC20)
     distributionProgress.percentAvailable = distributionProgress.poolTokenBalance.div(redeemableERC20.totalSupply())
   }
   
@@ -128,7 +146,7 @@ export function handleNewContract(event: NewContract): void {
   trust.distributionProgress = distributionProgress.id
   
   trust.save()
-  T.create(event.params._contract)
+  TrustTemplate.create(event.params._contract)
 }
 
 export function handleBlock(block: ethereum.Block): void {
@@ -172,7 +190,7 @@ export function handleBlock(block: ethereum.Block): void {
     distributionProgress.finalValuation = redeemableERC20Pool.finalValuation()
   }
   if(_contracts.redeemableERC20.toHex() != ZERO_ADDRESS){
-    let redeemableERC20 = RedeemableERC20.bind(_contracts.redeemableERC20)
+    let redeemableERC20 = RERC20.bind(_contracts.redeemableERC20)
     distributionProgress.percentAvailable = distributionProgress.poolTokenBalance.div(redeemableERC20.totalSupply())
   }
 
@@ -194,7 +212,7 @@ export function handleBlock(block: ethereum.Block): void {
       bpool.numberOfSwaps = ZERO_BI
       bpool.swaps = []
       bpool.save()
-      BP.create(_contracts.pool)
+      BalancerPoolTemplate.create(_contracts.pool)
     }
   }
   // end

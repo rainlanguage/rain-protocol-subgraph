@@ -34,7 +34,7 @@ dataSources:
       file: ./src/mapping.ts
 templates:
   - kind: ethereum/contract
-    name: Trust
+    name: TrustTemplate
     network: mumbai
     source:
       abi: Trust
@@ -57,7 +57,7 @@ templates:
         - handler: handleBlock
       file: ./src/mapping.ts
   - kind: ethereum/contract
-    name: ReserveERC20
+    name: ReserveERC20Template
     network: mumbai
     source:
       abi: ERC20
@@ -76,7 +76,7 @@ templates:
             kind: call
       file: ./src/ReserveERC20.ts
   - kind: ethereum/contract
-    name: BalancerPool
+    name: BalancerPoolTemplate
     network: mumbai
     source:
       abi: BPool
@@ -95,4 +95,21 @@ templates:
         - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleSwaps
       file: ./src/BPool.ts
-      
+  - kind: ethereum/contract
+    name: RedeemableERC20Template
+    network: mumbai
+    source:
+      abi: RedeemableERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - event
+      abis:
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+      eventHandlers:
+        - event: Redeem(indexed address,indexed address,uint256[2])
+          handler: handleRedeem
+      file: ./src/RedeemableERC20.ts  
