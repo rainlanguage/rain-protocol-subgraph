@@ -6,9 +6,9 @@ dataSources:
     name: RainProtocol
     network: mumbai
     source:
-      address: "0xFEf11a9B450334C8f255E2bb839fF7AB226368de"
+      address: "0x4C91F1DEE2681aCe4ae1cDF90Dba0BD2263B11DE"
       abi: RainProtocol
-      startBlock: 20059114
+      startBlock: 21439534
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -27,54 +27,14 @@ dataSources:
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
         - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json  
+          file: ./abis/RedeemableERC20Pool.json
+        - name: SeedERC20
+          file: ./abis/SeedERC20.json
       eventHandlers:
         - event: NewContract(indexed address)
           handler: handleNewContract
       file: ./src/mapping.ts
 templates:
-  - kind: ethereum/contract
-    name: TrustTemplate
-    network: mumbai
-    source:
-      abi: Trust
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - Block
-      abis:
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: BPool
-          file: ./abis/BPool.json
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
-      blockHandlers:
-        - handler: handleBlock
-      file: ./src/mapping.ts
-  - kind: ethereum/contract
-    name: ReserveERC20Template
-    network: mumbai
-    source:
-      abi: ERC20
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - Block
-      abis:
-        - name: ERC20
-          file: ./abis/ERC20.json
-      blockHandlers:
-        - handler: handleBlock
-          filter:
-            kind: call
-      file: ./src/ReserveERC20.ts
   - kind: ethereum/contract
     name: BalancerPoolTemplate
     network: mumbai
@@ -85,12 +45,18 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - event
+        - LOG_SWAP
       abis:
         - name: BPool
           file: ./abis/BPool.json
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: RedeemableERC20Pool
+          file: ./abis/RedeemableERC20Pool.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
       eventHandlers:
         - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleSwaps
@@ -105,11 +71,81 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - event
+        - Redeem
+        - Transfer
       abis:
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: Trust
+          file: ./abis/Trust.json
       eventHandlers:
         - event: Redeem(indexed address,indexed address,uint256[2])
           handler: handleRedeem
-      file: ./src/RedeemableERC20.ts  
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/RedeemableERC20.ts
+  - kind: ethereum/contract
+    name: SeedERC20Template
+    network: mumbai
+    source:
+      abi: SeedERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+        - Seed
+        - Unseed
+        - Redeem
+      abis:
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: SeedERC20
+          file: ./abis/SeedERC20.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+        - name: RedeemableERC20Pool
+          file: ./abis/RedeemableERC20Pool.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Seed(indexed address,uint256[2])
+          handler: handleSeed
+        - event: Unseed(indexed address,uint256[2])
+          handler: handleUnseed
+        - event: Redeem(indexed address,uint256[2])
+          handler: handleRedeem
+      file: ./src/SeedERC20.ts
+  - kind: ethereum/contract
+    name: RedeemableERC20PoolTemplate
+    network: mumbai
+    source:
+      abi: RedeemableERC20Pool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - PhaseShiftScheduled
+      abis:
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: RedeemableERC20Pool
+          file: ./abis/RedeemableERC20Pool.json
+        - name: BPool
+          file: ./abis/BPool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+        - name: SeedERC20
+          file: ./abis/SeedERC20.json
+      eventHandlers:
+        - event: PhaseShiftScheduled(indexed uint32)
+          handler: handlePhaseShiftScheduled
+      file: ./src/RedeemableERC20Pool.ts
