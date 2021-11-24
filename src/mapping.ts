@@ -3,10 +3,9 @@ import { NewContract } from "../generated/RainProtocol/RainProtocol"
 import { Trust as TrustContract } from "../generated/RainProtocol/Trust"
 import { RedeemableERC20Pool } from "../generated/RainProtocol/RedeemableERC20Pool"
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
-import { SeedERC20 as SeedERC20Contract} from "../generated/RainProtocol/SeedERC20"
 import { BPool } from "../generated/templates/BalancerPool/BPool"
 import { TrustFactory, Trust, Contract, DistributionProgress, ReserveERC20, CRP, RedeemableERC20Pool as RERC20P, Pool, RedeemableERC20, SeedERC20 } from "../generated/schema"
-import { BalancerPoolTemplate, RedeemableERC20PoolTemplate, RedeemableERC20Template, SeedERC20Template} from "../generated/templates"
+import { BalancerPoolTemplate, RedeemableERC20PoolTemplate, RedeemableERC20Template, SeedERC20Template, TrustTemplate} from "../generated/templates"
 // import { Trust as T, ReserveERC20 as R, BalancerPool as BP} from "../generated/templates"
 import { ERC20 } from "../generated/templates/ReserveERC20/ERC20"
 
@@ -23,14 +22,15 @@ export function handleNewContract(event: NewContract): void {
   let TF = TrustFactory.load(event.address.toHex())
   if(TF == null){
     TF = new TrustFactory(event.address.toHex())
-    TF.trusts = ZERO_BI
+    TF.trustCount = ZERO_BI
+    TF.trusts = []
   }
-  TF.trusts = TF.trusts.plus(ONE_BI)
-  TF.save()
+  TF.trustCount = TF.trustCount.plus(ONE_BI)
+  
   let trustContract = TrustContract.bind(event.params._contract)
   let trust = new Trust(event.params._contract.toHex())
-  trust.deployBlock = event.block.number
-  trust.deployTimestamp = event.block.timestamp
+  trust.block = event.block.number
+  trust.timestamp = event.block.timestamp
   trust.creator = trustContract.creator()
   trust.trustParticipants = []
   let _contracts = trustContract.getContracts()
@@ -49,10 +49,18 @@ export function handleNewContract(event: NewContract): void {
     reserveERC20 = new ReserveERC20(_contracts.reserveERC20.toHex())
   }
   let reserveERC20Contract = ERC20.bind(_contracts.reserveERC20)
-  reserveERC20.symbol = reserveERC20Contract.symbol()
-  reserveERC20.name = reserveERC20Contract.name()
-  reserveERC20.totalSupply = reserveERC20Contract.totalSupply()
-  reserveERC20.decimals = reserveERC20Contract.decimals()
+
+  let name = reserveERC20Contract.try_name()
+  !name.reverted ? (reserveERC20.name = name.value) : (reserveERC20.name = null)
+  let symbol = reserveERC20Contract.try_symbol()
+  !symbol.reverted ? (reserveERC20.symbol = symbol.value) : (reserveERC20.symbol = null)
+  let decimals = reserveERC20Contract.try_decimals()
+  !decimals.reverted ? (reserveERC20.decimals = decimals.value) : (reserveERC20.decimals = null)
+  let totalSupply = reserveERC20Contract.try_totalSupply()
+  !totalSupply.reverted ? (reserveERC20.totalSupply = totalSupply.value) : (reserveERC20.totalSupply = null)
+
+  reserveERC20.block = event.block.number
+  reserveERC20.timestamp = event.block.timestamp
   reserveERC20.save()
   contracts.reserveERC20 = reserveERC20.id
   // end
@@ -62,6 +70,7 @@ export function handleNewContract(event: NewContract): void {
   if(redeemableERC20 == null){
     redeemableERC20 = new RedeemableERC20(_contracts.redeemableERC20.toHex())
     redeemableERC20.holders = []
+    redeemableERC20.treasuryAssets = []
   }
   let redeemableERC20Contract = RERC20.bind(_contracts.redeemableERC20)
   redeemableERC20.redeems = []
@@ -69,7 +78,9 @@ export function handleNewContract(event: NewContract): void {
   redeemableERC20.name = redeemableERC20Contract.name()
   redeemableERC20.totalSupply = redeemableERC20Contract.totalSupply()
   redeemableERC20.decimals = redeemableERC20Contract.decimals()
-  redeemableERC20.maxRedeemables = redeemableERC20Contract.MAX_REDEEMABLES()
+  redeemableERC20.block = event.block.number
+  redeemableERC20.timestamp = event.block.timestamp
+  redeemableERC20.minimumTier = redeemableERC20Contract.minimumTier()
   redeemableERC20.save()
   RedeemableERC20Template.createWithContext(_contracts.redeemableERC20, context)
 
@@ -84,29 +95,29 @@ export function handleNewContract(event: NewContract): void {
     seedERC20 = new SeedERC20(_contracts.seeder.toHex())
     seedERC20.holders = []
   }
+  let seedErc20Contract = ERC20.bind(_contracts.seeder)
   seedERC20.trust = trust.id
   seedERC20.seederFee = trustContract.seederFee()
   seedERC20.seederUnits = trustContract.seederUnits()
   seedERC20.seedFeePerUnit = seedERC20.seederFee.div(BigInt.fromI32(seedERC20.seederUnits))
   seedERC20.seederCooldownDuration = trustContract.seederCooldownDuration()
-  log.debug("Seeder : {}", [_contracts.seeder.toHex()])
-  if(_contracts.seeder.toHex() != ZERO_ADDRESS){
-    let seedErc20Contract = ERC20.bind(_contracts.seeder)
-    seedERC20.seederUnitsAvail = seedErc20Contract.balanceOf(_contracts.seeder)
-    seedERC20.name = seedErc20Contract.name()
-    seedERC20.symbol = seedErc20Contract.symbol()
-    seedERC20.decimals = seedErc20Contract.decimals()
-    seedERC20.totalSupply = seedErc20Contract.totalSupply()
-    if(seedERC20.seederUnitsAvail.equals(ZERO_BI)){
-      seedERC20.seededAmount = _distributionProgress.reserveInit
-    }
-  }
+
+  seedERC20.seederUnitsAvail = seedErc20Contract.balanceOf(_contracts.seeder)
+  seedERC20.name = seedErc20Contract.name()
+  seedERC20.symbol = seedErc20Contract.symbol()
+  seedERC20.decimals = seedErc20Contract.decimals()
+  seedERC20.totalSupply = seedErc20Contract.totalSupply()
   seedERC20.seededAmount = reserveERC20Contract.balanceOf(_contracts.seeder)
-  // seedERC20.percentSeeded = seedERC20.seededAmount.div(distributionProgress.reserveInit)
+  if(seedERC20.seederUnitsAvail.equals(ZERO_BI)){
+    seedERC20.seededAmount = _distributionProgress.reserveInit
+  }
+  seedERC20.percentSeeded = seedERC20.seededAmount.toBigDecimal().times(HUNDRED_BD).div(_distributionProgress.reserveInit.toBigDecimal())
   seedERC20.factory = trustContract.seedERC20Factory()
   seedERC20.seeds = []
   seedERC20.unseeds = []
   seedERC20.redeemSeeds = []
+  seedERC20.block = event.block.number
+  seedERC20.timestamp = event.block.timestamp
   seedERC20.save()
 
   SeedERC20Template.createWithContext(_contracts.seeder, context)
@@ -120,15 +131,15 @@ export function handleNewContract(event: NewContract): void {
       let poolContract = BPool.bind(_contracts.pool)
       bpool = new Pool(_contracts.pool.toHex())
       bpool.trust = trust.id
-      bpool.spotPriceOfReserve = poolContract.getSpotPrice(_contracts.redeemableERC20, _contracts.reserveERC20)
-      bpool.spotPriceOfToken = poolContract.getSpotPrice(_contracts.reserveERC20, _contracts.redeemableERC20)
       let reserveERC20 = ReserveERC20.load(_contracts.reserveERC20.toHex())
       bpool.reserve = reserveERC20.id
-      bpool.redeemable = _contracts.redeemableERC20
+      bpool.redeemable = redeemableERC20.id
       bpool.poolBalanceReserve = _distributionProgress.poolReserveBalance
       bpool.poolTokenBalance = _distributionProgress.poolTokenBalance
       bpool.numberOfSwaps = ZERO_BI
       bpool.swaps = []
+      bpool.block = event.block.number
+      bpool.timestamp = event.block.timestamp
       bpool.save()
       BalancerPoolTemplate.create(_contracts.pool)
     }
@@ -139,6 +150,8 @@ export function handleNewContract(event: NewContract): void {
   let crp = CRP.load(_contracts.crp.toHex())
   if(crp == null){
     crp = new CRP(_contracts.crp.toHex())
+    crp.block = event.block.number
+    crp.timestamp = event.block.timestamp
     crp.save()
   }
   contracts.crp = crp.id
@@ -146,6 +159,8 @@ export function handleNewContract(event: NewContract): void {
   let redeemableERC20Pool = RERC20P.load(_contracts.redeemableERC20Pool.toHex())
   if(redeemableERC20Pool == null){
     redeemableERC20Pool = new RERC20P(_contracts.redeemableERC20Pool.toHex())
+    redeemableERC20Pool.block = event.block.number
+    redeemableERC20Pool.timestamp = event.block.timestamp
     redeemableERC20Pool.save()
   }
   contracts.redeemableERC20Pool = redeemableERC20Pool.id
@@ -196,7 +211,12 @@ export function handleNewContract(event: NewContract): void {
   
   trust.contracts = contracts.id
   trust.distributionProgress = distributionProgress.id
-  
+  trust.notices = []
   trust.save()
-  // TrustTemplate.create(event.params._contract)
+  TrustTemplate.create(event.params._contract)
+
+  let trusts = TF.trusts
+  trusts.push(trust.id)
+  TF.trusts = trusts
+  TF.save()
 }

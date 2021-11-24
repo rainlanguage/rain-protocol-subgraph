@@ -6,9 +6,9 @@ dataSources:
     name: RainProtocol
     network: mumbai
     source:
-      address: "0x4C91F1DEE2681aCe4ae1cDF90Dba0BD2263B11DE"
+      address: "0x3F5D9314d1483564106f53B390D2B15F87D11E52"
       abi: RainProtocol
-      startBlock: 21439534
+      startBlock: 21793651
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -35,6 +35,24 @@ dataSources:
           handler: handleNewContract
       file: ./src/mapping.ts
 templates:
+  - kind: ethereum/contract
+    name: TrustTemplate
+    network: mumbai
+    source:
+      abi: Trust
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Notice
+      abis:
+        - name: Trust
+          file: ./abis/Trust.json
+      eventHandlers:
+        - event: Notice(indexed address,bytes)
+          handler: handleNotice
+      file: ./src/Trust.ts
   - kind: ethereum/contract
     name: BalancerPoolTemplate
     network: mumbai
@@ -73,6 +91,7 @@ templates:
       entities:
         - Redeem
         - Transfer
+        - TreasuryAsset
       abis:
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
@@ -85,6 +104,8 @@ templates:
           handler: handleRedeem
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
+        - event: TreasuryAsset(indexed address,indexed address)
+          handler: handleTreasuryAsset
       file: ./src/RedeemableERC20.ts
   - kind: ethereum/contract
     name: SeedERC20Template

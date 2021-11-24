@@ -28,17 +28,22 @@ export function handlePhaseShiftScheduled(event: PhaseShiftScheduled) : void {
     let reserveERC20 = ReserveERC20.load(_contracts.reserveERC20.toHex())
     if(reserveERC20 == null){
         reserveERC20 = new ReserveERC20(_contracts.reserveERC20.toHex())
+        reserveERC20.block = event.block.number
+        reserveERC20.timestamp = event.block.timestamp
     }
     contracts.reserveERC20 = reserveERC20.id
 
     let redeemableERC20 = RedeemableERC20.load(_contracts.redeemableERC20.toHex())
     if(redeemableERC20 == null){
         redeemableERC20 = new RedeemableERC20(_contracts.redeemableERC20.toHex())
+        redeemableERC20.block = event.block.number
+        redeemableERC20.timestamp = event.block.timestamp
     }
     contracts.redeemableERC20 = redeemableERC20.id
 
     // creating seeder
     let seedERC20 = SeedERC20.load(_contracts.seeder.toHex())
+    let seedErc20Contract = SeedERC20Contract.bind(_contracts.seeder)
     let distributionProgress = DistributionProgress.load(trustAddress)
     if(seedERC20 == null){
     seedERC20 = new SeedERC20(_contracts.seeder.toHex())
@@ -47,16 +52,16 @@ export function handlePhaseShiftScheduled(event: PhaseShiftScheduled) : void {
     seedERC20.seedFeePerUnit = seedERC20.seederFee.div(BigInt.fromI32(seedERC20.seederUnits))
     seedERC20.seederCooldownDuration = trustContract.seederCooldownDuration()
     seedERC20.seededAmount = ZERO_BI
-    if(_contracts.seeder.toHex() != ZERO_ADDRESS){
-        let seedErc20Contract = SeedERC20Contract.bind(_contracts.seeder)
-        seedERC20.seederUnitsAvail = seedErc20Contract.balanceOf(_contracts.seeder)
-        seedERC20.name = seedErc20Contract.name()
-        seedERC20.symbol = seedErc20Contract.symbol()
-        seedERC20.decimals = seedErc20Contract.decimals()
-        seedERC20.totalSupply = seedErc20Contract.totalSupply()
+    seedERC20.seederUnitsAvail = seedErc20Contract.balanceOf(_contracts.seeder)
+    if(seedERC20.seederUnitsAvail.equals(ZERO_BI)){
+        seedERC20.seededAmount = distributionProgress.reserveInit
     }
+    seedERC20.name = seedErc20Contract.name()
+    seedERC20.symbol = seedErc20Contract.symbol()
+    seedERC20.decimals = seedErc20Contract.decimals()
+    seedERC20.totalSupply = seedErc20Contract.totalSupply()
     seedERC20.seededAmount = reserveERC20Contract.balanceOf(_contracts.seeder)
-    // seedERC20.percentSeeded = seedERC20.seededAmount.div(distributionProgress.reserveInit)
+    seedERC20.percentSeeded = seedERC20.seededAmount.toBigDecimal().times(HUNDRED_BD).div(distributionProgress.reserveInit.toBigDecimal())
     seedERC20.save()
     let context = new DataSourceContext()
     context.setString("trustAddress", trustAddress)
@@ -68,6 +73,8 @@ export function handlePhaseShiftScheduled(event: PhaseShiftScheduled) : void {
     let redeemableERC20Pool = RERC20P.load(_contracts.redeemableERC20Pool.toHex())
     if(redeemableERC20Pool == null){
         redeemableERC20Pool = new RERC20P(_contracts.redeemableERC20Pool.toHex())
+        redeemableERC20Pool.block = event.block.number
+        redeemableERC20Pool.timestamp = event.block.timestamp
     }
     contracts.redeemableERC20Pool = redeemableERC20Pool.id
 
@@ -76,6 +83,8 @@ export function handlePhaseShiftScheduled(event: PhaseShiftScheduled) : void {
     let crp = CRP.load(_contracts.crp.toHex())
     if(crp == null){
         crp = new CRP(_contracts.crp.toHex())
+        crp.block = event.block.number
+        crp.timestamp = event.block.timestamp
         crp.save()
     }
     contracts.crp = crp.id
@@ -125,15 +134,15 @@ export function handlePhaseShiftScheduled(event: PhaseShiftScheduled) : void {
         bpool = new Pool(_contracts.pool.toHex())
         let trustId = Trust.load(trustAddress)
         bpool.trust = trustId.id
-        bpool.spotPriceOfReserve = poolContract.getSpotPrice(_contracts.redeemableERC20, _contracts.reserveERC20)
-        bpool.spotPriceOfToken = poolContract.getSpotPrice(_contracts.reserveERC20, _contracts.redeemableERC20)
         let reserveERC20 = ReserveERC20.load(_contracts.reserveERC20.toHex())
         bpool.reserve = reserveERC20.id
-        bpool.redeemable = _contracts.redeemableERC20
+        bpool.redeemable = redeemableERC20.id
         bpool.poolBalanceReserve = _distributionProgress.poolReserveBalance
         bpool.poolTokenBalance = _distributionProgress.poolTokenBalance
         bpool.numberOfSwaps = ZERO_BI
         bpool.swaps = []
+        bpool.block = event.block.number
+        bpool.timestamp = event.block.timestamp
         bpool.save()
         BalancerPoolTemplate.create(_contracts.pool)
         }

@@ -28,8 +28,11 @@ export function handleTransfer(event: Transfer): void {
     seedERC20.seederCooldownDuration = trustContract.seederCooldownDuration()
     seedERC20.totalSupply = seedERC20AddressContract.totalSupply()
     seedERC20.seederUnitsAvail = seedERC20AddressContract.balanceOf(_contracts.seeder)
+    if(seedERC20.seederUnitsAvail.equals(ZERO_BI)){
+        seedERC20.seededAmount = _distributionProgress.reserveInit
+    }
     seedERC20.seededAmount = reserveERC20Contract.balanceOf(_contracts.seeder)
-    // seedERC20.percentSeeded = seedERC20.seededAmount.div(distributionProgress.reserveInit)
+    seedERC20.percentSeeded = seedERC20.seededAmount.toBigDecimal().times(HUNDRED_BD).div(_distributionProgress.reserveInit.toBigDecimal())
     seedERC20.factory = trustContract.seedERC20Factory()
     if(_distributionProgress.distributionStatus < 2){
         distributionProgress.distributionEndBlock = ZERO_BI
@@ -80,17 +83,17 @@ export function handleTransfer(event: Transfer): void {
 
 function notIn(contacts: Trust__getContractsResultValue0Struct, key: Address): boolean {
     if(contacts.seeder == key)
-        return true
+        return false
     if(contacts.redeemableERC20 == key)
-        return true
+        return false
     if(contacts.redeemableERC20Pool == key)
-        return true
+        return false
     if(contacts.reserveERC20 == key)
-        return true
+        return false
     if(contacts.crp == key)
-        return true
+        return false
     if(contacts.pool == key)
-        return true
+        return false
     return true
 }
 
@@ -104,6 +107,8 @@ export function handleSeed(event: SeedEvent): void {
     seed.caller = event.params.seeder
     seed.seedAmount = values[1]
     seed.seedUnits = values[0]
+    seed.block = event.block.number
+    seed.timestamp = event.block.timestamp
 
     let seeds = seedERC20.seeds
     seeds.push(seed.id)
@@ -200,6 +205,8 @@ export function handleUnseed(event: UnseedEvent): void {
     unseed.caller = event.params.unseeder
     unseed.seedAmount = values[1]
     unseed.seedUnits = values[0]
+    unseed.block = event.block.number
+    unseed.timestamp = event.block.timestamp
 
     let unseeds = seedERC20.unseeds
     unseeds.push(unseed.id)
