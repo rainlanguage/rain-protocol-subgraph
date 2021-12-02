@@ -134,24 +134,23 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
 
     let treasuryAssetContract = ERC20.bind(event.params.asset)
 
-    let treasuryAsset = TreasuryAsset.load(event.params.asset.toHex())
-    if(treasuryAsset == null){
-        treasuryAsset = new TreasuryAsset(event.params.asset.toHex())
-        treasuryAsset.caller = event.params.emitter
-        treasuryAsset.block = event.block.number
-        treasuryAsset.timestamp = event.block.timestamp
-        treasuryAsset.redeemableERC20 = redeemabaleERC20.id
-        treasuryAsset.trust = trust.id
+    let treasuryAsset = new TreasuryAsset(event.transaction.hash.toHex())
+    treasuryAsset.address = event.params.asset
+    treasuryAsset.caller = event.params.emitter
+    treasuryAsset.block = event.block.number
+    treasuryAsset.timestamp = event.block.timestamp
+    treasuryAsset.redeemableERC20 = redeemabaleERC20.id
+    treasuryAsset.trust = trust.id
 
-        let name = treasuryAssetContract.try_name()
-        !name.reverted ? (treasuryAsset.name = name.value) : (treasuryAsset.name = null)
+    let name = treasuryAssetContract.try_name()
+    !name.reverted ? (treasuryAsset.name = name.value) : (treasuryAsset.name = null)
 
-        let symbol = treasuryAssetContract.try_symbol()
-        !symbol.reverted ? (treasuryAsset.symbol = symbol.value) : (treasuryAsset.name = null)
-        
-        let decimals = treasuryAssetContract.try_decimals()
-        !decimals.reverted ? (treasuryAsset.decimals = decimals.value) : (treasuryAsset.decimals = null)
-    }
+    let symbol = treasuryAssetContract.try_symbol()
+    !symbol.reverted ? (treasuryAsset.symbol = symbol.value) : (treasuryAsset.name = null)
+    
+    let decimals = treasuryAssetContract.try_decimals()
+    !decimals.reverted ? (treasuryAsset.decimals = decimals.value) : (treasuryAsset.decimals = null)
+
     let totalSupply = treasuryAssetContract.try_totalSupply()
     !totalSupply.reverted ? (treasuryAsset.totalSupply = totalSupply.value) : (treasuryAsset.totalSupply = null)
 

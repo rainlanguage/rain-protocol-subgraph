@@ -229,6 +229,7 @@ type TreasuryAsset @entity {
     id:ID!
     caller: Bytes!
     trust: Trust!
+    address: Bytes!
     # Update after TreasuryAsset event on RedeemableERC20
     redeemableERC20: RedeemableERC20! #the RedeemableERC20 that emitted the TreasuryAsset event for this redeemable
     # Update after TreasuryAsset event on RedeemableERC20, and after Transfer events for this token
