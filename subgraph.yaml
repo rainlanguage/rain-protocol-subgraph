@@ -6,9 +6,9 @@ dataSources:
     name: RainProtocol
     network: mumbai
     source:
-      address: "0x3F5D9314d1483564106f53B390D2B15F87D11E52"
+      address: "0x191F93ce7E36D56DAffbDf1D91443fd9D4dCf59D"
       abi: RainProtocol
-      startBlock: 21793651
+      startBlock: 22165656
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

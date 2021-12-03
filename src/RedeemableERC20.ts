@@ -134,7 +134,7 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
 
     let treasuryAssetContract = ERC20.bind(event.params.asset)
 
-    let treasuryAsset = new TreasuryAsset(event.transaction.hash.toHex())
+    let treasuryAsset = new TreasuryAsset(event.params.asset.toHex())
     treasuryAsset.address = event.params.asset
     treasuryAsset.caller = event.params.emitter
     treasuryAsset.block = event.block.number
