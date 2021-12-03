@@ -16,7 +16,6 @@ let ZERO_BD = BigDecimal.fromString("0.0")
 let HUNDRED_BD = BigDecimal.fromString("100.0")
 
 export function handlePhaseShiftScheduled(event: PhaseShiftScheduled) : void {
-    log.info("Phase changed : {}", [event.params.newPhaseBlock_.toString()])
     let context = dataSource.context()
     let trustAddress = context.getString("trustAddress")
     let trustContract = TrustContract.bind(Address.fromString(trustAddress))

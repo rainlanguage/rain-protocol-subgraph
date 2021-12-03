@@ -51,13 +51,36 @@ export function handleNewContract(event: NewContract): void {
   let reserveERC20Contract = ERC20.bind(_contracts.reserveERC20)
 
   let name = reserveERC20Contract.try_name()
-  !name.reverted ? (reserveERC20.name = name.value) : (reserveERC20.name = null)
-  let symbol = reserveERC20Contract.try_symbol()
-  !symbol.reverted ? (reserveERC20.symbol = symbol.value) : (reserveERC20.symbol = null)
-  let decimals = reserveERC20Contract.try_decimals()
-  !decimals.reverted ? (reserveERC20.decimals = decimals.value) : (reserveERC20.decimals = null)
-  let totalSupply = reserveERC20Contract.try_totalSupply()
-  !totalSupply.reverted ? (reserveERC20.totalSupply = totalSupply.value) : (reserveERC20.totalSupply = null)
+    if(name.reverted){
+        log.debug("Reverted name for {}", [reserveERC20.id])
+        reserveERC20.name = null
+    }else{
+        reserveERC20.name = name.value
+    }
+
+    let symbol = reserveERC20Contract.try_symbol()
+    if(symbol.reverted){
+        log.debug("Reverted symbol for {}", [reserveERC20.id])
+        reserveERC20.symbol = null
+    }else{
+        reserveERC20.symbol = symbol.value
+    }
+    
+    let decimals = reserveERC20Contract.try_decimals()
+    if(decimals.reverted){
+        log.debug("Reverted decimals for {}", [reserveERC20.id])
+        reserveERC20.decimals = null
+    }else{
+        reserveERC20.decimals = decimals.value
+    }
+
+    let totalSupply = reserveERC20Contract.try_totalSupply()
+    if(totalSupply.reverted){
+        log.debug("Reverted totalSupply for {}", [reserveERC20.id])
+        reserveERC20.totalSupply = null
+    }else{
+        reserveERC20.totalSupply = totalSupply.value
+    }
 
   reserveERC20.block = event.block.number
   reserveERC20.timestamp = event.block.timestamp

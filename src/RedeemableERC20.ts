@@ -14,7 +14,7 @@ export function handleRedeem(event: Event):void {
     let trustAddress = context.getString("trustAddress")
     let _contracts = Contract.load(trustAddress)
     let redeemableERC20 = RedeemableERC20.load(redeemableERC20Address.toHex())
-    let treasuryAsset = TreasuryAsset.load(event.params.treasuryAsset.toHex())
+    let treasuryAsset = TreasuryAsset.load(redeemableERC20Address.toHex() + "-" +  event.params.treasuryAsset.toHex())
     let values = event.params.redeemAmounts
     let totalRedeems = redeemableERC20.redeems.length
     let redeem = new Redeem(event.transaction.hash.toHex() + "-" + totalRedeems.toString())
@@ -134,28 +134,58 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
 
     let treasuryAssetContract = ERC20.bind(event.params.asset)
 
-    let treasuryAsset = new TreasuryAsset(event.params.asset.toHex())
+    let treasuryAsset = new TreasuryAsset(redeemabaleERC20Address.toHex() + "-" + event.params.asset.toHex())
     treasuryAsset.address = event.params.asset
     treasuryAsset.caller = event.params.emitter
     treasuryAsset.block = event.block.number
     treasuryAsset.timestamp = event.block.timestamp
     treasuryAsset.redeemableERC20 = redeemabaleERC20.id
     treasuryAsset.trust = trust.id
+    // treasuryAsset.name = treasuryAssetContract.name()
+    // treasuryAsset.symbol = treasuryAssetContract.symbol()
+    // treasuryAsset.decimals = treasuryAssetContract.decimals()
+    // treasuryAsset.totalSupply = treasuryAssetContract.totalSupply()
+    // treasuryAsset.balance = treasuryAssetContract.balanceOf(redeemabaleERC20Address)
 
     let name = treasuryAssetContract.try_name()
-    !name.reverted ? (treasuryAsset.name = name.value) : (treasuryAsset.name = null)
+    if(name.reverted){
+        log.debug("Reverted name for {}", [treasuryAsset.id])
+        treasuryAsset.name = null
+    }else{
+        treasuryAsset.name = name.value
+    }
 
     let symbol = treasuryAssetContract.try_symbol()
-    !symbol.reverted ? (treasuryAsset.symbol = symbol.value) : (treasuryAsset.name = null)
+    if(symbol.reverted){
+        log.debug("Reverted symbol for {}", [treasuryAsset.id])
+        treasuryAsset.symbol = null
+    }else{
+        treasuryAsset.symbol = symbol.value
+    }
     
     let decimals = treasuryAssetContract.try_decimals()
-    !decimals.reverted ? (treasuryAsset.decimals = decimals.value) : (treasuryAsset.decimals = null)
+    if(decimals.reverted){
+        log.debug("Reverted decimals for {}", [treasuryAsset.id])
+        treasuryAsset.decimals = null
+    }else{
+        treasuryAsset.decimals = decimals.value
+    }
 
     let totalSupply = treasuryAssetContract.try_totalSupply()
-    !totalSupply.reverted ? (treasuryAsset.totalSupply = totalSupply.value) : (treasuryAsset.totalSupply = null)
-
+    if(totalSupply.reverted){
+        log.debug("Reverted totalSupply for {}", [treasuryAsset.id])
+        treasuryAsset.totalSupply = null
+    }else{
+        treasuryAsset.totalSupply = totalSupply.value
+    }
+    log.info("Assets : {} -- Redeemable : {}", [ event.params.asset.toHex() , redeemabaleERC20Address.toHex()])
     let balance = treasuryAssetContract.try_balanceOf(redeemabaleERC20Address)
-    !balance.reverted ? (treasuryAsset.balance = balance.value) : (treasuryAsset.balance = null)
+    if(balance.reverted){
+        log.debug("Reverted balance for {}", [treasuryAsset.id])
+        treasuryAsset.balance = null
+    }else{
+        treasuryAsset.balance = balance.value
+    }
     
     treasuryAsset.save()
 
