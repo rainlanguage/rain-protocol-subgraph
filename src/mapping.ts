@@ -3,11 +3,11 @@ import { NewContract } from "../generated/RainProtocol/RainProtocol"
 import { Trust as TrustContract } from "../generated/RainProtocol/Trust"
 import { RedeemableERC20Pool } from "../generated/RainProtocol/RedeemableERC20Pool"
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
-import { BPool } from "../generated/templates/BalancerPool/BPool"
+import { BPool } from "../generated/templates/BalancerPoolTemplate/BPool"
 import { TrustFactory, Trust, Contract, DistributionProgress, ReserveERC20, CRP, RedeemableERC20Pool as RERC20P, Pool, RedeemableERC20, SeedERC20 } from "../generated/schema"
 import { BalancerPoolTemplate, RedeemableERC20PoolTemplate, RedeemableERC20Template, SeedERC20Template, TrustTemplate} from "../generated/templates"
 // import { Trust as T, ReserveERC20 as R, BalancerPool as BP} from "../generated/templates"
-import { ERC20 } from "../generated/templates/ReserveERC20/ERC20"
+import { ERC20 } from "../generated/templates/BalancerPoolTemplate/ERC20"
 
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 let ZERO_BI = BigInt.fromI32(0)

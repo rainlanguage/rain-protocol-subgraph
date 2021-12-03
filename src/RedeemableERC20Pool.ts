@@ -5,9 +5,9 @@ import { Trust, Contract, DistributionProgress, ReserveERC20, CRP, RedeemableERC
 import { BalancerPoolTemplate, SeedERC20Template } from "../generated/templates"
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
 import { SeedERC20 as SeedERC20Contract} from "../generated/RainProtocol/SeedERC20"
-import { BPool } from "../generated/templates/BalancerPool/BPool"
+import { BPool } from "../generated/templates/BalancerPoolTemplate/BPool"
 import { RedeemableERC20Pool } from "../generated/RainProtocol/RedeemableERC20Pool"
-import { ERC20 } from "../generated/templates/ReserveERC20/ERC20"
+import { ERC20 } from "../generated/templates/BalancerPoolTemplate/ERC20"
 
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 let ZERO_BI = BigInt.fromI32(0)

@@ -2,8 +2,8 @@ import { dataSource, BigInt, Address, BigDecimal, log} from "@graphprotocol/grap
 
 import { Trust as TrustContract} from "../generated/RainProtocol/Trust"
 import { DistributionProgress, Pool, SeedERC20, Swap, Trust, TrustParticipant } from "../generated/schema"
-import { LOG_SWAP } from "../generated/templates/BalancerPool/BPool"
-import { ERC20 } from "../generated/templates/ReserveERC20/ERC20"
+import { LOG_SWAP } from "../generated/templates/BalancerPoolTemplate/BPool"
+import { ERC20 } from "../generated/templates/BalancerPoolTemplate/ERC20"
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
 import { RedeemableERC20Pool } from "../generated/RainProtocol/RedeemableERC20Pool"
 
