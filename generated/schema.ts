@@ -2118,13 +2118,21 @@ export class TreasuryAsset extends Entity {
     this.set("redeemableERC20", Value.fromString(value));
   }
 
-  get balance(): BigInt {
+  get balance(): BigInt | null {
     let value = this.get("balance");
-    return value.toBigInt();
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
   }
 
-  set balance(value: BigInt) {
-    this.set("balance", Value.fromBigInt(value));
+  set balance(value: BigInt | null) {
+    if (value === null) {
+      this.unset("balance");
+    } else {
+      this.set("balance", Value.fromBigInt(value as BigInt));
+    }
   }
 
   get block(): BigInt {

@@ -2,7 +2,7 @@ import { dataSource, BigInt, Address, BigDecimal, log} from "@graphprotocol/grap
 import { Redeem, Seed as SeedEvent, SeedERC20 as  SeedERC20Contract, Transfer, Unseed as UnseedEvent} from "../generated/templates/SeedERC20Template/SeedERC20";
 import { DistributionProgress, Holder, SeedERC20, Seed, Unseed, TrustParticipant, Trust, Contract, RedeemSeed} from "../generated/schema"
 import { Trust as TrustContract, Trust__getContractsResultValue0Struct } from "../generated/RainProtocol/Trust"
-import { ERC20 } from "../generated/templates/ReserveERC20/ERC20"
+import { ERC20 } from "../generated/templates/RedeemableERC20Template/ERC20"
 import { RedeemableERC20Pool } from "../generated/RainProtocol/RedeemableERC20Pool";
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
 

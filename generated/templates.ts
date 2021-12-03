@@ -75,3 +75,17 @@ export class RedeemableERC20PoolTemplate extends DataSourceTemplate {
     );
   }
 }
+
+export class TreasuryAssetTemplate extends DataSourceTemplate {
+  static create(address: Address): void {
+    DataSourceTemplate.create("TreasuryAssetTemplate", [address.toHex()]);
+  }
+
+  static createWithContext(address: Address, context: DataSourceContext): void {
+    DataSourceTemplate.createWithContext(
+      "TreasuryAssetTemplate",
+      [address.toHex()],
+      context
+    );
+  }
+}

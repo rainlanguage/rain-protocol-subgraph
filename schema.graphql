@@ -233,7 +233,7 @@ type TreasuryAsset @entity {
     # Update after TreasuryAsset event on RedeemableERC20
     redeemableERC20: RedeemableERC20! #the RedeemableERC20 that emitted the TreasuryAsset event for this redeemable
     # Update after TreasuryAsset event on RedeemableERC20, and after Transfer events for this token
-    balance: BigInt! #this.balanceOf(RedeemableERC20.address())
+    balance: BigInt #this.balanceOf(RedeemableERC20.address())
     #...Token interface fields
     # Update after TreasuryAsset event on RedeemableERC20
     block: BigInt! #the block the contract was deployed

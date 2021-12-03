@@ -1,9 +1,10 @@
-import { dataSource, BigInt, Address, log} from "@graphprotocol/graph-ts"
+import { dataSource, BigInt, Address, log, DataSourceContext} from "@graphprotocol/graph-ts"
 import { Trust as TrustContract, Trust__getContractsResultValue0Struct } from "../generated/RainProtocol/Trust"
 import { Contract, Holder, Redeem, RedeemableERC20, SeedERC20, TreasuryAsset, Trust, TrustParticipant} from "../generated/schema"
 import { Redeem as Event , Transfer, TreasuryAsset as TreasuryAssetEvent} from "../generated/templates/RedeemableERC20Template/RedeemableERC20"
-import { ERC20 } from "../generated/templates/ReserveERC20/ERC20"
+import { ERC20 } from "../generated/templates/RedeemableERC20Template/ERC20"
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
+import { TreasuryAssetTemplate } from "../generated/templates"
 
 let ONE_BI = BigInt.fromI32(1)
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -188,6 +189,9 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     }
     
     treasuryAsset.save()
+    let treasuryAssetContext = new DataSourceContext()
+    treasuryAssetContext.setString("redeemableERC20", redeemabaleERC20Address.toHex())
+    TreasuryAssetTemplate.createWithContext(event.params.asset, treasuryAssetContext)
 
     if(!redeemabaleERC20.treasuryAssets.includes(treasuryAsset.id)){
         let treasuryAssets = redeemabaleERC20.treasuryAssets

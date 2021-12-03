@@ -170,3 +170,23 @@ templates:
         - event: PhaseShiftScheduled(indexed uint32)
           handler: handlePhaseShiftScheduled
       file: ./src/RedeemableERC20Pool.ts
+  - kind: ethereum/contract
+    name: TreasuryAssetTemplate
+    network: mumbai
+    source:
+      abi: ERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/TreasuryAsset.ts
