@@ -142,11 +142,6 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     treasuryAsset.timestamp = event.block.timestamp
     treasuryAsset.redeemableERC20 = redeemabaleERC20.id
     treasuryAsset.trust = trust.id
-    // treasuryAsset.name = treasuryAssetContract.name()
-    // treasuryAsset.symbol = treasuryAssetContract.symbol()
-    // treasuryAsset.decimals = treasuryAssetContract.decimals()
-    // treasuryAsset.totalSupply = treasuryAssetContract.totalSupply()
-    // treasuryAsset.balance = treasuryAssetContract.balanceOf(redeemabaleERC20Address)
 
     let name = treasuryAssetContract.try_name()
     if(name.reverted){
