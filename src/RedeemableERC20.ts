@@ -1,6 +1,6 @@
 import { dataSource, BigInt, Address, log, DataSourceContext} from "@graphprotocol/graph-ts"
 import { Trust as TrustContract, Trust__getContractsResultValue0Struct } from "../generated/RainProtocol/Trust"
-import { Contract, Holder, Redeem, RedeemableERC20, SeedERC20, TreasuryAsset, Trust, TrustParticipant} from "../generated/schema"
+import { Caller, Contract, Holder, Redeem, RedeemableERC20, SeedERC20, TreasuryAsset, Trust, TrustParticipant} from "../generated/schema"
 import { Redeem as Event , Transfer, TreasuryAsset as TreasuryAssetEvent} from "../generated/templates/RedeemableERC20Template/RedeemableERC20"
 import { ERC20 } from "../generated/templates/RedeemableERC20Template/ERC20"
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
@@ -28,6 +28,17 @@ export function handleRedeem(event: Event):void {
     redeem.timestamp = event.block.timestamp
     redeem.trust = _contracts.id
     redeem.save()
+
+    let caller = new Caller(event.transaction.hash.toHex())
+    caller.caller = event.params.redeemer
+    caller.block = event.block.number
+    caller.timestamp = event.block.timestamp
+    caller.save()
+
+    let callers = treasuryAsset.callers
+    callers.push(caller.id)
+    treasuryAsset.callers = callers
+    treasuryAsset.save()
 
     let redeems = redeemableERC20.redeems
     redeems.push(redeem.id)
@@ -136,12 +147,22 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     let treasuryAssetContract = ERC20.bind(event.params.asset)
 
     let treasuryAsset = new TreasuryAsset(redeemabaleERC20Address.toHex() + "-" + event.params.asset.toHex())
+    treasuryAsset.callers = []
     treasuryAsset.address = event.params.asset
-    treasuryAsset.caller = event.params.emitter
     treasuryAsset.block = event.block.number
     treasuryAsset.timestamp = event.block.timestamp
     treasuryAsset.redeemableERC20 = redeemabaleERC20.id
     treasuryAsset.trust = trust.id
+
+    let caller = new Caller(event.transaction.hash.toHex())
+    caller.caller = event.params.emitter
+    caller.block = event.block.number
+    caller.timestamp = event.block.timestamp
+    caller.save()
+
+    let callers = treasuryAsset.callers
+    callers.push(caller.id)
+    treasuryAsset.callers = callers
 
     let name = treasuryAssetContract.try_name()
     if(name.reverted){

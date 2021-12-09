@@ -227,7 +227,7 @@ type RedeemSeed @entity {
 
 type TreasuryAsset @entity {
     id:ID!
-    caller: Bytes!
+    callers: [Caller!]
     trust: Trust!
     address: Bytes!
     # Update after TreasuryAsset event on RedeemableERC20
@@ -242,5 +242,12 @@ type TreasuryAsset @entity {
     totalSupply: BigInt
     decimals: Int
     name: String
+}
+
+type Caller @entity {
+    id: ID!
+    caller: Bytes!
+    block: BigInt!
+    timestamp: BigInt!
 }
 
