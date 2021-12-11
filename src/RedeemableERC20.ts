@@ -1,4 +1,4 @@
-import { dataSource, BigInt, Address, log, DataSourceContext} from "@graphprotocol/graph-ts"
+import { dataSource, BigInt, Address, log, DataSourceContext, BigDecimal} from "@graphprotocol/graph-ts"
 import { Trust as TrustContract, Trust__getContractsResultValue0Struct } from "../generated/RainProtocol/Trust"
 import { Caller, Contract, Holder, Redeem, RedeemableERC20, SeedERC20, TreasuryAsset, Trust, TrustParticipant} from "../generated/schema"
 import { Redeem as Event , Transfer, TreasuryAsset as TreasuryAssetEvent} from "../generated/templates/RedeemableERC20Template/RedeemableERC20"
@@ -152,6 +152,11 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     treasuryAsset.block = event.block.number
     treasuryAsset.timestamp = event.block.timestamp
     treasuryAsset.redeemableERC20 = redeemabaleERC20.id
+    if(redeemabaleERC20.totalSupply.gt(BigInt.fromI32(0))){
+        treasuryAsset.sharePerRedeemable = treasuryAsset.balance.toBigDecimal().div(redeemabaleERC20.totalSupply.toBigDecimal())
+    }else{
+        treasuryAsset.sharePerRedeemable = BigDecimal.fromString("0.0")
+    }
     treasuryAsset.trust = trust.id
 
     let caller = new Caller(event.transaction.hash.toHex())
