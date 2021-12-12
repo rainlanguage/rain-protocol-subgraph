@@ -44,8 +44,16 @@ export function handleRedeem(event: Event):void {
     let callers = treasuryAsset.callers
     callers.push(caller.id)
     treasuryAsset.callers = callers
-    treasuryAsset.balance = treasuryAssetContract.balanceOf(redeemableERC20Address)
-    if(redeemableERC20.totalSupply.gt(BigInt.fromI32(0))){
+
+    let balance = treasuryAssetContract.try_balanceOf(redeemableERC20Address)
+    if(balance.reverted){
+        log.debug("Reverted balance for {}", [treasuryAsset.id])
+        treasuryAsset.balance = null
+    }else{
+        treasuryAsset.balance = balance.value
+    }
+
+    if(redeemableERC20.totalSupply.gt(BigInt.fromI32(0)) && !!treasuryAsset.balance){
         treasuryAsset.sharePerRedeemable = treasuryAsset.balance.toBigDecimal().div(redeemableERC20.totalSupply.toBigDecimal())
     }else{
         treasuryAsset.sharePerRedeemable = BigDecimal.fromString("0.0")
@@ -164,8 +172,17 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     treasuryAsset.block = event.block.number
     treasuryAsset.timestamp = event.block.timestamp
     treasuryAsset.redeemableERC20 = redeemabaleERC20.id
-    treasuryAsset.balance = treasuryAssetContract.balanceOf(redeemabaleERC20Address)
-    if(redeemabaleERC20.totalSupply.gt(BigInt.fromI32(0))){
+
+    let treasuryAssetBalance = treasuryAssetContract.try_balanceOf(redeemabaleERC20Address)
+
+    if (treasuryAssetBalance.reverted) {
+        log.debug("Reverted balance for {}", [treasuryAsset.id])
+        treasuryAsset.balance = null
+    } else {
+        treasuryAsset.balance = treasuryAssetBalance.value
+    }
+
+    if(redeemabaleERC20.totalSupply.gt(BigInt.fromI32(0)) && !!treasuryAsset.balance){
         treasuryAsset.sharePerRedeemable = treasuryAsset.balance.toBigDecimal().div(redeemabaleERC20.totalSupply.toBigDecimal())
     }else{
         treasuryAsset.sharePerRedeemable = BigDecimal.fromString("0.0")
