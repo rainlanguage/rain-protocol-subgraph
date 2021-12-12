@@ -4,20 +4,26 @@ import { Caller, Contract, Holder, Redeem, RedeemableERC20, SeedERC20, TreasuryA
 import { Redeem as Event , Transfer, TreasuryAsset as TreasuryAssetEvent} from "../generated/templates/RedeemableERC20Template/RedeemableERC20"
 import { ERC20 } from "../generated/templates/RedeemableERC20Template/ERC20"
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
-import { TreasuryAssetTemplate } from "../generated/templates"
 
 let ONE_BI = BigInt.fromI32(1)
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 export function handleRedeem(event: Event):void {
     let redeemableERC20Address = dataSource.address()
+    let redeemableERC20 = RedeemableERC20.load(redeemableERC20Address.toHex())
+    let redeemabaleERC20Contract = ERC20.bind(redeemableERC20Address)
+
     let context = dataSource.context()
     let trustAddress = context.getString("trustAddress")
     let _contracts = Contract.load(trustAddress)
-    let redeemableERC20 = RedeemableERC20.load(redeemableERC20Address.toHex())
     let treasuryAsset = TreasuryAsset.load(redeemableERC20Address.toHex() + "-" +  event.params.treasuryAsset.toHex())
+    let treasuryAssetContract = ERC20.bind(Address.fromString(treasuryAsset.address.toHexString()))
     let values = event.params.redeemAmounts
     let totalRedeems = redeemableERC20.redeems.length
+
+    redeemableERC20.totalSupply = redeemabaleERC20Contract.totalSupply()
+
+
     let redeem = new Redeem(event.transaction.hash.toHex() + "-" + totalRedeems.toString())
     redeem.redeemableERC20 = redeemableERC20.id
     redeem.caller = event.params.redeemer
@@ -38,6 +44,12 @@ export function handleRedeem(event: Event):void {
     let callers = treasuryAsset.callers
     callers.push(caller.id)
     treasuryAsset.callers = callers
+    treasuryAsset.balance = treasuryAssetContract.balanceOf(redeemableERC20Address)
+    if(redeemableERC20.totalSupply.gt(BigInt.fromI32(0))){
+        treasuryAsset.sharePerRedeemable = treasuryAsset.balance.toBigDecimal().div(redeemableERC20.totalSupply.toBigDecimal())
+    }else{
+        treasuryAsset.sharePerRedeemable = BigDecimal.fromString("0.0")
+    }
     treasuryAsset.save()
 
     let redeems = redeemableERC20.redeems
@@ -152,6 +164,7 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     treasuryAsset.block = event.block.number
     treasuryAsset.timestamp = event.block.timestamp
     treasuryAsset.redeemableERC20 = redeemabaleERC20.id
+    treasuryAsset.balance = treasuryAssetContract.balanceOf(redeemabaleERC20Address)
     if(redeemabaleERC20.totalSupply.gt(BigInt.fromI32(0))){
         treasuryAsset.sharePerRedeemable = treasuryAsset.balance.toBigDecimal().div(redeemabaleERC20.totalSupply.toBigDecimal())
     }else{
@@ -210,9 +223,9 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     }
     
     treasuryAsset.save()
-    let treasuryAssetContext = new DataSourceContext()
-    treasuryAssetContext.setString("redeemableERC20", redeemabaleERC20Address.toHex())
-    TreasuryAssetTemplate.createWithContext(event.params.asset, treasuryAssetContext)
+    // let treasuryAssetContext = new DataSourceContext()
+    // treasuryAssetContext.setString("redeemableERC20", redeemabaleERC20Address.toHex())
+    // TreasuryAssetTemplate.createWithContext(event.params.asset, treasuryAssetContext)
 
     if(!redeemabaleERC20.treasuryAssets.includes(treasuryAsset.id)){
         let treasuryAssets = redeemabaleERC20.treasuryAssets
