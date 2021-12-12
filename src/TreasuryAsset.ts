@@ -13,7 +13,7 @@ export function handleTransfer(event: Transfer): void {
         let treasuryAsset = TreasuryAsset.load(redeemableERC20Address + "-" + treasuryAssetAddress.toHex())
         treasuryAsset.balance = treasuryAssetContract.balanceOf(Address.fromString(redeemableERC20Address))
         if(redeemabaleERC20.totalSupply.gt(BigInt.fromI32(0))){
-            treasuryAsset.sharePerRedeemable = treasuryAsset.balance.toBigDecimal().div(redeemabaleERC20.totalSupply.toBigDecimal())
+            treasuryAsset.redemptionRatio = treasuryAsset.balance.times(BigInt.fromString('10').pow(18)).div(redeemabaleERC20.totalSupply)
         }
         treasuryAsset.save()
     }

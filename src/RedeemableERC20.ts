@@ -1,6 +1,6 @@
 import { dataSource, BigInt, Address, log, DataSourceContext, BigDecimal} from "@graphprotocol/graph-ts"
 import { Trust as TrustContract, Trust__getContractsResultValue0Struct } from "../generated/RainProtocol/Trust"
-import { Caller, Contract, Holder, Redeem, RedeemableERC20, SeedERC20, TreasuryAsset, Trust, TrustParticipant} from "../generated/schema"
+import { TreasuryAssetCaller, Contract, Holder, Redeem, RedeemableERC20, SeedERC20, TreasuryAsset, Trust, TrustParticipant} from "../generated/schema"
 import { Redeem as Event , Transfer, TreasuryAsset as TreasuryAssetEvent} from "../generated/templates/RedeemableERC20Template/RedeemableERC20"
 import { ERC20 } from "../generated/templates/RedeemableERC20Template/ERC20"
 import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
@@ -35,15 +35,9 @@ export function handleRedeem(event: Event):void {
     redeem.trust = _contracts.id
     redeem.save()
 
-    let caller = new Caller(event.transaction.hash.toHex())
-    caller.caller = event.params.redeemer
-    caller.block = event.block.number
-    caller.timestamp = event.block.timestamp
-    caller.save()
-
-    let callers = treasuryAsset.callers
-    callers.push(caller.id)
-    treasuryAsset.callers = callers
+    let taRedeems = treasuryAsset.redeems
+    taRedeems.push(redeem.id)
+    treasuryAsset.redeems = taRedeems
 
     let balance = treasuryAssetContract.try_balanceOf(redeemableERC20Address)
     if(balance.reverted){
@@ -54,9 +48,9 @@ export function handleRedeem(event: Event):void {
     }
 
     if(redeemableERC20.totalSupply.gt(BigInt.fromI32(0)) && !!treasuryAsset.balance){
-        treasuryAsset.sharePerRedeemable = treasuryAsset.balance.toBigDecimal().div(redeemableERC20.totalSupply.toBigDecimal())
+        treasuryAsset.redemptionRatio = treasuryAsset.balance.times(BigInt.fromString('10').pow(18)).div(redeemableERC20.totalSupply)
     }else{
-        treasuryAsset.sharePerRedeemable = BigDecimal.fromString("0.0")
+        treasuryAsset.redemptionRatio = BigInt.fromString("0.0")
     }
     treasuryAsset.save()
 
@@ -183,16 +177,19 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     }
 
     if(redeemabaleERC20.totalSupply.gt(BigInt.fromI32(0)) && !!treasuryAsset.balance){
-        treasuryAsset.sharePerRedeemable = treasuryAsset.balance.toBigDecimal().div(redeemabaleERC20.totalSupply.toBigDecimal())
+        treasuryAsset.redemptionRatio = treasuryAsset.balance.times(BigInt.fromString('10').pow(18)).div(redeemabaleERC20.totalSupply)
     }else{
-        treasuryAsset.sharePerRedeemable = BigDecimal.fromString("0.0")
+        treasuryAsset.redemptionRatio = BigInt.fromString("0.0")
     }
     treasuryAsset.trust = trust.id
 
-    let caller = new Caller(event.transaction.hash.toHex())
+    let caller = new TreasuryAssetCaller(event.transaction.hash.toHex())
     caller.caller = event.params.emitter
     caller.block = event.block.number
     caller.timestamp = event.block.timestamp
+    caller.trustAddress = Address.fromString(trustAddress)
+    caller.redeemableERC20Address = redeemabaleERC20Address
+    caller.treasuryAsset = treasuryAsset.id
     caller.save()
 
     let callers = treasuryAsset.callers
