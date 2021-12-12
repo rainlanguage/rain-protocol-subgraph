@@ -1,11 +1,11 @@
 import { dataSource, BigInt, Address, BigDecimal, log} from "@graphprotocol/graph-ts"
 
-import { Trust as TrustContract} from "../generated/RainProtocol/Trust"
+import { Trust as TrustContract} from "../generated/RainProtocol1/Trust"
 import { DistributionProgress, Pool, SeedERC20, Swap, Trust, TrustParticipant } from "../generated/schema"
 import { LOG_SWAP } from "../generated/templates/BalancerPoolTemplate/BPool"
 import { ERC20 } from "../generated/templates/BalancerPoolTemplate/ERC20"
-import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
-import { RedeemableERC20Pool } from "../generated/RainProtocol/RedeemableERC20Pool"
+import { RedeemableERC20 as RERC20} from "../generated/RainProtocol1/RedeemableERC20"
+import { RedeemableERC20Pool } from "../generated/RainProtocol1/RedeemableERC20Pool"
 
 let ZERO_BI = BigInt.fromI32(0)
 let ONE_BI = BigInt.fromI32(1)

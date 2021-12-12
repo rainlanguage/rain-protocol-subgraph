@@ -1,5 +1,7 @@
 {
     "network": "matic",
-    "factory": "0x8f72c8dd9a16a86519497d57fa7123268f95d9d1",
-    "startBlock": 22126900
+    "factory1": "0x8f72c8dd9a16a86519497d57fa7123268f95d9d1",
+    "startBlock1": 22126900,
+    "factory2": "0xaDb1efb43D0e5Dad2BA68F3750652493e1Ca8859",
+    "startBlock2": 22369688
 }

@@ -13,6 +13,7 @@ type Trust @entity{
     distributionProgress: DistributionProgress!
     trustParticipants: [TrustParticipant!]
     notices: [Notice!]
+    factory: TrustFactory!
 }
 
 # event Notice(address indexed sender, bytes data);

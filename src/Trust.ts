@@ -1,5 +1,5 @@
 import { dataSource } from "@graphprotocol/graph-ts"
-import { Notice as EVENT} from "../generated/RainProtocol/Trust"
+import { Notice as EVENT} from "../generated/RainProtocol1/Trust"
 import { Notice, Trust } from "../generated/schema"
 
 export function handleNotice(event: EVENT): void {

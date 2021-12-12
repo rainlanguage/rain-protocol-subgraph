@@ -3,12 +3,44 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: RainProtocol
+    name: RainProtocol1
     network: {{ network }}
     source:
-      address: "{{ factory }}"
+      address: "{{ factory1 }}"
       abi: RainProtocol
-      startBlock: {{ startBlock }}
+      startBlock: {{ startBlock1 }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - NewContract
+      abis:
+        - name: RainProtocol
+          file: ./abis/RainProtocol.json
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: BPool
+          file: ./abis/BPool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+        - name: RedeemableERC20Pool
+          file: ./abis/RedeemableERC20Pool.json
+        - name: SeedERC20
+          file: ./abis/SeedERC20.json
+      eventHandlers:
+        - event: NewContract(indexed address)
+          handler: handleNewContract
+      file: ./src/mapping.ts
+  - kind: ethereum/contract
+    name: RainProtocol2
+    network: {{ network }}
+    source:
+      address: "{{ factory2 }}"
+      abi: RainProtocol
+      startBlock: {{ startBlock2 }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

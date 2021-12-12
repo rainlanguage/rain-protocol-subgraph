@@ -1,8 +1,8 @@
 import { BigDecimal, BigInt, dataSource, DataSourceContext, ethereum, log } from "@graphprotocol/graph-ts"
-import { NewContract } from "../generated/RainProtocol/RainProtocol"
-import { Trust as TrustContract } from "../generated/RainProtocol/Trust"
-import { RedeemableERC20Pool } from "../generated/RainProtocol/RedeemableERC20Pool"
-import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
+import { NewContract } from "../generated/RainProtocol1/RainProtocol"
+import { Trust as TrustContract } from "../generated/RainProtocol1/Trust"
+import { RedeemableERC20Pool } from "../generated/RainProtocol1/RedeemableERC20Pool"
+import { RedeemableERC20 as RERC20} from "../generated/RainProtocol1/RedeemableERC20"
 import { BPool } from "../generated/templates/BalancerPoolTemplate/BPool"
 import { TrustFactory, Trust, Contract, DistributionProgress, ReserveERC20, CRP, RedeemableERC20Pool as RERC20P, Pool, RedeemableERC20, SeedERC20 } from "../generated/schema"
 import { BalancerPoolTemplate, RedeemableERC20PoolTemplate, RedeemableERC20Template, SeedERC20Template, TrustTemplate} from "../generated/templates"
@@ -29,6 +29,7 @@ export function handleNewContract(event: NewContract): void {
   
   let trustContract = TrustContract.bind(event.params._contract)
   let trust = new Trust(event.params._contract.toHex())
+  trust.factory = TF.id
   trust.block = event.block.number
   trust.timestamp = event.block.timestamp
   trust.creator = trustContract.creator()

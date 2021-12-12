@@ -1,9 +1,9 @@
 import { dataSource, BigInt, Address, log, DataSourceContext, BigDecimal} from "@graphprotocol/graph-ts"
-import { Trust as TrustContract, Trust__getContractsResultValue0Struct } from "../generated/RainProtocol/Trust"
+import { Trust as TrustContract, Trust__getContractsResultValue0Struct } from "../generated/RainProtocol1/Trust"
 import { Caller, Contract, Holder, Redeem, RedeemableERC20, SeedERC20, TreasuryAsset, Trust, TrustParticipant} from "../generated/schema"
 import { Redeem as Event , Transfer, TreasuryAsset as TreasuryAssetEvent} from "../generated/templates/RedeemableERC20Template/RedeemableERC20"
 import { ERC20 } from "../generated/templates/RedeemableERC20Template/ERC20"
-import { RedeemableERC20 as RERC20} from "../generated/RainProtocol/RedeemableERC20"
+import { RedeemableERC20 as RERC20} from "../generated/RainProtocol1/RedeemableERC20"
 
 let ONE_BI = BigInt.fromI32(1)
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
