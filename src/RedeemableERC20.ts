@@ -162,6 +162,7 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
 
     let treasuryAsset = new TreasuryAsset(redeemabaleERC20Address.toHex() + "-" + event.params.asset.toHex())
     treasuryAsset.callers = []
+    treasuryAsset.redeems = []
     treasuryAsset.address = event.params.asset
     treasuryAsset.block = event.block.number
     treasuryAsset.timestamp = event.block.timestamp
