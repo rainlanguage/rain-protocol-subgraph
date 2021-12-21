@@ -1,7 +1,8 @@
 let
  pkgs = import <nixpkgs> {};
 
-   command = pkgs.writeShellScriptBin "command" ''
+   graph-test = pkgs.writeShellScriptBin "graph-test" ''
+    npx hardhat test;
   '';
   
 in
@@ -10,7 +11,7 @@ pkgs.stdenv.mkDerivation {
  buildInputs = [
   pkgs.nodejs-14_x
   pkgs.jq
-  command
+  graph-test
  ];
 
  shellHook = ''
