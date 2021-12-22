@@ -4,8 +4,6 @@ import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
-import "hardhat-gas-reporter";
-import "solidity-coverage";
 
 dotenv.config();
 
@@ -33,27 +31,11 @@ function createLocalHostConfig() {
   };
 };
 
-function createForkConfig() {
-  let url: string;
-  if (!process.env.POLYGON_ALCHEMY_KEY) {
-    throw new Error("Please set your ALCHEMY_KEY in a .env file");
-  } else {
-    url = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.POLYGON_ALCHEMY_KEY}`;
-  }
-  return {
-    forking: {
-      url,
-      blockNumber: 22800167
-    }
-  };
-};
 
 const config: HardhatUserConfig = {
   solidity: "0.8.10",
-  defaultNetwork: "hardhat",
   networks: {
     localhost: createLocalHostConfig(),
-    hardhat: createForkConfig(),
   },
 };
 
