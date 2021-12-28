@@ -38,9 +38,9 @@ dataSources:
     name: RainProtocol2
     network: matic
     source:
-      address: "0xaDb1efb43D0e5Dad2BA68F3750652493e1Ca8859"
+      address: "0x19B5aCe714b7231Fa6596e25e4E15CcDc5dc09eA"
       abi: RainProtocol
-      startBlock: 22369688
+      startBlock: 22481579
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

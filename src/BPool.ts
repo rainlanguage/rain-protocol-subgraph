@@ -18,7 +18,6 @@ export function handleSwaps(event: LOG_SWAP):void {
     let pool = Pool.load(poolAddress.toHex())
     pool.numberOfSwaps = pool.numberOfSwaps.plus(ONE_BI)
     let trustAddress = pool.trust
-
     let swap = new Swap(event.transaction.hash.toHex())
     swap.pool = pool.id
     swap.caller = event.params.caller
