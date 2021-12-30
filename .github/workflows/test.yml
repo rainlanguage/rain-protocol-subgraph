@@ -15,4 +15,6 @@ jobs:
         uses: jakejarvis/wait-action@master
         with:
           time: '60s'
-      - run: npx hardhat test
+      - run: |
+          yarn install
+          npx hardhat test
