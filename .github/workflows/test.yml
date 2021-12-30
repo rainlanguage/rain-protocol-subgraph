@@ -9,4 +9,4 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - run: yarn install
-      - run: nix-shell --run ci-test
+      - run: nix-shell --run all-graph-test
