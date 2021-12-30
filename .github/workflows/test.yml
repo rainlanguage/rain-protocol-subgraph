@@ -11,4 +11,8 @@ jobs:
       - run: |
           npx hardhat node &
           docker-compose -f "docker/docker-compose.yml" up &
-          nix-shell --run graph-test
+      - name: Sleep for 30 seconds
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '60s'
+      - run: nix-shell --run graph-test
