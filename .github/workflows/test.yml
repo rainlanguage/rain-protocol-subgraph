@@ -5,11 +5,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v13
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - run: yarn install
       - run: |
-            yarn install
             npx hardhat node &
             sleep 30s
+      - run: |
             docker-compose -f "docker/docker-compose.yml" up &
             sleep 60s
-            npx hardhat test
-            yarn deploy-build:localhost
+      - run: npx hardhat test
+      - run: yarn deploy-build:localhost
