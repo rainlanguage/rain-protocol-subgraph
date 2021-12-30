@@ -5,6 +5,11 @@ let
     yarn deploy-local;
     npx hardhat test;
   '';
+
+   all-graph-test = pkgs.writeShellScriptBin "all-graph-test" ''
+    yarn deploy-local;
+    npx hardhat test;
+  '';
   
 in
 pkgs.stdenv.mkDerivation {
@@ -13,6 +18,7 @@ pkgs.stdenv.mkDerivation {
   pkgs.nodejs-14_x
   pkgs.jq
   graph-test
+  all-graph-test
  ];
 
  shellHook = ''

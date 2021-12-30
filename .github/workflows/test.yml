@@ -9,15 +9,4 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - run: yarn install
-      - run: npx hardhat node &
-      - name: Waiting the ETH node for 30sec
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '30s'
-      - run: docker-compose -f "docker/docker-compose.yml" up &
-      - name: Waiting for 60 seconds
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '60s'
-      - run: yarn deploy-build:localhost
-      - run: npx hardhat test
+      - run: nix-shell --run ci-test
