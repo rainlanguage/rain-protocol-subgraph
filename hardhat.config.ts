@@ -33,6 +33,7 @@ function createLocalHostConfig() {
 
 
 const config: HardhatUserConfig = {
+  defaultNetwork: "localhost",
   solidity: "0.8.10",
   networks: {
     localhost: createLocalHostConfig(),

@@ -2,6 +2,7 @@ let
  pkgs = import <nixpkgs> {};
 
    graph-test = pkgs.writeShellScriptBin "graph-test" ''
+    yarn deploy-local;
     npx hardhat test;
   '';
   

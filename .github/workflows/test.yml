@@ -15,4 +15,5 @@ jobs:
         uses: jakejarvis/wait-action@master
         with:
           time: '60s'
+          
       - run: nix-shell --run graph-test
