@@ -22,17 +22,17 @@ import type { RedeemableERC20Pool } from "@beehiveinnovation/rain-protocol//type
 import type { RedeemableERC20 } from "@beehiveinnovation/rain-protocol//typechain/RedeemableERC20";
 import type { TrustFactory } from "@beehiveinnovation/rain-protocol//typechain/TrustFactory";
 
+let crpFactory: Contract, bFactory: Contract;
+let trustFactory: Contract & TrustFactory,
+  reserveToken: Contract & ReserveToken,
+  readWriteTier: Contract & ReadWriteTier,
+  tierByConstructionClaim: Contract & TierByConstructionClaim;
+let signers: Signer[],
+  creator: Signer,
+  seeder: Signer,
+  deployer: Signer,
+  trader1: Signer;
 describe("TheGraph - Rain Protocol", () => {
-  let crpFactory: Contract, bFactory: Contract;
-  let trustFactory: Contract & TrustFactory,
-    reserveToken: Contract & ReserveToken,
-    readWriteTier: Contract & ReadWriteTier,
-    tierByConstructionClaim: Contract & TierByConstructionClaim;
-  let signers: Signer[],
-    creator: Signer,
-    seeder: Signer,
-    deployer: Signer,
-    trader1: Signer;
   before("Deploying factories", async () => {
     signers = await ethers.getSigners();
     creator = signers[0];
@@ -41,8 +41,11 @@ describe("TheGraph - Rain Protocol", () => {
     trader1 = signers[3];
 
     [crpFactory, bFactory] = await balancerDeploy(creator);
+    const currentBlock = await ethers.provider.getBlockNumber();
     trustFactory = (await factoriesDeploy(crpFactory, bFactory, creator))
       .trustFactory;
+    console.log("Block: ", currentBlock);
+    console.log("trustF", trustFactory.address);
   });
 
   it("Creating a trust", async () => {

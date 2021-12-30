@@ -19,4 +19,5 @@ jobs:
         uses: jakejarvis/wait-action@master
         with:
           time: '60s'
+      - run: yarn deploy-build:localhost
       - run: npx hardhat test

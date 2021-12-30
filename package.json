@@ -14,7 +14,9 @@
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/rain-protocol",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/rain-protocol",
     "test": "hardhat test",
-    "lint": "eslint */**.ts"
+    "lint": "eslint */**.ts",
+    "prepare:localhost": "yarn mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
+    "deploy-build:localhost": "yarn prepare:localhost && yarn codegen && yarn build && yarn create-local && yarn deploy-local"
   },
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",
