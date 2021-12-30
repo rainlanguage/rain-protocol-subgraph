@@ -8,13 +8,15 @@ jobs:
       - uses: cachix/install-nix-action@v13
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - run: |
-          npx hardhat node &
-          docker-compose -f "docker/docker-compose.yml" up &
-      - name: Sleep for 60 seconds
+      - run: yarn install
+      - run: npx hardhat node &
+      - name: Waiting the ETH node for 30sec
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '30s'
+      - run: docker-compose -f "docker/docker-compose.yml" up &
+      - name: Waiting for 60 seconds
         uses: jakejarvis/wait-action@master
         with:
           time: '60s'
-      - run: |
-          yarn install
-          npx hardhat test
+      - run: npx hardhat test
