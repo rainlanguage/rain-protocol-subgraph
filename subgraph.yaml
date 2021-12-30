@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RainProtocol
-    network: mumbai
+    network: localhost
     source:
-      address: "0x191F93ce7E36D56DAffbDf1D91443fd9D4dCf59D"
+      address: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
       abi: RainProtocol
-      startBlock: 22165656
+      startBlock: 5
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -37,7 +37,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
-    network: mumbai
+    network: localhost
     source:
       abi: Trust
     mapping:
@@ -55,7 +55,7 @@ templates:
       file: ./src/Trust.ts
   - kind: ethereum/contract
     name: BalancerPoolTemplate
-    network: mumbai
+    network: localhost
     source:
       abi: BPool
     mapping:
@@ -81,7 +81,7 @@ templates:
       file: ./src/BPool.ts
   - kind: ethereum/contract
     name: RedeemableERC20Template
-    network: mumbai
+    network: localhost
     source:
       abi: RedeemableERC20
     mapping:
@@ -109,7 +109,7 @@ templates:
       file: ./src/RedeemableERC20.ts
   - kind: ethereum/contract
     name: SeedERC20Template
-    network: mumbai
+    network: localhost
     source:
       abi: SeedERC20
     mapping:
@@ -144,7 +144,7 @@ templates:
       file: ./src/SeedERC20.ts
   - kind: ethereum/contract
     name: RedeemableERC20PoolTemplate
-    network: mumbai
+    network: localhost
     source:
       abi: RedeemableERC20Pool
     mapping:
@@ -170,23 +170,3 @@ templates:
         - event: PhaseShiftScheduled(indexed uint32)
           handler: handlePhaseShiftScheduled
       file: ./src/RedeemableERC20Pool.ts
-  - kind: ethereum/contract
-    name: TreasuryAssetTemplate
-    network: mumbai
-    source:
-      abi: ERC20
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - Transfer
-      abis:
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-      eventHandlers:
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-      file: ./src/TreasuryAsset.ts
