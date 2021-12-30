@@ -8,5 +8,8 @@ jobs:
       - uses: cachix/install-nix-action@v13
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - run: nix-shell
-      - run: graph-test
+      - run: nix-shell --run graph-test
+      - run: |
+          npx hardhat node &
+          docker-compose -f "docker/docker-compose.yml" up &
+          npx hardhat test
