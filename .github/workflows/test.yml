@@ -13,5 +13,4 @@ jobs:
             npx hardhat node &
             sleep 30s
       - run: |
-            docker-compose -f "docker/docker-compose.yml" up &
-            sleep 60s
+            docker-compose -f "docker/docker-compose.yml" up

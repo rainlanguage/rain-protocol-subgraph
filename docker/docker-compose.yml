@@ -1,7 +1,6 @@
 version: '3'
 services:
   graph-node:
-    network_mode: host
     image: graphprotocol/graph-node:v0.22.0
     ports:
       - '8000:8000'
