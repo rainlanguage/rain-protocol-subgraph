@@ -15,5 +15,3 @@ jobs:
       - run: |
             docker-compose -f "docker/docker-compose.yml" up &
             sleep 60s
-      - run: npx hardhat test
-      - run: yarn deploy-build:localhost
