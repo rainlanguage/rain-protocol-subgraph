@@ -13,4 +13,7 @@ jobs:
             npx hardhat node &
             sleep 30s
       - run: |
-            docker-compose -f "docker/docker-compose.yml" up
+            /sbin/ip route|awk '/default/ { print $3 }'
+            docker-compose -f "docker/docker-compose.yml" up &
+            sleep 30s
+      - run: /sbin/ip route|awk '/default/ { print $3 }'
