@@ -14,4 +14,5 @@ jobs:
             sleep 10s
             docker-compose -f "docker/docker-compose.yml" up &
             sleep 60s
+            yarn graph-node
             yarn test
