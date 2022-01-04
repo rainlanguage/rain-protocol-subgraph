@@ -1,8 +1,8 @@
 version: '3'
 services:
   graph-node:
-    # extra_hosts:
-    #   - host.docker.internal:8.8.8.8
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
     image: graphprotocol/graph-node:v0.22.0
     ports:
       - '8000:8000'
