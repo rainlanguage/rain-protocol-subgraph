@@ -244,7 +244,7 @@ describe("TheGraph - Rain Protocol", () => {
     // exec(`yarn build`);
     // exec(`yarn create-local`);
     // exec(`yarn deploy-local`);
-    exec('yarn deploy-build:localhost')
+    exec(`yarn deploy-build:localhost`)
 
     // Create Subgraph Connection
     const subgraph: ApolloFetch = fetchSubgraph(subgraphUser, subgraphName);
