@@ -38,6 +38,9 @@ const config: HardhatUserConfig = {
   networks: {
     localhost: createLocalHostConfig(),
   },
+  mocha: {
+    timeout: 240000,
+  },
 };
 
 export default config;
