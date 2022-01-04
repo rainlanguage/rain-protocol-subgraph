@@ -1592,6 +1592,13 @@ apisauce@^2.1.5:
   dependencies:
     axios "^0.21.4"
 
+apollo-fetch@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/apollo-fetch/-/apollo-fetch-0.7.0.tgz#63c255a0ccb1b4c473524d8f9b536d72438bd3e7"
+  integrity sha512-0oHsDW3Zxx+Of1wuqcOXruNj4Kv55WN69tkIjwkCQDEIrgCpgA2scjChFsgflSVMy/1mkTKCY1Mc0TYJhNRzmw==
+  dependencies:
+    cross-fetch "^1.0.0"
+
 app-module-path@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/app-module-path/-/app-module-path-2.2.0.tgz#641aa55dfb7d6a6f0a8141c4b9c0aa50b6c24dd5"
@@ -1708,9 +1715,9 @@ asn1@~0.2.3:
   dependencies:
     safer-buffer "~2.1.0"
 
-"assemblyscript@git+https://github.com/AssemblyScript/assemblyscript.git#36040d5b5312f19a025782b5e36663823494c2f3":
+"assemblyscript@https://github.com/AssemblyScript/assemblyscript#36040d5b5312f19a025782b5e36663823494c2f3":
   version "0.6.0"
-  resolved "git+https://github.com/AssemblyScript/assemblyscript.git#36040d5b5312f19a025782b5e36663823494c2f3"
+  resolved "https://github.com/AssemblyScript/assemblyscript#36040d5b5312f19a025782b5e36663823494c2f3"
   dependencies:
     "@protobufjs/utf8" "^1.1.0"
     binaryen "77.0.0-nightly.20190407"
@@ -3316,6 +3323,14 @@ create-require@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/create-require/-/create-require-1.1.1.tgz#c1d7e8f1e5f6cfc9ff65f9cd352d37348756c333"
   integrity sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==
+
+cross-fetch@^1.0.0:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/cross-fetch/-/cross-fetch-1.1.1.tgz#dede6865ae30f37eae62ac90ebb7bdac002b05a0"
+  integrity sha512-+VJE04+UfxxmBfcnmAu/lKor53RUCx/1ilOti4p+JgrnLQ4AZZIRoe2OEd76VaHyWQmQxqKnV+TaqjHC4r0HWw==
+  dependencies:
+    node-fetch "1.7.3"
+    whatwg-fetch "2.0.3"
 
 cross-fetch@^2.1.0, cross-fetch@^2.1.1:
   version "2.2.5"
@@ -7831,6 +7846,14 @@ node-environment-flags@1.0.6:
     object.getownpropertydescriptors "^2.0.3"
     semver "^5.7.0"
 
+node-fetch@1.7.3, node-fetch@~1.7.1:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-1.7.3.tgz#980f6f72d85211a5347c6b2bc18c5b84c3eb47ef"
+  integrity sha512-NhZ4CsKx7cYm2vSrBAr2PvFOe6sWDf0UYLRqA6svUYg7+/TSfVAu49jYC4BvQ4Sms9SZgdqGBgroqfDhJdTyKQ==
+  dependencies:
+    encoding "^0.1.11"
+    is-stream "^1.0.1"
+
 node-fetch@2.6.1:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
@@ -7842,14 +7865,6 @@ node-fetch@^2.3.0, node-fetch@^2.6.0, node-fetch@^2.6.1:
   integrity sha512-Z8/6vRlTUChSdIgMa51jxQ4lrw/Jy5SOW10ObaA47/RElsAN2c5Pn8bTgFGWn/ibwzXTE8qwr1Yzx28vsecXEA==
   dependencies:
     whatwg-url "^5.0.0"
-
-node-fetch@~1.7.1:
-  version "1.7.3"
-  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-1.7.3.tgz#980f6f72d85211a5347c6b2bc18c5b84c3eb47ef"
-  integrity sha512-NhZ4CsKx7cYm2vSrBAr2PvFOe6sWDf0UYLRqA6svUYg7+/TSfVAu49jYC4BvQ4Sms9SZgdqGBgroqfDhJdTyKQ==
-  dependencies:
-    encoding "^0.1.11"
-    is-stream "^1.0.1"
 
 node-forge@^0.10.0:
   version "0.10.0"
@@ -10792,6 +10807,11 @@ websocket@^1.0.31:
     typedarray-to-buffer "^3.1.5"
     utf-8-validate "^5.0.2"
     yaeti "^0.0.6"
+
+whatwg-fetch@2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/whatwg-fetch/-/whatwg-fetch-2.0.3.tgz#9c84ec2dcf68187ff00bc64e1274b442176e1c84"
+  integrity sha1-nITsLc9oGH/wC8ZOEnS0QhduHIQ=
 
 whatwg-fetch@2.0.4:
   version "2.0.4"

@@ -18,7 +18,7 @@
     "prepare:localhost": "yarn mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:localhost": "yarn prepare:localhost && yarn codegen && yarn build && yarn create-local && yarn deploy-local",
     "hh-node": "hardhat node",
-    "dock-graph": "docker-compose -f \"docker/docker-compose.yml\" up"
+    "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up"
   },
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",
@@ -36,6 +36,7 @@
     "@types/node": "^12.0.0",
     "@typescript-eslint/eslint-plugin": "^4.29.1",
     "@typescript-eslint/parser": "^4.29.1",
+    "apollo-fetch": "^0.7.0",
     "chai": "^4.2.0",
     "dotenv": "^10.0.0",
     "eslint": "^7.29.0",
