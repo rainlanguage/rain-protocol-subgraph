@@ -1,4 +1,4 @@
-// import { expect } from "chai";
+import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
 import * as Utils from "./utils";
@@ -44,22 +44,22 @@ let signers: Signer[],
   trader1: Signer;
 
 describe("TheGraph - Rain Protocol", () => {
-  before("Deploying factories", async () => {
-    signers = await ethers.getSigners();
-    creator = signers[0];
-    seeder = signers[1]; // seeder is not creator/owner
-    deployer = signers[2];
-    trader1 = signers[3];
+  // before("Deploying factories", async () => {
+  //   signers = await ethers.getSigners();
+  //   creator = signers[0];
+  //   seeder = signers[1]; // seeder is not creator/owner
+  //   deployer = signers[2];
+  //   trader1 = signers[3];
 
-    [crpFactory, bFactory] = await balancerDeploy(creator);
-    const currentBlock = await ethers.provider.getBlockNumber();
-    trustFactory = (await factoriesDeploy(crpFactory, bFactory, creator))
-      .trustFactory;
-    console.log("Block: ", currentBlock);
-    console.log("trustF", trustFactory.address);
-  });
+  //   [crpFactory, bFactory] = await balancerDeploy(creator);
+  //   const currentBlock = await ethers.provider.getBlockNumber();
+  //   trustFactory = (await factoriesDeploy(crpFactory, bFactory, creator))
+  //     .trustFactory;
+  //   console.log("Block: ", currentBlock);
+  //   console.log("trustF", trustFactory.address);
+  // });
 
-  it("Creating a trust", async () => {
+  xit("Creating a trust", async () => {
     const config = { gasLimit: 20000000 };
 
     reserveToken = (await deploy(RESERVE_TOKEN, creator, [])) as Contract &
@@ -229,15 +229,16 @@ describe("TheGraph - Rain Protocol", () => {
     exec(`yarn deploy-local`);
 
     // Create Subgraph Connection
-    const subgraph = fetchSubgraph(subgraphUser, subgraphName);
+    const subgraph: ApolloFetch = fetchSubgraph(subgraphUser, subgraphName);
 
-    await waitForSubgraphToBeSynced(2000);
+    // await waitForSubgraphToBeSynced(2000);
 
     const query = await queryTrustFactories();
     const response = (await subgraph({ query })) as FetchResult;
 
-    const result = response.data as TrustFactoryQuery;
-    console.log(result);
+    const result = response.data.trustFactories[0] as TrustFactoryQuery;
+
+    expect(result.id).to.be.equal(trustFactory.address);
   }); 
 
 });

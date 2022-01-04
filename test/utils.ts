@@ -69,25 +69,19 @@ export const waitForSubgraphToBeSynced = async (delay: number) =>
     // Function to check if the subgraph is synced
     const checkSubgraphSynced = async () => {
       try {
-        console.log("a")
         let result = await fetchSubgraphs({
           query: `{ indexingStatuses { synced } }`,
         });
-        console.log(result)
 
         if (checkIfAllSynced(result.data.indexingStatuses)) {
-          console.log("resolved")
           resolve({ synced: true });
         } else {
-          console.log("not")
           throw new Error("reject or retry");
         }
       } catch (e) {
         if (Date.now() > deadline) {
-          console.log("The error: ", e);
           reject(new Error(`Timed out waiting for the subgraph to sync`));
         } else {
-          console.log("again")
           setTimeout(checkSubgraphSynced, delay);
         }
       }
