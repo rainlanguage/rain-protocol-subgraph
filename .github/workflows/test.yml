@@ -12,7 +12,6 @@ jobs:
       - run: |
             npx hardhat node &
             sleep 10s
-            docker-compose -f "docker/docker-compose.yml" up &
+            yarn graph-node &
             sleep 60s
-            yarn graph-node
             yarn test
