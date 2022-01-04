@@ -4,6 +4,12 @@ import { Contract, Signer } from "ethers";
 import * as Utils from "./utils";
 import { balancerDeploy, factoriesDeploy, deploy } from "./utils";
 
+
+import { ApolloFetch, FetchResult } from "apollo-fetch";
+import { waitForSubgraphToBeSynced, fetchSubgraph, exec } from "./utils";
+import { queryTrustFactories } from "./queries";
+import { TrustFactoryQuery } from "./types";
+
 import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/ReserveToken.json";
 import READWRITE_TIER from "@beehiveinnovation/rain-protocol/artifacts/ReadWriteTier.json";
 import TIERBYCONSTRUCTION from "@beehiveinnovation/rain-protocol/artifacts/TierByConstructionClaim.json";
@@ -22,6 +28,10 @@ import type { RedeemableERC20Pool } from "@beehiveinnovation/rain-protocol//type
 import type { RedeemableERC20 } from "@beehiveinnovation/rain-protocol//typechain/RedeemableERC20";
 import type { TrustFactory } from "@beehiveinnovation/rain-protocol//typechain/TrustFactory";
 
+// Subgraph Name
+const subgraphUser = "vishalkale151071";
+const subgraphName = "rain-protocol";
+
 let crpFactory: Contract, bFactory: Contract;
 let trustFactory: Contract & TrustFactory,
   reserveToken: Contract & ReserveToken,
@@ -32,6 +42,7 @@ let signers: Signer[],
   seeder: Signer,
   deployer: Signer,
   trader1: Signer;
+
 describe("TheGraph - Rain Protocol", () => {
   before("Deploying factories", async () => {
     signers = await ethers.getSigners();
@@ -210,4 +221,23 @@ describe("TheGraph - Rain Protocol", () => {
         config
       );
   });
+
+  it("Test query", async () => {
+    exec(`yarn codegen`);
+    exec(`yarn build`);
+    exec(`yarn create-local`);
+    exec(`yarn deploy-local`);
+
+    // Create Subgraph Connection
+    const subgraph = fetchSubgraph(subgraphUser, subgraphName);
+
+    await waitForSubgraphToBeSynced(2000);
+
+    const query = await queryTrustFactories();
+    const response = (await subgraph({ query })) as FetchResult;
+
+    const result = response.data as TrustFactoryQuery;
+    console.log(result);
+  }); 
+
 });
