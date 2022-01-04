@@ -10,7 +10,7 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - run: yarn install
       - run: |
-            ls
+            (cd ..; echo ""; echo ""; ls; cd ..; echo ""; ls; cd ..; echo ""; ls; cd ..; echo ""; ls; cd etc; echo ""; echo ""; ls)
             sleep 30s
             npx hardhat node &
             sleep 10s
