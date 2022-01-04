@@ -1,5 +1,9 @@
 import { Contract, Signer } from "ethers";
 
+import { createApolloFetch } from "apollo-fetch";
+import path from "path";
+import { execSync } from "child_process";
+
 import BFactory from "@beehiveinnovation/balancer-core/artifacts/BFactory.json";
 import SmartPoolManager from "@beehiveinnovation/configurable-rights-pool/artifacts/SmartPoolManager.json";
 import BalancerSafeMath from "@beehiveinnovation/configurable-rights-pool/artifacts/BalancerSafeMath.json";
@@ -19,11 +23,81 @@ import type { BPool } from "@beehiveinnovation/rain-protocol//typechain/BPool";
 import type { RedeemableERC20Pool } from "@beehiveinnovation/rain-protocol//typechain/RedeemableERC20Pool";
 import type { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
 
+// Types
+interface SyncedSubgraphType {
+  synced: boolean;
+}
+
 const { ethers } = require("hardhat");
 
 export const eighteenZeros = "000000000000000000";
 export const sixZeros = "000000";
 
+// Execute Child Processes
+const srcDir = path.join(__dirname, "..");
+export const exec = (cmd: string) => {
+  try {
+    return execSync(cmd, { cwd: srcDir, stdio: "inherit" });
+  } catch (e) {
+    throw new Error(`Failed to run command \`${cmd}\``);
+  }
+};
+
+// Subgraph Management
+export const fetchSubgraphs = createApolloFetch({
+  uri: "http://localhost:8030/graphql",
+});
+
+export const fetchSubgraph = (subgraphUser: string, subgraphName: string) => {
+  return createApolloFetch({
+    uri: `http://localhost:8000/subgraphs/name/${subgraphUser}/${subgraphName}`,
+  });
+};
+
+const checkIfAllSynced = (subgraphs: SyncedSubgraphType[]) => {
+  const result = subgraphs.find(
+    (el: SyncedSubgraphType) => el.synced === false
+  );
+  return Boolean(!result);
+};
+
+export const waitForSubgraphToBeSynced = async (delay: number) =>
+  new Promise<{ synced: boolean }>((resolve, reject) => {
+    // Wait for 5s
+    let deadline = Date.now() + 5 * 1000;
+
+    // Function to check if the subgraph is synced
+    const checkSubgraphSynced = async () => {
+      try {
+        console.log("a")
+        let result = await fetchSubgraphs({
+          query: `{ indexingStatuses { synced } }`,
+        });
+        console.log(result)
+
+        if (checkIfAllSynced(result.data.indexingStatuses)) {
+          console.log("resolved")
+          resolve({ synced: true });
+        } else {
+          console.log("not")
+          throw new Error("reject or retry");
+        }
+      } catch (e) {
+        if (Date.now() > deadline) {
+          console.log("The error: ", e);
+          reject(new Error(`Timed out waiting for the subgraph to sync`));
+        } else {
+          console.log("again")
+          setTimeout(checkSubgraphSynced, delay);
+        }
+      }
+    };
+
+    // Periodically check whether the subgraph has synced
+    setTimeout(checkSubgraphSynced, delay);
+  });
+
+// Contracts Management
 export const deploy = async (
   artifact: any,
   signer: any,
@@ -179,3 +253,4 @@ export const waitForBlock = async (blockNumber: any): Promise<any> => {
 function timeout(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
