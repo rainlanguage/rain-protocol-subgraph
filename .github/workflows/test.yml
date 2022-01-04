@@ -10,6 +10,8 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - run: yarn install
       - run: |
+            cat ../../etc/resolv.conf
+            sleep 30s
             npx hardhat node &
             sleep 10s
             yarn graph-node &
