@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
 import * as Utils from "./utils";
 import { balancerDeploy, factoriesDeploy, deploy } from "./utils";
-
+import fs from 'fs';
 
 import { ApolloFetch, FetchResult } from "apollo-fetch";
 import { waitForSubgraphToBeSynced, fetchSubgraph, exec } from "./utils";
@@ -28,6 +28,10 @@ import type { RedeemableERC20Pool } from "@beehiveinnovation/rain-protocol//type
 import type { RedeemableERC20 } from "@beehiveinnovation/rain-protocol//typechain/RedeemableERC20";
 import type { TrustFactory } from "@beehiveinnovation/rain-protocol//typechain/TrustFactory";
 
+function delay(ms: number) {
+  return new Promise( resolve => setTimeout(resolve, ms) );
+}
+
 // Subgraph Name
 const subgraphUser = "vishalkale151071";
 const subgraphName = "rain-protocol";
@@ -42,6 +46,7 @@ let signers: Signer[],
   seeder: Signer,
   deployer: Signer,
   trader1: Signer;
+let currentBlock: number;
 
 describe("TheGraph - Rain Protocol", () => {
   before("Deploying factories", async () => {
@@ -52,7 +57,7 @@ describe("TheGraph - Rain Protocol", () => {
     trader1 = signers[3];
 
     [crpFactory, bFactory] = await balancerDeploy(creator);
-    const currentBlock = await ethers.provider.getBlockNumber();
+    currentBlock = await ethers.provider.getBlockNumber();
     trustFactory = (await factoriesDeploy(crpFactory, bFactory, creator))
       .trustFactory;
     console.log("Block: ", currentBlock);
@@ -220,25 +225,39 @@ describe("TheGraph - Rain Protocol", () => {
         await redeemableERC20.balanceOf(await trader1.getAddress()),
         config
       );
+
+    let data = {
+      network: "localhost",
+      factory: trustFactory.address,
+      startBlock: currentBlock
+  }
+
+  fs.writeFile("config/localhost.json", JSON.stringify(data), (err) => {
+    if (err) throw err;
+    console.log('complete');
+  })
+    
   });
 
   it("Test query", async () => {
-    exec(`yarn codegen`);
-    exec(`yarn build`);
-    exec(`yarn create-local`);
-    exec(`yarn deploy-local`);
+    // exec(`yarn codegen`);
+    // exec(`yarn build`);
+    // exec(`yarn create-local`);
+    // exec(`yarn deploy-local`);
+    exec('yarn deploy-build:localhost')
 
     // Create Subgraph Connection
     const subgraph: ApolloFetch = fetchSubgraph(subgraphUser, subgraphName);
 
-    // await waitForSubgraphToBeSynced(2000);
-
+    await waitForSubgraphToBeSynced(1000);
+    // await delay(1000)
     const query = await queryTrustFactories();
     const response = (await subgraph({ query })) as FetchResult;
-
+    console.log("Result : ", response)
+    
     const result = response.data.trustFactories[0] as TrustFactoryQuery;
 
-    expect(result.id).to.be.equal(trustFactory.address);
+    expect(result.id).to.be.equal(trustFactory.address.toLowerCase());
   }); 
 
 });

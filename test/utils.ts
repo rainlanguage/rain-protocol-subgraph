@@ -64,16 +64,25 @@ const checkIfAllSynced = (subgraphs: SyncedSubgraphType[]) => {
 export const waitForSubgraphToBeSynced = async (delay: number) =>
   new Promise<{ synced: boolean }>((resolve, reject) => {
     // Wait for 5s
-    let deadline = Date.now() + 5 * 1000;
+    let deadline = Date.now() + 15 * 1000;
 
     // Function to check if the subgraph is synced
     const checkSubgraphSynced = async () => {
       try {
         let result = await fetchSubgraphs({
-          query: `{ indexingStatuses { synced } }`,
+          query: `{
+            indexingStatusForCurrentVersion(subgraphName: "vishalkale151071/rain-protocol") {
+              synced
+              health
+              fatalError{
+                message
+                handler
+              }
+            } 
+          }`,
         });
-
-        if (checkIfAllSynced(result.data.indexingStatuses)) {
+        console.log("sync result : ", result.data.indexingStatusForCurrentVersion.synced)
+        if (result.data.indexingStatusForCurrentVersion.synced == true) {
           resolve({ synced: true });
         } else {
           throw new Error("reject or retry");
