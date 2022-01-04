@@ -1,6 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
 
-export interface TrustFactory {
+export interface TrustFactoryQuery {
     id: string;
     trustCount: BigNumber;
     trusts: Trust[];
