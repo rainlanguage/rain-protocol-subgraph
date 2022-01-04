@@ -44,22 +44,22 @@ let signers: Signer[],
   trader1: Signer;
 
 describe("TheGraph - Rain Protocol", () => {
-  // before("Deploying factories", async () => {
-  //   signers = await ethers.getSigners();
-  //   creator = signers[0];
-  //   seeder = signers[1]; // seeder is not creator/owner
-  //   deployer = signers[2];
-  //   trader1 = signers[3];
+  before("Deploying factories", async () => {
+    signers = await ethers.getSigners();
+    creator = signers[0];
+    seeder = signers[1]; // seeder is not creator/owner
+    deployer = signers[2];
+    trader1 = signers[3];
 
-  //   [crpFactory, bFactory] = await balancerDeploy(creator);
-  //   const currentBlock = await ethers.provider.getBlockNumber();
-  //   trustFactory = (await factoriesDeploy(crpFactory, bFactory, creator))
-  //     .trustFactory;
-  //   console.log("Block: ", currentBlock);
-  //   console.log("trustF", trustFactory.address);
-  // });
+    [crpFactory, bFactory] = await balancerDeploy(creator);
+    const currentBlock = await ethers.provider.getBlockNumber();
+    trustFactory = (await factoriesDeploy(crpFactory, bFactory, creator))
+      .trustFactory;
+    console.log("Block: ", currentBlock);
+    console.log("trustF", trustFactory.address);
+  });
 
-  xit("Creating a trust", async () => {
+  it("Creating a trust", async () => {
     const config = { gasLimit: 20000000 };
 
     reserveToken = (await deploy(RESERVE_TOKEN, creator, [])) as Contract &
