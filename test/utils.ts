@@ -10,13 +10,13 @@ import BalancerSafeMath from "@beehiveinnovation/configurable-rights-pool/artifa
 import RightsManager from "@beehiveinnovation/configurable-rights-pool/artifacts/RightsManager.json";
 import CRPFactory from "@beehiveinnovation/configurable-rights-pool/artifacts/CRPFactory.json";
 
-import RedeemableERC20Factory from "@beehiveinnovation/rain-protocol/artifacts/RedeemableERC20Factory.json";
-import RedeemableERC20PoolFactory from "@beehiveinnovation/rain-protocol/artifacts/RedeemableERC20PoolFactory.json";
-import SeedERC20Factory from "@beehiveinnovation/rain-protocol/artifacts/SeedERC20Factory.json";
-import TrustFactory from "@beehiveinnovation/rain-protocol/artifacts/TrustFactory.json";
+import RedeemableERC20Factory from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
+import RedeemableERC20PoolFactory from "@beehiveinnovation/rain-protocol/artifacts/contracts/pool/RedeemableERC20PoolFactory.sol/RedeemableERC20PoolFactory.json";
+import SeedERC20Factory from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
+import TrustFactory from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
 import ConfigurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
 import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
-import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/Trust.json";
+import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 
 import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol//typechain/ConfigurableRightsPool";
 import type { BPool } from "@beehiveinnovation/rain-protocol//typechain/BPool";

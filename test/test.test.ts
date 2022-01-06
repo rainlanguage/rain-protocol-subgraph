@@ -10,13 +10,13 @@ import { waitForSubgraphToBeSynced, fetchSubgraph, exec } from "./utils";
 import { queryTrustFactories } from "./queries";
 import { TrustFactoryQuery } from "./types";
 
-import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/ReserveToken.json";
-import READWRITE_TIER from "@beehiveinnovation/rain-protocol/artifacts/ReadWriteTier.json";
-import TIERBYCONSTRUCTION from "@beehiveinnovation/rain-protocol/artifacts/TierByConstructionClaim.json";
+import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
+import READWRITE_TIER from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
+import TIERBYCONSTRUCTION from "@beehiveinnovation/rain-protocol/artifacts/contracts/claim/TierByConstructionClaim.sol/TierByConstructionClaim.json";
 
-import SEED from "@beehiveinnovation/rain-protocol/artifacts/SeedERC20.json";
-import POOL from "@beehiveinnovation/rain-protocol/artifacts/RedeemableERC20Pool.json";
-import REDEEMABLEERC20 from "@beehiveinnovation/rain-protocol/artifacts/RedeemableERC20.json";
+import SEED from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
+import POOL from "@beehiveinnovation/rain-protocol/artifacts/contracts/pool/RedeemableERC20Pool.sol/RedeemableERC20Pool.json";
+import REDEEMABLEERC20 from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
 
 import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol//typechain/ConfigurableRightsPool";
 import type { BPool } from "@beehiveinnovation/rain-protocol//typechain/BPool";
@@ -37,10 +37,8 @@ const subgraphUser = "vishalkale151071";
 const subgraphName = "rain-protocol";
 
 let crpFactory: Contract, bFactory: Contract;
-let trustFactory: Contract & TrustFactory,
-  reserveToken: Contract & ReserveToken,
-  readWriteTier: Contract & ReadWriteTier,
-  tierByConstructionClaim: Contract & TierByConstructionClaim;
+let trustFactory: Contract & TrustFactory;
+
 let signers: Signer[],
   creator: Signer,
   seeder: Signer,
@@ -58,8 +56,9 @@ describe("TheGraph - Rain Protocol", () => {
 
     [crpFactory, bFactory] = await balancerDeploy(creator);
     currentBlock = await ethers.provider.getBlockNumber();
-    trustFactory = (await factoriesDeploy(crpFactory, bFactory, creator))
-      .trustFactory;
+    const factories = (await factoriesDeploy(crpFactory, bFactory, creator));
+    trustFactory = factories.trustFactory;
+
     console.log("Block: ", currentBlock);
     console.log("trustF", trustFactory.address);
   });
@@ -67,8 +66,16 @@ describe("TheGraph - Rain Protocol", () => {
   it("Creating a trust", async () => {
     const config = { gasLimit: 20000000 };
 
-    reserveToken = (await deploy(RESERVE_TOKEN, creator, [])) as Contract &
-      ReserveToken;
+    let  reserveToken: Contract & ReserveToken,
+      redeemableERC20: Contract & RedeemableERC20, //redeemableERC20
+      pool: Contract & RedeemableERC20Pool, // RedeemableERC20Pool
+      seedERC20: Contract & SeedERC20, // SeedERC20
+      crp: Contract & ConfigurableRightsPool, // ConfigurableRightsPool
+      bPool: Contract & BPool, // Balancer pool
+      readWriteTier: Contract & ReadWriteTier,
+      tierByConstructionClaim: Contract & TierByConstructionClaim;
+
+    reserveToken = (await deploy(RESERVE_TOKEN, creator, [])) as Contract & ReserveToken;
 
     const erc20Config = { name: "Token", symbol: "TKN" };
     const seedERC20Config = { name: "SeedToken", symbol: "SDT" };
@@ -140,13 +147,17 @@ describe("TheGraph - Rain Protocol", () => {
       },
       config
     );
-    const redeemableERC20 = new ethers.Contract(
+
+    // This contain all the addresses, and should match with the contracts addresses attached and with the graph query
+    const trustContracts = await trust.getContracts();
+
+    redeemableERC20 = new ethers.Contract(
       await trust.token(),
       REDEEMABLEERC20.abi,
       creator
     ) as Contract & RedeemableERC20;
 
-    const seedERC20 = new ethers.Contract(
+    seedERC20 = new ethers.Contract(
       await trust.seeder(),
       SEED.abi,
       creator
@@ -165,7 +176,7 @@ describe("TheGraph - Rain Protocol", () => {
       .approve(seedERC20.address, seederFee, config);
     await seedERC20.connect(seeder).seed(0, seedUnits, config);
 
-    const pool = new ethers.Contract(
+    pool = new ethers.Contract(
       await trust.pool(),
       POOL.abi,
       creator
@@ -176,12 +187,11 @@ describe("TheGraph - Rain Protocol", () => {
     await tx1.wait();
     const startBlock = await ethers.provider.getBlockNumber();
 
-    const [crp, bPool] = (await Utils.poolContracts(signers, pool)) as [
+    [crp, bPool] = (await Utils.poolContracts(signers, pool)) as [
       ConfigurableRightsPool,
       BPool
     ];
 
-    const tokenAddress = await trust.token();
 
     // Start trading
     const swapReserveForTokens = async (signer: any, spend: any) => {
@@ -199,7 +209,7 @@ describe("TheGraph - Rain Protocol", () => {
         .swapExactAmountIn(
           reserveToken.address,
           spend,
-          tokenAddress,
+          redeemableERC20.address,
           ethers.BigNumber.from("1"),
           ethers.BigNumber.from("1000000" + Utils.sixZeros),
           config
