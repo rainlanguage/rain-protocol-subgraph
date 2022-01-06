@@ -150,6 +150,15 @@ describe("TheGraph - Rain Protocol", () => {
 
     // This contain all the addresses, and should match with the contracts addresses attached and with the graph query
     const trustContracts = await trust.getContracts();
+    /*
+    reserveERC20 - The reserve token
+    redeemableERC20 - RedeemableERC20 contract
+    redeemableERC20Pool - RedeemableERC20Pool contract
+    seeder - SeedERC20 contract
+    tier - ReadWriteTier contract 
+    crp - ConfigurableRightsPool contract
+    pool - Balancer pool contract
+    */
 
     redeemableERC20 = new ethers.Contract(
       await trust.token(),
@@ -249,7 +258,7 @@ describe("TheGraph - Rain Protocol", () => {
     
   });
 
-  it("Test query", async () => {
+  xit("Test query", async () => {
     // exec(`yarn codegen`);
     // exec(`yarn build`);
     // exec(`yarn create-local`);
