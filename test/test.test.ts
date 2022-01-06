@@ -258,7 +258,7 @@ describe("TheGraph - Rain Protocol", () => {
     
   });
 
-  xit("Test query", async () => {
+  it("Test query", async () => {
     // exec(`yarn codegen`);
     // exec(`yarn build`);
     // exec(`yarn create-local`);
