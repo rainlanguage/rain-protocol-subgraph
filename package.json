@@ -19,6 +19,7 @@
     "deploy-build:localhost": "yarn prepare:localhost && yarn codegen && yarn build && yarn create-local && yarn deploy-local",
     "hh-node": "hardhat node",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
+    "deploy-test": "hardhat run scripts/deploy-test-factories.ts",
     "postinstall": "cd node_modules/@beehiveinnovation/rain-protocol && npm install --ignore-scripts && npm run build"
   },
   "devDependencies": {

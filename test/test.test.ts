@@ -2,22 +2,32 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
 import * as Utils from "./utils";
-import { balancerDeploy, factoriesDeploy, deploy } from "./utils";
-import fs from 'fs';
+import {
+  deploy,
+  waitForSubgraphToBeSynced,
+  fetchSubgraph,
+  exec,
+} from "./utils";
+import fs from "fs";
 
 import { ApolloFetch, FetchResult } from "apollo-fetch";
-import { waitForSubgraphToBeSynced, fetchSubgraph, exec } from "./utils";
 import { queryTrustFactories } from "./queries";
 import { TrustFactoryQuery } from "./types";
 
+// Contract Factories
+import BFACTORY from "@beehiveinnovation/balancer-core/artifacts/BFactory.json";
+import CRPFACTORY from "@beehiveinnovation/configurable-rights-pool/artifacts/CRPFactory.json";
+import TRUSTFACTORY from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
+
+// Rain protocol contracts
 import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
 import READWRITE_TIER from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
 import TIERBYCONSTRUCTION from "@beehiveinnovation/rain-protocol/artifacts/contracts/claim/TierByConstructionClaim.sol/TierByConstructionClaim.json";
-
 import SEED from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
 import POOL from "@beehiveinnovation/rain-protocol/artifacts/contracts/pool/RedeemableERC20Pool.sol/RedeemableERC20Pool.json";
 import REDEEMABLEERC20 from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
 
+// Types
 import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol//typechain/ConfigurableRightsPool";
 import type { BPool } from "@beehiveinnovation/rain-protocol//typechain/BPool";
 import type { TierByConstructionClaim } from "@beehiveinnovation/rain-protocol/typechain/TierByConstructionClaim";
@@ -28,54 +38,90 @@ import type { RedeemableERC20Pool } from "@beehiveinnovation/rain-protocol//type
 import type { RedeemableERC20 } from "@beehiveinnovation/rain-protocol//typechain/RedeemableERC20";
 import type { TrustFactory } from "@beehiveinnovation/rain-protocol//typechain/TrustFactory";
 
+// Contract addresses deployed
+import ADDRESSES from "./addresess-test.json";
+
 function delay(ms: number) {
-  return new Promise( resolve => setTimeout(resolve, ms) );
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Subgraph Name
+// Subgraph
+let subgraph: ApolloFetch;
 const subgraphUser = "vishalkale151071";
 const subgraphName = "rain-protocol";
 
-let crpFactory: Contract, bFactory: Contract;
-let trustFactory: Contract & TrustFactory;
+let crpFactory: Contract,
+  bFactory: Contract,
+  trustFactory: Contract & TrustFactory,
+  reserveToken: Contract & ReserveToken, // A reserver token
+  readWriteTier: Contract & ReadWriteTier,
+  tierByConstructionClaim: Contract & TierByConstructionClaim;
+
+// T
+let redeemableERC20: Contract & RedeemableERC20, // redeemableERC20
+  pool: Contract & RedeemableERC20Pool, // RedeemableERC20Pool
+  seedERC20: Contract & SeedERC20, // SeedERC20
+  crp: Contract & ConfigurableRightsPool, // ConfigurableRightsPool
+  bPool: Contract & BPool; // Balancer pool
 
 let signers: Signer[],
   creator: Signer,
   seeder: Signer,
   deployer: Signer,
   trader1: Signer;
-let currentBlock: number;
+
+let trustCount: any;
 
 describe("TheGraph - Rain Protocol", () => {
-  before("Deploying factories", async () => {
+  before("Attaching factories", async () => {
     signers = await ethers.getSigners();
     creator = signers[0];
     seeder = signers[1]; // seeder is not creator/owner
     deployer = signers[2];
     trader1 = signers[3];
 
-    [crpFactory, bFactory] = await balancerDeploy(creator);
-    currentBlock = await ethers.provider.getBlockNumber();
-    const factories = (await factoriesDeploy(crpFactory, bFactory, creator));
-    trustFactory = factories.trustFactory;
+    // Configurable Right Pool Factory
+    crpFactory = new ethers.Contract(
+      ADDRESSES.crpFactory,
+      CRPFACTORY.abi,
+      creator
+    ) as Contract;
 
-    console.log("Block: ", currentBlock);
-    console.log("trustF", trustFactory.address);
+    // Balancer Factory
+    bFactory = new ethers.Contract(
+      ADDRESSES.bFactory,
+      BFACTORY.abi,
+      creator
+    ) as Contract;
+
+    // Trust Factory
+    trustFactory = new ethers.Contract(
+      ADDRESSES.trustFactory,
+      TRUSTFACTORY.abi,
+      creator
+    ) as Contract & TrustFactory;
+
+    // Create Subgraph Connection
+    subgraph = fetchSubgraph(subgraphUser, subgraphName);
+
+    // Query trust count (just for testing rn, we can remove it)
+    await waitForSubgraphToBeSynced(1000);
+    const queryTrustCount = `
+      {
+        trustFactories {
+          trustCount
+        }
+      }
+    `;
+    const queryTrustCountresponse = (await subgraph({ query: queryTrustCount })) as FetchResult;
+    trustCount = ethers.BigNumber.from(queryTrustCountresponse.data.trustFactories[0].trustCount);
   });
 
   it("Creating a trust", async () => {
     const config = { gasLimit: 20000000 };
 
-    let  reserveToken: Contract & ReserveToken,
-      redeemableERC20: Contract & RedeemableERC20, //redeemableERC20
-      pool: Contract & RedeemableERC20Pool, // RedeemableERC20Pool
-      seedERC20: Contract & SeedERC20, // SeedERC20
-      crp: Contract & ConfigurableRightsPool, // ConfigurableRightsPool
-      bPool: Contract & BPool, // Balancer pool
-      readWriteTier: Contract & ReadWriteTier,
-      tierByConstructionClaim: Contract & TierByConstructionClaim;
-
-    reserveToken = (await deploy(RESERVE_TOKEN, creator, [])) as Contract & ReserveToken;
+    reserveToken = (await deploy(RESERVE_TOKEN, creator, [])) as Contract &
+      ReserveToken;
 
     const erc20Config = { name: "Token", symbol: "TKN" };
     const seedERC20Config = { name: "SeedToken", symbol: "SDT" };
@@ -147,6 +193,7 @@ describe("TheGraph - Rain Protocol", () => {
       },
       config
     );
+    trustCount = trustCount.add(1);
 
     // This contain all the addresses, and should match with the contracts addresses attached and with the graph query
     const trustContracts = await trust.getContracts();
@@ -201,7 +248,6 @@ describe("TheGraph - Rain Protocol", () => {
       BPool
     ];
 
-
     // Start trading
     const swapReserveForTokens = async (signer: any, spend: any) => {
       const tx = await reserveToken.transfer(
@@ -245,38 +291,24 @@ describe("TheGraph - Rain Protocol", () => {
         config
       );
 
-    let data = {
-      network: "localhost",
-      factory: trustFactory.address,
-      startBlock: currentBlock
-  }
+    // Query
+    await waitForSubgraphToBeSynced(2000);
+    const query = queryTrustFactories();
+    const response = (await subgraph({ query })) as FetchResult;
+    const result = response.data.trustFactories[0];
 
-  fs.writeFile("config/localhost.json", JSON.stringify(data), (err) => {
-    if (err) throw err;
-    console.log('complete');
-  })
-    
+    expect(result.trustCount).to.be.equal(trustCount);
+    expect(result.id).to.be.equal(trustFactory.address.toLowerCase());
+    expect(Utils.containObject(result.trusts, {id: trust.address})).to.be.true;
   });
 
   it("Test query", async () => {
-    // exec(`yarn codegen`);
-    // exec(`yarn build`);
-    // exec(`yarn create-local`);
-    // exec(`yarn deploy-local`);
-    exec(`yarn deploy-build:localhost`)
-
-    // Create Subgraph Connection
-    const subgraph: ApolloFetch = fetchSubgraph(subgraphUser, subgraphName);
-
     await waitForSubgraphToBeSynced(1000);
-    // await delay(1000)
     const query = await queryTrustFactories();
     const response = (await subgraph({ query })) as FetchResult;
-    console.log("Result : ", response)
-    
     const result = response.data.trustFactories[0] as TrustFactoryQuery;
 
     expect(result.id).to.be.equal(trustFactory.address.toLowerCase());
-  }); 
-
+    expect(result.trustCount).to.be.equal(trustCount);
+  });
 });
