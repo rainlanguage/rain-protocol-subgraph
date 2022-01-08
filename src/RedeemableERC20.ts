@@ -50,7 +50,7 @@ export function handleRedeem(event: Event):void {
     if(redeemableERC20.totalSupply.gt(BigInt.fromI32(0)) && !!treasuryAsset.balance){
         treasuryAsset.redemptionRatio = treasuryAsset.balance.times(BigInt.fromString('10').pow(18)).div(redeemableERC20.totalSupply)
     }else{
-        treasuryAsset.redemptionRatio = BigInt.fromI32(0)
+        treasuryAsset.redemptionRatio = BigInt.fromString("0.0")
     }
     treasuryAsset.save()
 
@@ -180,7 +180,7 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     if(redeemabaleERC20.totalSupply.gt(BigInt.fromI32(0)) && !!treasuryAsset.balance){
         treasuryAsset.redemptionRatio = treasuryAsset.balance.times(BigInt.fromString('10').pow(18)).div(redeemabaleERC20.totalSupply)
     }else{
-        treasuryAsset.redemptionRatio = BigInt.fromI32(0)
+        treasuryAsset.redemptionRatio = BigInt.fromString("0.0")
     }
     treasuryAsset.trust = trust.id
 
