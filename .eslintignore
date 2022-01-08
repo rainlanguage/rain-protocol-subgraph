@@ -3,4 +3,5 @@ artifacts
 cache
 coverage
 docker
+test/types.ts
 
