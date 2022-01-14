@@ -5,14 +5,14 @@ let
   '';
 
    hh-node = pkgs.writeShellScriptBin "hh-node" ''
-    # yarn hh-node &
-    yarn hardhat node &
+    yarn hh-node &
+    # yarn hardhat node &
     sleep 5s
   '';
 
    graph-node = pkgs.writeShellScriptBin "graph-node" ''
-    # yarn graph-node &
-    docker-compose -f docker/docker-compose.yml up &
+    yarn graph-node &
+    # docker-compose -f docker/docker-compose.yml up &
     sleep 60s
   '';
 
