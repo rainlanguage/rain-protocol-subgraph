@@ -3,11 +3,11 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: RainProtocol
+    name: TrustFactory
     network: {{ network }}
     source:
       address: "{{ factory }}"
-      abi: RainProtocol
+      abi: TrustFactory
       startBlock: {{ startBlock }}
     mapping:
       kind: ethereum/events
@@ -16,8 +16,8 @@ dataSources:
       entities:
         - NewContract
       abis:
-        - name: RainProtocol
-          file: ./abis/RainProtocol.json
+        - name: TrustFactory
+          file: ./abis/TrustFactory.json
         - name: Trust
           file: ./abis/Trust.json
         - name: BPool
@@ -31,9 +31,9 @@ dataSources:
         - name: SeedERC20
           file: ./abis/SeedERC20.json
       eventHandlers:
-        - event: NewContract(indexed address)
-          handler: handleNewContract
-      file: ./src/mapping.ts
+        - event: NewChild(address,address)
+          handler: handleNewChild
+      file: ./src/trustFactory.ts
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -45,128 +45,29 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Notice
+        - Construction(address,address,address,address,address,uint256,uint256)
+        - CreatorFundsRelease(address,address,uint256)
+        - EndDutchAuction(address,uint256,uint256,uint256,uint256,uint256)
+        - Initialize((address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256),address,address,address,uint256)
+        - Notice(address,bytes)
+        - PhaseScheduled(address,uint256,uint256)
+        - StartDutchAuction(address,address,uint256)
       abis:
         - name: Trust
           file: ./abis/Trust.json
       eventHandlers:
-        - event: Notice(indexed address,bytes)
+        - event: Construction(address,address,address,address,address,uint256,uint256)
+          handler: handleConstruction
+        - event: CreatorFundsRelease(address,address,uint256)
+          handler: handleCreatorFundsRelease
+        - event: EndDutchAuction(address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleEndDutchAuction
+        - event: Initialize((address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256),address,address,address,uint256)
+          handler: handleInitialize
+        - event: Notice(address,bytes)
           handler: handleNotice
+        - event: PhaseScheduled(address,uint256,uint256)
+          handler: handlePhaseScheduled
+        - event: StartDutchAuction(address,address,uint256)
+          handler: handleStartDutchAuction
       file: ./src/Trust.ts
-  - kind: ethereum/contract
-    name: BalancerPoolTemplate
-    network: {{ network }}
-    source:
-      abi: BPool
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - LOG_SWAP
-      abis:
-        - name: BPool
-          file: ./abis/BPool.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-      eventHandlers:
-        - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
-          handler: handleSwaps
-      file: ./src/BPool.ts
-  - kind: ethereum/contract
-    name: RedeemableERC20Template
-    network: {{ network }}
-    source:
-      abi: RedeemableERC20
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - Redeem
-        - Transfer
-        - TreasuryAsset
-      abis:
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: Trust
-          file: ./abis/Trust.json
-      eventHandlers:
-        - event: Redeem(indexed address,indexed address,uint256[2])
-          handler: handleRedeem
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-        - event: TreasuryAsset(indexed address,indexed address)
-          handler: handleTreasuryAsset
-      file: ./src/RedeemableERC20.ts
-  - kind: ethereum/contract
-    name: SeedERC20Template
-    network: {{ network }}
-    source:
-      abi: SeedERC20
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - Transfer
-        - Seed
-        - Unseed
-        - Redeem
-      abis:
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: SeedERC20
-          file: ./abis/SeedERC20.json
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
-      eventHandlers:
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-        - event: Seed(indexed address,uint256[2])
-          handler: handleSeed
-        - event: Unseed(indexed address,uint256[2])
-          handler: handleUnseed
-        - event: Redeem(indexed address,uint256[2])
-          handler: handleRedeem
-      file: ./src/SeedERC20.ts
-  - kind: ethereum/contract
-    name: RedeemableERC20PoolTemplate
-    network: {{ network }}
-    source:
-      abi: RedeemableERC20Pool
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - PhaseShiftScheduled
-      abis:
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
-        - name: BPool
-          file: ./abis/BPool.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-        - name: SeedERC20
-          file: ./abis/SeedERC20.json
-      eventHandlers:
-        - event: PhaseShiftScheduled(indexed uint32)
-          handler: handlePhaseShiftScheduled
-      file: ./src/RedeemableERC20Pool.ts
