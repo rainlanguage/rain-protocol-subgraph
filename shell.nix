@@ -41,6 +41,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.nixpkgs-fmt
     pkgs.yarn
     pkgs.nodejs-16_x
+    pkgs.hardhat
     pkgs.jq
     command
     hh-node
