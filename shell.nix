@@ -3,6 +3,14 @@ let
 
    command = pkgs.writeShellScriptBin "command" ''
   '';
+
+   test-graph = pkgs.writeShellScriptBin "test-graph" ''
+    yarn hh-node &
+    sleep 15s
+    graph-node
+    sleep 60s
+    yarn test
+  '';
   
 in
 pkgs.stdenv.mkDerivation {
@@ -11,6 +19,7 @@ pkgs.stdenv.mkDerivation {
   pkgs.nodejs-14_x
   pkgs.jq
   command
+  test-graph
  ];
 
  shellHook = ''
