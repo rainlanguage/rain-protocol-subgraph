@@ -13,13 +13,13 @@
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/rain-protocol",
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/rain-protocol",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/rain-protocol",
-    "test": "hardhat test",
+    "test": "npx hardhat test",
     "lint": "eslint */**.ts",
     "prepare:localhost": "yarn mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:localhost": "yarn prepare:localhost && yarn codegen && yarn build && yarn create-local && yarn deploy-local",
-    "hh-node": "hardhat node",
+    "hh-node": "npx hardhat node",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
-    "deploy-test": "hardhat run scripts/deploy-test-factories.ts",
+    "deploy-test": "npx hardhat run scripts/deploy-test-factories.ts",
     "postinstall": "cd node_modules/@beehiveinnovation/rain-protocol && npm install --ignore-scripts && npm run build"
   },
   "devDependencies": {
