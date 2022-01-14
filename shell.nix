@@ -6,24 +6,26 @@ let
 
    hh-node = pkgs.writeShellScriptBin "hh-node" ''
     yarn hh-node &
-    sleep 15s
+    sleep 5s
   '';
 
-   graph-node = pkgs.writeShellScriptBin " graph-node" ''
+   graph-node = pkgs.writeShellScriptBin "graph-node" ''
     yarn graph-node &
     sleep 60s
   '';
 
-   test-graph = pkgs.writeShellScriptBin "command" ''
-    yarn test
+   deploy-test = pkgs.writeShellScriptBin "deploy-test" ''
+    yarn deploy-test
   '';
 
    test-graph = pkgs.writeShellScriptBin "test-graph" ''
-    yarn hh-node &
-    sleep 15s
-    yarn graph-node &
-    sleep 60s
     yarn test
+  '';
+
+   run-test-graph = pkgs.writeShellScriptBin "run-test-graph" ''
+    hh-node
+    graph-node
+    test-graph
   '';
   
 in
@@ -33,7 +35,11 @@ pkgs.stdenv.mkDerivation {
   pkgs.nodejs-14_x
   pkgs.jq
   command
+  hh-node
+  graph-node
+  deploy-test
   test-graph
+  run-test-graph
  ];
 
  shellHook = ''

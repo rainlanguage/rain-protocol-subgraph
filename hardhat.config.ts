@@ -27,7 +27,7 @@ function createLocalHostConfig() {
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
-    url,
+    url
   };
 };
 
