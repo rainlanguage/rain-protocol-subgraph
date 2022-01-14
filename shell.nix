@@ -1,11 +1,5 @@
 let
-  pkgs = import
-    (builtins.fetchTarball {
-      name = "nixos-unstable-2021-10-01";
-      url = "https://github.com/nixos/nixpkgs/archive/fa5e153653a1b48e4a21a14b341e2e01835ba8b5.tar.gz";
-      sha256 = "1yvqxrw0ila4y6mryhpf32c8ydljfmfbvijxra2dawvhcfbbm2rw";
-    })
-    { };
+  pkgs = import <nixpkgs> {};
 
    command = pkgs.writeShellScriptBin "command" ''
   '';
@@ -55,6 +49,5 @@ pkgs.stdenv.mkDerivation {
   source .env
   export PATH=$( npm bin ):$PATH
   yarn install
-  yarn add --dev hardhat
  '';
 }
