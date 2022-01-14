@@ -9,5 +9,5 @@ jobs:
         uses: cachix/install-nix-action@v13
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-                - name: Run the test fully
-        run: nix-shell --run prepack
+        - name: Run the test fully
+        run: nix-shell --run run-test-graph
