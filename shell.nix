@@ -11,7 +11,8 @@ let
   '';
 
    hh-node = pkgs.writeShellScriptBin "hh-node" ''
-    yarn hh-node &
+    # yarn hh-node &
+    yarn hardhat node &
     sleep 5s
   '';
 
