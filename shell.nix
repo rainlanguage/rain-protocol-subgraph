@@ -11,7 +11,8 @@ let
   '';
 
    graph-node = pkgs.writeShellScriptBin "graph-node" ''
-    yarn graph-node &
+    # yarn graph-node &
+    docker-compose -f \"docker/docker-compose.yml\" up
     sleep 60s
   '';
 
