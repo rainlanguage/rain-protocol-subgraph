@@ -1,6 +1,16 @@
 node_modules
 build
+cache
 package-lock.json
 generated
 subgraph.yaml
-yarn.lock
+.env
+
+# IDE files
+.vscode/
+
+
+# Ignore data files created by running the Docker Compose setup locally
+/docker/data/
+/docker/parity/chains/
+/docker/parity/network/
