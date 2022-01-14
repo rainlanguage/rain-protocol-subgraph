@@ -54,5 +54,6 @@ pkgs.stdenv.mkDerivation {
   source .env
   export PATH=$( npm bin ):$PATH
   yarn install
+  yarn add --dev hardhat
  '';
 }
