@@ -3,3 +3,4 @@ build
 package-lock.json
 generated
 subgraph.yaml
+yarn.lock
