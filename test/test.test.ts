@@ -112,21 +112,20 @@ describe("TheGraph - Rain Protocol", () => {
       creator
     ) as Contract & TrustFactory;
 
-    // // Create Subgraph Connection
-    // subgraph = fetchSubgraph(subgraphUser, subgraphName);
+    // Create Subgraph Connection
+    subgraph = fetchSubgraph(subgraphUser, subgraphName);
 
-    // // Query trust count (just for testing rn, we can remove it)
-    // await waitForSubgraphToBeSynced(1000);
-    // const queryTrustCount = `
-    //   {
-    //     trustFactories {
-    //       trustCount
-    //     }
-    //   }
-    // `;
-    // const queryTrustCountresponse = (await subgraph({ query: queryTrustCount })) as FetchResult;
-    // trustCount = ethers.BigNumber.from(queryTrustCountresponse.data.trustFactories[0].trustCount);
-    trustCount = ethers.BigNumber.from(1);
+    // Query trust count (just for testing rn, we can remove it)
+    await waitForSubgraphToBeSynced(1000);
+    const queryTrustCount = `
+      {
+        trustFactories {
+          trustCount
+        }
+      }
+    `;
+    const queryTrustCountresponse = (await subgraph({ query: queryTrustCount })) as FetchResult;
+    trustCount = ethers.BigNumber.from(queryTrustCountresponse.data.trustFactories[0].trustCount);
   });
 
   it("Creating a trust", async () => {
@@ -162,16 +161,6 @@ describe("TheGraph - Rain Protocol", () => {
       ReadWriteTier;
     
     await readWriteTier.setTier(await signer1.getAddress(), Tier.GOLD, []);// Tier.THREE
-
-    // tierByConstructionClaim = (await deploy(TIERBYCONSTRUCTION, creator, [
-    //   readWriteTier.address,
-    //   minimumStatus,
-    // ])) as Contract & TierByConstructionClaim;
-
-    // await tierByConstructionClaim.claim(await trader1.getAddress(), [], {
-    //   gasLimit: 20000000,
-    // });
-
 
     // Using the trust factory
     const trustFactoryDeployer = trustFactory.connect(deployer);
@@ -316,18 +305,18 @@ describe("TheGraph - Rain Protocol", () => {
       .connect(signer1)
       .redeem([reserveToken.address], await token.balanceOf(await signer1.getAddress()));
 
-    // // Query
-    // await waitForSubgraphToBeSynced(2000);
-    // const query = queryTrustFactories();
-    // const response = (await subgraph({ query })) as FetchResult;
-    // const result = response.data.trustFactories[0];
+    // Query
+    await waitForSubgraphToBeSynced(2000);
+    const query = queryTrustFactories();
+    const response = (await subgraph({ query })) as FetchResult;
+    const result = response.data.trustFactories[0];
 
-    // expect(result.trustCount).to.be.equal(trustCount);
-    // expect(result.id).to.be.equal(trustFactory.address.toLowerCase());
-    // expect(Utils.containObject(result.trusts, {id: trust.address})).to.be.true;
+    expect(result.trustCount).to.be.equal(trustCount);
+    expect(result.id).to.be.equal(trustFactory.address.toLowerCase());
+    expect(Utils.containObject(result.trusts, {id: trust.address})).to.be.true;
   });
 
-  xit("Test query", async () => {
+  it("Test query", async () => {
     await waitForSubgraphToBeSynced(1000);
     const query = await queryTrustFactories();
     const response = (await subgraph({ query })) as FetchResult;
