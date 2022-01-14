@@ -4,10 +4,24 @@ let
    command = pkgs.writeShellScriptBin "command" ''
   '';
 
+   hh-node = pkgs.writeShellScriptBin "hh-node" ''
+    yarn hh-node &
+    sleep 15s
+  '';
+
+   graph-node = pkgs.writeShellScriptBin " graph-node" ''
+    yarn graph-node &
+    sleep 60s
+  '';
+
+   test-graph = pkgs.writeShellScriptBin "command" ''
+    yarn test
+  '';
+
    test-graph = pkgs.writeShellScriptBin "test-graph" ''
     yarn hh-node &
     sleep 15s
-    graph-node
+    yarn graph-node &
     sleep 60s
     yarn test
   '';
