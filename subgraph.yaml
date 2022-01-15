@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: TrustFactory
-    network: {{ network }}
+    network: matic
     source:
-      address: "{{ factory }}"
+      address: "0x8f72c8dd9a16a86519497d57fa7123268f95d9d1"
       abi: TrustFactory
-      startBlock: {{ startBlock }}
+      startBlock: 22126900
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -37,7 +37,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
-    network: {{ network }}
+    network: matic
     source:
       abi: Trust
     mapping:
