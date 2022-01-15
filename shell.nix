@@ -47,7 +47,6 @@ pkgs.stdenv.mkDerivation {
  ];
 
  shellHook = ''
-  source .env
   export PATH=$( npm bin ):$PATH
   yarn install
   echo "Sleep"
