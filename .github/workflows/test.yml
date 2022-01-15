@@ -4,11 +4,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install nix
-        uses: cachix/install-nix-action@v13
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v13
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - name: Run the test fully
-        run: nix-shell --run run-test-graph
+      - run: nix-shell --run ci-test

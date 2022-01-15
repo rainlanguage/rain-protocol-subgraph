@@ -50,6 +50,8 @@ pkgs.stdenv.mkDerivation {
   source .env
   export PATH=$( npm bin ):$PATH
   yarn install
+  echo "Sleep"
+  sleep 30s
   echo "Checking if finish the install"
   (cd node_modules/@beehiveinnovation/rain-protocol; npm install --ignore-scripts; npm run build)
  '';
