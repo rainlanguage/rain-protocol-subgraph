@@ -1,5 +1,6 @@
 version: '3'
 services:
+  extra_hosts: host.docker.internal:172.17.0.1
   graph-node:
     image: graphprotocol/graph-node:v0.22.0
     ports:
