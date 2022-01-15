@@ -70,4 +70,4 @@ templates:
           handler: handlePhaseScheduled
         - event: StartDutchAuction(address,address,uint256)
           handler: handleStartDutchAuction
-      file: ./src/Trust.ts
+      file: ./src/trust.ts
