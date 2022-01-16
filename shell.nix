@@ -55,6 +55,8 @@ pkgs.stdenv.mkDerivation {
  shellHook = ''
   export PATH=$( npm bin ):$PATH
   yarn install
-  (cd node_modules/@beehiveinnovation/rain-protocol; npm install --ignore-scripts; npm run build)
+  mkdir -p node_modules/@beehiveinnovation/rain-protocol
+  cp -r rain-protocol node_modules/@beehiveinnovation/rain-protocol
+  (cd node_modules/@beehiveinnovation/rain-protocol; git checkout 5972e90bdf137423ae9cbdd0f268bf8fd126ed65;npm install --ignore-scripts; npm run build)
  '';
 }
