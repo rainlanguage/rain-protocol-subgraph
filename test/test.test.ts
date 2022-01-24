@@ -35,12 +35,9 @@ describe("Test", function () {
     const subgraphUser = "vishalkale151071";
     const subgraphName = "rain-protocol";
 
-    it("Deploys", async function () {
+  it("Deploys", async function () {
     const signers = await ethers.getSigners();
-
     const creator = signers[0];
-    const seeder = signers[1]; // seeder is not creator/owner
-    const deployer = signers[2]; // deployer is not creator
 
     const [crpFactory, bFactory] = await Util.balancerDeploy(creator);
 
@@ -63,11 +60,10 @@ describe("Test", function () {
 
     exec(`yarn deploy-build:localhost`);
     await waitForSubgraphToBeSynced(1000);
-
   });
 
-  it("Should create one trust factory",async () => {
-    // Query trust count (just for testing rn, we can remove it)
+  it("Should query the trust factories",async () => {
+    // Query trust count and an ID (just for testing rn, we can remove it)
     await waitForSubgraphToBeSynced(2000);
     const query = `
     {
@@ -79,7 +75,6 @@ describe("Test", function () {
     `;
 
      // Create Subgraph Connection
-
      const subgraph = fetchSubgraph(subgraphUser, subgraphName);
 
     const queryTrustCountresponse = (await subgraph({ query: query })) as FetchResult;
@@ -91,9 +86,69 @@ describe("Test", function () {
     const signers = await ethers.getSigners();
 
     const creator = signers[0];
-    
-    const trust: Trust = await Util.trustDeploy(TrustFactory, creator, {})
-    console.log(trust)
+    const seeder = signers[1]; // seeder is not creator/owner
+    const deployer = signers[2]; // deployer is not creator
+
+    const [crpFactory, bFactory] = await Util.balancerDeploy(creator);
+
+    const reserve = (await Util.deploy(RESERVE_TOKEN, creator, []));
+
+    const tier = (await Util.deploy(READWRITE_TIER, creator, []));
+    const minimumTier = Tier.GOLD;
+
+    const { trustFactory } = await factoriesDeploy(crpFactory, bFactory, creator);
+
+    const erc20Config = { name: "Token", symbol: "TKN" };
+    const seedERC20Config = { name: "SeedToken", symbol: "SDT" };
+
+    const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const totalTokenSupply = ethers.BigNumber.from("2000" + Util.eighteenZeros);
+    const initialValuation = ethers.BigNumber.from("20000" + Util.sixZeros);
+    const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
+
+    const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+    const seederUnits = 0;
+    const seederCooldownDuration = 0;
+
+    const successLevel = redeemInit
+      .add(minimumCreatorRaise)
+      .add(seederFee)
+      .add(reserveInit);
+
+    const minimumTradingDuration = 10;
+
+    const trustFactoryDeployer = trustFactory.connect(deployer);
+
+    const trust = await Util.trustDeploy(
+      trustFactoryDeployer,
+      creator,
+      {
+        creator: creator.address,
+        minimumCreatorRaise,
+        seederFee,
+        redeemInit,
+        reserve: reserve.address,
+        reserveInit,
+        initialValuation,
+        finalValuation: successLevel,
+        minimumTradingDuration,
+      },
+      {
+        erc20Config,
+        tier: tier.address,
+        minimumTier,
+        totalSupply: totalTokenSupply,
+      },
+      {
+        seeder: seeder.address,
+        seederUnits,
+        seederCooldownDuration,
+        seedERC20Config,
+      },
+      { gasLimit: 15000000 }
+    );
+    console.log(trust.address);
   })
 
 

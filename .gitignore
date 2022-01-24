@@ -5,3 +5,5 @@ generated
 subgraph.yaml
 artifacts
 cache
+
+docker/data
