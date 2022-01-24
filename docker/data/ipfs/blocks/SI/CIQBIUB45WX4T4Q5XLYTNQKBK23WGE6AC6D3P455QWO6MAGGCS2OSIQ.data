@@ -1,0 +1,652 @@
+
+²oªo[
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "crpFactory",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "balancerFactory",
+            "type": "address"
+          },
+          {
+            "internalType": "contract RedeemableERC20Factory",
+            "name": "redeemableERC20Factory",
+            "type": "address"
+          },
+          {
+            "internalType": "contract SeedERC20Factory",
+            "name": "seedERC20Factory",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "creatorFundsReleaseTimeout",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxRaiseDuration",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct TrustConstructionConfig",
+        "name": "config_",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "balancerFactory",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "crpFactory",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "redeemableERC20Factory",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "seedERC20Factory",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "bPoolFeeEscrow",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "creatorFundsReleaseTimeout",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "maxRaiseDuration",
+        "type": "uint256"
+      }
+    ],
+    "name": "Construction",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "CreatorFundsRelease",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "finalBalance",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "seederPay",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "creatorPay",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tokenPay",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "poolDust",
+        "type": "uint256"
+      }
+    ],
+    "name": "EndDutchAuction",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "contract IERC20",
+            "name": "reserve",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveInit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "initialValuation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "finalValuation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minimumTradingDuration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minimumCreatorRaise",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "seederFee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "redeemInit",
+            "type": "uint256"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct TrustConfig",
+        "name": "config",
+        "type": "tuple"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "crp",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "seeder",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "redeemableERC20",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "successBalance",
+        "type": "uint256"
+      }
+    ],
+    "name": "Initialize",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "Notice",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newPhase",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "scheduledBlock",
+        "type": "uint256"
+      }
+    ],
+    "name": "PhaseScheduled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "finalAuctionBlock",
+        "type": "uint256"
+      }
+    ],
+    "name": "StartDutchAuction",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32[8]",
+        "name": "phaseBlocks_",
+        "type": "uint32[8]"
+      },
+      {
+        "internalType": "enum Phase",
+        "name": "phase_",
+        "type": "uint8"
+      }
+    ],
+    "name": "blockNumberForPhase",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token_",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount_",
+        "type": "uint256"
+      }
+    ],
+    "name": "creatorFundsRelease",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "crp",
+    "outputs": [
+      {
+        "internalType": "contract IConfigurableRightsPool",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "currentPhase",
+    "outputs": [
+      {
+        "internalType": "enum Phase",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "enableCreatorFundsRelease",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "endDutchAuction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "endDutchAuctionAndTransfer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getDistributionStatus",
+    "outputs": [
+      {
+        "internalType": "enum DistributionStatus",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "contract IERC20",
+            "name": "reserve",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reserveInit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "initialValuation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "finalValuation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minimumTradingDuration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minimumCreatorRaise",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "seederFee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "redeemInit",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct TrustConfig",
+        "name": "config_",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "symbol",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct ERC20Config",
+            "name": "erc20Config",
+            "type": "tuple"
+          },
+          {
+            "internalType": "contract ITier",
+            "name": "tier",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minimumTier",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSupply",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct TrustRedeemableERC20Config",
+        "name": "trustRedeemableERC20Config_",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "seeder",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "seederUnits",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "seederCooldownDuration",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "symbol",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct ERC20Config",
+            "name": "seedERC20Config",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct TrustSeedERC20Config",
+        "name": "trustSeedERC20Config_",
+        "type": "tuple"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32[8]",
+        "name": "phaseBlocks_",
+        "type": "uint32[8]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "blockNumber_",
+        "type": "uint256"
+      }
+    ],
+    "name": "phaseAtBlockNumber",
+    "outputs": [
+      {
+        "internalType": "enum Phase",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "phaseBlocks",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "reserve",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "data_",
+        "type": "bytes"
+      }
+    ],
+    "name": "sendNotice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startDutchAuction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "token",
+    "outputs": [
+      {
+        "internalType": "contract RedeemableERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "transferAuctionTokens",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]ªo
