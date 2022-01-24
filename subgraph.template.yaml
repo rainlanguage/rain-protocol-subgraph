@@ -14,6 +14,7 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
+        - Implementation
         - NewContract
       abis:
         - name: TrustFactory
@@ -33,6 +34,8 @@ dataSources:
       eventHandlers:
         - event: NewChild(address,address)
           handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
       file: ./src/trustFactory.ts
 templates:
   - kind: ethereum/contract

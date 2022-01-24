@@ -8,7 +8,7 @@ in
 pkgs.stdenv.mkDerivation {
  name = "shell";
  buildInputs = [
-  pkgs.nodejs-14_x
+  pkgs.nodejs-16_x
   pkgs.jq
   command
  ];
