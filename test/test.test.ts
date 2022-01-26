@@ -16,9 +16,10 @@ import { ApolloFetch, FetchResult } from "apollo-fetch";
 import * as path from "path";
 import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
 import READWRITE_TIER from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
-import TrustFactory from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
-import type { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { factory as factoryAddress } from "../config/localhost.json"
+import {TrustFactory} from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
+import {ReserveToken} from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
+import {ITier} from "@beehiveinnovation/rain-protocol/typechain/ITier";
+import { QUERY } from "./queries"
 enum Tier {
   NIL,
   COPPER,
@@ -34,55 +35,15 @@ enum Tier {
 describe("Test", function () {
     const subgraphUser = "vishalkale151071";
     const subgraphName = "rain-protocol";
+    let trustFactory: TrustFactory;
+    let reserve: ReserveToken
+    let tier: ITier
+    let minimumTier: Tier
+    let subgraph: ApolloFetch
+    let currentBlock: number
 
-  it("Deploys", async function () {
-    const signers = await ethers.getSigners();
-    const creator = signers[0];
+    before( async function (){
 
-    const [crpFactory, bFactory] = await Util.balancerDeploy(creator);
-
-    const reserve = await deploy(RESERVE_TOKEN, creator, []);
-
-    const tierFactory = await deploy(READWRITE_TIER, creator, []);
-    const minimumTier = Tier.GOLD;
-
-    const currentBlock = await ethers.provider.getBlockNumber();
-    const { trustFactory } = await factoriesDeploy(crpFactory, bFactory, creator);
-
-    console.log("Block: ", currentBlock);
-    console.log("trustF: ", trustFactory.address);
-
-    const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
-    const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
-    configLocal.factory = trustFactory.address;
-    configLocal.startBlock = currentBlock;
-    Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
-
-    exec(`yarn deploy-build:localhost`);
-    await waitForSubgraphToBeSynced(1000);
-  });
-
-  it("Should query the trust factories",async () => {
-    // Query trust count and an ID (just for testing rn, we can remove it)
-    await waitForSubgraphToBeSynced(2000);
-    const query = `
-    {
-      trustFactories {
-        id
-        trustCount
-      }
-    }
-    `;
-
-     // Create Subgraph Connection
-     const subgraph = fetchSubgraph(subgraphUser, subgraphName);
-
-    const queryTrustCountresponse = (await subgraph({ query: query })) as FetchResult;
-    expect(queryTrustCountresponse.data.trustFactories[0].id).to.equals(factoryAddress.toLowerCase())
-    expect(queryTrustCountresponse.data.trustFactories[0].trustCount).to.equals('0')
-  })
-
-  it.only("Should create a trust",async () => {
     const signers = await ethers.getSigners();
 
     const creator = signers[0];
@@ -91,12 +52,45 @@ describe("Test", function () {
 
     const [crpFactory, bFactory] = await Util.balancerDeploy(creator);
 
-    const reserve = (await Util.deploy(RESERVE_TOKEN, creator, []));
+    reserve = (await Util.deploy(RESERVE_TOKEN, creator, [])) as ReserveToken
 
-    const tier = (await Util.deploy(READWRITE_TIER, creator, []));
-    const minimumTier = Tier.GOLD;
+    tier = (await Util.deploy(READWRITE_TIER, creator, [])) as ITier;
+    minimumTier = Tier.GOLD;
 
-    const { trustFactory } = await factoriesDeploy(crpFactory, bFactory, creator);
+
+    ({ trustFactory } = await factoriesDeploy(crpFactory, bFactory, creator));
+    currentBlock = await ethers.provider.getBlockNumber();
+
+    console.log("Block: ", currentBlock--);
+
+    console.log("trustF: ", trustFactory.address);
+
+    const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
+    const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
+
+    configLocal.factory = trustFactory.address;
+    configLocal.startBlock = currentBlock;
+    Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
+
+    exec(`yarn deploy-build:localhost`);
+    
+    subgraph = fetchSubgraph(subgraphUser, subgraphName);
+    })
+
+  it("Should query the trust factories",async () => {
+    await waitForSubgraphToBeSynced(1000);
+
+    const queryTrustCountresponse = (await subgraph({ query: QUERY })) as FetchResult;
+    expect(queryTrustCountresponse.data.trustFactories[0].id).to.equals(trustFactory.address.toLowerCase())
+    expect(queryTrustCountresponse.data.trustFactories[0].trustCount).to.equals('0')
+  })
+
+  it("deploy trust.", async function(){
+    const signers = await ethers.getSigners();
+
+    const creator = signers[0];
+    const deployer = signers[2];
+    const seeder = signers[1];
 
     const erc20Config = { name: "Token", symbol: "TKN" };
     const seedERC20Config = { name: "SeedToken", symbol: "SDT" };
@@ -148,8 +142,23 @@ describe("Test", function () {
       },
       { gasLimit: 15000000 }
     );
-    console.log(trust.address);
-  })
 
+
+    await waitForSubgraphToBeSynced(1000);
+     // Create Subgraph Connection
+    const queryTrustCountresponse = (await subgraph({ query: QUERY })) as FetchResult;
+    const response = queryTrustCountresponse.data 
+    console.log("Response : ", JSON.stringify(response))
+    const factoryData = response.trustFactories[0]
+    const trustData = factoryData.trusts[0]
+
+    expect(parseInt(factoryData.trustCount)).to.equals(1)
+    expect(trustData.id).to.equals(trust.address.toLowerCase())
+    expect(trustData.factory).to.equals(trustFactory.address.toLowerCase())
+    expect(trustData.contracts).to.be.null
+    expect(trustData.distributionProgress).to.be.null
+    expect(trustData.notices).to.be.empty
+    expect(trustData.trustParticipants).to.be.empty 
+  })
 
 });

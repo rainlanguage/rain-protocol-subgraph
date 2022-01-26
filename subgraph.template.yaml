@@ -14,8 +14,8 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
+        - NewChild
         - Implementation
-        - NewContract
       abis:
         - name: TrustFactory
           file: ./abis/TrustFactory.json
@@ -48,13 +48,13 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Construction(address,address,address,address,address,uint256,uint256)
-        - CreatorFundsRelease(address,address,uint256)
-        - EndDutchAuction(address,uint256,uint256,uint256,uint256,uint256)
-        - Initialize((address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256),address,address,address,uint256)
-        - Notice(address,bytes)
-        - PhaseScheduled(address,uint256,uint256)
-        - StartDutchAuction(address,address,uint256)
+        - Construction
+        - CreatorFundsRelease
+        - EndDutchAuction
+        - Initialize
+        - Notice
+        - PhaseScheduled
+        - StartDutchAuction
       abis:
         - name: Trust
           file: ./abis/Trust.json

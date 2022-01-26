@@ -9,8 +9,9 @@ type Trust @entity{
     block: BigInt! #the block the contract was deployed
     timestamp: BigInt! #the timestamp the contract was deployed
     creator: Bytes! #Trust.creator()
-    contracts: Contract!
-    distributionProgress: DistributionProgress!
+    contracts: Contract
+    factory: Bytes!
+    distributionProgress: DistributionProgress
     trustParticipants: [TrustParticipant!]
     notices: [Notice!]
 }

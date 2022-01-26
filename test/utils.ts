@@ -89,6 +89,7 @@ export const waitForSubgraphToBeSynced = async (delay: number) =>
             } 
           }`,
         });
+        // console.log("Health : ", result.data)
         if (result.data.indexingStatusForCurrentVersion.synced == true) {
           resolve({ synced: true });
         } else {
@@ -196,8 +197,7 @@ export const trustDeploy = async (
     trustRedeemableERC20Config,
     trustSeedERC20Config,
     ...args
-    );
-  
+  );
   // Getting the address, and get the contract abstraction
   const trust = new ethers.Contract(
     ethers.utils.hexZeroPad(
