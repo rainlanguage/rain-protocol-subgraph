@@ -26,14 +26,14 @@ docker run -it \
   -e postgres_pass=oh-hello \
   -e postgres_db=graph-node \
   -e ipfs=host.docker.internal:5001 \
-  -e ethereum=localhost:http://localhost:8545/ \
+  -e ethereum=mainnet:http://localhost:8545/ \
   graphprotocol/graph-node:latest
 ```
 
 ## Docker Compose
 
 The Docker Compose setup requires an Ethereum network name and node
-to connect to. By default, it will use `localhost:http://host.docker.internal:8545`
+to connect to. By default, it will use `mainnet:http://host.docker.internal:8545`
 in order to connect to an Ethereum node running on your host machine.
 You can replace this with anything else in `docker-compose.yaml`.
 
@@ -78,3 +78,21 @@ can access these via:
 Once this is up and running, you can use
 [`graph-cli`](https://github.com/graphprotocol/graph-cli) to create and
 deploy your subgraph to the running Graph Node.
+<<<<<<< HEAD
+=======
+  
+### Running Graph Node on an Macbook M1
+  
+We do not currently build native images for Macbook M1, which can lead to processes being killed due to out-of-memory errors (code 137). Based on the example `docker-compose.yml` is possible to rebuild the image for your M1 by running the following, then running `docker-compose up` as normal:
+ 
+```
+# Remove the original image
+docker rmi graphprotocol/graph-node:latest
+
+# Build the image
+./docker/build.sh
+
+# Tag the newly created image
+docker tag graph-node graphprotocol/graph-node:latest
+```
+>>>>>>> 4361cf61972fc97d8a12d4e943706b1dc66f409d

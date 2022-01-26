@@ -1,6 +1,7 @@
-import { Signer } from "ethers";
-
+import { Contract, Signer, ContractTransaction } from "ethers";
+import { Result } from "ethers/lib/utils";
 import { createApolloFetch } from "apollo-fetch";
+import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 
@@ -28,14 +29,6 @@ import type {
   TrustRedeemableERC20ConfigStruct,
   TrustSeedERC20ConfigStruct,
 } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import type {
-  BigNumber,
-  Contract,
-  BytesLike,
-  BigNumberish,
-  ContractTransaction,
-} from "ethers";
-import { concat, Hexable, hexlify, Result, zeroPad } from "ethers/lib/utils";
 
 interface SyncedSubgraphType {
   synced: boolean;
@@ -45,7 +38,6 @@ const { ethers } = require("hardhat");
 
 export const eighteenZeros = "000000000000000000";
 export const sixZeros = "000000";
-export const zeroAddress = ethers.constants.AddressZero;
 export const CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING = 100;
 export const MAX_RAISE_DURATION_TESTING = 100;
 
@@ -97,6 +89,7 @@ export const waitForSubgraphToBeSynced = async (delay: number) =>
             } 
           }`,
         });
+        // console.log("Health : ", result.data)
         if (result.data.indexingStatusForCurrentVersion.synced == true) {
           resolve({ synced: true });
         } else {
@@ -124,7 +117,7 @@ export const deploy = async (
   const iface = new ethers.utils.Interface(artifact.abi);
   const factory = new ethers.ContractFactory(iface, artifact.bytecode, signer);
   const contract = await factory.deploy(...argmts);
-  await contract.deployTransaction.wait();
+  await contract.deployed();
   return contract;
 };
 
@@ -167,15 +160,9 @@ export const factoriesDeploy = async (
   balancerFactory: Contract,
   signer: Signer
 ): Promise<any> => {
-  const redeemableERC20Factory = await deploy(
-    RedeemableERC20Factory,
-    signer,
-    []
-  );
-  await redeemableERC20Factory.deployed();
+  const redeemableERC20Factory = await deploy(RedeemableERC20Factory, signer,[]);
 
   const seedERC20Factory = await deploy(SeedERC20Factory, signer, []);
-  await seedERC20Factory.deployed();
 
   const TrustFactoryArgs = {
     redeemableERC20Factory: redeemableERC20Factory.address,
@@ -183,11 +170,13 @@ export const factoriesDeploy = async (
     crpFactory: crpFactory.address,
     balancerFactory: balancerFactory.address,
     creatorFundsReleaseTimeout: CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING,
-    maxRaiseDuration: MAX_RAISE_DURATION_TESTING,
+    maxRaiseDuration: MAX_RAISE_DURATION_TESTING
   };
-  const trustFactory = await deploy(TrustFactory, signer, [TrustFactoryArgs]);
-  await trustFactory.deployed();
 
+  const iface = new ethers.utils.Interface(TrustFactory.abi);
+  const trustFactoryFactory  = new ethers.ContractFactory(iface, TrustFactory.bytecode, signer);
+  const trustFactory = (await trustFactoryFactory.deploy(TrustFactoryArgs));
+  await trustFactory.deployed();
   return {
     redeemableERC20Factory,
     seedERC20Factory,
@@ -196,20 +185,20 @@ export const factoriesDeploy = async (
 };
 
 export const trustDeploy = async (
-  trustFactory: Contract,
-  creator: Signer,
+  trustFactory: any,
+  creator: any,
   trustConfig: TrustConfigStruct,
   trustRedeemableERC20Config: TrustRedeemableERC20ConfigStruct,
   trustSeedERC20Config: TrustSeedERC20ConfigStruct,
   ...args: any
-): Promise<Trust & Contract> => {
+): Promise<Trust> => {
   const txDeploy = await trustFactory.createChildTyped(
     trustConfig,
     trustRedeemableERC20Config,
     trustSeedERC20Config,
     ...args
   );
-
+  // Getting the address, and get the contract abstraction
   const trust = new ethers.Contract(
     ethers.utils.hexZeroPad(
       ethers.utils.hexStripZeros(
@@ -274,14 +263,14 @@ function timeout(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const containObject = (arr: any[], obj: any): Boolean => {
+export const containObject = (arr:any[], obj:any): Boolean => {
   const keys = Object.keys(obj);
   let result = false;
 
   for (let i = 0; i < arr.length; i++) {
     if (Object.keys(arr[i]).length === keys.length) {
-      for (let j = 0; j < keys.length; j++) {
-        if (arr[i][keys[j]] === obj[keys[j]]) {
+      for(let j = 0; j < keys.length; j++) {
+        if(arr[i][keys[j]] === obj[keys[j]]) {
           result = true;
         } else {
           result = false;
@@ -295,6 +284,23 @@ export const containObject = (arr: any[], obj: any): Boolean => {
   return result;
 };
 
+export const fetchFile = (_path: string) => {
+  try {
+    return fs.readFileSync(_path).toString();
+  } catch (error) {
+    console.log(error);
+    return "";
+  }
+};
+
+export const writeFile = (_path: string, file: any) => {
+  try {
+    fs.writeFileSync(_path, file);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 /**
  *
  * @param tx - transaction where event occurs
@@ -303,16 +309,17 @@ export const containObject = (arr: any[], obj: any): Boolean => {
  * @param contractAddressOverride - (optional) override the contract address which emits this event
  * @returns Event arguments, can be deconstructed by array index or by object key
  */
-export const getEventArgs = async (
+ export const getEventArgs = async (
   tx: ContractTransaction,
   eventName: string,
   contract: Contract,
-  contractAddressOverride: string = null
+  contractAddressOverride: any = null
 ): Promise<Result> => {
   const eventObj = (await tx.wait()).events.find(
     (x) =>
       x.topics[0] == contract.filters[eventName]().topics[0] &&
-      x.address == (contractAddressOverride || contract.address)
+      x.address ==
+        (contractAddressOverride ? contractAddressOverride : contract.address)
   );
 
   if (!eventObj) {
@@ -320,16 +327,5 @@ export const getEventArgs = async (
   }
 
   return contract.interface.decodeEventLog(eventName, eventObj.data);
-};
-
-export const createEmptyBlock = async (count?: number): Promise<void> => {
-  const signers = await ethers.getSigners();
-  const tx = { to: signers[1].address };
-  if (count > 0) {
-    for (let i = 0; i < count; i++) {
-      await signers[0].sendTransaction(tx);
-    }
-  } else {
-    await signers[0].sendTransaction(tx);
-  }
+  
 };

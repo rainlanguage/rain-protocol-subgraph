@@ -38,18 +38,11 @@ let
   
 in
 pkgs.stdenv.mkDerivation {
-  name = "shell";
-  buildInputs = [
-    pkgs.nixpkgs-fmt
-    pkgs.yarn
-    pkgs.nodejs-16_x
-    pkgs.jq
-    command
-    hh-node
-    graph-node
-    deploy-test
-    test-graph
-    run-test-graph
+ name = "shell";
+ buildInputs = [
+  pkgs.nodejs-16_x
+  pkgs.jq
+  command
  ];
 
  shellHook = ''
