@@ -18,8 +18,9 @@ import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/contracts/
 import READWRITE_TIER from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
 import {TrustFactory} from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import {ReserveToken} from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
+import {Trust} from "@beehiveinnovation/rain-protocol/typechain/Trust";
 import {ITier} from "@beehiveinnovation/rain-protocol/typechain/ITier";
-import { QUERY } from "./queries"
+import { getTrust, NOTICE_QUERY, QUERY } from "./queries"
 enum Tier {
   NIL,
   COPPER,
@@ -32,7 +33,7 @@ enum Tier {
   JAWAD,
 }
 
-describe("Test", function () {
+describe("Factory Test", function () {
     const subgraphUser = "vishalkale151071";
     const subgraphName = "rain-protocol";
     let trustFactory: TrustFactory;
@@ -41,6 +42,7 @@ describe("Test", function () {
     let minimumTier: Tier
     let subgraph: ApolloFetch
     let currentBlock: number
+    let trust: Trust
 
     before( async function (){
 
@@ -78,6 +80,7 @@ describe("Test", function () {
     })
 
   it("Should query the trust factories",async () => {
+    await Util.delay(Util.wait)
     await waitForSubgraphToBeSynced(1000);
 
     const queryTrustCountresponse = (await subgraph({ query: QUERY })) as FetchResult;
@@ -85,7 +88,7 @@ describe("Test", function () {
     expect(queryTrustCountresponse.data.trustFactories[0].trustCount).to.equals('0')
   })
 
-  it("deploy trust.", async function(){
+  it("Trust Test", async function(){
     const signers = await ethers.getSigners();
 
     const creator = signers[0];
@@ -114,7 +117,7 @@ describe("Test", function () {
 
     const trustFactoryDeployer = trustFactory.connect(deployer);
 
-    const trust = await Util.trustDeploy(
+    trust = await Util.trustDeploy(
       trustFactoryDeployer,
       creator,
       {
@@ -141,14 +144,14 @@ describe("Test", function () {
         seedERC20Config,
       },
       { gasLimit: 15000000 }
-    );
+    ) as Trust;
 
+    await Util.delay(Util.wait)
 
     await waitForSubgraphToBeSynced(1000);
      // Create Subgraph Connection
-    const queryTrustCountresponse = (await subgraph({ query: QUERY })) as FetchResult;
-    const response = queryTrustCountresponse.data 
-    console.log("Response : ", JSON.stringify(response))
+    const queryResponse = (await subgraph({ query: QUERY })) as FetchResult;
+    const response = queryResponse.data 
     const factoryData = response.trustFactories[0]
     const trustData = factoryData.trusts[0]
 
@@ -160,5 +163,36 @@ describe("Test", function () {
     expect(trustData.notices).to.be.empty
     expect(trustData.trustParticipants).to.be.empty 
   })
+
+  it("Trust Construction Event", async function() {
+    await Util.delay(Util.wait)
+    await waitForSubgraphToBeSynced(1000)
+
+    
+  })
+
+  it("Notice Test", async function(){
+    const signers = await ethers.getSigners();
+
+    const sender = signers[9];
+
+    const noticeSender = trust.connect(sender)
+
+    await noticeSender.sendNotice("0x01")
+
+    await Util.delay(Util.wait)
+    await waitForSubgraphToBeSynced(1000)
+
+    let queryResponse = (await subgraph({ query: NOTICE_QUERY })) as FetchResult;
+    let notices = queryResponse.data.notices
+    expect(notices.length).to.equals(1)
+    expect(notices[0].sender).to.equals(sender.address.toLowerCase())
+    expect(notices[0].data).to.equals("0x01")
+
+    queryResponse = (await subgraph({ query: getTrust(trust.address.toLowerCase()) })) as FetchResult;
+    notices = queryResponse.data.trust.notices
+    expect(notices.length).to.equals(1)
+  })
+
 
 });

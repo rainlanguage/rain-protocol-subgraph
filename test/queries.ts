@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export const QUERY = `
     {
     trustFactories{
@@ -26,3 +27,26 @@ export const QUERY = `
   }
   
 `;
+
+export const NOTICE_QUERY = `
+  {
+    notices{
+      sender
+      data
+      trust{
+        id
+      }
+    }
+  }`;
+
+export function getTrust(trust: string): string {
+  return (`
+    {
+      trust(id:"${trust}"){
+        notices{
+          id
+        }
+      }
+    }
+  `);
+}

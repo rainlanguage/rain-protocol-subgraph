@@ -14,7 +14,7 @@
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/rain-protocol",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/rain-protocol",
     "prepare:localhost": "yarn mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
-    "deploy-build:localhost": "yarn prepare:localhost && yarn codegen && yarn build && yarn deploy-local",
+    "deploy-build:localhost": "yarn prepare:localhost && yarn codegen && yarn build && yarn create-local && yarn deploy-local",
     "hardhat-node": "hardhat node",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
     "test": "hardhat test"

@@ -329,3 +329,9 @@ export const writeFile = (_path: string, file: any) => {
   return contract.interface.decodeEventLog(eventName, eventObj.data);
   
 };
+
+export function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export const wait = 500

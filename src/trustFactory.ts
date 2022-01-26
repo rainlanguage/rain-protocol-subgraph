@@ -4,7 +4,7 @@ import {
     TrustFactory,
     Trust
 } from '../generated/schema'
-
+import { TrustTemplate } from "../generated/templates"
 import { ZERO_BI, ONE_BI } from './utils'
 import { log } from '@graphprotocol/graph-ts'
 export function handleNewChild(event: NewChild): void {
@@ -25,9 +25,8 @@ export function handleNewChild(event: NewChild): void {
     trustFactory.trusts = trusts
     trustFactory.trustCount = trustFactory.trustCount.plus(ONE_BI)
     trustFactory.save()
-
-    log.info("Child is created.", [])
-
+ 
+    TrustTemplate.create(event.params.child)
 }
 
 export function handleImplementation(event: Implementation): void {

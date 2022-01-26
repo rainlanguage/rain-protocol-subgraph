@@ -39,23 +39,23 @@ type Contract @entity {
 
 type DistributionProgress @entity {
     id:ID!
-    distributionStatus: Int! #Trust.getDistributionProgress() => DistributionStatus distributionStatus
-    distributionStartBlock: BigInt! #Trust.getDistributionProgress() => uint32 distributionStartBlock
-    distributionEndBlock: BigInt! #Trust.getDistributionProgress() => uint32 distributionEndBlock
-    minimumTradingDuration: BigInt! #RedeemableERC20Pool.minimumTradingDuration()
-    poolReserveBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolReserveBalance
-    poolTokenBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolTokenBalance
-    minimumCreatorRaise: BigInt! #Trust.getDistributionProgress() => uint256 minimumCreatorRaise
-    finalWeight: BigInt! #RedeemableERC20Pool.finalWeight()
-    finalValuation: BigInt! #RedeemableERC20Pool.finalValuation()
-    successPoolBalance: BigInt! #Trust.successBalance()
-    finalBalance: BigInt! #Trust.finalBalance()
-    reserveInit: BigInt! #Trust.getDistributionProgress() => uint256 reserveInit
-    redeemInit: BigInt! #Trust.getDistributionProgress() => uint256 redeemInit
-    minimumRaise: BigInt! #minimumCreatorRaise + redeemInit + Trust.SeedERC20.seederFee
-    amountRaised: BigInt! # = poolReserveBalance - reserveInit
-    percentRaised: BigDecimal! # = amountRaised / minimumRaise
-    percentAvailable: BigDecimal! # = poolTokenBalance / RedeemableERC20.totalSupply
+    distributionStatus: Int #Trust.getDistributionProgress() => DistributionStatus distributionStatus
+    distributionStartBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionStartBlock
+    distributionEndBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionEndBlock
+    minimumTradingDuration: BigInt #RedeemableERC20Pool.minimumTradingDuration()
+    poolReserveBalance: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
+    poolTokenBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
+    minimumCreatorRaise: BigInt #Trust.getDistributionProgress() => uint256 minimumCreatorRaise
+    finalWeight: BigInt #RedeemableERC20Pool.finalWeight()
+    finalValuation: BigInt #RedeemableERC20Pool.finalValuation()
+    successPoolBalance: BigInt #Trust.successBalance()
+    finalBalance: BigInt #Trust.finalBalance()
+    reserveInit: BigInt #Trust.getDistributionProgress() => uint256 reserveInit
+    redeemInit: BigInt #Trust.getDistributionProgress() => uint256 redeemInit
+    minimumRaise: BigInt #minimumCreatorRaise + redeemInit + Trust.SeedERC20.seederFee
+    amountRaised: BigInt # = poolReserveBalance - reserveInit
+    percentRaised: BigDecimal # = amountRaised / minimumRaise
+    percentAvailable: BigDecimal # = poolTokenBalance / RedeemableERC20.totalSupply
 }
 
 type CRP @entity{
