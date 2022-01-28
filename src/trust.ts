@@ -10,26 +10,60 @@ import {
     StartDutchAuction
 } from '../generated/TrustFactory/Trust'
 
-import { Contract, Notice as NoticeScheme, Trust } from "../generated/schema"
+import { Contract, CRP, DistributionProgress, Notice as NoticeScheme, RedeemableERC20, RedeemableERC20Pool, ReserveERC20, SeedERC20, Trust, TrustFactory } from "../generated/schema"
+import { dataSource, log } from '@graphprotocol/graph-ts'
+import { ERC20 } from "../generated/TrustFactory/ERC20"
 
 export function handleConstruction(event: Construction): void {
-    // let trustAddress = event.address
-    // let trust = Trust.load(trustAddress.toHex())
+    let context = dataSource.context()
+    let trustFactory = TrustFactory.load(context.getBytes("factory").toHex())
 
-    // let contract = new Contract(trustAddress.toHex())
 
-    // trust.contracts = contract.id
-    // trust.save()
+    trustFactory.balancerFactory = event.params.balancerFactory
+    trustFactory.crpFactory = event.params.crpFactory
+    trustFactory.redeemableERC20Factory = event.params.redeemableERC20Factory
+    trustFactory.seedERC20Factory = event.params.seedERC20Factory
+    trustFactory.bPoolFeeEscrow = event.params.bPoolFeeEscrow
+
+    trustFactory.save()
 }
+
 export function handleCreatorFundsRelease(event: CreatorFundsRelease): void {
 
 }
+
 export function handleEndDutchAuction(event: EndDutchAuction): void {
 
 }
-export function handleInitialize(event: Initialize): void {
 
+export function handleInitialize(event: Initialize): void {
+    let trustAddress = event.address
+    let trust = Trust.load(trustAddress.toHex())
+    // contracts creation
+    let contracts = new Contract(trustAddress.toHex())
+    contracts.crp = createConfigurableRightPool(event)
+    contracts.reserveERC20 = createReserveERC20(event)
+    contracts.redeemableERC20 = createRedeemableERC20(event)
+    contracts.save()
+    
+    // DistributionProgess creation
+
+    let distributionProgress = new DistributionProgress(trustAddress.toHex())
+    distributionProgress.successPoolBalance = event.params.successBalance
+    distributionProgress.reserveInit = event.params.config.reserveInit
+    distributionProgress.initialValuation = event.params.config.initialValuation
+    distributionProgress.finalValuation = event.params.config.finalValuation
+    distributionProgress.minimumTradingDuration = event.params.config.minimumTradingDuration
+    distributionProgress.minimumCreatorRaise = event.params.config.minimumCreatorRaise
+    distributionProgress.redeemInit = event.params.config.redeemInit
+    distributionProgress.save()
+
+
+    trust.contracts = contracts.id
+    trust.distributionProgress = distributionProgress.id
+    trust.save()
 }
+
 export function handleNotice(event: Notice): void {
     let trustAddress = event.address
     let trust = Trust.load(trustAddress.toHex())
@@ -38,8 +72,8 @@ export function handleNotice(event: Notice): void {
     notice.trust = trust.id
     notice.data = event.params.data
     notice.sender = event.params.sender
-    notice.block = event.block.number
-    notice.timestamp = event.block.timestamp
+    notice.deployBlock= event.block.number
+    notice.deployTimestamp= event.block.timestamp
 
     let notices = trust.notices
     notices.push(notice.id)
@@ -48,9 +82,95 @@ export function handleNotice(event: Notice): void {
     trust.save()
     notice.save()
 }
+
 export function handlePhaseScheduled(event: PhaseScheduled): void {
 
 }
+
 export function handleStartDutchAuction(event: StartDutchAuction): void {
 
+}
+
+function createConfigurableRightPool(event: Initialize): string {
+    let crp = CRP.load(event.params.crp.toHex())
+    if(crp == null)
+        crp = new CRP(event.params.crp.toHex())
+    else
+        return crp.id
+    crp.deployBlock= event.block.number
+    crp.deployTimestamp= event.block.timestamp
+    crp.save()
+    return crp.id
+}
+
+function createReserveERC20(event: Initialize): string {
+    let reserveERC20 = ReserveERC20.load(event.params.config.reserve.toHex())
+    let reserveERC20Contract = ERC20.bind(event.params.config.reserve)
+
+    if(reserveERC20 == null)
+        reserveERC20 = new ReserveERC20(event.params.config.reserve.toHex())
+    else
+        return reserveERC20.id
+    reserveERC20.deployBlock= event.block.number
+    reserveERC20.deployTimestamp= event.block.timestamp
+    reserveERC20.name = reserveERC20Contract.name()
+    reserveERC20.symbol = reserveERC20Contract.symbol()
+    reserveERC20.totalSupply = reserveERC20Contract.totalSupply()
+    reserveERC20.decimals = reserveERC20Contract.decimals()
+    reserveERC20.save()
+    return reserveERC20.id
+}
+
+function createRedeemableERC20(event: Initialize): string {
+    let redeemableERC20 = RedeemableERC20.load(event.params.redeemableERC20.toHex())
+    let redeemableERC20Contract = ERC20.bind(event.params.redeemableERC20)
+
+    if(redeemableERC20 == null)
+        redeemableERC20 = new RedeemableERC20(event.params.redeemableERC20.toHex())
+    else
+        return redeemableERC20.id
+    redeemableERC20.deployBlock= event.block.number
+    redeemableERC20.deployTimestamp= event.block.timestamp
+    redeemableERC20.name = redeemableERC20Contract.name()
+    redeemableERC20.symbol = redeemableERC20Contract.symbol()
+    redeemableERC20.totalSupply = redeemableERC20Contract.totalSupply()
+    redeemableERC20.decimals = redeemableERC20Contract.decimals()
+    redeemableERC20.save()
+    return redeemableERC20.id
+}
+
+
+function createRedeemableERC20Pool(event: Initialize): string {
+    let redeemableERC20Pool = RedeemableERC20Pool.load(event.params.redeemableERC20.toHex())
+
+    if(redeemableERC20Pool == null)
+        redeemableERC20Pool = new RedeemableERC20Pool(event.params.redeemableERC20.toHex())
+    else
+        return redeemableERC20Pool.id
+    redeemableERC20Pool.deployBlock= event.block.number
+    redeemableERC20Pool.deployTimestamp= event.block.timestamp
+    redeemableERC20Pool.save()
+    return redeemableERC20Pool.id
+}
+
+function createSeedERC20(event: Initialize): string {
+    log.info("Seeder : {}", [event.params.seeder.toHex()])
+    let seedERC20 = SeedERC20.load(event.params.seeder.toHex())
+    let seedERC20Contract = ERC20.bind(event.params.seeder)
+    if(seedERC20 == null)
+        seedERC20 = new SeedERC20(event.params.seeder.toHex())
+    else
+        return seedERC20.id
+    seedERC20.deployBlock = event.block.number
+    seedERC20.deployTimestamp = event.block.timestamp
+    // seedERC20.name = seedERC20Contract.name()
+    // seedERC20.symbol = seedERC20Contract.symbol()
+    // seedERC20.totalSupply = seedERC20Contract.totalSupply()
+    // seedERC20.decimals = seedERC20Contract.decimals()
+    seedERC20.seeds = []
+    seedERC20.unseeds = []
+    seedERC20.holders = []
+    seedERC20.redeemSeed = []
+    seedERC20.save()
+    return seedERC20.id
 }

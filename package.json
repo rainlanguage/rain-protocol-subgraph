@@ -12,7 +12,7 @@
     "deploy:blocks": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/blocks",
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/rain-protocol",
     "remove-local": "graph remove --node http://localhost:8020/ vishalkale151071/rain-protocol",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/rain-protocol",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 vishalkale151071/rain-protocol  --version-label 1",
     "prepare:localhost": "yarn mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:localhost": "yarn prepare:localhost && yarn codegen && yarn build && yarn create-local && yarn deploy-local",
     "hardhat-node": "hardhat node",

@@ -58,6 +58,8 @@ templates:
       abis:
         - name: Trust
           file: ./abis/Trust.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: Construction(address,address,address,address,address,uint256,uint256)
           handler: handleConstruction

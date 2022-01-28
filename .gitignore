@@ -1,6 +1,5 @@
 node_modules
 build
-cache
 package-lock.json
 generated
 subgraph.yaml

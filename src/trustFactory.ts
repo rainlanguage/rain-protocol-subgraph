@@ -6,15 +6,15 @@ import {
 } from '../generated/schema'
 import { TrustTemplate } from "../generated/templates"
 import { ZERO_BI, ONE_BI } from './utils'
-import { log } from '@graphprotocol/graph-ts'
+import { log, Address, DataSourceContext } from '@graphprotocol/graph-ts'
 export function handleNewChild(event: NewChild): void {
     let trustFactory = TrustFactory.load(event.address.toHex())
 
     let trust = new Trust(event.params.child.toHex())
     trust.factory = event.address
     trust.creator = event.params.sender
-    trust.block = event.block.number
-    trust.timestamp = event.block.timestamp
+    trust.deployBlock = event.block.number
+    trust.deployTimestamp = event.block.timestamp
     trust.trustParticipants = []
     trust.notices = []
     
@@ -27,6 +27,7 @@ export function handleNewChild(event: NewChild): void {
     trustFactory.save()
  
     TrustTemplate.create(event.params.child)
+    log.info("NewChild Block Number : {}", [event.block.number.toString()])
 }
 
 export function handleImplementation(event: Implementation): void {
@@ -37,6 +38,9 @@ export function handleImplementation(event: Implementation): void {
         trustFactory.trusts = []
     }
 
+    let context = new DataSourceContext()
+    context.setBytes("factory", event.address)
+    TrustTemplate.createWithContext(event.params.implementation, context)
     trustFactory.save()
     log.info("Factory is created.", [])
 }

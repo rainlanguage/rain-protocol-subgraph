@@ -1,17 +1,24 @@
 type TrustFactory @entity{
     id: ID! #address of the TrustFactory
-    trustCount: BigInt!
+    trustCount: BigInt
+    balancerFactory: Bytes
+    crpFactory: Bytes
+    redeemableERC20Factory: Bytes
+    seedERC20Factory: Bytes 
+    bPoolFeeEscrow: Bytes
     trusts: [Trust!]
 }
 
 type Trust @entity{
     id: ID! #address of trust contract - from TrustFactory NewContract events
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
     creator: Bytes! #Trust.creator()
     contracts: Contract
     factory: Bytes!
     distributionProgress: DistributionProgress
+    creatorFundsReleaseTimeout: BigInt
+    maxRaiseDuration: BigInt
     trustParticipants: [TrustParticipant!]
     notices: [Notice!]
 }
@@ -22,31 +29,32 @@ type Notice @entity{
     trust: Trust! #the trust that emitted the event
     sender: Bytes! #the address of the sender, from the event
     data: Bytes! #from the event
-    block: BigInt! #block of event
-    timestamp: BigInt! #timestamp of event
+    deployBlock: BigInt! #block of event
+    deployTimestamp: BigInt! #timestamp of event
 }
 
 type Contract @entity {
     id: ID!
-    reserveERC20: ReserveERC20! #Trust.getContracts() => address reserveERC20
-    redeemableERC20: RedeemableERC20! #Trust.getContracts() => address redeemableERC20
-    redeemableERC20Pool: RedeemableERC20Pool! #Trust.getContracts() => address redeemableERC20Pool
+    reserveERC20: ReserveERC20 #Trust.getContracts() => address reserveERC20
+    redeemableERC20: RedeemableERC20 #Trust.getContracts() => address redeemableERC20
+    redeemableERC20Pool: RedeemableERC20Pool #Trust.getContracts() => address redeemableERC20Pool
     seeder: SeedERC20 #Trust.getContracts() => address seeder
-    tier: Bytes! #Trust.getContracts() => address tier
-    crp: CRP! #Trust.getContracts() => address crp
+    tier: Bytes #Trust.getContracts() => address tier
+    crp: CRP #Trust.getContracts() => address crp
     pool: Pool #Trust.getContracts() => address pool
 }
 
 type DistributionProgress @entity {
     id:ID!
     distributionStatus: Int #Trust.getDistributionProgress() => DistributionStatus distributionStatus
-    distributionStartBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionStartBlock
-    distributionEndBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionEndBlock
+    distributionStartdeployBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionStartBlock
+    distributionEnddeployBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionEndBlock
     minimumTradingDuration: BigInt #RedeemableERC20Pool.minimumTradingDuration()
     poolReserveBalance: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
     poolTokenBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
     minimumCreatorRaise: BigInt #Trust.getDistributionProgress() => uint256 minimumCreatorRaise
     finalWeight: BigInt #RedeemableERC20Pool.finalWeight()
+    initialValuation: BigInt
     finalValuation: BigInt #RedeemableERC20Pool.finalValuation()
     successPoolBalance: BigInt #Trust.successBalance()
     finalBalance: BigInt #Trust.finalBalance()
@@ -60,14 +68,14 @@ type DistributionProgress @entity {
 
 type CRP @entity{
     id:ID!
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type RedeemableERC20Pool @entity{
     id: ID!
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type ReserveERC20 @entity{
@@ -76,8 +84,8 @@ type ReserveERC20 @entity{
     totalSupply: BigInt
     decimals: Int
     name: String
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type Redeemable @entity{
@@ -86,8 +94,8 @@ type Redeemable @entity{
     totalSupply: BigInt!
     decimals: Int!
     name: String!
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type Pool @entity{
@@ -99,8 +107,8 @@ type Pool @entity{
     poolTokenBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolTokenBalance
     numberOfSwaps: BigInt!
     swaps: [Swap!]!
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type Swap @entity{
@@ -114,24 +122,24 @@ type Swap @entity{
     tokenAmountOut: BigInt!
     pool: Pool!
     userAddress: Bytes!
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type RedeemableERC20 @entity {
     id: ID!
-    redeems: [Redeem!]! #Redeem event in RedeemableERC20.sol
+    redeems: [Redeem!] #Redeem event in RedeemableERC20.sol
     treasuryAssets: [TreasuryAsset!]
-    minimumTier: Int!
+    minimumTier: Int
     # redeemables: [Redeemable!]! #RedeemableERC20.getRedeemables() => returns max 8 addresses for tokens
     #...Token interface fields
-    symbol: String!
-    totalSupply: BigInt!
-    decimals: Int!
-    name: String!
+    symbol: String
+    totalSupply: BigInt
+    decimals: Int
+    name: String
     holders: [Holder!]
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt #the block the contract was deployed
+    deployTimestamp: BigInt #the timestamp the contract was deployed
 }
 
 type Redeem @entity {
@@ -142,31 +150,35 @@ type Redeem @entity {
     redeemableERC20: RedeemableERC20! #address indexed redeemable
     redeemAmount: BigInt! #redeemAmounts[0]
     treasuryAssetAmount: BigInt! #redeemAmounts[1]
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type SeedERC20 @entity{
-    id: ID!
-    trust: Trust!
-    seederFee: BigInt! #Trust.seederFee()
-    seederUnits: Int! #Trust.seederUnits()
-    seedFeePerUnit: BigInt! # = seederFee / seederUnits
-    seederCooldownDuration: Int! #Trust.seederCooldownDuration()
+    id: ID! #address of SeedERC20
+    # Update after Trust construction
+    factory: Bytes #Trust.seedERC20Factory()
+    seederFee: BigInt #Trust.seederFee()
+    seederUnits: BigInt #Trust.seederUnits()
+    seedFeePerUnit: BigInt # = seederFee / seederUnits
+    seederCooldownDuration: BigInt #Trust.seederCooldownDuration()
+    # Update after Seed event
     seederUnitsAvail: BigInt #SeedERC20.balanceOf(this)
     seededAmount: BigInt #ReserveERC20.balanceOf(this)
-    percentSeeded: BigDecimal #SeedERC20.seededAmount / Trust.redeemInit()
-    factory: Bytes! #Trust.seedERC20Factory()
-    symbol: String!
-    totalSupply: BigInt!
-    decimals: Int!
-    name: String!
-    holders: [Holder!]
-    seeds: [Seed!]
-    unseeds: [Unseed!]
-    redeemSeeds: [RedeemSeed!]
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    percentSeeded: BigInt #SeedERC20.seededAmount / Trust.redeemInit()
+    seeds: [Seed!] #Seed events
+    unseeds: [Unseed!] #Unseed events
+    #...Token interface fields. Update after Trust construction
+    deployBlock: BigInt #the block the contract was deployed
+    deployTimestamp: BigInt #the timestamp the contract was deployed
+    symbol: String
+    totalSupply: BigInt
+    decimals: Int
+    name: String
+    # Update after Transfer events
+    holders: [Holder!] #addresses of token holders
+    # Update after Redeem events for this SeedERC20
+    redeemSeed: [RedeemSeed!] #redeem
 }
 
 type Holder @entity {
@@ -183,8 +195,8 @@ type Seed @entity {
     seedERC20: SeedERC20! #the seedERC20 that emitted the event
     seedAmount: BigInt! #the reserve amount that was transferred
     seedUnits: BigInt! #the amount of SeedERC20 that was transferred
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type Unseed @entity {
@@ -193,8 +205,8 @@ type Unseed @entity {
     seedERC20: SeedERC20! #the seedERC20 that emitted the event
     seedAmount: BigInt! #the reserve amount that was transferred
     seedUnits: BigInt! #the amount of SeedERC20 that was transferred
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type TrustParticipant @entity {
@@ -222,8 +234,8 @@ type RedeemSeed @entity {
     seedERC20: SeedERC20! #the SeedERC20 that emitted the event
     redeemAmount: BigInt! #redeemAmounts[0]
     reserveAmount: BigInt! #redeemAmounts[1]
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
 type TreasuryAsset @entity {
@@ -239,8 +251,8 @@ type TreasuryAsset @entity {
     redemptionRatio: BigInt!
     #...Token interface fields
     # Update after TreasuryAsset event on RedeemableERC20
-    block: BigInt! #the block the contract was deployed
-    timestamp: BigInt! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
     symbol: String
     totalSupply: BigInt
     decimals: Int
@@ -253,7 +265,7 @@ type TreasuryAssetCaller @entity {
     treasuryAsset: TreasuryAsset!
     id: ID!
     caller: Bytes!
-    block: BigInt!
-    timestamp: BigInt!
+    deployBlock: BigInt!
+    deployTimestamp: BigInt!
 }
 

@@ -20,7 +20,11 @@ import {TrustFactory} from "@beehiveinnovation/rain-protocol/typechain/TrustFact
 import {ReserveToken} from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
 import {Trust} from "@beehiveinnovation/rain-protocol/typechain/Trust";
 import {ITier} from "@beehiveinnovation/rain-protocol/typechain/ITier";
-import { getTrust, NOTICE_QUERY, QUERY } from "./queries"
+import {BFactory} from "@beehiveinnovation/rain-protocol/typechain/BFactory";
+import {CRPFactory} from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
+import {RedeemableERC20Factory} from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
+import {SeedERC20Factory} from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
+import { getContracts, getFactories, getTrust, NOTICE_QUERY, QUERY } from "./queries"
 enum Tier {
   NIL,
   COPPER,
@@ -43,8 +47,12 @@ describe("Factory Test", function () {
     let subgraph: ApolloFetch
     let currentBlock: number
     let trust: Trust
+    let crpFactory: CRPFactory
+    let bFactory: BFactory
+    let redeemableERC20Factory: RedeemableERC20Factory
+    let seedERC20Factory: SeedERC20Factory
 
-    before( async function (){
+    before(async function (){
 
     const signers = await ethers.getSigners();
 
@@ -52,7 +60,7 @@ describe("Factory Test", function () {
     const seeder = signers[1]; // seeder is not creator/owner
     const deployer = signers[2]; // deployer is not creator
 
-    const [crpFactory, bFactory] = await Util.balancerDeploy(creator);
+    [crpFactory, bFactory] = await Util.balancerDeploy(creator) as[CRPFactory, BFactory];
 
     reserve = (await Util.deploy(RESERVE_TOKEN, creator, [])) as ReserveToken
 
@@ -60,7 +68,7 @@ describe("Factory Test", function () {
     minimumTier = Tier.GOLD;
 
 
-    ({ trustFactory } = await factoriesDeploy(crpFactory, bFactory, creator));
+    ({ trustFactory, redeemableERC20Factory, seedERC20Factory} = await factoriesDeploy(crpFactory, bFactory, creator));
     currentBlock = await ethers.provider.getBlockNumber();
 
     console.log("Block: ", currentBlock--);
@@ -77,9 +85,13 @@ describe("Factory Test", function () {
     exec(`yarn deploy-build:localhost`);
     
     subgraph = fetchSubgraph(subgraphUser, subgraphName);
-    })
+  })
 
-  it("Should query the trust factories",async () => {
+  after(async function(){
+    process.exit()
+  })
+
+  it("Should query the trust factories",async function(){
     await Util.delay(Util.wait)
     await waitForSubgraphToBeSynced(1000);
 
@@ -158,7 +170,6 @@ describe("Factory Test", function () {
     expect(parseInt(factoryData.trustCount)).to.equals(1)
     expect(trustData.id).to.equals(trust.address.toLowerCase())
     expect(trustData.factory).to.equals(trustFactory.address.toLowerCase())
-    expect(trustData.contracts).to.be.null
     expect(trustData.distributionProgress).to.be.null
     expect(trustData.notices).to.be.empty
     expect(trustData.trustParticipants).to.be.empty 
@@ -168,7 +179,27 @@ describe("Factory Test", function () {
     await Util.delay(Util.wait)
     await waitForSubgraphToBeSynced(1000)
 
+    const queryResponse = await subgraph({query: getFactories(trustFactory.address.toLowerCase())})
+    const factories = queryResponse.data.trustFactory
     
+    expect(factories.balancerFactory).to.equals(bFactory.address.toLowerCase())
+    expect(factories.crpFactory).to.equals(crpFactory.address.toLowerCase())
+    expect(factories.redeemableERC20Factory).to.equals(redeemableERC20Factory.address.toLowerCase())
+    expect(factories.seedERC20Factory).to.equals(seedERC20Factory.address.toLowerCase())
+  })
+
+  it("Contracts Test",async function(){
+    await Util.delay(Util.wait)
+    await waitForSubgraphToBeSynced(1000)
+
+    const queryResponse = await subgraph({query: getContracts(trust.address.toLowerCase())})
+    const contract = queryResponse.data.contract
+    
+    const g_reserve = contract.reserveERC20
+    expect(g_reserve.name).to.equals(await reserve.name())
+    expect(g_reserve.symbol).to.equals(await reserve.symbol())
+    expect(g_reserve.decimals).to.equals(await reserve.decimals())
+    expect(g_reserve.totalSupply).to.equals(await reserve.totalSupply())
   })
 
   it("Notice Test", async function(){
@@ -194,5 +225,8 @@ describe("Factory Test", function () {
     expect(notices.length).to.equals(1)
   })
 
+  it("Test Ended.", async function(){
+
+  })
 
 });
