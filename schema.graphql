@@ -19,6 +19,7 @@ type Trust @entity{
     distributionProgress: DistributionProgress
     creatorFundsReleaseTimeout: BigInt
     maxRaiseDuration: BigInt
+    dutchAuction: DutchAuction
     trustParticipants: [TrustParticipant!]
     notices: [Notice!]
 }
@@ -269,3 +270,15 @@ type TreasuryAssetCaller @entity {
     deployTimestamp: BigInt!
 }
 
+type DutchAuction @entity {
+    id: ID!
+    starterAddress: Bytes
+    enderAddress: Bytes
+    pool: Bytes
+    finalAuctionBlock: BigInt
+    finalBalance: BigInt
+    seederPay: BigInt
+    creatorPay: BigInt
+    tokenPay: BigInt
+    poolDust: BigInt
+}

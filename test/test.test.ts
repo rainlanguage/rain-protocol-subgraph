@@ -87,10 +87,6 @@ describe("Factory Test", function () {
     subgraph = fetchSubgraph(subgraphUser, subgraphName);
   })
 
-  after(async function(){
-    process.exit()
-  })
-
   it("Should query the trust factories",async function(){
     await Util.delay(Util.wait)
     await waitForSubgraphToBeSynced(1000);
@@ -166,12 +162,10 @@ describe("Factory Test", function () {
     const response = queryResponse.data 
     const factoryData = response.trustFactories[0]
     const trustData = factoryData.trusts[0]
-
+    
     expect(parseInt(factoryData.trustCount)).to.equals(1)
     expect(trustData.id).to.equals(trust.address.toLowerCase())
     expect(trustData.factory).to.equals(trustFactory.address.toLowerCase())
-    expect(trustData.distributionProgress).to.be.null
-    expect(trustData.notices).to.be.empty
     expect(trustData.trustParticipants).to.be.empty 
   })
 
@@ -189,6 +183,20 @@ describe("Factory Test", function () {
   })
 
   it("Contracts Test",async function(){
+    await Util.delay(Util.wait)
+    await waitForSubgraphToBeSynced(1000)
+
+    const queryResponse = await subgraph({query: getContracts(trust.address.toLowerCase())})
+    const contract = queryResponse.data.contract
+    
+    const g_reserve = contract.reserveERC20
+    expect(g_reserve.name).to.equals(await reserve.name())
+    expect(g_reserve.symbol).to.equals(await reserve.symbol())
+    expect(g_reserve.decimals).to.equals(await reserve.decimals())
+    expect(g_reserve.totalSupply).to.equals(await reserve.totalSupply())
+  })
+
+  it("DistributionProgress Test",async function(){
     await Util.delay(Util.wait)
     await waitForSubgraphToBeSynced(1000)
 
@@ -226,7 +234,6 @@ describe("Factory Test", function () {
   })
 
   it("Test Ended.", async function(){
-
+    await trust.startDutchAuction()
   })
-
 });
