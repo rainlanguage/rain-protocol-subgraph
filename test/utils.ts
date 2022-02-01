@@ -37,6 +37,7 @@ interface SyncedSubgraphType {
 const { ethers } = require("hardhat");
 
 export const eighteenZeros = "000000000000000000";
+export const zeroAddress = ethers.constants.AddressZero;
 export const sixZeros = "000000";
 export const CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING = 100;
 export const MAX_RAISE_DURATION_TESTING = 100;
@@ -335,3 +336,15 @@ export function delay(ms: number) {
 }
 
 export const wait = 500
+
+export const createEmptyBlock = async (count?: number): Promise<void> => {
+  const signers = await ethers.getSigners();
+  const tx = { to: signers[1].address };
+  if (count > 0) {
+    for (let i = 0; i < count; i++) {
+      await signers[0].sendTransaction(tx);
+    }
+  } else {
+    await signers[0].sendTransaction(tx);
+  }
+};

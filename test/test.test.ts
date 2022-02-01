@@ -16,6 +16,11 @@ import { ApolloFetch, FetchResult } from "apollo-fetch";
 import * as path from "path";
 import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
 import READWRITE_TIER from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
+import seedERC20Json from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
+import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
+import ConfigurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
+import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
+
 import {TrustFactory} from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import {ReserveToken} from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
 import {Trust} from "@beehiveinnovation/rain-protocol/typechain/Trust";
@@ -24,7 +29,13 @@ import {BFactory} from "@beehiveinnovation/rain-protocol/typechain/BFactory";
 import {CRPFactory} from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
 import {RedeemableERC20Factory} from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
 import {SeedERC20Factory} from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
+import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20";
+import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
+import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol//typechain/ConfigurableRightsPool";
+import { BPool } from "@beehiveinnovation/rain-protocol//typechain/BPool";
 import { getContracts, getFactories, getTrust, NOTICE_QUERY, QUERY } from "./queries"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import type { BigNumber,BigNumberish } from "ethers";
 enum Tier {
   NIL,
   COPPER,
@@ -51,14 +62,24 @@ describe("Factory Test", function () {
     let bFactory: BFactory
     let redeemableERC20Factory: RedeemableERC20Factory
     let seedERC20Factory: SeedERC20Factory
+    let seederContract : SeedERC20
+
+    let creator: SignerWithAddress
+    let deployer: SignerWithAddress
+    let seeder1: SignerWithAddress
+    let seeder2: SignerWithAddress
+    let signer1: SignerWithAddress
 
     before(async function (){
 
     const signers = await ethers.getSigners();
 
-    const creator = signers[0];
-    const seeder = signers[1]; // seeder is not creator/owner
-    const deployer = signers[2]; // deployer is not creator
+    // Signers (to avoid fetch again)
+    creator = signers[0];
+    deployer = signers[1]; // deployer is not creator
+    seeder1 = signers[2];
+    seeder2 = signers[3];
+    signer1 = signers[4];
 
     [crpFactory, bFactory] = await Util.balancerDeploy(creator) as[CRPFactory, BFactory];
 
@@ -66,7 +87,7 @@ describe("Factory Test", function () {
 
     tier = (await Util.deploy(READWRITE_TIER, creator, [])) as ITier;
     minimumTier = Tier.GOLD;
-
+    // await tier.setTier(signer1.address, Tier.GOLD, []);
 
     ({ trustFactory, redeemableERC20Factory, seedERC20Factory} = await factoriesDeploy(crpFactory, bFactory, creator));
     currentBlock = await ethers.provider.getBlockNumber();
@@ -96,12 +117,19 @@ describe("Factory Test", function () {
     expect(queryTrustCountresponse.data.trustFactories[0].trustCount).to.equals('0')
   })
 
+  it("SetTier test", async function(){
+    /**
+     * Giving to `signer1` a tier (the beneficies)
+     * The schema doesnt exit yet, but will be necessary here
+     * In this case is a ReadWriteTier (ITier)
+     * Need to be `setTier` before the Trust Creation
+     */
+    await tier.setTier(signer1.address, Tier.GOLD, []);
+    await waitForSubgraphToBeSynced(1000);
+  })
+
   it("Trust Test", async function(){
     const signers = await ethers.getSigners();
-
-    const creator = signers[0];
-    const deployer = signers[2];
-    const seeder = signers[1];
 
     const erc20Config = { name: "Token", symbol: "TKN" };
     const seedERC20Config = { name: "SeedToken", symbol: "SDT" };
@@ -113,15 +141,15 @@ describe("Factory Test", function () {
     const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
 
     const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
-    const seederUnits = 0;
-    const seederCooldownDuration = 0;
+    const seederUnits = 10;
+    const seederCooldownDuration = 1;
 
     const successLevel = redeemInit
       .add(minimumCreatorRaise)
       .add(seederFee)
       .add(reserveInit);
 
-    const minimumTradingDuration = 10;
+    const minimumTradingDuration = 20;
 
     const trustFactoryDeployer = trustFactory.connect(deployer);
 
@@ -146,7 +174,7 @@ describe("Factory Test", function () {
         totalSupply: totalTokenSupply,
       },
       {
-        seeder: seeder.address,
+        seeder: Util.zeroAddress,
         seederUnits,
         seederCooldownDuration,
         seedERC20Config,
@@ -156,7 +184,7 @@ describe("Factory Test", function () {
 
     await Util.delay(Util.wait)
 
-    await waitForSubgraphToBeSynced(1000);
+    await waitForSubgraphToBeSynced(2000);
      // Create Subgraph Connection
     const queryResponse = (await subgraph({ query: QUERY })) as FetchResult;
     const response = queryResponse.data 
@@ -220,7 +248,7 @@ describe("Factory Test", function () {
     await noticeSender.sendNotice("0x01")
 
     await Util.delay(Util.wait)
-    await waitForSubgraphToBeSynced(1000)
+    await waitForSubgraphToBeSynced(2000)
 
     let queryResponse = (await subgraph({ query: NOTICE_QUERY })) as FetchResult;
     let notices = queryResponse.data.notices
@@ -233,7 +261,283 @@ describe("Factory Test", function () {
     expect(notices.length).to.equals(1)
   })
 
-  it("Test Ended.", async function(){
-    await trust.startDutchAuction()
+  it("After a Seed event Test.", async function(){
+    /*
+      SeedERC20 Contact - When the `seed` funcion is called, the user who seed the contract
+      with the reserves. will get some seed tokens. The event that is emitted:
+
+      `emit Seed(msg.sender, units_, reserveAmount_);`
+      - msg.sender - address that seed the contract
+      - uint_ - the amount of seed tokens that sender will get by a `reserveAmount_`
+      - reserverAmount - the amount sended to get the seed tokens
+
+      After a seed, it is necessary get the amount of seed units and the amount of the reserve are availables in the contract.
+      And the percent seeded. That means:
+        The seeder1 will get an amount of seedUnits beetween `minSeedUnits` and `seeder1Units`, this depend of the stock of 
+        SeedERC20 contract. In this case, will get `seeder1Units` because is full stock. So, seed uints available should be
+        `seederUnits - seeder1Units` (10 - 4)
+
+      Also, when a seed is call, a transfer of the Seed units (SeedERC20) happen, so maybe also would be good query the holders 
+      Ofc, could be use the SeedERC20 with the first Seed event/entity
+    */
+
+    const { seeder } = await Util.getEventArgs(
+      trust.deployTransaction,
+      "Initialize",
+      trust
+    );
+    seederContract = new ethers.Contract(
+      seeder,
+      seedERC20Json.abi,
+      creator
+    ) as SeedERC20;
+
+    const recipient = trust.address;
+
+    const seeder1Units = 4;
+    const minSeedUnits = 0;
+
+    const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const seedPrice = reserveInit.div(10);
+    const reserveAmount = seedPrice.mul(seeder1Units);
+
+    // seeder need some cash, give enough each for seeding
+    await reserve.transfer(seeder1.address, reserveAmount);
+    
+    const seederContract1 = seederContract.connect(seeder1);
+    const reserve1 = reserve.connect(seeder1);
+    
+    await reserve1.approve(seederContract.address, reserveAmount);
+    
+    // seeder send reserve to seeder contract
+    await seederContract1.seed(minSeedUnits, seeder1Units);
+
+    // Recipient gains infinite approval on reserve token withdrawals from seed contract
+    await reserve.allowance(seederContract.address, recipient);
+
+    // SeedERC20 queries :). As:
+    await waitForSubgraphToBeSynced(1000);
+    // - seedsUnits availables `seederUnitsAvail` (init: 10 units, now should 6), 
+    // - reserve tokens in the seedContract `seededAmount`. This will be the `seedPrice * seedUnitsObtained`, 
+    //   or `seederContract.seedPrice() * seedUnitsObtained`
+    // etc
+  })
+
+  it("After a second Seed event Test.", async function(){
+    /*
+      SeedERC20 Contact - When the `seed` funcion is called, the user who seed the contract
+      with the reserves. will get some seed tokens. The event that is emitted:
+
+      `emit Seed(msg.sender, units_, reserveAmount_);`
+      - msg.sender - address that seed the contract
+      - uint_ - the amount of seed tokens that sender will get by a `reserveAmount_`
+      - reserverAmount - the amount sended to get the seed tokens
+
+      In the second seed call, the seeder will seed and get the remain seed units `seeder2Units`. And seeds entity should
+      be 2 of length
+      It is necesarry check the again the `seederUnitsAvail`, `seededAmount` and `percentSeeded` if you like
+    */
+    const recipient = trust.address;
+
+    const seeder2Units = 6;
+    const minSeedUnits = 0;
+
+    const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const seedPrice = reserveInit.div(10);
+
+    // seeder need some cash, give enough each for seeding
+    await reserve.transfer(seeder2.address, seedPrice.mul(seeder2Units));
+    
+    const seederContract2 = seederContract.connect(seeder2);
+    const reserve2 = reserve.connect(seeder2);
+    
+    await reserve2.approve(seederContract.address, seedPrice.mul(seeder2Units));
+    
+    // seeders send reserve to seeder contract
+    await seederContract2.seed(minSeedUnits, seeder2Units);
+
+    // Recipient gains infinite approval on reserve token withdrawals from seed contract
+    await reserve.allowance(seederContract.address, recipient);
+
+    // Query the seedERC20 to see the new status ...
+    await waitForSubgraphToBeSynced(1000);
+  })
+
+  it("Start Dutch Auction Test.", async function(){
+
+    await trust.startDutchAuction();
+
+    await waitForSubgraphToBeSynced(1000);
+    /**
+     * When startDutchAuction is called, a `StartDutchAuction(msg.sender, pool_, finalAuctionBlock_)` event is emitted.
+     * From the DutchAuction entity could be query - The starterAddress
+     */
+  })
+
+  it("Single Swap test", async function(){
+    // Copy the properties of the trust. I think we should make a scope for this trust.
+    const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
+    const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+    
+    const signers = await ethers.getSigners();
+    const [crp, bPool] = await Util.poolContracts(signers, trust);
+    
+    const finalValuation = redeemInit
+    .add(minimumCreatorRaise)
+    .add(seederFee)
+    .add(reserveInit);
+    const reserveSpend = finalValuation.div(10);
+
+    // give signer some reserve
+    await reserve.transfer(signer1.address, reserveSpend);
+
+    const reserveSigner = reserve.connect(signer1);
+    const crpSigner = crp.connect(signer1);
+    const bPoolSigner = bPool.connect(signer1);
+
+    await reserveSigner.approve(bPool.address, reserveSpend);
+    await crpSigner.pokeWeights();
+    await bPoolSigner.swapExactAmountIn(
+      reserve.address,
+      reserveSpend,
+      await trust.token(),
+      ethers.BigNumber.from("1"),
+      ethers.BigNumber.from("1000000" + Util.sixZeros)
+    );
+    /**
+     * Here is a single swap tx to query all the changes before and after the swap with the:
+     * - Pool Entity with the numberOfSwaps, the contracts the poolBalanceReserve and the initial
+     * poolTokenBalance (which is 10**18 * 10**9)
+     * - Swap Entity can query the tokensIn and tokensOut
+     * I think could use the balance of the user/contract to check the amount that out/in to their balances
+     * and should match those differences with the out/in amount :) Also, the next `it` statement have a loop
+     * to finish all the swaps. So, we can add these expects there
+     */
+     await waitForSubgraphToBeSynced(1000);
+  })
+
+  it("Swaps test", async function(){
+    // Copy the properties of the trust. I think we should make a scope for this trust.
+    const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
+    const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+
+    const signers = await ethers.getSigners();
+    const [crp, bPool] = await Util.poolContracts(signers, trust);
+
+
+    const finalValuation = redeemInit
+    .add(minimumCreatorRaise)
+    .add(seederFee)
+    .add(reserveInit);
+    const reserveSpend = finalValuation.div(10);
+
+    const swapReserveForTokens = async (signer: SignerWithAddress, spend: BigNumber) => {
+      // give signer some reserve
+      await reserve.transfer(signer.address, spend);
+
+      const reserveSigner = reserve.connect(signer);
+      const crpSigner = crp.connect(signer);
+      const bPoolSigner = bPool.connect(signer);
+
+      await reserveSigner.approve(bPool.address, spend);
+      await crpSigner.pokeWeights();
+      await bPoolSigner.swapExactAmountIn(
+        reserve.address,
+        spend,
+        await trust.token(),
+        ethers.BigNumber.from("1"),
+        ethers.BigNumber.from("1000000" + Util.sixZeros)
+      );
+    };
+    let swaps = 1;
+    while ((await reserve.balanceOf(bPool.address)).lte(finalValuation)) {
+      await swapReserveForTokens(signer1, reserveSpend);
+      swaps++;
+      /** 
+       * Should query every swap here. All swaps will have the same. 
+       * The `swaps` could be use to maintain control of the swaps lengths (in this scenario ofc)
+       * Also check the amount in/out if it is necessary with the balances maybe
+       */ 
+    }
+  })
+
+  it("End Dutch Auction test", async function(){
+    // Trust properties
+    const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+    const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+    const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
+    const minimumTradingDuration = 20;
+    const finalValuation = redeemInit
+      .add(minimumCreatorRaise)
+      .add(seederFee)
+      .add(reserveInit);
+
+    await Util.createEmptyBlock(minimumTradingDuration);
+
+    // Use `seeder1` to ends rase
+    await trust.connect(seeder1).endDutchAuction();
+
+    /**
+     * `EndDutchAuction` Event/Entity
+     * - `enderAddress`: Should be who call the endDutchAuction(), so eq to seeder1.address
+     * - `finalBalance`: should be eq or greater than `finalValuation`
+     * - `seederPay`: idk yet how this is calculated. Represent the payment of the seeder that will be approved
+     * - `creatorPay`:
+     * - `poolDust`: It is the reserver that still in the pool after end, `await reserve.balanceOf(poolAddress)`
+     * - 
+     * 
+     */
+  })
+
+  it("Trust Owner pulls reserve", async function(){
+    await reserve
+    .connect(creator)
+    .transferFrom(
+      trust.address,
+      creator.address,
+      await reserve.allowance(trust.address, creator.address)
+    );
+  })
+
+  it("Seeder pull erc20", async function() {
+      // seeder1 pulls erc20 from SeedERC20 contract
+      await seederContract
+      .connect(seeder1)
+      .pullERC20(await reserve.allowance(trust.address, seederContract.address));
+  })
+
+  it("Redeem seed test", async function() {
+    const seederContract1 = seederContract.connect(seeder1);
+    const seeder1Units = 4
+    await seederContract1.redeem(seeder1Units);
+  })
+
+  it("Pull ERC20 tokens ", async function() {
+    const token = new ethers.Contract(
+      await trust.token(),
+      redeemableTokenJson.abi,
+      creator
+    ) as RedeemableERC20;
+
+    await token
+    .connect(signer1)
+    .pullERC20(await reserve.allowance(trust.address, token.address));
+  })
+
+  it("Redeem RedeemableERC20 test", async function() {
+    const token = new ethers.Contract(
+      await trust.token(),
+      redeemableTokenJson.abi,
+      creator
+    ) as RedeemableERC20;
+
+    await token
+      .connect(signer1)
+      .redeem([reserve.address], await token.balanceOf(signer1.address));
   })
 });

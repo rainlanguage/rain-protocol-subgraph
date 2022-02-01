@@ -17,7 +17,8 @@
     "deploy-build:localhost": "yarn prepare:localhost && yarn codegen && yarn build && yarn create-local && yarn deploy-local",
     "hardhat-node": "hardhat node",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "postinstall": "cd node_modules/@beehiveinnovation/rain-protocol && yarn install --ignore-scripts && yarn build"
   },
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",
