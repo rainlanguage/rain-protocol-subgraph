@@ -14,7 +14,7 @@ import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeSche
 import { dataSource, log } from '@graphprotocol/graph-ts'
 import { ERC20 } from "../generated/TrustFactory/ERC20"
 import { Trust as TrustContract } from "../generated/TrustFactory/Trust"
-
+import { RedeemableERC20Template, SeedERC20Template } from '../generated/templates'
 export function handleConstruction(event: Construction): void {
     let context = dataSource.context()
     let trustFactory = TrustFactory.load(context.getBytes("factory").toHex())
@@ -54,8 +54,11 @@ export function handleInitialize(event: Initialize): void {
     let contracts = new Contract(trustAddress.toHex())
     contracts.crp = createConfigurableRightPool(event)
     contracts.reserveERC20 = createReserveERC20(event)
+    contracts.seeder = createSeedERC20(event)
     contracts.redeemableERC20 = createRedeemableERC20(event)
     contracts.save()
+
+    log.info("Seeder : {}", [event.params.seeder.toHex()])
     
     // DistributionProgess creation
 
@@ -157,7 +160,16 @@ function createRedeemableERC20(event: Initialize): string {
     redeemableERC20.symbol = redeemableERC20Contract.symbol()
     redeemableERC20.totalSupply = redeemableERC20Contract.totalSupply()
     redeemableERC20.decimals = redeemableERC20Contract.decimals()
+
+    redeemableERC20.redeems = []
+    redeemableERC20.treasuryAssets = []
+    redeemableERC20.holders = []
+    redeemableERC20.grantedReceivers = []
+    redeemableERC20.grantedSenders = []
+
     redeemableERC20.save()
+
+    RedeemableERC20Template.create(event.params.redeemableERC20)
     return redeemableERC20.id
 }
 
@@ -176,7 +188,6 @@ function createRedeemableERC20Pool(event: Initialize): string {
 }
 
 function createSeedERC20(event: Initialize): string {
-    log.info("Seeder : {}", [event.params.seeder.toHex()])
     let seedERC20 = SeedERC20.load(event.params.seeder.toHex())
     let seedERC20Contract = ERC20.bind(event.params.seeder)
     if(seedERC20 == null)
@@ -185,14 +196,17 @@ function createSeedERC20(event: Initialize): string {
         return seedERC20.id
     seedERC20.deployBlock = event.block.number
     seedERC20.deployTimestamp = event.block.timestamp
-    // seedERC20.name = seedERC20Contract.name()
-    // seedERC20.symbol = seedERC20Contract.symbol()
-    // seedERC20.totalSupply = seedERC20Contract.totalSupply()
-    // seedERC20.decimals = seedERC20Contract.decimals()
+    seedERC20.name = seedERC20Contract.name()
+    seedERC20.symbol = seedERC20Contract.symbol()
+    seedERC20.totalSupply = seedERC20Contract.totalSupply()
+    seedERC20.decimals = seedERC20Contract.decimals()
+    seedERC20.seederFee = event.params.config.seederFee
     seedERC20.seeds = []
     seedERC20.unseeds = []
     seedERC20.holders = []
     seedERC20.redeemSeed = []
     seedERC20.save()
+
+    SeedERC20Template.create(event.params.seeder)
     return seedERC20.id
 }

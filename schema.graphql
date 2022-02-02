@@ -167,11 +167,13 @@ type Swap @entity{
 
 type RedeemableERC20 @entity {
     id: ID!
+    sender: Bytes
+    admin: Bytes
+    grantedReceivers: [Bytes!]
+    grantedSenders: [Bytes!]
     redeems: [Redeem!] #Redeem event in RedeemableERC20.sol
     treasuryAssets: [TreasuryAsset!]
-    minimumTier: Int
-    # redeemables: [Redeemable!]! #RedeemableERC20.getRedeemables() => returns max 8 addresses for tokens
-    #...Token interface fields
+    minimumTier: BigInt
     symbol: String
     totalSupply: BigInt
     decimals: Int
@@ -179,6 +181,7 @@ type RedeemableERC20 @entity {
     holders: [Holder!]
     deployBlock: BigInt #the block the contract was deployed
     deployTimestamp: BigInt #the timestamp the contract was deployed
+    erc20Pull: ERC20Pull
 }
 
 type Redeem @entity {
@@ -196,6 +199,10 @@ type Redeem @entity {
 type SeedERC20 @entity{
     id: ID! #address of SeedERC20
     # Update after Trust construction
+    sender: Bytes
+    recipient: Bytes
+    reserve: Bytes
+    seedPrice: BigInt
     factory: Bytes #Trust.seedERC20Factory()
     seederFee: BigInt #Trust.seederFee()
     seederUnits: BigInt #Trust.seederUnits()
@@ -232,8 +239,8 @@ type Seed @entity {
     id: ID!
     caller: Bytes! #the address that was transferred to/from
     seedERC20: SeedERC20! #the seedERC20 that emitted the event
-    seedAmount: BigInt! #the reserve amount that was transferred
-    seedUnits: BigInt! #the amount of SeedERC20 that was transferred
+    tokensSeeded: BigInt! #the reserve amount that was transferred
+    reserveReceived: BigInt! #the amount of SeedERC20 that was transferred
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
@@ -242,8 +249,8 @@ type Unseed @entity {
     id: ID!
     caller: Bytes! #the address that was transferred to/from
     seedERC20: SeedERC20! #the seedERC20 that emitted the event
-    seedAmount: BigInt! #the reserve amount that was transferred
-    seedUnits: BigInt! #the amount of SeedERC20 that was transferred
+    reserveReceived: BigInt! #the reserve amount that was transferred
+    tokensSeeded: BigInt! #the amount of SeedERC20 that was transferred
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
@@ -299,11 +306,18 @@ type TreasuryAsset @entity {
 }
 
 type TreasuryAssetCaller @entity {
+    id: ID!
     trustAddress: Bytes!
     redeemableERC20Address: Bytes!
     treasuryAsset: TreasuryAsset!
-    id: ID!
     caller: Bytes!
     deployBlock: BigInt!
     deployTimestamp: BigInt!
+}
+
+type ERC20Pull @entity {
+    id: ID!
+    sender: Bytes
+    tokenSender: Bytes
+    token: Bytes
 }
