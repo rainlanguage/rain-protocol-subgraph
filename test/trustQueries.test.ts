@@ -4,7 +4,7 @@
 
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import * as Util from "./utils";
+import * as Util from "./utils/utils";
 import {
   deploy,
   waitForSubgraphToBeSynced,
@@ -12,7 +12,7 @@ import {
   exec,
   balancerDeploy,
   factoriesDeploy,
-} from "./utils";
+} from "./utils/utils";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
 import * as path from "path";
 import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
@@ -40,7 +40,7 @@ import {
   getTrust,
   NOTICE_QUERY,
   QUERY,
-} from "./queries";
+} from "./utils/queries";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import type { BigNumber, BigNumberish } from "ethers";
 enum Tier {
@@ -423,7 +423,7 @@ describe("Subgraph Test", function () {
       })) as FetchResult;
       const trustParticipantData = queryResponse.data;
 
-      // This user only have a single seed in this trust. 
+      // This user only have a single seed in this trust.
       // This got empty
       // expect(trustParticipantData.seeds.length).to.equals(1);
       // Or we can use the trustQuery and get the TrustParticipants lenght (should be one here)
@@ -487,7 +487,7 @@ describe("Subgraph Test", function () {
       await trustContract1.startDutchAuction();
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced(2000);
 
       const dutchAuctionQuery = `
         {
