@@ -3,6 +3,20 @@ let
 
    command = pkgs.writeShellScriptBin "command" ''
   '';
+
+   hardhat-node = pkgs.writeShellScriptBin "hardhat-node" ''
+    yarn hardhat-node &
+    sleep 5s
+  '';
+
+   graph-node = pkgs.writeShellScriptBin "graph-node" ''
+    yarn graph-node &
+    sleep 60s
+  '';
+
+   graph-test = pkgs.writeShellScriptBin "graph-test" ''
+    yarn test
+  '';
   
 in
 pkgs.stdenv.mkDerivation {
@@ -12,6 +26,9 @@ pkgs.stdenv.mkDerivation {
   pkgs.nodejs-16_x
   pkgs.jq
   command
+  hardhat-node
+  graph-node
+  graph-test
  ];
 
  shellHook = ''
