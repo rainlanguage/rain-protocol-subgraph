@@ -27,8 +27,6 @@ dataSources:
           file: ./abis/ERC20.json
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
         - name: SeedERC20
           file: ./abis/SeedERC20.json
       eventHandlers:
@@ -76,3 +74,60 @@ templates:
         - event: StartDutchAuction(address,address,uint256)
           handler: handleStartDutchAuction
       file: ./src/trust.ts
+  - kind: ethereum/contract
+    name: SeedERC20Template
+    network: {{ network }}
+    source:
+      abi: SeedERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Seed
+        - Initialize
+        - Unseed
+        - Transfer
+      abis:
+        - name: SeedERC20
+          file: ./abis/SeedERC20.json
+      eventHandlers:
+        - event: Seed(address,uint256,uint256)
+          handler: handleSeed
+        - event: Initialize(address,address,address,uint256,uint256)
+          handler: handleInitialize
+        - event: Unseed(address,uint256,uint256)
+          handler: handleUnseed
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/SeedERC20.ts
+  - kind: ethereum/contract
+    name: RedeemableERC20Template
+    network: {{ network }}
+    source:
+      abi: RedeemableERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Initialize
+        - Receiver
+        - Sender
+        - Transfer
+        - ERC20PullInitialize
+      abis:
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+      eventHandlers:
+        - event: Initialize(address,address,uint256)
+          handler: handleInitialize
+        - event: Receiver(address,address)
+          handler: handleInitialize
+        - event: Sender(address,address)
+          handler: handleSender
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: ERC20PullInitialize(address,address,address)
+          handler: handleERC20PullInitialize
+      file: ./src/RedeemableERC20.ts
