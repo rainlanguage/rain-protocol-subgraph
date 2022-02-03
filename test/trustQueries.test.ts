@@ -64,7 +64,7 @@ enum DistributionStatus {
   Fail,
 }
 
-describe("Subgraph Test", function () {
+describe("Subgraph Trusts Test", function () {
   const subgraphUser = "vishalkale151071";
   const subgraphName = "rain-protocol";
   let trustFactory: TrustFactory;

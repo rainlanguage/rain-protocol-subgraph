@@ -1,9 +1,11 @@
+/* eslint-disable node/no-missing-import */
 import { Contract, Signer, ContractTransaction } from "ethers";
 import { Result } from "ethers/lib/utils";
 import { createApolloFetch } from "apollo-fetch";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import { Artifact } from "hardhat/types";
 
 // Balancer contracts
 import BFactory from "@beehiveinnovation/balancer-core/artifacts/BFactory.json";
@@ -21,14 +23,15 @@ import TrustFactory from "@beehiveinnovation/rain-protocol/artifacts/contracts/t
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 
 // Types
-import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol//typechain/ConfigurableRightsPool";
-import type { BPool } from "@beehiveinnovation/rain-protocol//typechain/BPool";
+import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
+import type { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
 import type {
   Trust,
   TrustConfigStruct,
   TrustRedeemableERC20ConfigStruct,
   TrustSeedERC20ConfigStruct,
 } from "@beehiveinnovation/rain-protocol/typechain/Trust";
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 interface SyncedSubgraphType {
   synced: boolean;
@@ -161,7 +164,11 @@ export const factoriesDeploy = async (
   balancerFactory: Contract,
   signer: Signer
 ): Promise<any> => {
-  const redeemableERC20Factory = await deploy(RedeemableERC20Factory, signer,[]);
+  const redeemableERC20Factory = await deploy(
+    RedeemableERC20Factory,
+    signer,
+    []
+  );
 
   const seedERC20Factory = await deploy(SeedERC20Factory, signer, []);
 
@@ -171,12 +178,16 @@ export const factoriesDeploy = async (
     crpFactory: crpFactory.address,
     balancerFactory: balancerFactory.address,
     creatorFundsReleaseTimeout: CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING,
-    maxRaiseDuration: MAX_RAISE_DURATION_TESTING
+    maxRaiseDuration: MAX_RAISE_DURATION_TESTING,
   };
 
   const iface = new ethers.utils.Interface(TrustFactory.abi);
-  const trustFactoryFactory  = new ethers.ContractFactory(iface, TrustFactory.bytecode, signer);
-  const trustFactory = (await trustFactoryFactory.deploy(TrustFactoryArgs));
+  const trustFactoryFactory = new ethers.ContractFactory(
+    iface,
+    TrustFactory.bytecode,
+    signer
+  );
+  const trustFactory = await trustFactoryFactory.deploy(TrustFactoryArgs);
   await trustFactory.deployed();
   return {
     redeemableERC20Factory,
@@ -264,14 +275,14 @@ function timeout(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const containObject = (arr:any[], obj:any): Boolean => {
+export const containObject = (arr: any[], obj: any): Boolean => {
   const keys = Object.keys(obj);
   let result = false;
 
   for (let i = 0; i < arr.length; i++) {
     if (Object.keys(arr[i]).length === keys.length) {
-      for(let j = 0; j < keys.length; j++) {
-        if(arr[i][keys[j]] === obj[keys[j]]) {
+      for (let j = 0; j < keys.length; j++) {
+        if (arr[i][keys[j]] === obj[keys[j]]) {
           result = true;
         } else {
           result = false;
@@ -310,7 +321,7 @@ export const writeFile = (_path: string, file: any) => {
  * @param contractAddressOverride - (optional) override the contract address which emits this event
  * @returns Event arguments, can be deconstructed by array index or by object key
  */
- export const getEventArgs = async (
+export const getEventArgs = async (
   tx: ContractTransaction,
   eventName: string,
   contract: Contract,
@@ -319,8 +330,7 @@ export const writeFile = (_path: string, file: any) => {
   const eventObj = (await tx.wait()).events.find(
     (x) =>
       x.topics[0] == contract.filters[eventName]().topics[0] &&
-      x.address ==
-        (contractAddressOverride ? contractAddressOverride : contract.address)
+      x.address == (contractAddressOverride || contract.address)
   );
 
   if (!eventObj) {
@@ -328,14 +338,13 @@ export const writeFile = (_path: string, file: any) => {
   }
 
   return contract.interface.decodeEventLog(eventName, eventObj.data);
-  
 };
 
 export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const wait = 500
+export const wait = 500;
 
 export const createEmptyBlock = async (count?: number): Promise<void> => {
   const signers = await ethers.getSigners();
@@ -347,4 +356,31 @@ export const createEmptyBlock = async (count?: number): Promise<void> => {
   } else {
     await signers[0].sendTransaction(tx);
   }
+};
+
+/**
+ *
+ * @param tx - transaction where event of the creation occurs
+ * @param contractFactory - contract factory that create the child
+ * @param contractArtifact - the artifact of the child contract
+ * @param signer - (optional) the signer that will be connected the child contract. Same as contractFactory if not provided
+ * @returns A child contract connected to the signer
+ */
+export const getContractChild = async (
+  tx: ContractTransaction,
+  contractFactory: Contract,
+  contractArtifact: Artifact,
+  signer?: SignerWithAddress
+): Promise<Contract> => {
+  const contractChild = new ethers.Contract(
+    ethers.utils.hexZeroPad(
+      ethers.utils.hexStripZeros(
+        (await getEventArgs(tx, "NewChild", contractFactory)).child
+      ),
+      20 // address bytes length
+    ),
+    contractArtifact.abi,
+    signer || contractFactory.signer
+  ) as Contract;
+  return contractChild;
 };
