@@ -11,7 +11,7 @@ import {
 } from '../generated/TrustFactory/Trust'
 
 import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, RedeemableERC20, RedeemableERC20Pool, ReserveERC20, SeedERC20, Trust, TrustFactory } from "../generated/schema"
-import { dataSource, log } from '@graphprotocol/graph-ts'
+import { dataSource, DataSourceContext, log } from '@graphprotocol/graph-ts'
 import { ERC20 } from "../generated/TrustFactory/ERC20"
 import { Trust as TrustContract } from "../generated/TrustFactory/Trust"
 import { RedeemableERC20Template, SeedERC20Template } from '../generated/templates'
@@ -57,8 +57,6 @@ export function handleInitialize(event: Initialize): void {
     contracts.seeder = createSeedERC20(event)
     contracts.redeemableERC20 = createRedeemableERC20(event)
     contracts.save()
-
-    log.info("Seeder : {}", [event.params.seeder.toHex()])
     
     // DistributionProgess creation
 
@@ -168,23 +166,10 @@ function createRedeemableERC20(event: Initialize): string {
     redeemableERC20.grantedSenders = []
 
     redeemableERC20.save()
-
-    RedeemableERC20Template.create(event.params.redeemableERC20)
+    let context = new DataSourceContext()
+    context.setString("trust", event.address.toHex())
+    RedeemableERC20Template.createWithContext(event.params.redeemableERC20, context)
     return redeemableERC20.id
-}
-
-
-function createRedeemableERC20Pool(event: Initialize): string {
-    let redeemableERC20Pool = RedeemableERC20Pool.load(event.params.redeemableERC20.toHex())
-
-    if(redeemableERC20Pool == null)
-        redeemableERC20Pool = new RedeemableERC20Pool(event.params.redeemableERC20.toHex())
-    else
-        return redeemableERC20Pool.id
-    redeemableERC20Pool.deployBlock= event.block.number
-    redeemableERC20Pool.deployTimestamp= event.block.timestamp
-    redeemableERC20Pool.save()
-    return redeemableERC20Pool.id
 }
 
 function createSeedERC20(event: Initialize): string {

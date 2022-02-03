@@ -116,7 +116,11 @@ templates:
         - Sender
         - Transfer
         - ERC20PullInitialize
+        - Redeem
+        - TreasuryAsset
       abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
       eventHandlers:
@@ -130,4 +134,8 @@ templates:
           handler: handleTransfer
         - event: ERC20PullInitialize(address,address,address)
           handler: handleERC20PullInitialize
+        - event: Redeem(address,address,uint256[2])
+          handler: handleRedeem
+        - event: TreasuryAsset(address,address)
+          handler: handleTreasuryAsset
       file: ./src/RedeemableERC20.ts

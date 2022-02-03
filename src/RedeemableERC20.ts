@@ -1,7 +1,9 @@
-import { ERC20Pull, Holder, RedeemableERC20 } from "../generated/schema"
-import { Initialize, Receiver, Sender, Transfer, ERC20PullInitialize} from "../generated/templates/RedeemableERC20Template/RedeemableERC20"
+import { ERC20Pull, Holder, RedeemableERC20, TreasuryAsset, TreasuryAssetCaller, Redeem} from "../generated/schema"
+import { Initialize, Receiver, Sender, Transfer, ERC20PullInitialize, Redeem as RedeemEvent , TreasuryAsset as TreasuryAssetEvent} from "../generated/templates/RedeemableERC20Template/RedeemableERC20"
 import { ZERO_ADDRESS, ZERO_BI } from "./utils"
 import { RedeemableERC20 as RedeemabaleERC20Contract } from "../generated/TrustFactory/RedeemableERC20"
+import { ERC20 } from "../generated/TrustFactory/ERC20"
+import { dataSource, log } from "@graphprotocol/graph-ts"
 
 export function handleInitialize(event: Initialize): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
@@ -71,6 +73,75 @@ export function handleERC20PullInitialize(event: ERC20PullInitialize): void {
     redeemabaleERC20.save()
 }
 
+export function handleRedeem(event: RedeemEvent): void {
+    let redeemableERC20 = RedeemableERC20.load(event.address.toHex())
+    let totalRedeems = redeemableERC20.redeems.length
+    let redeem = new Redeem(event.transaction.hash.toHex() + "-" + totalRedeems.toString())
+    let treasuryAsset = TreasuryAsset.load(event.address.toHex() + " - " + event.params.treasuryAsset.toHex())
+    let values = event.params.redeemAmounts
+    let context = dataSource.context()
+
+    redeem.redeemableERC20 = redeemableERC20.id
+    redeem.caller = event.params.sender
+    redeem.treasuryAsset = treasuryAsset.id
+    redeem.treasuryAssetAmount = values[0]
+    redeem.redeemAmount = values[1]
+    redeem.deployBlock = event.block.number
+    redeem.deployTimestamp = event.block.timestamp
+    redeem.trust = context.getString("trust")
+    redeem.save()
+
+    let taredeems = treasuryAsset.redeems
+    taredeems.push(redeem.id)
+    treasuryAsset.redeems = taredeems
+
+    treasuryAsset.save()
+
+    let redeems = redeemableERC20.redeems
+    redeems.push(redeem.id)
+    redeemableERC20.redeems = redeems
+
+    redeemableERC20.save()
+}
+
+export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
+    let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
+    let context = dataSource.context()
+    let treasuryAsset = TreasuryAsset.load(event.address.toHex() + " - " + event.params.asset.toHex())
+    if(treasuryAsset == null){
+        let treasuryAssetContract = ERC20.bind(event.params.asset)
+
+        treasuryAsset = new TreasuryAsset(event.address.toHex() + " - " + event.params.asset.toHex())
+        
+        treasuryAsset.deployBlock = event.block.number
+        treasuryAsset.deployTimestamp = event.block.timestamp
+        treasuryAsset.name = treasuryAssetContract.name()
+        treasuryAsset.symbol = treasuryAssetContract.symbol()
+        treasuryAsset.decimals = treasuryAssetContract.decimals()
+        treasuryAsset.totalSupply = treasuryAssetContract.totalSupply()
+        treasuryAsset.balance = treasuryAssetContract.balanceOf(event.address)
+        treasuryAsset.redeemableERC20 = redeemabaleERC20.id
+        treasuryAsset.address = event.params.asset
+        treasuryAsset.trust = context.getString("trust")
+        treasuryAsset.callers = []
+        treasuryAsset.redeems = [] 
+    }
+
+    let caller = new TreasuryAssetCaller(event.transaction.hash.toHex())
+    caller.caller = event.params.sender
+    caller.deployBlock = event.block.number
+    caller.deployTimestamp = event.block.timestamp
+    caller.trustAddress = context.getString("trust")
+    caller.redeemableERC20Address = event.address
+    caller.treasuryAsset = treasuryAsset.id
+    caller.save()
+
+    let callers = treasuryAsset.callers
+    callers.push(caller.id)
+    treasuryAsset.callers = callers
+
+    treasuryAsset.save()
+}
 
 // export function handleRedeem(event: Event):void {
 //     let redeemableERC20Address = dataSource.address()
@@ -248,14 +319,14 @@ export function handleERC20PullInitialize(event: ERC20PullInitialize): void {
 //     }
 //     treasuryAsset.trust = trust.id
 
-//     let caller = new TreasuryAssetCaller(event.transaction.hash.toHex())
-//     caller.caller = event.params.emitter
-//     caller.block = event.block.number
-//     caller.timestamp = event.block.timestamp
-//     caller.trustAddress = Address.fromString(trustAddress)
-//     caller.redeemableERC20Address = redeemabaleERC20Address
-//     caller.treasuryAsset = treasuryAsset.id
-//     caller.save()
+    // let caller = new TreasuryAssetCaller(event.transaction.hash.toHex())
+    // caller.caller = event.params.emitter
+    // caller.block = event.block.number
+    // caller.timestamp = event.block.timestamp
+    // caller.trustAddress = Address.fromString(trustAddress)
+    // caller.redeemableERC20Address = redeemabaleERC20Address
+    // caller.treasuryAsset = treasuryAsset.id
+    // caller.save()
 
 //     let callers = treasuryAsset.callers
 //     callers.push(caller.id)
