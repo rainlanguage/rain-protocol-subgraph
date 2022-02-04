@@ -1,8 +1,8 @@
 
-import { log } from "@graphprotocol/graph-ts";
-import { Seed, Unseed, SeedERC20, Holder } from "../generated/schema";
+import { dataSource, log } from "@graphprotocol/graph-ts";
+import { Seed, Unseed, SeedERC20, Holder, Trust } from "../generated/schema";
 import { Initialize, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../generated/templates/SeedERC20Template/SeedERC20";
-import { ZERO_ADDRESS, ZERO_BI } from "./utils";
+import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "./utils";
 import { SeedERC20 as SeedERC20Contract } from "../generated/TrustFactory/SeedERC20"
 export function handleSeed(event: SeedEvent): void {
     let seedERC20 = SeedERC20.load(event.address.toHex())
@@ -21,6 +21,13 @@ export function handleSeed(event: SeedEvent): void {
     seeds.push(seed.id)
     seedERC20.seeds = seeds
     seedERC20.save()
+
+    let context = dataSource.context()
+    let trustParticipant = getTrustParticipent(event.params.sender, context.getString("trust"))
+    let tseeds = trustParticipant.seeds
+    tseeds.push(seed.id)
+    trustParticipant.seeds = tseeds
+    trustParticipant.save()
 }
 
 export function handleUnseed(event: UnseedEvent): void {
@@ -40,6 +47,13 @@ export function handleUnseed(event: UnseedEvent): void {
     unseeds.push(unseed.id)
     seedERC20.unseeds = unseeds
     seedERC20.save()
+
+    let context = dataSource.context()
+    let trustParticipant = getTrustParticipent(event.params.sender, context.getString("trust"))
+    let tunseeds = trustParticipant.unSeeds
+    tunseeds.push(unseed.id)
+    trustParticipant.unSeeds = tunseeds
+    trustParticipant.save()
 }
 
 export function handleInitialize(event: Initialize): void {
@@ -64,19 +78,20 @@ export function handleTransfer(event: Transfer): void {
         }
         sender.balance = sender.balance.minus(event.params.value)
     }
+    if(event.params.to.toHex() != ZERO_ADDRESS){
+        let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
+        if(receiver == null){
+            receiver = new Holder(event.address.toHex() + " - " + event.params.to.toHex())
+            receiver.balance = ZERO_BI
+        }
+        receiver.balance = receiver.balance.plus(event.params.value)
+        receiver.address = event.params.to
+        receiver.save()
 
-    let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
-    if(receiver == null){
-        receiver = new Holder(event.address.toHex() + " - " + event.params.to.toHex())
-        receiver.balance = ZERO_BI
+        if(!holders.includes(receiver.id)){
+            holders.push(receiver.id)
+            seedERC20.holders = holders
+            seedERC20.save()
+        }
     }
-    receiver.balance = receiver.balance.plus(event.params.value)
-    receiver.address = event.params.to
-    receiver.save()
-
-    if(!holders.includes(receiver.id)){
-        holders.push(receiver.id)
-        seedERC20.holders = holders
-        seedERC20.save()
-    }  
 }

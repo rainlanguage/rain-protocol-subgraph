@@ -54,7 +54,6 @@ type Contract @entity {
     id: ID!
     reserveERC20: ReserveERC20 #Trust.getContracts() => address reserveERC20
     redeemableERC20: RedeemableERC20 #Trust.getContracts() => address redeemableERC20
-    redeemableERC20Pool: RedeemableERC20Pool #Trust.getContracts() => address redeemableERC20Pool
     seeder: SeedERC20 #Trust.getContracts() => address seeder
     tier: Bytes #Trust.getContracts() => address tier
     crp: CRP #Trust.getContracts() => address crp
@@ -140,12 +139,12 @@ type Redeemable @entity{
 type Pool @entity{
     id: ID!
     trust: Trust! #the trust that is the owner of this pool
-    reserve: ReserveERC20! #the reserve token for this trust
-    redeemable: RedeemableERC20! #the redeemable token for this trust
-    poolBalanceReserve: BigInt! #Trust.getDistributionProgress() => uint256 poolReserveBalance
-    poolTokenBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolTokenBalance
-    numberOfSwaps: BigInt!
-    swaps: [Swap!]!
+    reserve: ReserveERC20 #the reserve token for this trust
+    redeemable: RedeemableERC20 #the redeemable token for this trust
+    poolBalanceReserve: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
+    poolTokenBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
+    numberOfSwaps: BigInt
+    swaps: [Swap!]
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
@@ -257,10 +256,10 @@ type Unseed @entity {
 
 type TrustParticipant @entity {
     id: ID!
-    user: Bytes! #address of user
+    address: Bytes! #address of user
     trust: Trust! #map by address of the trust
     # Update after every Swap event from Pool, and after every Redeem event for this RedeemableERC20 (as this burns the token)
-    tokenBalance: BigInt! #RedeemableERC20.balanceOf(this.user.address)
+    tokenBalance: BigInt #RedeemableERC20.balanceOf(this.user.address)
     swaps: [Swap!] #Swaps for this.address
     # Seed events for the SeedERC20 associated with this trust, for this.address
     seeds: [Seed!]
@@ -268,8 +267,8 @@ type TrustParticipant @entity {
     # Seed redeem events for the SeedERC20 associated with this trust, for this.address
     redeemSeeds: [RedeemSeed!]
     # Update after Transfer events for SeedERC20
-    seedBalance: BigInt! #SeedERC20.balanceOf(this.user.address)
-    seedFeeClaimable: BigInt! # = SeedERC20.balanceOf(this.user.address) * SeedERC20.seedFeePerUnit
+    seedBalance: BigInt #SeedERC20.balanceOf(this.user.address)
+    seedFeeClaimable: BigInt # = SeedERC20.balanceOf(this.user.address) * SeedERC20.seedFeePerUnit
     # Reedeem events for this trust, for this.address
     redeems: [Redeem!]
 }

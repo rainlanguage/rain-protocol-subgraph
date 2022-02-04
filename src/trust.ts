@@ -10,11 +10,13 @@ import {
     StartDutchAuction
 } from '../generated/TrustFactory/Trust'
 
-import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, RedeemableERC20, RedeemableERC20Pool, ReserveERC20, SeedERC20, Trust, TrustFactory } from "../generated/schema"
+import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ReserveERC20, SeedERC20, Trust, TrustFactory } from "../generated/schema"
 import { dataSource, DataSourceContext, log } from '@graphprotocol/graph-ts'
 import { ERC20 } from "../generated/TrustFactory/ERC20"
 import { Trust as TrustContract } from "../generated/TrustFactory/Trust"
-import { RedeemableERC20Template, SeedERC20Template } from '../generated/templates'
+import { PoolTemplate, RedeemableERC20Template, SeedERC20Template } from '../generated/templates'
+import { ZERO_BI } from "./utils"
+
 export function handleConstruction(event: Construction): void {
     let context = dataSource.context()
     let trustFactory = TrustFactory.load(context.getBytes("factory").toHex())
@@ -71,7 +73,6 @@ export function handleInitialize(event: Initialize): void {
     distributionProgress.redeemInit = event.params.config.redeemInit
     distributionProgress.save()
 
-
     trust.contracts = contracts.id
     trust.distributionProgress = distributionProgress.id
     trust.save()
@@ -112,6 +113,10 @@ export function handleStartDutchAuction(event: StartDutchAuction): void {
 
     trust.dutchAuction = dutchAuction.id
     trust.save()
+
+    let contracts = Contract.load(trustAddress.toHex())
+    contracts.pool = createPool(event)
+    contracts.save()
 }
 
 function createConfigurableRightPool(event: Initialize): string {
@@ -192,6 +197,28 @@ function createSeedERC20(event: Initialize): string {
     seedERC20.redeemSeed = []
     seedERC20.save()
 
-    SeedERC20Template.create(event.params.seeder)
+    let context = new DataSourceContext()
+    context.setString("trust", event.address.toHex())
+    SeedERC20Template.createWithContext(event.params.seeder, context)
     return seedERC20.id
+}
+
+function createPool(event: StartDutchAuction): string {
+    let pool = Pool.load(event.params.pool.toHex())
+    if(pool == null){
+        pool = new Pool(event.params.pool.toHex())
+        pool.deployBlock = event.block.number
+        pool.deployTimestamp = event.block.timestamp
+        pool.trust = event.address.toHex()
+        pool.numberOfSwaps = ZERO_BI
+        pool.swaps = []
+    }else{
+        return pool.id
+    }
+    pool.save()
+
+    let context = new DataSourceContext()
+    context.setString("trust", event.address.toHex())
+    PoolTemplate.createWithContext(event.params.pool, context)
+    return pool.id
 }

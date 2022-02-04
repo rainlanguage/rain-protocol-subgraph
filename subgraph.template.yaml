@@ -21,8 +21,8 @@ dataSources:
           file: ./abis/TrustFactory.json
         - name: Trust
           file: ./abis/Trust.json
-        - name: BPool
-          file: ./abis/BPool.json
+        - name: Pool
+          file: ./abis/Pool.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: RedeemableERC20
@@ -91,6 +91,8 @@ templates:
       abis:
         - name: SeedERC20
           file: ./abis/SeedERC20.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
       eventHandlers:
         - event: Seed(address,uint256,uint256)
           handler: handleSeed
@@ -123,6 +125,8 @@ templates:
           file: ./abis/ERC20.json
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
+        - name: SeedERC20
+          file: ./abis/SeedERC20.json
       eventHandlers:
         - event: Initialize(address,address,uint256)
           handler: handleInitialize
@@ -139,3 +143,27 @@ templates:
         - event: TreasuryAsset(address,address)
           handler: handleTreasuryAsset
       file: ./src/RedeemableERC20.ts
+  - kind: ethereum/contract
+    name: PoolTemplate
+    network: {{ network }}
+    source:
+      abi: Pool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - LOG_SWAP
+      abis:
+        - name: Pool
+          file: ./abis/Pool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+        - name: SeedERC20
+          file: ./abis/SeedERC20.json
+      eventHandlers:
+        - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleLOG_SWAP
+      file: ./src/Pool.ts
