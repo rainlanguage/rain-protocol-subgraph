@@ -105,6 +105,7 @@ describe("Subgraph Trusts Test", function () {
 
     tier = (await Util.deploy(READWRITE_TIER, creator, [])) as ITier;
     minimumTier = Tier.GOLD;
+    await tier.setTier(signer1.address, Tier.GOLD, []);
 
     ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
       await factoriesDeploy(crpFactory, bFactory, creator));
@@ -159,25 +160,6 @@ describe("Subgraph Trusts Test", function () {
     expect(factories.seedERC20Factory).to.equals(
       seedERC20Factory.address.toLowerCase()
     );
-  });
-
-  it("should get a tier change correctly", async function () {
-    const sender = creator.address;
-    const accountToUpgrade = signer1.address;
-    const startTier = await tier.report(accountToUpgrade);
-    const endTier = Tier.GOLD;
-
-    await tier.setTier(accountToUpgrade, endTier, []);
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
-    /**
-     * This will be move to new test file (specfic to Tiers)
-     * Giving to `signer1` a tier (the beneficies)
-     * The schema doesnt exit yet, but will be necessary here
-     * In this case is a ReadWriteTier (ITier)
-     * Need to be `setTier` before the Trust Creation
-     *
-     */
   });
 
   describe("Single Trust test", function () {
