@@ -18,6 +18,8 @@
     "hardhat-node": "hardhat node",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
     "test": "hardhat test",
+    "test-trust": "hardhat test test/trustQueries.test.ts",
+    "test-tier": "hardhat test test/tierQueries.test.ts",
     "postinstall": "cd node_modules/@beehiveinnovation/rain-protocol && yarn install --ignore-scripts && yarn build"
   },
   "devDependencies": {
