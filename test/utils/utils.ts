@@ -1,6 +1,6 @@
 /* eslint-disable node/no-missing-import */
-import { Contract, Signer, ContractTransaction } from "ethers";
-import { Result } from "ethers/lib/utils";
+import { Contract, Signer, ContractTransaction, BytesLike } from "ethers";
+import { Result, concat, hexlify, Hexable, zeroPad } from "ethers/lib/utils";
 import { createApolloFetch } from "apollo-fetch";
 import fs from "fs";
 import path from "path";
@@ -39,9 +39,15 @@ interface SyncedSubgraphType {
 
 const { ethers } = require("hardhat");
 
-export const eighteenZeros = "000000000000000000";
-export const zeroAddress = ethers.constants.AddressZero;
 export const sixZeros = "000000";
+export const sixteenZeros = "0000000000000000";
+export const eighteenZeros = "000000000000000000";
+
+export const zeroAddress = ethers.constants.AddressZero;
+
+export const ONE = ethers.BigNumber.from("1" + eighteenZeros);
+export const RESERVE_ONE = ethers.BigNumber.from("1" + sixZeros);
+
 export const CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING = 100;
 export const MAX_RAISE_DURATION_TESTING = 100;
 
@@ -66,6 +72,7 @@ export const fetchSubgraph = (subgraphUser: string, subgraphName: string) => {
   });
 };
 
+// eslint-disable-next-line no-unused-vars
 const checkIfAllSynced = (subgraphs: SyncedSubgraphType[]) => {
   const result = subgraphs.find(
     (el: SyncedSubgraphType) => el.synced === false
@@ -94,7 +101,7 @@ export const waitForSubgraphToBeSynced = async (delay: number) =>
           }`,
         });
         // console.log("Health : ", result.data)
-        if (result.data.indexingStatusForCurrentVersion.synced == true) {
+        if (result.data.indexingStatusForCurrentVersion.synced === true) {
           resolve({ synced: true });
         } else {
           throw new Error("reject or retry");
@@ -148,12 +155,12 @@ export const balancerDeploy = async (
 };
 
 const linkBytecode = (artifact: any, links: any) => {
-  Object.keys(links).forEach((library_name) => {
-    const library_address = links[library_name];
-    const regex = new RegExp(`__${library_name}_+`, "g");
+  Object.keys(links).forEach((libraryName) => {
+    const libraryAddress = links[libraryName];
+    const regex = new RegExp(`__${libraryName}_+`, "g");
     artifact.bytecode = artifact.bytecode.replace(
       regex,
-      library_address.replace("0x", "")
+      libraryAddress.replace("0x", "")
     );
   });
   return artifact;
@@ -325,12 +332,12 @@ export const getEventArgs = async (
   tx: ContractTransaction,
   eventName: string,
   contract: Contract,
-  contractAddressOverride: any = null
+  contractAddressOverride: string = null
 ): Promise<Result> => {
   const eventObj = (await tx.wait()).events.find(
     (x) =>
-      x.topics[0] == contract.filters[eventName]().topics[0] &&
-      x.address == (contractAddressOverride || contract.address)
+      x.topics[0] === contract.filters[eventName]().topics[0] &&
+      x.address === (contractAddressOverride || contract.address)
   );
 
   if (!eventObj) {
@@ -384,3 +391,26 @@ export const getContractChild = async (
   ) as Contract;
   return contractChild;
 };
+
+/**
+ * Converts a value to raw bytes representation. Assumes `value` is less than or equal to 1 byte, unless a desired `bytesLength` is specified.
+ *
+ * @param value - value to convert to raw bytes format
+ * @param bytesLength - (defaults to 1) number of bytes to left pad if `value` doesn't completely fill the desired amount of memory. Will throw `InvalidArgument` error if value already exceeds bytes length.
+ * @returns {Uint8Array} - raw bytes representation
+ */
+export function bytify(
+  value: number | BytesLike | Hexable,
+  bytesLength = 1
+): BytesLike {
+  return zeroPad(hexlify(value), bytesLength);
+}
+
+/**
+ * Converts an opcode and operand to bytes, and returns their concatenation.
+ * @param code - the opcode
+ * @param erand - the operand, currently limited to 1 byte (defaults to 0)
+ */
+export function op(code: number, erand = 0): Uint8Array {
+  return concat([bytify(code), bytify(erand)]);
+}

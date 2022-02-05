@@ -214,9 +214,9 @@
     truffle-plugin-verify "^0.4.0"
     yarn "^1.22.5"
 
-"@beehiveinnovation/rain-protocol@beehive-innovation/rain-protocol.git#5972e90bdf137423ae9cbdd0f268bf8fd126ed65":
+"@beehiveinnovation/rain-protocol@git+https://github.com/beehive-innovation/rain-protocol.git#develop-sale":
   version "0.0.16"
-  resolved "https://codeload.github.com/beehive-innovation/rain-protocol/tar.gz/5972e90bdf137423ae9cbdd0f268bf8fd126ed65"
+  resolved "git+https://github.com/beehive-innovation/rain-protocol.git#adca2a0345b433cfba0adaf6a2a7ebb34b6a8688"
   dependencies:
     "@0xsequence/sstore2" "git+https://github.com/0xsequence/sstore2.git#b9233bcf1bbbbed37f9029e0355ac3026cd3563b"
     "@beehiveinnovation/balancer-core" "0.0.7"
@@ -1456,6 +1456,16 @@
   dependencies:
     "@typescript-eslint/types" "4.33.0"
     eslint-visitor-keys "^2.0.0"
+
+"@vishalkale15107/rain-protocol@git+https://github.com/vishalkale151071/rain-protocol.git#develop":
+  version "0.0.16"
+  resolved "git+https://github.com/vishalkale151071/rain-protocol.git#8c536bc531908a67fb4f4f88a6066552bd4ad492"
+  dependencies:
+    "@0xsequence/sstore2" "git+https://github.com/0xsequence/sstore2.git#b9233bcf1bbbbed37f9029e0355ac3026cd3563b"
+    "@beehiveinnovation/balancer-core" "0.0.7"
+    "@beehiveinnovation/configurable-rights-pool" "0.0.1"
+    "@openzeppelin/contracts" "^4.3.3"
+    "@openzeppelin/contracts-upgradeable" "^4.4.1"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
