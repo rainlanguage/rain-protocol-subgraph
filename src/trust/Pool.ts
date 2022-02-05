@@ -1,8 +1,8 @@
 import { dataSource } from "@graphprotocol/graph-ts"
-import { Pool, Swap } from "../generated/schema"
-import { LOG_SWAP } from "../generated/templates/PoolTemplate/Pool"
-import { ERC20 } from "../generated/TrustFactory/ERC20"
-import { getTrustParticipent } from "./utils"
+import { Pool, Swap, Trust } from "../../generated/schema"
+import { LOG_SWAP } from "../../generated/templates/PoolTemplate/Pool"
+import { ERC20 } from "../../generated/TrustFactory/ERC20"
+import { getTrustParticipent } from "../utils"
 
 export function handleLOG_SWAP(event: LOG_SWAP): void {
     let pool = Pool.load(event.address.toHex())
@@ -37,4 +37,12 @@ export function handleLOG_SWAP(event: LOG_SWAP): void {
     trustParticipant.swaps = tswaps
     
     trustParticipant.save()
+
+    let trust = Trust.load(context.getString("trust"))
+    let trustParticipants = trust.trustParticipants
+    if(!trustParticipants.includes(trustParticipant.id)){
+        trustParticipants.push(trustParticipant.id)
+        trust.trustParticipants = trustParticipants
+        trust.save()
+    }
 }

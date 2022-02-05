@@ -86,9 +86,6 @@ export function getContracts(contract: string) :string {
           decimals
           totalSupply
         }
-        redeemableERC20Pool {
-          id
-        }
         seeder {
           id
           name

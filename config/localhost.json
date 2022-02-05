@@ -1,5 +1,15 @@
 {
     "network": "localhost",
-    "factory": "0x0fe4223AD99dF788A6Dcad148eB4086E6389cEB6",
-    "startBlock": 429
+    "factory": "0xfaAddC93baf78e89DCf37bA67943E1bE8F37Bb8c",
+    "startBlock": 145,
+    "verifyFactory": "0x276C216D241856199A83bf27b2286659e5b877D3",
+    "blockErc20VerifyFactory": 148,
+    "erc20BalanceTierFactory": "0x3347B4d90ebe72BeFb30444C9966B2B990aE9FcB",
+    "blockErc20BalanceTierFactory": 149,
+    "erc20TransferTierFactory": "0x3155755b79aA083bd953911C92705B7aA82a18F9",
+    "blockErc20TierTierFactory": 150,
+    "combineTierFactory": "0x5bf5b11053e734690269C6B9D438F8C9d48F528A",
+    "blockCombineTierFactory": 151,
+    "verifyTierFactory": "0xffa7CA1AEEEbBc30C874d32C7e22F052BbEa0429",
+    "blockVerifyTierFactory": 152
 }

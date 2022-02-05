@@ -1,9 +1,9 @@
 
 import { dataSource, log } from "@graphprotocol/graph-ts";
-import { Seed, Unseed, SeedERC20, Holder, Trust } from "../generated/schema";
-import { Initialize, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../generated/templates/SeedERC20Template/SeedERC20";
-import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "./utils";
-import { SeedERC20 as SeedERC20Contract } from "../generated/TrustFactory/SeedERC20"
+import { Seed, Unseed, SeedERC20, Holder, Trust } from "../../generated/schema";
+import { Initialize, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../../generated/templates/SeedERC20Template/SeedERC20";
+import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "../utils";
+import { SeedERC20 as SeedERC20Contract } from "../../generated/TrustFactory/SeedERC20"
 export function handleSeed(event: SeedEvent): void {
     let seedERC20 = SeedERC20.load(event.address.toHex())
 

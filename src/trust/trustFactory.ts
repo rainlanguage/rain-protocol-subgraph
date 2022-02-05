@@ -1,11 +1,11 @@
 /* eslint-disable prettier/prettier */
-import { NewChild, Implementation } from '../generated/TrustFactory/TrustFactory'
+import { NewChild, Implementation } from '../../generated/TrustFactory/TrustFactory'
 import {
     TrustFactory,
     Trust
-} from '../generated/schema'
-import { TrustTemplate } from "../generated/templates"
-import { ZERO_BI, ONE_BI } from './utils'
+} from '../../generated/schema'
+import { TrustTemplate } from "../../generated/templates"
+import { ZERO_BI, ONE_BI } from '../utils'
 import { log, Address, DataSourceContext } from '@graphprotocol/graph-ts'
 export function handleNewChild(event: NewChild): void {
     let trustFactory = TrustFactory.load(event.address.toHex())

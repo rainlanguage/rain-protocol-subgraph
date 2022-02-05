@@ -34,7 +34,57 @@ dataSources:
           handler: handleNewChild
         - event: Implementation(address,address)
           handler: handleImplementation
-      file: ./src/trustFactory.ts
+      file: ./src/trust/trustFactory.ts
+  - kind: ethereum/contract
+    name: VerifyFactory
+    network: {{ network }}
+    source:
+      address: "{{ verifyFactory }}"
+      abi: VerifyFactory
+      startBlock: {{ blockErc20VerifyFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - NewChild
+        - Implementation
+      abis:
+        - name: VerifyFactory
+          file: ./abis/tier/VerifyFactory.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/VerifyFactory.ts
+  - kind: ethereum/contract
+    name: ERC20BalanceTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ erc20BalanceTierFactory }}"
+      abi: ERC20BalanceTierFactory
+      startBlock: {{ blockErc20BalanceTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - NewChild
+        - Implementation
+      abis:
+        - name: ERC20BalanceTierFactory
+          file: ./abis/tier/ERC20BalanceTierFactory.json
+        - name: ERC20BalanceTier
+          file: ./abis/tier/ERC20BalanceTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/ERC20BalanceTierFactory.ts
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -73,7 +123,7 @@ templates:
           handler: handlePhaseScheduled
         - event: StartDutchAuction(address,address,uint256)
           handler: handleStartDutchAuction
-      file: ./src/trust.ts
+      file: ./src/trust/trust.ts
   - kind: ethereum/contract
     name: SeedERC20Template
     network: {{ network }}
@@ -102,7 +152,7 @@ templates:
           handler: handleUnseed
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
-      file: ./src/SeedERC20.ts
+      file: ./src/trust/SeedERC20.ts
   - kind: ethereum/contract
     name: RedeemableERC20Template
     network: {{ network }}
@@ -142,7 +192,7 @@ templates:
           handler: handleRedeem
         - event: TreasuryAsset(address,address)
           handler: handleTreasuryAsset
-      file: ./src/RedeemableERC20.ts
+      file: ./src/trust/RedeemableERC20.ts
   - kind: ethereum/contract
     name: PoolTemplate
     network: {{ network }}
@@ -166,4 +216,30 @@ templates:
       eventHandlers:
         - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleLOG_SWAP
-      file: ./src/Pool.ts
+      file: ./src/trust/Pool.ts
+  - kind: ethereum/contract
+    name: ERC20BalanceTierTemplate
+    network: {{ network }}
+    source:
+      abi: ERC20BalanceTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Initialize
+        - InitializeValueTier
+        - TierChange
+      abis:
+        - name: ERC20BalanceTier
+          file: ./abis/tier/ERC20BalanceTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Initialize(address,address)
+          handler: handleInitialize
+        - event: InitializeValueTier(address,address)
+          handler: handleInitializeValueTier
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/ERC20BalanceTier.ts

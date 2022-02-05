@@ -8,14 +8,14 @@ import {
     Notice,
     PhaseScheduled,
     StartDutchAuction
-} from '../generated/TrustFactory/Trust'
+} from '../../generated/TrustFactory/Trust'
 
-import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ReserveERC20, SeedERC20, Trust, TrustFactory } from "../generated/schema"
+import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ReserveERC20, SeedERC20, Trust, TrustFactory } from "../../generated/schema"
 import { dataSource, DataSourceContext, log } from '@graphprotocol/graph-ts'
-import { ERC20 } from "../generated/TrustFactory/ERC20"
-import { Trust as TrustContract } from "../generated/TrustFactory/Trust"
-import { PoolTemplate, RedeemableERC20Template, SeedERC20Template } from '../generated/templates'
-import { ZERO_BI } from "./utils"
+import { ERC20 } from "../../generated/TrustFactory/ERC20"
+import { Trust as TrustContract } from "../../generated/TrustFactory/Trust"
+import { PoolTemplate, RedeemableERC20Template, SeedERC20Template } from '../../generated/templates'
+import { ZERO_BI } from "../utils"
 
 export function handleConstruction(event: Construction): void {
     let context = dataSource.context()
@@ -71,6 +71,7 @@ export function handleInitialize(event: Initialize): void {
     distributionProgress.minimumTradingDuration = event.params.config.minimumTradingDuration
     distributionProgress.minimumCreatorRaise = event.params.config.minimumCreatorRaise
     distributionProgress.redeemInit = event.params.config.redeemInit
+
     distributionProgress.save()
 
     trust.contracts = contracts.id

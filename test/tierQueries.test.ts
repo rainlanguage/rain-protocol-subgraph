@@ -78,6 +78,8 @@ enum Status {
 }
 
 describe("Subgraph Tier Test", function () {
+  const subgraphUser = "vishalkale151071";
+  const subgraphName = "rain-protocol";
   // let ERC721BalanceTierFactory;
   let subgraph: ApolloFetch;
   let verifyFactory: VerifyFactory;
@@ -149,7 +151,6 @@ describe("Subgraph Tier Test", function () {
       []
     )) as VerifyTierFactory;
 
-    /*
     const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
     const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
 
@@ -178,7 +179,6 @@ describe("Subgraph Tier Test", function () {
     exec(`yarn deploy-build:localhost`);
 
     subgraph = fetchSubgraph(subgraphUser, subgraphName);
-    */
   });
 
   describe("Verify Factories - queries", function () {
@@ -208,7 +208,7 @@ describe("Subgraph Tier Test", function () {
 
       const tierFactoryQuery = `
         {
-          tierFactory  (id: "${verifyFactory.address.toLowerCase()}") {
+          verifyTierFactory  (id: "${verifyFactory.address.toLowerCase()}") {
             address
             children {
               id
@@ -223,10 +223,10 @@ describe("Subgraph Tier Test", function () {
 
       const TierFactoriesData = queryTierFactoriesresponse.data;
 
-      expect(TierFactoriesData.tierFactory.address).to.equals(
+      expect(TierFactoriesData.verifyTierFactory.address).to.equals(
         verifyFactory.address.toLowerCase()
       );
-      expect(TierFactoriesData.tierFactory.children).to.be.empty;
+      expect(TierFactoriesData.verifyTierFactory.children).to.be.empty;
     });
 
     it("should query VerifyTierFactory correctly after construction", async function () {
