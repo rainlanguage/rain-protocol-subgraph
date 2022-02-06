@@ -3,26 +3,20 @@
 /* eslint-disable no-unused-expressions */
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import * as Util from "./utils/utils";
+import { BigNumber, Contract, ContractTransaction } from "ethers";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { concat } from "ethers/lib/utils";
 import * as path from "path";
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import type {
-  BigNumber,
-  BigNumberish,
-  Contract,
-  ContractTransaction,
-} from "ethers";
-import { hexlify, concat } from "ethers/lib/utils";
+
+import * as Util from "./utils/utils";
 import {
   op,
   deploy,
   waitForSubgraphToBeSynced,
-  fetchSubgraph,
-  exec,
-  balancerDeploy,
-  factoriesDeploy,
+  getContract,
   eighteenZeros,
+  Tier,
 } from "./utils/utils";
 import {
   getContracts,
@@ -40,34 +34,23 @@ import redeemableERC20Json from "@beehiveinnovation/rain-protocol/artifacts/cont
 import saleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
 
 import saleFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
+import trustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
 
 import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
 import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
 import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
+import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import type {
   BuyEvent,
   Sale,
 } from "@beehiveinnovation/rain-protocol/typechain/Sale";
 import type {
   SaleConfigStruct,
-  SaleConstructorConfigStruct,
   SaleFactory,
   SaleRedeemableERC20ConfigStruct,
 } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
 import { isContext } from "vm";
-
-enum Tier {
-  ZERO,
-  ONE,
-  TWO,
-  THREE,
-  FOUR,
-  FIVE,
-  SIX,
-  SEVEN,
-  EIGHT,
-}
 
 enum Status {
   PENDING,
@@ -141,95 +124,86 @@ interface BuyConfig {
   maximumPrice: BigNumber;
 }
 
-const subgraphUser = "vishalkale151071";
-const subgraphName = "rain-protocol";
-let subgraph: ApolloFetch;
-
-let reserve: ReserveToken & Contract,
-  redeemableERC20Factory: RedeemableERC20Factory & Contract,
-  readWriteTier: ReadWriteTier & Contract,
-  saleConstructorConfig: SaleConstructorConfigStruct,
-  saleFactory: SaleFactory & Contract,
-  sale: Sale & Contract,
-  redeemableERC20Token: RedeemableERC20 & Contract;
-
-let deployer: SignerWithAddress,
-  recipient: SignerWithAddress,
-  feeRecipient: SignerWithAddress,
-  signer1: SignerWithAddress;
-
-let startBlock: number,
-  canStartStateConfig: StateConfig,
-  canEndStateConfig: StateConfig,
-  calculatePriceStateConfig: StateConfig,
-  buyConfig: BuyConfig;
-
-// Use to save the tx between statements
-let transaction: ContractTransaction;
-
 describe("Sales queries test", function () {
-  before(async function () {
+  let subgraph: ApolloFetch,
+    reserve: ReserveToken,
+    redeemableERC20Factory: RedeemableERC20Factory,
+    readWriteTier: ReadWriteTier,
+    saleFactory: SaleFactory,
+    sale: Sale,
+    redeemableERC20Token: RedeemableERC20,
+    trustFactory: TrustFactory;
+
+  let deployer: SignerWithAddress,
+    recipient: SignerWithAddress,
+    feeRecipient: SignerWithAddress,
+    signer1: SignerWithAddress;
+
+  let startBlock: number,
+    canStartStateConfig: StateConfig,
+    canEndStateConfig: StateConfig,
+    calculatePriceStateConfig: StateConfig,
+    buyConfig: BuyConfig;
+
+  // Use to save the tx between statements
+  let transaction: ContractTransaction;
+
+  before("getting the factory", async function () {
     const signers = await ethers.getSigners();
     deployer = signers[0];
     recipient = signers[1];
     feeRecipient = signers[2];
     signer1 = signers[3];
 
-    reserve = (await Util.deploy(reserveToken, deployer, [])) as ReserveToken &
-      Contract;
+    reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
 
-    redeemableERC20Factory = (await Util.deploy(
+    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
+    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
+
+    // Trust factory
+    trustFactory = getContract(
+      localInfoJson.trustFactory,
+      trustFactoryJson,
+      deployer
+    ) as TrustFactory;
+
+    // redeemableERC20Factory
+    redeemableERC20Factory = getContract(
+      localInfoJson.redeemableERC20Factory,
       redeemableERC20FactoryJson,
-      deployer,
-      []
-    )) as RedeemableERC20Factory & Contract;
+      deployer
+    ) as RedeemableERC20Factory;
 
-    readWriteTier = (await Util.deploy(
+    // New readWriteTier
+    readWriteTier = (await deploy(
       readwriteTierJson,
       deployer,
       []
-    )) as ReadWriteTier & Contract;
+    )) as ReadWriteTier;
 
-    saleConstructorConfig = {
-      redeemableERC20Factory: redeemableERC20Factory.address,
-    };
+    // Sale factory existing
+    saleFactory = getContract(
+      localInfoJson.saleFactory,
+      saleFactoryJson,
+      deployer
+    ) as SaleFactory;
 
-    saleFactory = (await Util.deploy(saleFactoryJson, deployer, [
-      saleConstructorConfig,
-    ])) as SaleFactory & Contract;
-    const currentBlock = await ethers.provider.getBlockNumber();
-
-    // // Address and block to the subgraph
-    // const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
-    // const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
-
-    // configLocal.saleFactory = saleFactory.address;
-    // configLocal.startBlockSaleFactory = currentBlock;
-    // Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
-
-    // exec(`yarn deploy-build:localhost`);
-
-    // subgraph = fetchSubgraph(subgraphUser, subgraphName);
+    // Connecting to the subgraph
+    subgraph = Util.fetchSubgraph(
+      localInfoJson.subgraphUser,
+      localInfoJson.subgraphName
+    );
   });
 
   it("should query the saleFactory after construction correctly", async function () {
     await Util.delay(Util.wait);
     await waitForSubgraphToBeSynced(1000);
 
-    const implementationAddress = (
-      await Util.getEventArgs(
-        saleFactory.deployTransaction,
-        "Implementation",
-        sale
-      )
-    ).implementation;
-
     // The redeemableERC20Factory entity not exist yet, but Josh said that maybe will be implemented
     const saleFactoryQuery = `
       {
         saleFactory (id: "${saleFactory.address.toLowerCase()}") {
           address
-          implementation
           children {
             id
           }
@@ -245,9 +219,6 @@ describe("Sales queries test", function () {
 
     expect(saleFactoryData.address).to.equals(
       saleFactory.address.toLowerCase()
-    );
-    expect(saleFactoryData.implementation).to.equals(
-      implementationAddress.toLowerCase()
     );
     expect(saleFactoryData.children).to.be.empty;
     expect(saleFactoryData.redeemableERC20Factory).to.equals(

@@ -166,6 +166,16 @@
                 "internalType": "string",
                 "name": "symbol",
                 "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "distributor",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "initialSupply",
+                "type": "uint256"
               }
             ],
             "internalType": "struct ERC20Config",
@@ -180,11 +190,6 @@
           {
             "internalType": "uint256",
             "name": "minimumTier",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "totalSupply",
             "type": "uint256"
           }
         ],
@@ -201,12 +206,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "seederUnits",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "seederCooldownDuration",
+            "name": "cooldownDuration",
             "type": "uint256"
           },
           {
@@ -220,10 +220,20 @@
                 "internalType": "string",
                 "name": "symbol",
                 "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "distributor",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "initialSupply",
+                "type": "uint256"
               }
             ],
             "internalType": "struct ERC20Config",
-            "name": "seedERC20Config",
+            "name": "erc20Config",
             "type": "tuple"
           }
         ],

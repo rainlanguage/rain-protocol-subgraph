@@ -48,6 +48,12 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "balancerFactory",
         "type": "address"
       },
@@ -162,6 +168,12 @@
   {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
       {
         "components": [
           {
@@ -320,9 +332,9 @@
         "type": "uint32[8]"
       },
       {
-        "internalType": "enum Phase",
+        "internalType": "uint256",
         "name": "phase_",
-        "type": "uint8"
+        "type": "uint256"
       }
     ],
     "name": "blockNumberForPhase",
@@ -372,9 +384,9 @@
     "name": "currentPhase",
     "outputs": [
       {
-        "internalType": "enum Phase",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint8"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -481,6 +493,16 @@
                 "internalType": "string",
                 "name": "symbol",
                 "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "distributor",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "initialSupply",
+                "type": "uint256"
               }
             ],
             "internalType": "struct ERC20Config",
@@ -495,11 +517,6 @@
           {
             "internalType": "uint256",
             "name": "minimumTier",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "totalSupply",
             "type": "uint256"
           }
         ],
@@ -516,12 +533,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "seederUnits",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "seederCooldownDuration",
+            "name": "cooldownDuration",
             "type": "uint256"
           },
           {
@@ -535,10 +547,20 @@
                 "internalType": "string",
                 "name": "symbol",
                 "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "distributor",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "initialSupply",
+                "type": "uint256"
               }
             ],
             "internalType": "struct ERC20Config",
-            "name": "seedERC20Config",
+            "name": "erc20Config",
             "type": "tuple"
           }
         ],
@@ -568,9 +590,9 @@
     "name": "phaseAtBlockNumber",
     "outputs": [
       {
-        "internalType": "enum Phase",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint8"
+        "type": "uint256"
       }
     ],
     "stateMutability": "pure",
@@ -600,9 +622,22 @@
     "name": "reserve",
     "outputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "saleStatus",
+    "outputs": [
+      {
+        "internalType": "enum SaleStatus",
+        "name": "",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -633,7 +668,7 @@
     "name": "token",
     "outputs": [
       {
-        "internalType": "contract RedeemableERC20",
+        "internalType": "address",
         "name": "",
         "type": "address"
       }

@@ -4,49 +4,56 @@
 
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { ApolloFetch, FetchResult } from "apollo-fetch";
+import * as path from "path";
+
 import * as Util from "./utils/utils";
 import {
   deploy,
   waitForSubgraphToBeSynced,
-  fetchSubgraph,
-  exec,
-  balancerDeploy,
-  factoriesDeploy,
+  Tier,
+  sixZeros,
+  eighteenZeros,
 } from "./utils/utils";
-import { ApolloFetch, FetchResult } from "apollo-fetch";
-import * as path from "path";
-import RESERVE_TOKEN from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
-import READWRITE_TIER from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
+
+// Artifacts
+import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
+import readWriteTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
 import seedERC20Json from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
 import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
-import ConfigurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
-import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
+import configurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
+import bPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
 
-import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
-import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
-import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { ITier } from "@beehiveinnovation/rain-protocol/typechain/ITier";
+import erc20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
+import erc20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
+import combineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
+import verifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
+import verifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
+import saleFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
+
+// Types
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import type { BigNumber } from "ethers";
+
 import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
 import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
 import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
 import { SeedERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
-import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20";
-import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
-import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol//typechain/ConfigurableRightsPool";
-import { BPool } from "@beehiveinnovation/rain-protocol//typechain/BPool";
+import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 
-///
 import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
 import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTierFactory";
 import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
 import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
 import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
+import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
 
-import ERC20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
-import ERC20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
-import CombineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
-import VerifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
-import VerifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
+import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
+import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
+import { ITier } from "@beehiveinnovation/rain-protocol/typechain/ITier";
+import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20";
+import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
+import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
 
 import {
   getContracts,
@@ -55,19 +62,6 @@ import {
   NOTICE_QUERY,
   QUERY,
 } from "./utils/queries";
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import type { BigNumber, BigNumberish } from "ethers";
-enum Tier {
-  NIL,
-  COPPER,
-  BRONZE,
-  SILVER,
-  GOLD,
-  PLATINUM,
-  DIAMOND,
-  CHAD,
-  JAWAD,
-}
 
 enum DistributionStatus {
   Pending,
@@ -81,31 +75,31 @@ enum DistributionStatus {
 describe("Subgraph Trusts Test", function () {
   const subgraphUser = "vishalkale151071";
   const subgraphName = "rain-protocol";
-  let trustFactory: TrustFactory;
-  let reserve: ReserveToken;
-  let tier: ITier;
-  let minimumTier: Tier;
-  let subgraph: ApolloFetch;
-  let currentBlock: number;
-  let trust: Trust;
-  let crpFactory: CRPFactory;
-  let bFactory: BFactory;
-  let redeemableERC20Factory: RedeemableERC20Factory;
-  let seedERC20Factory: SeedERC20Factory;
-  let seederContract: SeedERC20;
+  let trustFactory: TrustFactory,
+    reserve: ReserveToken,
+    tier: ITier,
+    minimumTier: Tier,
+    subgraph: ApolloFetch,
+    currentBlock: number,
+    trust: Trust,
+    crpFactory: CRPFactory,
+    bFactory: BFactory,
+    redeemableERC20Factory: RedeemableERC20Factory,
+    seedERC20Factory: SeedERC20Factory,
+    seederContract: SeedERC20;
 
-  let creator: SignerWithAddress;
-  let deployer: SignerWithAddress;
-  let seeder1: SignerWithAddress;
-  let seeder2: SignerWithAddress;
-  let signer1: SignerWithAddress;
+  let deployer: SignerWithAddress,
+    creator: SignerWithAddress,
+    seeder1: SignerWithAddress,
+    seeder2: SignerWithAddress,
+    signer1: SignerWithAddress;
 
   before(async function () {
     const signers = await ethers.getSigners();
 
     // Signers (to avoid fetch again)
-    creator = signers[0];
-    deployer = signers[1]; // deployer is not creator
+    deployer = signers[0]; // deployer is not creator
+    creator = signers[1];
     seeder1 = signers[2];
     seeder2 = signers[3];
     signer1 = signers[4];
@@ -115,61 +109,73 @@ describe("Subgraph Trusts Test", function () {
       BFactory
     ];
 
-    reserve = (await Util.deploy(RESERVE_TOKEN, creator, [])) as ReserveToken;
+    reserve = (await deploy(reserveTokenJson, creator, [])) as ReserveToken;
 
-    tier = (await Util.deploy(READWRITE_TIER, creator, [])) as ITier;
-    minimumTier = Tier.GOLD;
-    await tier.setTier(signer1.address, Tier.GOLD, []);
+    tier = (await deploy(readWriteTierJson, creator, [])) as ITier;
+    minimumTier = Tier.FOUR;
+    await tier.setTier(signer1.address, Tier.FOUR, []);
 
     currentBlock = await ethers.provider.getBlockNumber();
     ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
-      await factoriesDeploy(crpFactory, bFactory, creator));
+      await Util.factoriesDeploy(crpFactory, bFactory, creator));
 
     // Verify factory
     const blockErc20VerifyFactory = await ethers.provider.getBlockNumber();
-    const verifyFactory = (await Util.deploy(
-      VerifyFactoryJson,
+    const verifyFactory = (await deploy(
+      verifyFactoryJson,
       deployer,
       []
     )) as VerifyFactory;
 
     // Tiers factories
     const blockErc20BalanceTierFactory = await ethers.provider.getBlockNumber();
-    const erc20BalanceTierFactory = (await Util.deploy(
-      ERC20BalanceTierFactoryJson,
+    const erc20BalanceTierFactory = (await deploy(
+      erc20BalanceTierFactoryJson,
       deployer,
       []
     )) as ERC20BalanceTierFactory;
 
     const blockErc20TierTierFactory = await ethers.provider.getBlockNumber();
-    const erc20TransferTierFactory = (await Util.deploy(
-      ERC20TransferTierFactoryJson,
+    const erc20TransferTierFactory = (await deploy(
+      erc20TransferTierFactoryJson,
       deployer,
       []
     )) as ERC20TransferTierFactory;
 
     const blockCombineTierFactory = await ethers.provider.getBlockNumber();
-    const combineTierFactory = (await Util.deploy(
-      CombineTierFactoryJson,
+    const combineTierFactory = (await deploy(
+      combineTierFactoryJson,
       deployer,
       []
     )) as CombineTierFactory;
 
     const blockVerifyTierFactory = await ethers.provider.getBlockNumber();
-    const verifyTierFactory = (await Util.deploy(
-      VerifyTierFactoryJson,
+    const verifyTierFactory = (await deploy(
+      verifyTierFactoryJson,
       deployer,
       []
     )) as VerifyTierFactory;
 
+    // SaleFactory
+    const saleConstructorConfig = {
+      redeemableERC20Factory: redeemableERC20Factory.address,
+    };
+    const blockSaleFactory = await ethers.provider.getBlockNumber();
+    const saleFactory = (await deploy(saleFactoryJson, deployer, [
+      saleConstructorConfig,
+    ])) as SaleFactory;
+
+    // Saving data in JSON
     const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
     const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
 
-    // If we need index both
+    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
+    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
+
+    // If we need index both, saving addresses and individuals blocks
     configLocal.factory = trustFactory.address;
     configLocal.startBlock = currentBlock;
 
-    // Saving addresses and individuals blocks. Idk if it is necessary, just in case
     configLocal.verifyFactory = verifyFactory.address;
     configLocal.blockErc20VerifyFactory = blockErc20VerifyFactory;
 
@@ -185,16 +191,28 @@ describe("Subgraph Trusts Test", function () {
     configLocal.verifyTierFactory = verifyTierFactory.address;
     configLocal.blockVerifyTierFactory = blockVerifyTierFactory;
 
-    console.log("Block: ", currentBlock--);
-    console.log("trustF: ", trustFactory.address);
+    configLocal.saleFactory = saleFactory.address;
+    configLocal.blockSaleFactory = blockSaleFactory;
 
-    configLocal.factory = trustFactory.address;
-    configLocal.startBlock = currentBlock;
+    // localInfo.json - Tests
+    localInfoJson.subgraphUser = subgraphUser;
+    localInfoJson.subgraphName = subgraphName;
+    localInfoJson.trustFactory = trustFactory.address;
+    localInfoJson.redeemableERC20Factory = redeemableERC20Factory.address;
+    localInfoJson.seedERC20Factory = seedERC20Factory.address;
+    localInfoJson.verifyFactory = verifyFactory.address;
+    localInfoJson.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
+    localInfoJson.erc20TransferTierFactory = erc20TransferTierFactory.address;
+    localInfoJson.combineTierFactory = combineTierFactory.address;
+    localInfoJson.verifyTierFactory = verifyTierFactory.address;
+    localInfoJson.saleFactory = saleFactory.address;
+
     Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
+    Util.writeFile(localInfoPath, JSON.stringify(localInfoJson, null, 4));
 
-    exec(`yarn deploy-build:localhost`);
+    Util.exec(`yarn deploy-build:localhost`);
 
-    subgraph = fetchSubgraph(subgraphUser, subgraphName);
+    subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
 
     await Util.delay(Util.wait);
     await waitForSubgraphToBeSynced(1000);
@@ -239,11 +257,11 @@ describe("Subgraph Trusts Test", function () {
 
   describe("Single Trust test", function () {
     // Properties of this trust
-    const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-    const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-    const totalTokenSupply = ethers.BigNumber.from("2000" + Util.eighteenZeros);
-    const initialValuation = ethers.BigNumber.from("20000" + Util.sixZeros);
-    const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
+    const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
+    const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
+    const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
+    const initialValuation = ethers.BigNumber.from("20000" + sixZeros);
+    const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
     const minimumTradingDuration = 20;
 
     const redeemableERC20Config = {
@@ -253,7 +271,7 @@ describe("Subgraph Trusts Test", function () {
       initialSupply: totalTokenSupply,
     };
     // - Seeder props
-    const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+    const seederFee = ethers.BigNumber.from("100" + sixZeros);
     const seederUnits = 10;
     const seederCooldownDuration = 1;
     const seedPrice = reserveInit.div(10);
@@ -536,13 +554,13 @@ describe("Subgraph Trusts Test", function () {
 
       expect(seedErc20Data.seeds).to.have.lengthOf(2);
       // This got null
-      // expect(seedErc20Data.seederUnitsAvail).to.equals(0);
+      expect(seedErc20Data.seederUnitsAvail).to.equals(0);
     });
 
     it("Should query after Start Dutch Auction.", async function () {
       const crp = new ethers.Contract(
         await trust.crp(),
-        ConfigurableRightsPoolJson.abi,
+        configurableRightsPoolJson.abi,
         creator
       ) as ConfigurableRightsPool;
 
@@ -583,10 +601,10 @@ describe("Subgraph Trusts Test", function () {
 
     it("Single Swap test", async function () {
       // Copy the properties of the trust. I think we should make a scope for this trust.
-      const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
-      const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+      const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
+      const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
+      const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
+      const seederFee = ethers.BigNumber.from("100" + sixZeros);
 
       const signers = await ethers.getSigners();
       const [crp, bPool] = await Util.poolContracts(signers, trust);
@@ -611,7 +629,7 @@ describe("Subgraph Trusts Test", function () {
         reserveSpend,
         await trust.token(),
         ethers.BigNumber.from("1"),
-        ethers.BigNumber.from("1000000" + Util.sixZeros)
+        ethers.BigNumber.from("1000000" + sixZeros)
       );
       /**
        * Here is a single swap tx to query all the changes before and after the swap with the:
@@ -627,10 +645,10 @@ describe("Subgraph Trusts Test", function () {
 
     it("Swaps test", async function () {
       // Copy the properties of the trust. I think we should make a scope for this trust.
-      const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
-      const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+      const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
+      const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
+      const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
+      const seederFee = ethers.BigNumber.from("100" + sixZeros);
 
       const signers = await ethers.getSigners();
       const [crp, bPool] = await Util.poolContracts(signers, trust);
@@ -659,7 +677,7 @@ describe("Subgraph Trusts Test", function () {
           spend,
           await trust.token(),
           ethers.BigNumber.from("1"),
-          ethers.BigNumber.from("1000000" + Util.sixZeros)
+          ethers.BigNumber.from("1000000" + sixZeros)
         );
       };
       let swaps = 1;
@@ -676,10 +694,10 @@ describe("Subgraph Trusts Test", function () {
 
     it("End Dutch Auction test", async function () {
       // Trust properties
-      const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
-      const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
+      const seederFee = ethers.BigNumber.from("100" + sixZeros);
+      const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
+      const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
+      const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
       const minimumTradingDuration = 20;
       const finalValuation = redeemInit
         .add(minimumCreatorRaise)

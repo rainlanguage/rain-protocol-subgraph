@@ -4,43 +4,44 @@
 
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import * as Util from "./utils/utils";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
-import * as path from "path";
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import type { BigNumber, BigNumberish } from "ethers";
+import { BigNumber } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { hexlify } from "ethers/lib/utils";
+import * as path from "path";
+
+import * as Util from "./utils/utils";
 import {
   deploy,
+  getContract,
+  getContractChild,
   waitForSubgraphToBeSynced,
-  fetchSubgraph,
-  exec,
-  balancerDeploy,
-  factoriesDeploy,
   eighteenZeros,
+  sixZeros,
+  zeroAddress,
+  Tier,
 } from "./utils/utils";
-import {
-  getContracts,
-  getFactories,
-  getTrust,
-  NOTICE_QUERY,
-  QUERY,
-} from "./utils/queries";
 
+// Artifacts
 import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
-import ERC20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
-import ERC20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
-import CombineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
-import VerifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
-import VerifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
+import trustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
+import erc20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
+import erc20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
+import combineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
+import verifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
+import verifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
 
-import ERC20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
-import ERC20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
-import CombineTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
-import VerifyTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTier.sol/VerifyTier.json";
-import VerifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
+import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
+import erc20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
+import combineTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
+import verifyTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTier.sol/VerifyTier.json";
+import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 
+// Types
 import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
+import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
+import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
+import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
 import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTierFactory";
 import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
@@ -48,28 +49,19 @@ import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/Ve
 import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
 
 import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
-import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
-import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
-
 import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
 import { ERC20TransferTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
 import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
 import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
 
-enum Tier {
-  ZERO,
-  ONE,
-  TWO,
-  THREE,
-  FOUR,
-  FIVE,
-  SIX,
-  SEVEN,
-  EIGHT,
-}
-
+import {
+  getContracts,
+  getFactories,
+  getTrust,
+  NOTICE_QUERY,
+  QUERY,
+} from "./utils/queries";
 enum Status {
   Nil,
   Added,
@@ -78,129 +70,95 @@ enum Status {
 }
 
 describe("Subgraph Tier Test", function () {
-  const subgraphUser = "vishalkale151071";
-  const subgraphName = "rain-protocol";
+  let subgraph: ApolloFetch,
+    verifyFactory: VerifyFactory,
+    verifyTierFactory: VerifyTierFactory,
+    erc20BalanceTierFactory: ERC20BalanceTierFactory,
+    erc20TransferTierFactory: ERC20TransferTierFactory,
+    combineTierFactory: CombineTierFactory,
+    reserve: ReserveToken,
+    trustFactory: TrustFactory,
+    trust: Trust;
   // let ERC721BalanceTierFactory;
-  let subgraph: ApolloFetch;
-  let verifyFactory: VerifyFactory;
-  let verifyTierFactory: VerifyTierFactory;
-  let erc20BalanceTierFactory: ERC20BalanceTierFactory;
-  let erc20TransferTierFactory: ERC20TransferTierFactory;
-  let combineTierFactory: CombineTierFactory;
-  let reserve: ReserveToken;
-  let trustFactory: TrustFactory;
-  let trust: Trust;
-  let currentBlock: number;
+
+  let deployer: SignerWithAddress,
+    admin: SignerWithAddress,
+    signer1: SignerWithAddress,
+    signer2: SignerWithAddress;
 
   const LEVELS = Array.from(Array(8).keys()).map((value) =>
-    ethers.BigNumber.from(++value + eighteenZeros)
+    ethers.BigNumber.from(++value + eighteenZeros).toString()
   ); // [1,2,3,4,5,6,7,8]
-  const LEVEL_SIZE_LINEAR = ethers.BigNumber.from(1 + eighteenZeros);
 
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 
-  before("Deploy factories", async function () {
+  before("getting the factories", async function () {
     const signers = await ethers.getSigners();
-    const deployer: SignerWithAddress = signers[0];
+    deployer = signers[0];
+    signer1 = signers[5];
+    signer2 = signers[6];
+    admin = signers[9];
 
-    reserve = (await Util.deploy(reserveToken, deployer, [])) as ReserveToken;
+    reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
+
+    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
+    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
 
     // Trust factory
-    const [crpFactory, bFactory] = (await Util.balancerDeploy(deployer)) as [
-      CRPFactory,
-      BFactory
-    ];
-    currentBlock = await ethers.provider.getBlockNumber();
-    ({ trustFactory } = await factoriesDeploy(crpFactory, bFactory, deployer));
+    trustFactory = getContract(
+      localInfoJson.trustFactory,
+      trustFactoryJson,
+      deployer
+    ) as TrustFactory;
 
     // Verify factory
-    const blockErc20VerifyFactory = await ethers.provider.getBlockNumber();
-    verifyFactory = (await Util.deploy(
-      VerifyFactoryJson,
-      deployer,
-      []
-    )) as VerifyFactory;
+    verifyFactory = getContract(
+      localInfoJson.verifyFactory,
+      verifyFactoryJson,
+      deployer
+    ) as VerifyFactory;
 
     // Tiers factories
-    const blockErc20BalanceTierFactory = await ethers.provider.getBlockNumber();
-    erc20BalanceTierFactory = (await Util.deploy(
-      ERC20BalanceTierFactoryJson,
-      deployer,
-      []
-    )) as ERC20BalanceTierFactory;
+    erc20BalanceTierFactory = getContract(
+      localInfoJson.erc20BalanceTierFactory,
+      erc20BalanceTierFactoryJson,
+      deployer
+    ) as ERC20BalanceTierFactory;
 
-    const blockErc20TierTierFactory = await ethers.provider.getBlockNumber();
-    erc20TransferTierFactory = (await Util.deploy(
-      ERC20TransferTierFactoryJson,
-      deployer,
-      []
-    )) as ERC20TransferTierFactory;
+    erc20TransferTierFactory = getContract(
+      localInfoJson.erc20TransferTierFactory,
+      erc20TransferTierFactoryJson,
+      deployer
+    ) as ERC20TransferTierFactory;
 
-    const blockCombineTierFactory = await ethers.provider.getBlockNumber();
-    combineTierFactory = (await Util.deploy(
-      CombineTierFactoryJson,
-      deployer,
-      []
-    )) as CombineTierFactory;
+    combineTierFactory = getContract(
+      localInfoJson.combineTierFactory,
+      combineTierFactoryJson,
+      deployer
+    ) as CombineTierFactory;
 
-    const blockVerifyTierFactory = await ethers.provider.getBlockNumber();
-    verifyTierFactory = (await Util.deploy(
-      VerifyTierFactoryJson,
-      deployer,
-      []
-    )) as VerifyTierFactory;
+    verifyTierFactory = getContract(
+      localInfoJson.verifyTierFactory,
+      verifyTierFactoryJson,
+      deployer
+    ) as VerifyTierFactory;
 
-    const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
-    const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
-
-    // If we need index both
-    configLocal.factory = trustFactory.address;
-    configLocal.startBlock = currentBlock;
-
-    // Saving addresses and individuals blocks. Idk if it is necessary, just in case
-    configLocal.verifyFactory = verifyFactory.address;
-    configLocal.blockErc20VerifyFactory = blockErc20VerifyFactory;
-
-    configLocal.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
-    configLocal.blockErc20BalanceTierFactory = blockErc20BalanceTierFactory;
-
-    configLocal.erc20TransferTierFactory = erc20TransferTierFactory.address;
-    configLocal.blockErc20TierTierFactory = blockErc20TierTierFactory;
-
-    configLocal.combineTierFactory = combineTierFactory.address;
-    configLocal.blockCombineTierFactory = blockCombineTierFactory;
-
-    configLocal.verifyTierFactory = verifyTierFactory.address;
-    configLocal.blockVerifyTierFactory = blockVerifyTierFactory;
-
-    Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
-
-    exec(`yarn deploy-build:localhost`);
-
-    // subgraph = fetchSubgraph(subgraphUser, subgraphName);
+    // Connecting to the subgraph
+    subgraph = Util.fetchSubgraph(
+      localInfoJson.subgraphUser,
+      localInfoJson.subgraphName
+    );
   });
 
   describe("Verify Factories - queries", function () {
-    let verifyTier: VerifyTier;
-    let verify: Verify;
-    let deployer: SignerWithAddress;
-    let admin: SignerWithAddress;
-    let signer1: SignerWithAddress;
-    let signer2: SignerWithAddress;
-
     const evidenceEmpty = hexlify([...Buffer.from("")]);
     const evidenceAdd = hexlify([...Buffer.from("Evidence for add")]);
     const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
     const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 
-    before("Declare signers", async function () {
-      const signers = await ethers.getSigners();
-      deployer = signers[0];
-      signer1 = signers[5];
-      signer2 = signers[6];
-      admin = signers[9];
-    });
+    let verifyTier: VerifyTier;
+    let verify: Verify;
 
     it("should query VerifyFactory correctly after construction", async function () {
       await Util.delay(Util.wait);
@@ -261,10 +219,10 @@ describe("Subgraph Tier Test", function () {
 
       const tx = await verifyFactory.createChildTyped(admin.address);
 
-      verify = (await Util.getContractChild(
+      verify = (await getContractChild(
         tx,
         verifyFactory,
-        VerifyJson
+        verifyJson
       )) as Verify;
 
       await Util.delay(Util.wait);
@@ -300,10 +258,10 @@ describe("Subgraph Tier Test", function () {
       const verifyTierCreator = verifyTierFactory.signer;
       const tx = await verifyTierFactory.createChildTyped(verify.address);
 
-      verifyTier = (await Util.getContractChild(
+      verifyTier = (await getContractChild(
         tx,
         verifyTierFactory,
-        VerifyTierJson
+        verifyTierJson
       )) as VerifyTier;
 
       await Util.delay(Util.wait);
@@ -363,8 +321,8 @@ describe("Subgraph Tier Test", function () {
 
     it("should query null if Verify is present in VerifyTier and was deployed without the factory", async function () {
       // Verify deployed without factory
-      const verifyIndependent = (await Util.deploy(
-        VerifyJson,
+      const verifyIndependent = (await deploy(
+        verifyJson,
         deployer,
         []
       )) as Verify;
@@ -375,10 +333,10 @@ describe("Subgraph Tier Test", function () {
         verifyIndependent.address
       );
 
-      const verifyTier2 = (await Util.getContractChild(
+      const verifyTier2 = (await getContractChild(
         tx,
         verifyTierFactory,
-        VerifyTierJson
+        verifyTierJson
       )) as VerifyTier;
 
       await Util.delay(Util.wait);
@@ -713,10 +671,10 @@ describe("Subgraph Tier Test", function () {
         tierValues: LEVELS,
       });
 
-      erc20BalanceTier = (await Util.getContractChild(
+      erc20BalanceTier = (await getContractChild(
         tx,
         erc20BalanceTierFactory,
-        ERC20BalanceTierJson
+        erc20BalanceTierJson
       )) as ERC20BalanceTier;
 
       await Util.delay(Util.wait);
@@ -819,8 +777,6 @@ describe("Subgraph Tier Test", function () {
       expect(tierData.address).to.equals(
         erc20BalanceTier.address.toLowerCase()
       );
-      console.log("tierData.tierValues");
-      console.log(tierData.tierValues);
       expect(tierData.tierValues).to.eql(LEVELS);
 
       expect(tokenData.name).to.equals(await reserve.name());
@@ -868,10 +824,10 @@ describe("Subgraph Tier Test", function () {
         tierValues: LEVELS,
       });
 
-      erc20TransferTier = (await Util.getContractChild(
+      erc20TransferTier = (await getContractChild(
         tx,
         erc20TransferTierFactory,
-        ERC20TransferTierJson
+        erc20TransferTierJson
       )) as ERC20TransferTier;
 
       await Util.delay(Util.wait);
@@ -1148,8 +1104,8 @@ describe("Subgraph Tier Test", function () {
       creator = signers[1];
 
       // Deploy and initialize an ERC20BalanceTierIndependent
-      erc20BalanceTierIndepent = (await Util.deploy(
-        ERC20BalanceTierJson,
+      erc20BalanceTierIndepent = (await deploy(
+        erc20BalanceTierJson,
         deployer,
         []
       )) as ERC20BalanceTier;
@@ -1160,8 +1116,8 @@ describe("Subgraph Tier Test", function () {
       });
 
       // Deploy and initialize an ERC20BalanceTierIndependent
-      erc20TransferTierIndepent = (await Util.deploy(
-        ERC20TransferTierJson,
+      erc20TransferTierIndepent = (await deploy(
+        erc20TransferTierJson,
         deployer,
         []
       )) as ERC20TransferTier;
@@ -1174,23 +1130,21 @@ describe("Subgraph Tier Test", function () {
 
     it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Trust", async function () {
       // Properties of this trust
-      const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const totalTokenSupply = ethers.BigNumber.from(
-        "2000" + Util.eighteenZeros
-      );
-      const initialValuation = ethers.BigNumber.from("20000" + Util.sixZeros);
-      const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
+      const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
+      const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
+      const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
+      const initialValuation = ethers.BigNumber.from("20000" + sixZeros);
+      const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
       const minimumTradingDuration = 20;
 
       const redeemableERC20Config = {
         name: "Token",
         symbol: "TKN",
-        distributor: Util.zeroAddress,
+        distributor: zeroAddress,
         initialSupply: totalTokenSupply,
       };
       // - Seeder props
-      const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+      const seederFee = ethers.BigNumber.from("100" + sixZeros);
       const seederUnits = 10;
       const seederCooldownDuration = 1;
       const seedPrice = reserveInit.div(10);
@@ -1200,7 +1154,7 @@ describe("Subgraph Tier Test", function () {
       const seedERC20Config = {
         name: "SeedToken",
         symbol: "SDT",
-        distributor: Util.zeroAddress,
+        distributor: zeroAddress,
         initialSupply: seederUnits,
       };
 
@@ -1231,7 +1185,7 @@ describe("Subgraph Tier Test", function () {
           minimumTier,
         },
         {
-          seeder: Util.zeroAddress,
+          seeder: zeroAddress,
           cooldownDuration: seederCooldownDuration,
           erc20Config: seedERC20Config,
         },

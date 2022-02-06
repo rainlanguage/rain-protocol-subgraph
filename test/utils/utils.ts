@@ -1,4 +1,5 @@
 /* eslint-disable node/no-missing-import */
+/* eslint-disable no-unused-vars */
 import { Contract, Signer, ContractTransaction, BytesLike } from "ethers";
 import { Result, concat, hexlify, Hexable, zeroPad } from "ethers/lib/utils";
 import { createApolloFetch } from "apollo-fetch";
@@ -51,6 +52,18 @@ export const RESERVE_ONE = ethers.BigNumber.from("1" + sixZeros);
 export const CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING = 100;
 export const MAX_RAISE_DURATION_TESTING = 100;
 
+export enum Tier {
+  ZERO,
+  ONE,
+  TWO,
+  THREE,
+  FOUR,
+  FIVE,
+  SIX,
+  SEVEN,
+  EIGHT,
+}
+
 // Execute Child Processes
 const srcDir = path.join(__dirname, "..");
 export const exec = (cmd: string) => {
@@ -72,7 +85,6 @@ export const fetchSubgraph = (subgraphUser: string, subgraphName: string) => {
   });
 };
 
-// eslint-disable-next-line no-unused-vars
 const checkIfAllSynced = (subgraphs: SyncedSubgraphType[]) => {
   const result = subgraphs.find(
     (el: SyncedSubgraphType) => el.synced === false
@@ -413,4 +425,12 @@ export function bytify(
  */
 export function op(code: number, erand = 0): Uint8Array {
   return concat([bytify(code), bytify(erand)]);
+}
+
+export function getContract(
+  address: string,
+  artifact: Artifact,
+  signer: Signer | SignerWithAddress
+): Contract {
+  return new ethers.Contract(address, artifact.abi, signer) as Contract;
 }

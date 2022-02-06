@@ -109,13 +109,13 @@ templates:
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:
-        - event: Construction(address,address,address,address,address,uint256,uint256)
+        - event: Construction(address,address,address,address,address,address,uint256,uint256)
           handler: handleConstruction
         - event: CreatorFundsRelease(address,address,uint256)
           handler: handleCreatorFundsRelease
         - event: EndDutchAuction(address,uint256,uint256,uint256,uint256,uint256)
           handler: handleEndDutchAuction
-        - event: Initialize((address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256),address,address,address,uint256)
+        - event: Initialize(address,(address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256),address,address,address,uint256)
           handler: handleInitialize
         - event: Notice(address,bytes)
           handler: handleNotice
