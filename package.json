@@ -20,6 +20,7 @@
     "test": "hardhat test",
     "test-trust": "hardhat test test/trustQueries.test.ts",
     "test-tier": "hardhat test test/tierQueries.test.ts",
+    "test-sales": "hardhat test test/salesQueries.test.ts",
     "postinstall": "cd node_modules/@beehiveinnovation/rain-protocol && yarn install --ignore-scripts && yarn build"
   },
   "devDependencies": {
