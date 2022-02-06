@@ -174,11 +174,11 @@ describe("Subgraph Tier Test", function () {
     configLocal.verifyTierFactory = verifyTierFactory.address;
     configLocal.blockVerifyTierFactory = blockVerifyTierFactory;
 
-    Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
+    // Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
 
-    exec(`yarn deploy-build:localhost`);
+    // exec(`yarn deploy-build:localhost`);
 
-    subgraph = fetchSubgraph(subgraphUser, subgraphName);
+    // subgraph = fetchSubgraph(subgraphUser, subgraphName);
   });
 
   describe("Verify Factories - queries", function () {
@@ -361,12 +361,7 @@ describe("Subgraph Tier Test", function () {
       expect(verifyData.verifyAddresses).to.be.empty;
     });
 
-    xit("should query null if Verify is present in VerifyTier and was deployed without the factory", async function () {
-      /**
-       * Im not sure about this. If a verify contract deployed without the factory could be indexed
-       * when is used in the VerifyTier or will still null? Confirm this or Ask to Josh
-       */
-
+    it("should query null if Verify is present in VerifyTier and was deployed without the factory", async function () {
       // Verify deployed without factory
       const verifyIndependent = (await Util.deploy(
         VerifyJson,
@@ -418,7 +413,9 @@ describe("Subgraph Tier Test", function () {
         verifyTier2.address.toLowerCase()
       );
       // confirm this
-      expect(verifyTierData.verifyContract).to.be.null;
+      expect(verifyTierData.verifyContract).to.equals(
+        verifyIndependent.address.toLowerCase()
+      );
     });
 
     it("should query a Verify event after a RequestApprove ", async function () {
@@ -830,100 +827,7 @@ describe("Subgraph Tier Test", function () {
       expect(tokenData.totalSupply).to.equals(await reserve.totalSupply());
     });
 
-    it("should be an unknown tier in other contracts if was deployed without the factory", async function () {
-      const erc20Config = { name: "Token", symbol: "TKN" };
-      const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const initialValuation = ethers.BigNumber.from("20000" + Util.sixZeros);
-      const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
-      const minimumTradingDuration = 20;
-      const minimumTier = Tier.ONE;
-      const totalTokenSupply = ethers.BigNumber.from(
-        "2000" + Util.eighteenZeros
-      );
-      // - Seeder props
-      const seedERC20Config = { name: "SeedToken", symbol: "SDT" };
-      const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
-      const seederUnits = 10;
-      const seederCooldownDuration = 1;
-
-      const successLevel = redeemInit
-        .add(minimumCreatorRaise)
-        .add(seederFee)
-        .add(reserveInit);
-
-      const signers = await ethers.getSigners();
-      const deployer: SignerWithAddress = signers[0];
-      const creator: SignerWithAddress = signers[9];
-
-      // BalancerTier deployed without factory
-      const erc20BalanceTierIndependent = (await Util.deploy(
-        ERC20BalanceTierJson,
-        deployer,
-        []
-      )) as ERC20BalanceTier;
-
-      trust = (await Util.trustDeploy(
-        trustFactory,
-        creator,
-        {
-          creator: creator.address,
-          minimumCreatorRaise,
-          seederFee,
-          redeemInit,
-          reserve: reserve.address,
-          reserveInit,
-          initialValuation,
-          finalValuation: successLevel,
-          minimumTradingDuration,
-        },
-        {
-          erc20Config,
-          tier: erc20BalanceTierIndependent.address,
-          minimumTier,
-          totalSupply: totalTokenSupply,
-        },
-        {
-          seeder: Util.zeroAddress,
-          seederUnits,
-          seederCooldownDuration,
-          seedERC20Config,
-        },
-        { gasLimit: 15000000 }
-      )) as Trust;
-
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const unknownTierQuery = `
-        {
-          trust (id:"${trust.address.toLowerCase()}"){
-            contracts{
-              tier
-            }
-          }
-          unknownTier (id: "${erc20BalanceTierIndependent.address.toLowerCase()}") {
-            address
-            factory
-          }
-        }
-      `;
-
-      const queryTierFactoriesresponse = (await subgraph({
-        query: unknownTierQuery,
-      })) as FetchResult;
-
-      const trustData = queryTierFactoriesresponse.data.trust;
-      const unknownTierData = queryTierFactoriesresponse.data.unknownTier;
-
-      expect(unknownTierData.factory).to.be.null;
-      expect(trustData.contracts.tier).to.equals(
-        erc20BalanceTierIndependent.address.toLowerCase()
-      );
-      expect(unknownTierData.address).to.equals(
-        erc20BalanceTierIndependent.address.toLowerCase()
-      );
-    });
+    it("should be an unknown tier in other contracts if was deployed without the factory", async function () {});
   });
 
   describe("ERC20TransferTierFactory - queries", function () {
@@ -1197,103 +1101,10 @@ describe("Subgraph Tier Test", function () {
       expect(tierChangeData.endTier).to.equals(Tier.FOUR);
     });
 
-    it("should be an unknown tier in other contracts if was deployed without the factory", async function () {
-      const erc20Config = { name: "Token", symbol: "TKN" };
-      const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
-      const initialValuation = ethers.BigNumber.from("20000" + Util.sixZeros);
-      const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
-      const minimumTradingDuration = 20;
-      const minimumTier = Tier.ONE;
-      const totalTokenSupply = ethers.BigNumber.from(
-        "2000" + Util.eighteenZeros
-      );
-      // - Seeder props
-      const seedERC20Config = { name: "SeedToken", symbol: "SDT" };
-      const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
-      const seederUnits = 10;
-      const seederCooldownDuration = 1;
-
-      const successLevel = redeemInit
-        .add(minimumCreatorRaise)
-        .add(seederFee)
-        .add(reserveInit);
-
-      const signers = await ethers.getSigners();
-      const deployer: SignerWithAddress = signers[0];
-      const creator: SignerWithAddress = signers[9];
-
-      // TransferTier deployed without factory
-      const erc20TransferTierIndependent = (await Util.deploy(
-        ERC20TransferTierJson,
-        deployer,
-        []
-      )) as ERC20TransferTier;
-
-      trust = (await Util.trustDeploy(
-        trustFactory,
-        creator,
-        {
-          creator: creator.address,
-          minimumCreatorRaise,
-          seederFee,
-          redeemInit,
-          reserve: reserve.address,
-          reserveInit,
-          initialValuation,
-          finalValuation: successLevel,
-          minimumTradingDuration,
-        },
-        {
-          erc20Config,
-          tier: erc20TransferTierIndependent.address,
-          minimumTier,
-          totalSupply: totalTokenSupply,
-        },
-        {
-          seeder: Util.zeroAddress,
-          seederUnits,
-          seederCooldownDuration,
-          seedERC20Config,
-        },
-        { gasLimit: 15000000 }
-      )) as Trust;
-
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const unknownTierQuery = `
-        {
-          trust (id:"${trust.address.toLowerCase()}"){
-            contracts{
-              tier
-            }
-          }
-          unknownTier (id: "${erc20TransferTierIndependent.address.toLowerCase()}") {
-            address
-            factory
-          }
-        }
-      `;
-
-      const queryTierFactoriesresponse = (await subgraph({
-        query: unknownTierQuery,
-      })) as FetchResult;
-
-      const trustData = queryTierFactoriesresponse.data.trust;
-      const unknownTierData = queryTierFactoriesresponse.data.unknownTier;
-
-      expect(unknownTierData.factory).to.be.null;
-      expect(trustData.contracts.tier).to.equals(
-        erc20TransferTierIndependent.address.toLowerCase()
-      );
-      expect(unknownTierData.address).to.equals(
-        erc20TransferTierIndependent.address.toLowerCase()
-      );
-    });
+    it("should be an unknown tier in other contracts if was deployed without the factory", async function () {});
   });
 
-  describe("CombineTierFactory - queries", function () {
+  xdescribe("CombineTierFactory - queries", function () {
     it("should query CombineTierFactory correctly", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);

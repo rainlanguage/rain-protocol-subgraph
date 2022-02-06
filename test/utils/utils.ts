@@ -217,6 +217,7 @@ export const trustDeploy = async (
     trustSeedERC20Config,
     ...args
   );
+  console.log("here");
   // Getting the address, and get the contract abstraction
   const trust = new ethers.Contract(
     ethers.utils.hexZeroPad(

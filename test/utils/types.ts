@@ -1,4 +1,5 @@
-import { BigNumber } from "@ethersproject/bignumber";
+/* eslint-disable no-use-before-define */
+import type { BigNumber } from "ethers";
 
 export interface Trust {
   id: string;
@@ -16,7 +17,6 @@ export interface TrustFactoryQuery {
   trustCount: BigNumber;
   trusts: Trust[];
 }
-
 
 // event Notice(address indexed sender, bytes data);
 export interface Notice {

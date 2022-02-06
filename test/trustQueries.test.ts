@@ -164,7 +164,6 @@ describe("Subgraph Trusts Test", function () {
 
   describe("Single Trust test", function () {
     // Properties of this trust
-    const erc20Config = { name: "Token", symbol: "TKN" };
     const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
     const totalTokenSupply = ethers.BigNumber.from("2000" + Util.eighteenZeros);
@@ -172,8 +171,13 @@ describe("Subgraph Trusts Test", function () {
     const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
     const minimumTradingDuration = 20;
 
+    const redeemableERC20Config = {
+      name: "Token",
+      symbol: "TKN",
+      distributor: Util.zeroAddress,
+      initialSupply: totalTokenSupply,
+    };
     // - Seeder props
-    const seedERC20Config = { name: "SeedToken", symbol: "SDT" };
     const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
     const seederUnits = 10;
     const seederCooldownDuration = 1;
@@ -181,6 +185,12 @@ describe("Subgraph Trusts Test", function () {
     const minSeedUnits = 0;
     const seeder1Units = 4;
     const seeder2Units = 6;
+    const seedERC20Config = {
+      name: "SeedToken",
+      symbol: "SDT",
+      distributor: Util.zeroAddress,
+      initialSupply: seederUnits,
+    };
 
     const successLevel = redeemInit
       .add(minimumCreatorRaise)
@@ -205,16 +215,14 @@ describe("Subgraph Trusts Test", function () {
           minimumTradingDuration,
         },
         {
-          erc20Config,
+          erc20Config: redeemableERC20Config,
           tier: tier.address,
           minimumTier,
-          totalSupply: totalTokenSupply,
         },
         {
           seeder: Util.zeroAddress,
-          seederUnits,
-          seederCooldownDuration,
-          seedERC20Config,
+          cooldownDuration: seederCooldownDuration,
+          erc20Config: seedERC20Config,
         },
         { gasLimit: 15000000 }
       )) as Trust;
@@ -253,8 +261,8 @@ describe("Subgraph Trusts Test", function () {
       expect(gReserve.decimals).to.equals(await reserve.decimals());
       expect(gReserve.totalSupply).to.equals(await reserve.totalSupply());
 
-      expect(tRedeemable.name).to.equals(erc20Config.name);
-      expect(tRedeemable.symbol).to.equals(erc20Config.symbol);
+      expect(tRedeemable.name).to.equals(redeemableERC20Config.name);
+      expect(tRedeemable.symbol).to.equals(redeemableERC20Config.symbol);
 
       expect(tSeed.name).to.equals(seedERC20Config.name);
       expect(tSeed.symbol).to.equals(seedERC20Config.symbol);
@@ -380,9 +388,9 @@ describe("Subgraph Trusts Test", function () {
         seeder1Units.toString()
       );
       // This value got null
-      // expect(seedErc20Data.seederUnitsAvail).to.equals(
-      //   await seederContract.balanceOf(seederContract.address)
-      // );
+      expect(seedErc20Data.seederUnitsAvail).to.equals(
+        await seederContract.balanceOf(seederContract.address)
+      );
     });
 
     it("should query  the trustParticipant", async function () {
@@ -643,7 +651,7 @@ describe("Subgraph Trusts Test", function () {
     it("Redeem seed test", async function () {
       const seederContract1 = seederContract.connect(seeder1);
       const seeder1Units = 4;
-      await seederContract1.redeem(seeder1Units);
+      await seederContract1.redeem(seeder1Units, 0);
     });
 
     it("Pull ERC20 tokens ", async function () {
