@@ -174,9 +174,9 @@ describe("Subgraph Tier Test", function () {
     configLocal.verifyTierFactory = verifyTierFactory.address;
     configLocal.blockVerifyTierFactory = blockVerifyTierFactory;
 
-    // Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
+    Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
 
-    // exec(`yarn deploy-build:localhost`);
+    exec(`yarn deploy-build:localhost`);
 
     // subgraph = fetchSubgraph(subgraphUser, subgraphName);
   });
@@ -683,9 +683,9 @@ describe("Subgraph Tier Test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const tierFactoriesQuery = `
+      const query = `
         {
-          tierFactory  (id: "${erc20BalanceTierFactory.address.toLowerCase()}") {
+          erc20BalanceTierFactory  (id: "${erc20BalanceTierFactory.address.toLowerCase()}") {
             address
             children {
               id
@@ -694,11 +694,11 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryTierFactoriesresponse = (await subgraph({
-        query: tierFactoriesQuery,
+      const queryResponse = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const TierFactoryData = queryTierFactoriesresponse.data.tierFactory;
+      const TierFactoryData = queryResponse.data.erc20BalanceTierFactory;
 
       expect(TierFactoryData.address).to.equals(
         erc20BalanceTierFactory.address.toLowerCase()
@@ -722,9 +722,9 @@ describe("Subgraph Tier Test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const tierFactoriesQuery = `
+      const query = `
         {
-          tierFactory  (id: "${erc20BalanceTierFactory.address.toLowerCase()}") {
+          erc20BalanceTierFactory  (id: "${erc20BalanceTierFactory.address.toLowerCase()}") {
             address
             children {
               id
@@ -734,14 +734,14 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryTierFactoriesResponse = (await subgraph({
-        query: tierFactoriesQuery,
+      const queryResponse = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const TierFactoryData = queryTierFactoriesResponse.data.tierFactory;
-      const erc20BalanceTierData = TierFactoryData.children[0];
+      const factoryData = queryResponse.data.erc20BalanceTierFactory;
+      const erc20BalanceTierData = factoryData.children[0];
 
-      expect(TierFactoryData.children).to.have.lengthOf(1);
+      expect(factoryData.children).to.have.lengthOf(1);
       expect(erc20BalanceTierData.id).to.equals(
         erc20BalanceTier.address.toLowerCase()
       );
@@ -819,6 +819,8 @@ describe("Subgraph Tier Test", function () {
       expect(tierData.address).to.equals(
         erc20BalanceTier.address.toLowerCase()
       );
+      console.log("tierData.tierValues");
+      console.log(tierData.tierValues);
       expect(tierData.tierValues).to.eql(LEVELS);
 
       expect(tokenData.name).to.equals(await reserve.name());
@@ -826,8 +828,6 @@ describe("Subgraph Tier Test", function () {
       expect(tokenData.decimals).to.equals(await reserve.decimals());
       expect(tokenData.totalSupply).to.equals(await reserve.totalSupply());
     });
-
-    it("should be an unknown tier in other contracts if was deployed without the factory", async function () {});
   });
 
   describe("ERC20TransferTierFactory - queries", function () {
@@ -1100,11 +1100,9 @@ describe("Subgraph Tier Test", function () {
       expect(tierChangeData.startTier).to.equals(Tier.FIVE);
       expect(tierChangeData.endTier).to.equals(Tier.FOUR);
     });
-
-    it("should be an unknown tier in other contracts if was deployed without the factory", async function () {});
   });
 
-  xdescribe("CombineTierFactory - queries", function () {
+  describe("CombineTierFactory - queries", function () {
     it("should query CombineTierFactory correctly", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
@@ -1132,5 +1130,144 @@ describe("Subgraph Tier Test", function () {
 
       expect(TierFactoriesData.combineTierF.children).to.be.empty;
     });
+  });
+
+  describe("UnknownTier - Queries", function () {
+    // All are contracts "independents" - deployed without the factory indexed
+    let verify: Verify,
+      verifyTier: VerifyTier,
+      erc20BalanceTierIndepent: ERC20BalanceTier,
+      erc20TransferTierIndepent: ERC20TransferTier,
+      combineTier: CombineTier;
+
+    let deployer: SignerWithAddress, creator: SignerWithAddress;
+
+    before("deploy Independent TierContracts", async function () {
+      const signers = await ethers.getSigners();
+      deployer = signers[0];
+      creator = signers[1];
+
+      // Deploy and initialize an ERC20BalanceTierIndependent
+      erc20BalanceTierIndepent = (await Util.deploy(
+        ERC20BalanceTierJson,
+        deployer,
+        []
+      )) as ERC20BalanceTier;
+
+      await erc20BalanceTierIndepent.initialize({
+        erc20: reserve.address,
+        tierValues: LEVELS,
+      });
+
+      // Deploy and initialize an ERC20BalanceTierIndependent
+      erc20TransferTierIndepent = (await Util.deploy(
+        ERC20TransferTierJson,
+        deployer,
+        []
+      )) as ERC20TransferTier;
+
+      await erc20TransferTierIndepent.initialize({
+        erc20: reserve.address,
+        tierValues: LEVELS,
+      });
+    });
+
+    it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Trust", async function () {
+      // Properties of this trust
+      const reserveInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+      const redeemInit = ethers.BigNumber.from("2000" + Util.sixZeros);
+      const totalTokenSupply = ethers.BigNumber.from(
+        "2000" + Util.eighteenZeros
+      );
+      const initialValuation = ethers.BigNumber.from("20000" + Util.sixZeros);
+      const minimumCreatorRaise = ethers.BigNumber.from("100" + Util.sixZeros);
+      const minimumTradingDuration = 20;
+
+      const redeemableERC20Config = {
+        name: "Token",
+        symbol: "TKN",
+        distributor: Util.zeroAddress,
+        initialSupply: totalTokenSupply,
+      };
+      // - Seeder props
+      const seederFee = ethers.BigNumber.from("100" + Util.sixZeros);
+      const seederUnits = 10;
+      const seederCooldownDuration = 1;
+      const seedPrice = reserveInit.div(10);
+      const minSeedUnits = 0;
+      const seeder1Units = 4;
+      const seeder2Units = 6;
+      const seedERC20Config = {
+        name: "SeedToken",
+        symbol: "SDT",
+        distributor: Util.zeroAddress,
+        initialSupply: seederUnits,
+      };
+
+      const successLevel = redeemInit
+        .add(minimumCreatorRaise)
+        .add(seederFee)
+        .add(reserveInit);
+
+      const minimumTier = Tier.TWO;
+
+      trust = (await Util.trustDeploy(
+        trustFactory,
+        creator,
+        {
+          creator: creator.address,
+          minimumCreatorRaise,
+          seederFee,
+          redeemInit,
+          reserve: reserve.address,
+          reserveInit,
+          initialValuation,
+          finalValuation: successLevel,
+          minimumTradingDuration,
+        },
+        {
+          erc20Config: redeemableERC20Config,
+          tier: erc20BalanceTierIndepent.address,
+          minimumTier,
+        },
+        {
+          seeder: Util.zeroAddress,
+          cooldownDuration: seederCooldownDuration,
+          erc20Config: seedERC20Config,
+        },
+        { gasLimit: 15000000 }
+      )) as Trust;
+
+      await trust.deployed();
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1000);
+
+      const query = `
+        {
+          trust (id: "${trust.address.toLowerCase()}") {
+            contracts {
+              tier
+            }
+          }
+          ERC721BalanceTier 
+          unknownTier (id: "${erc20BalanceTierIndepent.address.toLowerCase()}") {
+            address
+            deployer
+            factory
+          }
+        }
+      `;
+      // erc20BalanceTierIndepent
+
+      const queryResponse = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const tierData = queryResponse.data.erc20BalanceTier;
+      const tokenData = tierData.token;
+    });
+
+    it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Sale", async function () {});
   });
 });

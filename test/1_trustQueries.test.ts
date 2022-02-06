@@ -34,6 +34,20 @@ import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20"
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
 import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol//typechain/ConfigurableRightsPool";
 import { BPool } from "@beehiveinnovation/rain-protocol//typechain/BPool";
+
+///
+import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
+import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTierFactory";
+import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
+import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
+import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
+
+import ERC20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
+import ERC20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
+import CombineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
+import VerifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
+import VerifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
+
 import {
   getContracts,
   getFactories,
@@ -107,15 +121,72 @@ describe("Subgraph Trusts Test", function () {
     minimumTier = Tier.GOLD;
     await tier.setTier(signer1.address, Tier.GOLD, []);
 
+    currentBlock = await ethers.provider.getBlockNumber();
     ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
       await factoriesDeploy(crpFactory, bFactory, creator));
-    currentBlock = await ethers.provider.getBlockNumber();
 
-    console.log("Block: ", currentBlock--);
-    console.log("trustF: ", trustFactory.address);
+    // Verify factory
+    const blockErc20VerifyFactory = await ethers.provider.getBlockNumber();
+    const verifyFactory = (await Util.deploy(
+      VerifyFactoryJson,
+      deployer,
+      []
+    )) as VerifyFactory;
+
+    // Tiers factories
+    const blockErc20BalanceTierFactory = await ethers.provider.getBlockNumber();
+    const erc20BalanceTierFactory = (await Util.deploy(
+      ERC20BalanceTierFactoryJson,
+      deployer,
+      []
+    )) as ERC20BalanceTierFactory;
+
+    const blockErc20TierTierFactory = await ethers.provider.getBlockNumber();
+    const erc20TransferTierFactory = (await Util.deploy(
+      ERC20TransferTierFactoryJson,
+      deployer,
+      []
+    )) as ERC20TransferTierFactory;
+
+    const blockCombineTierFactory = await ethers.provider.getBlockNumber();
+    const combineTierFactory = (await Util.deploy(
+      CombineTierFactoryJson,
+      deployer,
+      []
+    )) as CombineTierFactory;
+
+    const blockVerifyTierFactory = await ethers.provider.getBlockNumber();
+    const verifyTierFactory = (await Util.deploy(
+      VerifyTierFactoryJson,
+      deployer,
+      []
+    )) as VerifyTierFactory;
 
     const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
     const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
+
+    // If we need index both
+    configLocal.factory = trustFactory.address;
+    configLocal.startBlock = currentBlock;
+
+    // Saving addresses and individuals blocks. Idk if it is necessary, just in case
+    configLocal.verifyFactory = verifyFactory.address;
+    configLocal.blockErc20VerifyFactory = blockErc20VerifyFactory;
+
+    configLocal.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
+    configLocal.blockErc20BalanceTierFactory = blockErc20BalanceTierFactory;
+
+    configLocal.erc20TransferTierFactory = erc20TransferTierFactory.address;
+    configLocal.blockErc20TierTierFactory = blockErc20TierTierFactory;
+
+    configLocal.combineTierFactory = combineTierFactory.address;
+    configLocal.blockCombineTierFactory = blockCombineTierFactory;
+
+    configLocal.verifyTierFactory = verifyTierFactory.address;
+    configLocal.blockVerifyTierFactory = blockVerifyTierFactory;
+
+    console.log("Block: ", currentBlock--);
+    console.log("trustF: ", trustFactory.address);
 
     configLocal.factory = trustFactory.address;
     configLocal.startBlock = currentBlock;
@@ -124,6 +195,9 @@ describe("Subgraph Trusts Test", function () {
     exec(`yarn deploy-build:localhost`);
 
     subgraph = fetchSubgraph(subgraphUser, subgraphName);
+
+    await Util.delay(Util.wait);
+    await waitForSubgraphToBeSynced(1000);
   });
 
   it("should query the trust factories", async function () {
@@ -133,6 +207,7 @@ describe("Subgraph Trusts Test", function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
     })) as FetchResult;
+
     expect(queryTrustCountresponse.data.trustFactories[0].id).to.equals(
       trustFactory.address.toLowerCase()
     );
