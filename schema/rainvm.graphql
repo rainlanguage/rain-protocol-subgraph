@@ -1,0 +1,31 @@
+type Snapshot @entity{
+    id: ID!
+    sender: Bytes!
+    pointer: Bytes!
+    state: Bytes!
+}
+
+type CanStartStateConfig @entity{
+    id: ID!
+    sources: [Bytes!]!
+    constants: [BigInt!]!
+    stackLength: BigInt!
+    argumentsLength: BigInt!
+}
+
+type CanEndStateConfig @entity{
+    id: ID!
+    sources: [Bytes!]!
+    constants: [BigInt!]!
+    stackLength: BigInt!
+    argumentsLength: BigInt!
+}
+
+type CalculatePriceStateConfig @entity{
+    id: ID!
+    sources: [Bytes!]!
+    constants: [BigInt!]!
+    stackLength: BigInt!
+    argumentsLength: BigInt!
+}
+

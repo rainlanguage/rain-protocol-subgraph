@@ -183,7 +183,7 @@ describe("Subgraph Trusts Test", function () {
     configLocal.blockErc20BalanceTierFactory = blockErc20BalanceTierFactory;
 
     configLocal.erc20TransferTierFactory = erc20TransferTierFactory.address;
-    configLocal.blockErc20TierTierFactory = blockErc20TierTierFactory;
+    configLocal.blockErc20TransferTierFactory = blockErc20TierTierFactory;
 
     configLocal.combineTierFactory = combineTierFactory.address;
     configLocal.blockCombineTierFactory = blockCombineTierFactory;

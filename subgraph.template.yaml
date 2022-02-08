@@ -85,6 +85,81 @@ dataSources:
         - event: Implementation(address,address)
           handler: handleImplementation
       file: ./src/tier/ERC20BalanceTierFactory.ts
+  - kind: ethereum/contract
+    name: ERC20TransferTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ erc20TransferTierFactory }}"
+      abi: ERC20TransferTierFactory
+      startBlock: {{ blockErc20TransferTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - NewChild
+        - Implementation
+      abis:
+        - name: ERC20TransferTierFactory
+          file: ./abis/tier/ERC20TransferTierFactory.json
+        - name: ERC20TransferTier
+          file: ./abis/tier/ERC20TransferTier.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/ERC20TransferTierFactory.ts
+  - kind: ethereum/contract
+    name: CombineTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ combineTierFactory }}"
+      abi: CombineTierFactory
+      startBlock: {{ blockCombineTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - NewChild
+        - Implementation
+      abis:
+        - name: CombineTierFactory
+          file: ./abis/tier/CombineTierFactory.json
+        - name: CombineTier
+          file: ./abis/tier/CombineTier.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/CombineTierFactory.ts
+  - kind: ethereum/contract
+    name: SaleFactory
+    network: {{ network }}
+    source:
+      address: "{{ saleFactory }}"
+      abi: SaleFactory
+      startBlock: {{ blockSaleFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - NewChild
+        - Implementation
+      abis:
+        - name: SaleFactory
+          file: ./abis/sale/SaleFactory.json
+        - name: Sale
+          file: ./abis/sale/Sale.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/sale/SaleFactory.ts
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -243,3 +318,90 @@ templates:
         - event: TierChange(address,address,uint256,uint256)
           handler: handleTierChange
       file: ./src/tier/ERC20BalanceTier.ts
+  - kind: ethereum/contract
+    name: ERC20TransferTierTemplate
+    network: {{ network }}
+    source:
+      abi: ERC20TransferTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Initialize
+        - InitializeValueTier
+        - TierChange
+      abis:
+        - name: ERC20TransferTier
+          file: ./abis/tier/ERC20TransferTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Initialize(address,address)
+          handler: handleInitialize
+        - event: InitializeValueTier(address,address)
+          handler: handleInitializeValueTier
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/ERC20TransferTier.ts
+  - kind: ethereum/contract
+    name: CombineTierTemplate
+    network: {{ network }}
+    source:
+      abi: CombineTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - TierChange
+      abis:
+        - name: CombineTier
+          file: ./abis/tier/CombineTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/CombineTier.ts
+  - kind: ethereum/contract
+    name: SaleTemplate
+    network: {{ network }}
+    source:
+      abi: Sale
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Buy
+        - Construct
+        - CooldownInitialize
+        - CooldownTriggered
+        - End
+        - Initialize
+        - Refund
+        - Start
+      abis:
+        - name: Sale
+          file: ./abis/sale/Sale.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Buy(address,(address,uint256,uint256,uint256,uint256),(uint256,address,uint256,uint256,uint256))
+          handler: handleBuy
+        - event: Construct(address,(address))
+          handler: handleConstruct
+        - event: CooldownInitialize(address,uint256)
+          handler: handleCooldownInitialize
+        - event: CooldownTriggered(address,uint256)
+          handler: handleCooldownTriggered
+        - event: End(address,uint8)
+          handler: handleEnd
+        - event: Initialize(address,((bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),address,address,uint256,uint256,uint256),address)
+          handler: handleInitialize
+        - event: Refund(address,(uint256,address,uint256,uint256,uint256))
+          handler: handleRefund
+        - event: Start(address)
+          handler: handleStart
+      file: ./src/sale/Sale.ts

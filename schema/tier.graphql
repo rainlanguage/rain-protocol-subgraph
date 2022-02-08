@@ -1,0 +1,165 @@
+interface TierFactory {
+    id: ID! #factory address
+    address: Bytes! #factory address
+    implementation: Bytes! #implementation address from Implementation event
+    children: [TierContract!] #all the children that were deployed by this factory
+}
+
+interface TierContract {
+    id: ID! #tier contract address
+    address: Bytes! #tier contract address
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    factory: TierFactory #the factory that deployed this contract
+}
+
+type VerifyTierFactory implements TierFactory @entity {
+    id: ID! #factory address
+    address: Bytes! #factory address
+    implementation: Bytes! #implementation address from Implementation event
+    children: [TierContract!] #all the children that were deployed by this factory
+}
+
+type VerifyTier implements TierContract @entity {
+    id: ID! #tier contract address
+    address: Bytes! #tier contract address
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    deployer: Bytes! #address of the deployer - get from event Initialize.verify
+    factory: TierFactory #the factory that deployed this contract
+
+    # verifyContract: Verify! #the Verify contract checked for reports - from event Initialize.verify
+}
+
+type ERC20BalanceTierFactory implements TierFactory @entity{
+    id: ID! #factory address
+    address: Bytes! #factory address
+    implementation: Bytes! #implementation address from Implementation event
+    children: [TierContract!] #all the children that were deployed by this factory
+}
+
+# ERC20BalanceTier - created by listening to NewChild events on the factory
+type ERC20BalanceTier implements TierContract  @entity{
+    id: ID! #tier contract address
+    address: Bytes! #tier contract address
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    factory: TierFactory #the factory that deployed this contract
+
+    token: ERC20 #map by id = Intialize.erc20
+    tierValues: [BigInt!]! #get from ERC20BalanceTier.tierValues() view method
+}
+
+type ERC20 @entity{
+    id: ID! #address of token
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    symbol: String
+    totalSupply: BigInt
+    decimals: Int
+    name: String
+}
+
+type ERC20TransferTierFactory implements TierFactory @entity{
+    id: ID! #factory address
+    address: Bytes! #factory address
+    implementation: Bytes! #implementation address from Implementation event
+    children: [TierContract!] #all the children that were deployed by this factory
+}
+
+# ERC20BalanceTier - created by listening to NewChild events on the factory
+type ERC20TransferTier implements TierContract @entity{
+    id: ID! #tier contract address
+    address: Bytes! #tier contract address
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    factory: TierFactory #the factory that deployed this contract
+
+    token: ERC20 #map by id = Intialize.erc20
+    tierValues: [BigInt!] #get from ERC20BalanceTier.tierValues() view method
+    tierChanges: [TierChange!] #get from TierChange event
+    tierLevels: [TierLevel!] #always eight for a Tier contract
+}
+
+type TierChange @entity{
+    id: ID! #transaction hash + the tier contract address
+    transactionHash: Bytes! #transaction hash
+    changeblock: BigInt! #block of event
+    changetimestamp: BigInt! #timestamp of event
+    tierContract: TierContract #the tier contract that emitted the event
+    sender: Bytes #get from TierChange.sender
+    account: Bytes #get from TierChange.account
+    startTier: BigInt
+    endTier: BigInt
+}
+
+type TierLevel @entity{
+    id: ID! #concat {tierContractAddress}+{tierLevel}
+    tierLevel: Int # number from 0-8
+    tierContract: TierContract!
+    tierContractAddress: Bytes!
+    ## As a user changes tier, we memberCount++ for all tiers between startTier and endTier (if going up),
+    ## and memberCount-- for all tiers between startTier and endTier (if going down).
+    memberCount: BigInt! #can be derived from all the TierChange events for the parent contract.
+}
+
+type ERC721BalanceTierFactory implements TierFactory @entity{
+    id: ID! #factory address
+    address: Bytes! #factory address
+    implementation: Bytes! #implementation address from Implementation event
+    children: [TierContract!] #all the children that were deployed by this factory
+}
+
+# Created by listening to NewChild events on the factory
+type ERC721BalanceTier implements TierContract @entity{
+    id: ID! #tier contract address
+    address: Bytes! #tier contract address
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    factory: TierFactory #the factory that deployed this contract
+
+    token: ERC721 #map by id = Intialize.erc20
+    tierValues: [BigInt!] #get from ERC721BalanceTier.tierValues() view method
+}
+
+type ERC721 @entity{
+    id: ID! #address of token
+    deployBlock: Int! #the block the contract was deployed
+    deployTimestamp: Int! #the timestamp the contract was deployed
+    symbol: String
+    totalSupply: BigInt!
+    name: String
+}
+
+type CombineTierFactory implements TierFactory @entity{
+    id: ID! #factory address
+    address: Bytes! #factory address
+    implementation: Bytes! #implementation address from Implementation event
+    children: [TierContract!] #all the children that were deployed by this factory
+}
+
+# Created by listening to NewChild events on the factory
+type CombineTier implements TierContract @entity{
+    id: ID! #tier contract address
+    address: Bytes! #tier contract address
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    deployer: Bytes! #address of the deployer - get from the Snapshot event emitted by this contract - Snapshot.sender
+    factory: TierFactory #the factory that deployed this contract
+
+    state: Bytes #from event Snapshot.state
+}
+
+type UnknownTier implements TierContract @entity{
+    id: ID! #tier contract address
+    address: Bytes! #tier contract address
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    factory: TierFactory #is this possible when using the TierContract interface?
+}
+

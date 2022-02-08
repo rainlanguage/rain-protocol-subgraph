@@ -8,7 +8,12 @@ let ONE_BI = BigInt.fromI32(1)
 let ZERO_BD = BigDecimal.fromString("0.0")
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 let HUNDRED_BD = BigDecimal.fromString("100.0")
-
+export enum SaleStatus {
+    Pending,
+    Active,
+    Success,
+    Fail
+}
 export {
     ZERO_BI,
     ONE_BI,
