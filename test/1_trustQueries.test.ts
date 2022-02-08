@@ -55,6 +55,10 @@ import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20"
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
 import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
 
+// Should update path after a new commit
+import erc721BalanceTierFactoryJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTierFactory.sol/ERC721BalanceTierFactory.json";
+import { ERC721BalanceTierFactory } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTierFactory";
+
 import {
   getContracts,
   getFactories,
@@ -126,6 +130,7 @@ describe("Subgraph Trusts Test", function () {
       deployer,
       []
     )) as VerifyFactory;
+    console.log("Check Verify: ", verifyFactory.address.toLowerCase());
 
     // Tiers factories
     const blockErc20BalanceTierFactory = await ethers.provider.getBlockNumber();
@@ -155,6 +160,16 @@ describe("Subgraph Trusts Test", function () {
       deployer,
       []
     )) as VerifyTierFactory;
+    console.log("Check VerifyTier: ", verifyTierFactory.address.toLowerCase());
+
+    // ERC721BalanceTierFactory
+    const blockErc721BalanceTierFactory =
+      await ethers.provider.getBlockNumber();
+    const erc721BalanceTierFactory = (await deploy(
+      erc721BalanceTierFactoryJson,
+      deployer,
+      []
+    )) as ERC721BalanceTierFactory;
 
     // SaleFactory
     const saleConstructorConfig = {
@@ -191,6 +206,9 @@ describe("Subgraph Trusts Test", function () {
     configLocal.verifyTierFactory = verifyTierFactory.address;
     configLocal.blockVerifyTierFactory = blockVerifyTierFactory;
 
+    configLocal.erc721BalanceTierFactory = erc721BalanceTierFactory.address;
+    configLocal.blockErc721BalanceTierFactory = blockErc721BalanceTierFactory;
+
     configLocal.saleFactory = saleFactory.address;
     configLocal.blockSaleFactory = blockSaleFactory;
 
@@ -205,6 +223,7 @@ describe("Subgraph Trusts Test", function () {
     localInfoJson.erc20TransferTierFactory = erc20TransferTierFactory.address;
     localInfoJson.combineTierFactory = combineTierFactory.address;
     localInfoJson.verifyTierFactory = verifyTierFactory.address;
+    localInfoJson.erc721BalanceTierFactory = erc721BalanceTierFactory.address;
     localInfoJson.saleFactory = saleFactory.address;
 
     Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
