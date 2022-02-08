@@ -55,6 +55,12 @@ import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineT
 import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
 
+// Should update path after a new commit
+import erc721BalanceTierFactoryJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTierFactory.sol/ERC721BalanceTierFactory.json";
+import erc721BalanceTierJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTier.sol/ERC721BalanceTier.json";
+import { ERC721BalanceTierFactory } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTierFactory";
+import { ERC721BalanceTier } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
+
 import {
   getContracts,
   getFactories,
@@ -76,6 +82,7 @@ describe("Subgraph Tier Test", function () {
     erc20BalanceTierFactory: ERC20BalanceTierFactory,
     erc20TransferTierFactory: ERC20TransferTierFactory,
     combineTierFactory: CombineTierFactory,
+    erc721BalanceTierFactory: ERC721BalanceTierFactory,
     reserve: ReserveToken,
     trustFactory: TrustFactory,
     trust: Trust;
@@ -143,6 +150,13 @@ describe("Subgraph Tier Test", function () {
       verifyTierFactoryJson,
       deployer
     ) as VerifyTierFactory;
+    console.log("Check: ", verifyTierFactory.address.toLowerCase());
+
+    erc721BalanceTierFactory = getContract(
+      localInfoJson.erc721BalanceTierFactory,
+      erc721BalanceTierFactoryJson,
+      deployer
+    ) as ERC721BalanceTierFactory;
 
     // Connecting to the subgraph
     subgraph = Util.fetchSubgraph(
@@ -164,9 +178,9 @@ describe("Subgraph Tier Test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const tierFactoryQuery = `
+      const query = `
         {
-          verifyTierFactory  (id: "${verifyFactory.address.toLowerCase()}") {
+          verifyFactory   (id: "${verifyFactory.address.toLowerCase()}") {
             address
             children {
               id
@@ -175,25 +189,25 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryTierFactoriesresponse = (await subgraph({
-        query: tierFactoryQuery,
+      const queryResponse = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const TierFactoriesData = queryTierFactoriesresponse.data;
+      const factoryData = queryResponse.data.verifyFactory;
 
-      expect(TierFactoriesData.verifyTierFactory.address).to.equals(
+      expect(factoryData.address).to.equals(
         verifyFactory.address.toLowerCase()
       );
-      expect(TierFactoriesData.verifyTierFactory.children).to.be.empty;
+      expect(factoryData.children).to.be.empty;
     });
 
     it("should query VerifyTierFactory correctly after construction", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const tierFactoriesQuery = `
+      const query = `
         {
-          tierFactory  (id: "${verifyTierFactory.address.toLowerCase()}") {
+          verifyTierFactory (id: "${verifyTierFactory.address.toLowerCase()}") {
             address
             children {
               id
@@ -202,20 +216,21 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryTierFactoriesresponse = (await subgraph({
-        query: tierFactoriesQuery,
+      const queryResponse = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const TierFactoriesData = queryTierFactoriesresponse.data;
+      console.log(queryResponse);
+      const factoryData = queryResponse.data.verifyTierFactory;
 
-      expect(TierFactoriesData.tierFactory.address).to.equals(
-        erc20BalanceTierFactory.address.toLowerCase()
+      expect(factoryData.address).to.equals(
+        verifyTierFactory.address.toLowerCase()
       );
-      expect(TierFactoriesData.tierFactory.children).to.be.empty;
+      expect(factoryData.children).to.be.empty;
     });
 
     it("should query the Verify child from factory after creation", async function () {
-      const verifyCreator = verifyFactory.signer;
+      const verifyCreator = await verifyFactory.signer.getAddress();
 
       const tx = await verifyFactory.createChildTyped(admin.address);
 
@@ -228,10 +243,9 @@ describe("Subgraph Tier Test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const verifyFactoryQuery = `
+      const query = `
         {
           verifyFactory (id: "${verifyFactory.address.toLowerCase()}") {
-            address
             children {
               id
               deployer
@@ -241,21 +255,21 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const queryVerifyFactoryResponse = (await subgraph({
-        query: verifyFactoryQuery,
+        query: query,
       })) as FetchResult;
 
-      const verifyFactoryData = queryVerifyFactoryResponse.data.verifyFactory;
-      const verifyData = verifyFactoryData.children[0];
+      const factoryData = queryVerifyFactoryResponse.data.verifyFactory;
+      const verifyData = factoryData.children[0];
 
-      expect(verifyFactoryData.children).to.have.lengthOf(1);
+      expect(factoryData.children).to.have.lengthOf(1);
       expect(verifyData.id).to.equals(verify.address.toLowerCase());
-      expect(verifyData.deployer).to.equals(
-        (await verifyCreator.getAddress()).toLowerCase()
-      );
+      expect(verifyData.deployer).to.equals(verifyCreator.toLowerCase());
     });
 
     it("should query the VerifyTier child from factory after creation", async function () {
-      const verifyTierCreator = verifyTierFactory.signer;
+      const verifyTierCreator = await verifyTierFactory.signer.getAddress();
+
+      // Creating the VerifyTier Contract with a Verify Contract
       const tx = await verifyTierFactory.createChildTyped(verify.address);
 
       verifyTier = (await getContractChild(
@@ -267,7 +281,7 @@ describe("Subgraph Tier Test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const verifyTierFactoryQuery = `
+      const query = `
         {
           verifyTierFactory  (id: "${verifyTierFactory.address.toLowerCase()}") {
             address
@@ -279,18 +293,17 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryVerifyTierFactoryResponse = (await subgraph({
-        query: verifyTierFactoryQuery,
+      const queryResponse = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const verifyTierFactoryData =
-        queryVerifyTierFactoryResponse.data.verifyFactory;
-      const verifyTierData = verifyTierFactoryData.children[0];
+      const factoryData = queryResponse.data.verifyFactory;
+      const verifyTierData = factoryData.children[0];
 
-      expect(verifyTierFactoryData.children).to.have.lengthOf(1);
+      expect(factoryData.children).to.have.lengthOf(1);
       expect(verifyTierData.id).to.equals(verifyTier.address.toLowerCase());
       expect(verifyTierData.deployer).to.equals(
-        (await verifyTierCreator.getAddress()).toLowerCase()
+        await verifyTierCreator.toLowerCase()
       );
     });
 
@@ -298,24 +311,26 @@ describe("Subgraph Tier Test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const verifyTierQuery = `
+      const query = `
         {
           verifyTier (id: "${verifyTier.address.toLowerCase()}") {
             verifyContract {
-              address
+              id
+              factory
               verifyAddresses
             }
           }
         }
       `;
 
-      const verifyTierQueryResponse = (await subgraph({
-        query: verifyTierQuery,
+      const queryResponse = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const verifyData = verifyTierQueryResponse.data.verifyTier.verifyContract;
+      const verifyData = queryResponse.data.verifyTier.verifyContract;
 
-      expect(verifyData.address).to.equals(verify.address.toLowerCase());
+      expect(verifyData.id).to.equals(verify.address.toLowerCase());
+      expect(verifyData.factory).to.equals(verifyFactory.address.toLowerCase());
       expect(verifyData.verifyAddresses).to.be.empty;
     });
 
@@ -1085,6 +1100,37 @@ describe("Subgraph Tier Test", function () {
       );
 
       expect(TierFactoriesData.combineTierF.children).to.be.empty;
+    });
+  });
+
+  describe("ERCc721BalanceTier - queries", function () {
+    let erc721BalanceTier: ERC721BalanceTier;
+    it("should query ERC721BalanceTierFactory correctly", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1000);
+
+      const query = `
+				{
+				  erc721BalanceTierFactory (id: "${erc721BalanceTierFactory.address.toLowerCase()}") {
+						address
+						children {
+							id
+						}
+					}
+				}
+			`;
+
+      const queryResponse = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const factoryData = queryResponse.data.erc721BalanceTierFactory;
+
+      expect(factoryData.address).to.equals(
+        erc721BalanceTierFactory.address.toLowerCase()
+      );
+
+      expect(factoryData.children).to.be.empty;
     });
   });
 
