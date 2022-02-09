@@ -20,6 +20,7 @@ export function handleSeed(event: SeedEvent): void {
     let seeds = seedERC20.seeds
     seeds.push(seed.id)
     seedERC20.seeds = seeds
+    seedERC20.seederUnitsAvail = seedERC20.seederUnitsAvail.minus(event.params.tokensSeeded) // Here
     seedERC20.save()
 
     let context = dataSource.context()
@@ -46,6 +47,7 @@ export function handleUnseed(event: UnseedEvent): void {
     let unseeds = seedERC20.unseeds
     unseeds.push(unseed.id)
     seedERC20.unseeds = unseeds
+    seedERC20.seederUnitsAvail = seedERC20.seederUnitsAvail.plus(event.params.tokensUnseeded) // Here
     seedERC20.save()
 
     let context = dataSource.context()

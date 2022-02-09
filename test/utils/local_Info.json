@@ -1,27 +1,14 @@
 {
     "subgraphUser": "vishalkale151071",
     "subgraphName": "rain-protocol",
-<<<<<<< HEAD
-    "factory": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-    "verifyFactory": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    "erc20BalanceTierFactory": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "erc20TransferTierFactory": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-    "combineTierFactory": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-    "verifyTierFactory": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-    "trustFactory": "0x0f5D1ef48f12b6f691401bfe88c2037c690a6afe",
-    "saleFactory": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-    "redeemableERC20Factory": "0x05Aa229Aec102f78CE0E852A812a388F076Aa555",
-    "seedERC20Factory": "0x0b48aF34f4c854F5ae1A3D587da471FeA45bAD52"
-=======
-    "trustFactory": "0x9Fe28b717aDE38BA99E32c45BE3Ee4291f2E338B",
-    "redeemableERC20Factory": "0x90352F820342f8BE0012848bCB8aBd37877d7ec2",
-    "seedERC20Factory": "0x82B642D9deDb3Ad19b8E99FF3792A49d4d9d85Bf",
-    "verifyFactory": "0xFD6F7A6a5c21A3f503EBaE7a473639974379c351",
-    "erc20BalanceTierFactory": "0xa6e99A4ED7498b3cdDCBB61a6A607a4925Faa1B7",
-    "erc20TransferTierFactory": "0x5302E909d1e93e30F05B5D6Eea766363D14F9892",
-    "combineTierFactory": "0x0ed64d01D0B4B655E410EF1441dD677B695639E7",
-    "verifyTierFactory": "0x4bf010f1b9beDA5450a8dD702ED602A104ff65EE",
-    "erc721BalanceTierFactory": "0x40a42Baf86Fc821f972Ad2aC878729063CeEF403",
-    "saleFactory": "0x96F3Ce39Ad2BfDCf92C0F6E2C2CAbF83874660Fc"
->>>>>>> 9137bbc1edb18a4bf62f8e35e2d39cee2eede08e
+    "trustFactory": "0x04F339eC4D75Cf2833069e6e61b60eF56461CD7C",
+    "redeemableERC20Factory": "0xE7FF84Df24A9a252B6E8A5BB093aC52B1d8bEEdf",
+    "seedERC20Factory": "0x6D712CB50297b97b79dE784d10F487C00d7f8c2C",
+    "verifyFactory": "0x3de00f44ce68FC56DB0e0E33aD4015C6e78eCB39",
+    "erc20BalanceTierFactory": "0x89372b32b8AF3F1272e2efb3088616318D2834cA",
+    "erc20TransferTierFactory": "0xB1c05b498Cb58568B2470369FEB98B00702063dA",
+    "combineTierFactory": "0x92A00fc48Ad3dD4A8b5266a8F467a52Ac784fC83",
+    "verifyTierFactory": "0x2f8D338360D095a72680A943A22fE6a0d398a0B4",
+    "erc721BalanceTierFactory": "0x21915b79E1d334499272521a3508061354D13FF0",
+    "saleFactory": "0x44863F234b137A395e5c98359d16057A9A1fAc55"
 }
