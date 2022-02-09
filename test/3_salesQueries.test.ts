@@ -124,7 +124,7 @@ interface BuyConfig {
   maximumPrice: BigNumber;
 }
 
-describe("Sales queries test", function () {
+xdescribe("Sales queries test", function () {
   let subgraph: ApolloFetch,
     reserve: ReserveToken,
     redeemableERC20Factory: RedeemableERC20Factory,
