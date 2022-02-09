@@ -8,18 +8,37 @@ let ONE_BI = BigInt.fromI32(1)
 let ZERO_BD = BigDecimal.fromString("0.0")
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 let HUNDRED_BD = BigDecimal.fromString("100.0")
+let ETHER = BigInt.fromString("10000000000000000000")
+
 export enum SaleStatus {
     Pending,
     Active,
     Success,
     Fail
 }
+
+export enum RequestStatus {
+    NONE,
+    REQUEST_APPROVE,
+    REQUEST_BAN,
+    REQUEST_REMOVE
+}
+
+export enum Status {
+    NONE,
+    APPROVED,
+    BANNED,
+    REMOVED
+}
+
+
 export {
     ZERO_BI,
     ONE_BI,
     ZERO_BD,
     HUNDRED_BD,
-    ZERO_ADDRESS
+    ZERO_ADDRESS,
+    ETHER
 }
 
 export function getTrustParticipent(participant: Address, trust: string) : TrustParticipant {

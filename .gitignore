@@ -9,3 +9,6 @@ config
 schema.graphql
 
 docker/data
+
+.idea
+.vscode

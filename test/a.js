@@ -1,1 +1,1 @@
-console.log(10 ** 18);
+// console.log(10 ** 18);

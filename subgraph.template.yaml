@@ -41,7 +41,7 @@ dataSources:
     source:
       address: "{{ verifyFactory }}"
       abi: VerifyFactory
-      startBlock: {{ blockErc20VerifyFactory }}
+      startBlock: {{ verifyFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -51,13 +51,13 @@ dataSources:
         - Implementation
       abis:
         - name: VerifyFactory
-          file: ./abis/tier/VerifyFactory.json
+          file: ./abis/verify/VerifyFactory.json
       eventHandlers:
         - event: NewChild(address,address)
           handler: handleNewChild
         - event: Implementation(address,address)
           handler: handleImplementation
-      file: ./src/tier/VerifyFactory.ts
+      file: ./src/verify/VerifyFactory.ts
   - kind: ethereum/contract
     name: ERC20BalanceTierFactory
     network: {{ network }}
@@ -160,6 +160,7 @@ dataSources:
         - event: Implementation(address,address)
           handler: handleImplementation
       file: ./src/sale/SaleFactory.ts
+  
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -405,3 +406,37 @@ templates:
         - event: Start(address)
           handler: handleStart
       file: ./src/sale/Sale.ts
+  - kind: ethereum/contract
+    name: VerifyTemplate
+    network: {{ network }}
+    source:
+      abi: Verify
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Approve
+      abis:
+        - name: Verify
+          file: ./abis/verify/Verify.json
+      eventHandlers:
+        - event: Approve(address,address,bytes)
+          handler: handleApprove
+        - event: Ban(address,address,bytes)
+          handler: handleBan
+        - event: Remove(address,address,bytes)
+          handler: handleRemove
+        - event: RequestApprove(address,bytes)
+          handler: handleRequestApprove
+        - event: RequestBan(address,address,bytes)
+          handler: handleRequestBan
+        - event: RequestRemove(address,address,bytes)
+          handler: handleRequestRemove
+        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+          handler: handleRoleAdminChanged
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleRevoked
+      file: ./src/verify/Verify.ts

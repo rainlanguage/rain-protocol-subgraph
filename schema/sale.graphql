@@ -93,6 +93,7 @@ type SaleRefund @entity{
     timestamp: BigInt! #timestamp of event
     saleContract: Sale! #Sale that emitted the event
     saleContractAddress: Bytes! #address of the sale contract
+    fee: BigInt! #from refunds.fee
     feeRecipient: SaleFeeRecipient! # created/referenced by id {Sale.address}+{Refund.feeRecipient}
     feeRecipientAddress: Bytes! #from Buy.feeRecipient
     receipt: SaleReceipt! #from {Sale.address}+{receipt.id}
