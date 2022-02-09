@@ -150,7 +150,6 @@ describe("Subgraph Tier Test", function () {
       verifyTierFactoryJson,
       deployer
     ) as VerifyTierFactory;
-    console.log("Check: ", verifyTierFactory.address.toLowerCase());
 
     erc721BalanceTierFactory = getContract(
       localInfoJson.erc721BalanceTierFactory,
@@ -220,7 +219,6 @@ describe("Subgraph Tier Test", function () {
         query: query,
       })) as FetchResult;
 
-      console.log(queryResponse);
       const factoryData = queryResponse.data.verifyTierFactory;
 
       expect(factoryData.address).to.equals(
