@@ -8,8 +8,8 @@ type VerifyFactory @entity{
 type Verify @entity{
     id: ID! #Verify contract address
     address: Bytes! #Verify contract address
-    deployBlock: Int! #the block the contract was deployed
-    deployTimestamp: Int! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes! #address of the deployer - get from event Initialize.sender
     factory: VerifyFactory! #the factory that deployed this contract
     #contruct and update by listening to the RequestApprove, Approve, RequestBan, Ban, RequestRemove, Remove events

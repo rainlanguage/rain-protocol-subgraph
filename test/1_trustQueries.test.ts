@@ -200,7 +200,7 @@ describe("Subgraph Trusts Test", function () {
     configLocal.startBlock = currentBlock;
 
     configLocal.verifyFactory = verifyFactory.address;
-    configLocal.blockErc20VerifyFactory = blockErc20VerifyFactory;
+    configLocal.blockVerifyFactory = blockErc20VerifyFactory;
 
     configLocal.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
     configLocal.blockErc20BalanceTierFactory = blockErc20BalanceTierFactory;

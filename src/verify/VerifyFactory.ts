@@ -1,13 +1,13 @@
 /* eslint-disable prettier/prettier */
 import { NewChild, Implementation } from '../../generated/VerifyFactory/VerifyFactory'
 import {
-    VerifyTierFactory,
-    VerifyTier
+    VerifyFactory,
+    Verify
 } from '../../generated/schema'
 export function handleNewChild(event: NewChild): void {
-    let verifyFactory = VerifyTierFactory.load(event.address.toHex())
+    let verifyFactory = VerifyFactory.load(event.address.toHex())
     
-    let verifyTier = new VerifyTier(event.params.child.toHex())
+    let verifyTier = new Verify(event.params.child.toHex())
     verifyTier.address = event.params.child
     verifyTier.deployBlock = event.block.number
     verifyTier.deployTimestamp = event.block.timestamp
@@ -22,9 +22,10 @@ export function handleNewChild(event: NewChild): void {
 }
 
 export function handleImplementation(event: Implementation): void {
-    let verifyFactory = new VerifyTierFactory(event.address.toHex())
+    let verifyFactory = new VerifyFactory(event.address.toHex())
     verifyFactory.address = event.address
     verifyFactory.implementation = event.params.implementation
     verifyFactory.children = []
     verifyFactory.save()
 }
+

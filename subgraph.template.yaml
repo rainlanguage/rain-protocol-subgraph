@@ -41,7 +41,7 @@ dataSources:
     source:
       address: "{{ verifyFactory }}"
       abi: VerifyFactory
-      startBlock: {{ verifyFactoryBlock }}
+      startBlock: {{ blockVerifyFactory }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
