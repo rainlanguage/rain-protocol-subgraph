@@ -10,5 +10,6 @@ schema.graphql
 
 docker/data
 
+## IDE
 .idea
 .vscode

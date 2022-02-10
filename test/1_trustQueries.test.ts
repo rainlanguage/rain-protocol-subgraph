@@ -35,7 +35,7 @@ import saleFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contract
 
 // Types
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import type { BigNumber, ContractTransaction } from "ethers";
+import type { BigNumber, Contract, ContractTransaction } from "ethers";
 
 import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
 import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
@@ -56,6 +56,7 @@ import { ITier } from "@beehiveinnovation/rain-protocol/typechain/ITier";
 import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20";
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
 import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
+import { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
 import { BPoolFeeEscrow } from "@beehiveinnovation/rain-protocol/typechain/BPoolFeeEscrow";
 
 // Should update path after a new commit
@@ -79,33 +80,35 @@ enum DistributionStatus {
   Fail,
 }
 
-// export let trustFactory: TrustFactory;
+const subgraphUser = "vishalkale151071";
+const subgraphName = "rain-protocol";
+let trustFactory: TrustFactory,
+  reserve: ReserveToken,
+  tier: ITier,
+  minimumTier: Tier,
+  subgraph: ApolloFetch,
+  currentBlock: number,
+  trust: Trust,
+  crpFactory: CRPFactory,
+  bFactory: BFactory,
+  redeemableERC20Factory: RedeemableERC20Factory,
+  redeemableERC20Contract: RedeemableERC20,
+  seedERC20Factory: SeedERC20Factory,
+  seedContract: SeedERC20,
+  crpContract: ConfigurableRightsPool,
+  bPoolContract: BPool;
+
+let deployer: SignerWithAddress,
+  creator: SignerWithAddress,
+  seeder1: SignerWithAddress,
+  seeder2: SignerWithAddress,
+  signer1: SignerWithAddress,
+  signer2: SignerWithAddress;
+
+// use to save tx
+let transaction: ContractTransaction;
 
 describe("Subgraph Trusts Test", function () {
-  const subgraphUser = "vishalkale151071";
-  const subgraphName = "rain-protocol";
-  let trustFactory: TrustFactory,
-    reserve: ReserveToken,
-    tier: ITier,
-    minimumTier: Tier,
-    subgraph: ApolloFetch,
-    currentBlock: number,
-    trust: Trust,
-    crpFactory: CRPFactory,
-    bFactory: BFactory,
-    redeemableERC20Factory: RedeemableERC20Factory,
-    seedERC20Factory: SeedERC20Factory,
-    seedContract: SeedERC20;
-
-  let deployer: SignerWithAddress,
-    creator: SignerWithAddress,
-    seeder1: SignerWithAddress,
-    seeder2: SignerWithAddress,
-    signer1: SignerWithAddress;
-
-  // use to save tx
-  let transaction: ContractTransaction;
-
   before(async function () {
     const signers = await ethers.getSigners();
 
@@ -115,6 +118,7 @@ describe("Subgraph Trusts Test", function () {
     seeder1 = signers[2];
     seeder2 = signers[3];
     signer1 = signers[4];
+    signer2 = signers[5];
 
     [crpFactory, bFactory] = (await Util.balancerDeploy(deployer)) as [
       CRPFactory,
@@ -365,6 +369,28 @@ describe("Subgraph Trusts Test", function () {
         },
         { gasLimit: 15000000 }
       )) as Trust;
+
+      // Creating the instance for contracts
+      const { redeemableERC20, seeder } = await Util.getEventArgs(
+        trust.deployTransaction,
+        "Initialize",
+        trust
+      );
+
+      redeemableERC20Contract = new ethers.Contract(
+        redeemableERC20,
+        redeemableTokenJson.abi,
+        creator
+      ) as RedeemableERC20;
+
+      seedContract = new ethers.Contract(
+        seeder,
+        seedERC20Json.abi,
+        creator
+      ) as SeedERC20;
+
+      // Get the CRP contract
+      crpContract = (await Util.poolContracts(creator, trust)).crp;
     });
 
     it("should query the trust correctly", async function () {
@@ -436,20 +462,169 @@ describe("Subgraph Trusts Test", function () {
       expect(tierContract.id).to.equals(tier.address.toLowerCase());
     });
 
+    it("should query the RedeemableERC20 after creation correctly", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(500);
+
+      const query = `
+      {
+        redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
+          sender
+          admin
+          minimumTier
+          redeems {
+            id
+          }
+        }
+      }
+    `;
+
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const data = queryResponse.data.redeemableERC20;
+
+      // Becuase the factory it is the sender in their initialization
+      expect(data.sender).to.equals(
+        redeemableERC20Factory.address.toLowerCase()
+      );
+      expect(data.admin).to.equals(trust.address.toLowerCase());
+      expect(data.minimumTier).to.equals(minimumTier);
+
+      expect(data.redeems).to.have.lengthOf(0);
+    });
+
+    it("should query the initial RedeemableERC20 Holder after creation", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(500);
+
+      // The intial holder is the contract itself
+      const holderId = `${redeemableERC20Contract.address.toLowerCase()} - ${trust.address.toLowerCase()}`;
+
+      const query = `
+      {
+        redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
+          holders {
+            id
+          }
+        }
+        holder (id: "${holderId}") {
+          address
+          balance
+        }
+      }
+    `;
+
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const dataHolders = queryResponse.data.redeemableERC20.holders;
+      const data = queryResponse.data.holder;
+
+      expect(dataHolders).to.have.lengthOf(2);
+      expect(dataHolders).to.deep.include({ id: holderId });
+
+      expect(data.balance).to.equal(redeemableERC20Config.initialSupply);
+      expect(data.address).to.equal(trust.address.toLowerCase());
+    });
+
+    it("should query the TreasuryAsset from RedeemableERC20 correclty", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(500);
+
+      const treasuryAssetsId = `${redeemableERC20Contract.address.toLowerCase()} - ${reserve.address.toLowerCase()}`;
+
+      const query = `
+      {
+        redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
+          treasuryAssets {
+            id
+            trust
+            address
+            redeems {
+              id
+            }
+            callers {
+              caller
+            }
+          }
+        }
+      }
+    `;
+
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const dataTreasury = queryResponse.data.redeemableERC20.treasuryAssets;
+      const data = dataTreasury[0];
+
+      expect(dataTreasury).to.have.lengthOf(1);
+
+      expect(data.id).to.equals(treasuryAssetsId);
+      expect(data.trust).to.equals(trust.address.toLowerCase());
+      expect(data.address).to.equals(reserve.address.toLowerCase());
+
+      expect(data.redeems).to.be.empty;
+
+      expect(data.callers).to.have.lengthOf(1); // The RedeemableERC20 contract
+      expect(data.callers).to.deep.include({
+        caller: redeemableERC20Contract.address.toLowerCase(),
+      });
+    });
+
+    it("should query the ERC20Pull from RedeemableERC20 correclty", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(500);
+
+      console.log("TrustFactory", trustFactory.address);
+      console.log("redeemableERC20Factory", redeemableERC20Factory.address);
+      console.log("Trust", trust.address);
+
+      // Get the values from event
+      const args = await Util.getEventArgs(
+        trust.deployTransaction,
+        "ERC20PullInitialize",
+        redeemableERC20Contract
+      );
+      console.log("---- args");
+      console.log(args);
+
+      const query = `
+      {
+        redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
+          erc20Pull {
+            id
+            sender
+            tokenSender
+            token
+          }
+        }
+      }
+    `;
+
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const data = queryResponse.data.redeemableERC20.erc20Pull;
+
+      // Because it is the ERC20Pull properties to this contract
+      expect(data.id).to.equals(redeemableERC20Contract.address.toLowerCase());
+      expect(data.sender).to.equals(
+        redeemableERC20Factory.address.toLowerCase()
+      );
+    });
+
+    it("should query the grants Receiver/Sender from RedeemableERC20", async function () {
+      //   RedeemableERC20(config_.token).grantReceiver(
+      //     address(IConfigurableRightsPool(crp_).bFactory())
+      // );
+      // RedeemableERC20(config_.token).grantReceiver(address(this));
+      // RedeemableERC20(config_.token).grantSender(crp_);
+    });
+
     it("should query the SeedContract values information correctly", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
-
-      const { seeder } = await Util.getEventArgs(
-        trust.deployTransaction,
-        "Initialize",
-        trust
-      );
-      seedContract = new ethers.Contract(
-        seeder,
-        seedERC20Json.abi,
-        creator
-      ) as SeedERC20;
 
       const seedFeePerUnitExpected = seederFee.div(seederUnits);
 
@@ -489,8 +664,8 @@ describe("Subgraph Trusts Test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      // Sender == SeedERC20Factory.address
-      // Recipint == Trust.address
+      // Sender == SeedERC20Factory.address -> because it's the sender emited on their init event
+      // Recipient == Trust.address
       // Reserve ==  reserve.address
       // Factory == SeedERC20Factory.address
       const query = `
@@ -515,45 +690,27 @@ describe("Subgraph Trusts Test", function () {
       expect(data.factory).to.equals(seedERC20Factory.address.toLowerCase());
     });
 
-    it("shoudl query initial values before any Seed event from SeedContract correclty", async function () {
-      const recipient = trust.address;
-
-      const reserveAmount = seedPrice.mul(seeder1Units);
-
-      // seeder need some cash, give enough each for seeding
-      await reserve.transfer(seeder1.address, reserveAmount);
-
-      await reserve
-        .connect(seeder1)
-        .approve(seedContract.address, reserveAmount);
-
-      // seeder send reserve to seeder contract
-      // Saving the tx to get the args
-      transaction = await seedContract
-        .connect(seeder1)
-        .seed(minSeedUnits, seeder1Units);
-
-      // Recipient gains infinite approval on reserve token withdrawals from seed contract
-      await reserve.allowance(seedContract.address, recipient);
-
-      // Get the values from event
-      const { tokensSeeded, reserveReceived } = await Util.getEventArgs(
-        transaction,
-        "Seed",
-        seedContract
-      );
-
-      // SeedERC20 queries :). As:
+    it("should query initial values of SeedContract before any transaction/event", async function () {
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
-
+      await waitForSubgraphToBeSynced(1000);
       const query = `
         {
-          seeds {
-            id
-            caller
-            reserveReceived
-            tokensSeeded
+          seedERC20 (id: "${seedContract.address.toLowerCase()}") {
+            seeds {
+              id
+            }
+            unseeds {
+              id
+            }
+            holders {
+              id
+            }
+            redeemSeed {
+              id
+            }
+            seederUnitsAvail
+            seededAmount
+            percentSeeded
           }
         }
       `;
@@ -561,18 +718,26 @@ describe("Subgraph Trusts Test", function () {
       const queryResponse = await subgraph({
         query: query,
       });
-      const data = queryResponse.data.seeds;
 
-      expect(data).to.have.lengthOf(1);
+      const data = queryResponse.data.seedERC20;
 
-      expect(data[0].id).to.equals(transaction.hash.toLowerCase());
-      expect(data[0].caller).to.equals(seeder1.address.toLowerCase());
+      expect(data.holders).to.have.lengthOf(1);
+      expect(data.holders[0].address).to.equals(
+        seedContract.address.toLowerCase()
+      );
 
-      expect(data[0].reserveReceived).to.equals(reserveReceived.toString());
-      expect(data[0].tokensSeeded).to.equals(tokensSeeded.toString());
+      expect(data.seeds).to.be.empty;
+      expect(data.unseeds).to.be.empty;
+      expect(data.reedeemSeed).to.be.empty;
+
+      expect(data.seederUnitsAvail).to.equals(
+        await seedContract.balanceOf(seedContract.address)
+      );
+      expect(data.seededAmount).to.equals("0");
+      expect(data.percentSeeded).to.equals("0");
     });
 
-    xit("should query the distribution status and distribution blocks correclty after creation", async function () {
+    it("should query the distribution status and distribution blocks correclty after creation", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(500);
 
@@ -596,7 +761,7 @@ describe("Subgraph Trusts Test", function () {
       expect(data.distributionEndBlock).to.be.null;
     });
 
-    xit("should query initial values from DistributionProgress after trust creation", async function () {
+    it("should query initial values from DistributionProgress after trust creation", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(500);
 
@@ -606,6 +771,9 @@ describe("Subgraph Trusts Test", function () {
             initialValuation
             finalBalance
             reserveInit
+            amountRaised
+            percentRaised
+            percentAvailable
           }
         }
       `;
@@ -618,9 +786,12 @@ describe("Subgraph Trusts Test", function () {
       expect(data.initialValuation).to.equals(initialValuation);
       expect(data.reserveInit).to.equals(reserveInit);
       expect(data.finalBalance).to.be.null;
+      expect(data.amountRaised).to.be.null;
+      expect(data.percentRaised).to.be.null;
+      expect(data.percentAvailable).to.be.null;
     });
 
-    xit("should query minimum values from DistributionProgress after trust creation", async function () {
+    it("should query minimum values from DistributionProgress after trust creation", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(500);
 
@@ -650,7 +821,7 @@ describe("Subgraph Trusts Test", function () {
       expect(data.minimumRaise).to.equals(minimumRaise);
     });
 
-    xit("should query expected final values from DistributionProgress after trust creation", async function () {
+    it("should query expected final values from DistributionProgress after trust creation", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(500);
 
@@ -688,7 +859,7 @@ describe("Subgraph Trusts Test", function () {
       expect(data.finalWeight).to.equals(finalWeightExpected);
     });
 
-    xit("should get Notice correctly", async function () {
+    it("should get Notice correctly", async function () {
       const sender = (await ethers.getSigners())[9];
 
       const noticeSender = trust.connect(sender);
@@ -703,7 +874,7 @@ describe("Subgraph Trusts Test", function () {
       })) as FetchResult;
       let notices = queryResponse.data.notices;
 
-      expect(notices.length).to.equals(1);
+      expect(notices).to.have.lengthOf(1);
       expect(notices[0].sender).to.equals(sender.address.toLowerCase());
       expect(notices[0].data).to.equals("0x01");
 
@@ -711,29 +882,24 @@ describe("Subgraph Trusts Test", function () {
         query: getTrust(trust.address.toLowerCase()),
       })) as FetchResult;
       notices = queryResponse.data.trust.notices;
-      expect(notices.length).to.equals(1);
+
+      expect(notices).to.have.lengthOf(1);
     });
 
-    xit("should query the seed correctly after a Seed.", async function () {
-      const recipient = trust.address;
-
+    it("should query the seed correctly after a Seed.", async function () {
       const reserveAmount = seedPrice.mul(seeder1Units);
 
-      // seeder need some cash, give enough each for seeding
+      // seeder need some cash, give enough for seeding
       await reserve.transfer(seeder1.address, reserveAmount);
 
       await reserve
         .connect(seeder1)
         .approve(seedContract.address, reserveAmount);
 
-      // seeder send reserve to seeder contract
-      // Saving the tx to get the args
+      // seeder1 seed the contract. Save the tx to get the args
       transaction = await seedContract
         .connect(seeder1)
         .seed(minSeedUnits, seeder1Units);
-
-      // Recipient gains infinite approval on reserve token withdrawals from seed contract
-      await reserve.allowance(seedContract.address, recipient);
 
       // Get the values from event
       const { tokensSeeded, reserveReceived } = await Util.getEventArgs(
@@ -742,7 +908,6 @@ describe("Subgraph Trusts Test", function () {
         seedContract
       );
 
-      // SeedERC20 queries :). As:
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
 
@@ -753,6 +918,9 @@ describe("Subgraph Trusts Test", function () {
             caller
             reserveReceived
             tokensSeeded
+            seedERC20 {
+              id
+            }
           }
         }
       `;
@@ -769,32 +937,35 @@ describe("Subgraph Trusts Test", function () {
 
       expect(data[0].reserveReceived).to.equals(reserveReceived.toString());
       expect(data[0].tokensSeeded).to.equals(tokensSeeded.toString());
+
+      expect(data[0].seedERC20.id).to.equals(
+        seedContract.address.toLowerCase()
+      );
     });
 
-    xit("should query the seedERC20 correctly after a Seed.", async function () {
+    it("should query the seedERC20 correctly after a Seed.", async function () {
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced(500);
 
-      // Get the values from event
-      const { tokensSeeded, reserveReceived } = await Util.getEventArgs(
-        transaction,
-        "Seed",
-        seedContract
+      const seederUnitsAvailExpected = await seedContract.balanceOf(
+        seedContract.address
       );
+      const seededAmountExpected = await reserve.balanceOf(
+        seedContract.address
+      );
+
+      // percentSeeded = seededAmount / trust.config_.redeemInit
+      const percentSeededExpected = seededAmountExpected.div(redeemInit);
 
       const query = `
         {
           seedERC20 (id: "${seedContract.address.toLowerCase()}") {
-            recipient
-            reserve
-            seedPrice
-            factory
-            seederFee
-            seederUnits
-            seedFeePerUnit
-            seederCooldownDuration
             seederUnitsAvail
             seededAmount
+            percentSeeded
+            seeds {
+              id
+            }
           }
         }
       `;
@@ -804,27 +975,74 @@ describe("Subgraph Trusts Test", function () {
       });
       const data = queryResponse.data.seedERC20;
 
-      expect(data.seederUnitsAvail).to.equals(
-        await seedContract.balanceOf(seedContract.address)
-      );
-      expect(data.factory).to.equals(seedERC20Factory.address.toLowerCase());
+      expect(data.seeds).to.have.lengthOf(1);
+
+      expect(data.seederUnitsAvail).to.equals(seederUnitsAvailExpected);
+      expect(data.seededAmount).to.equals(seededAmountExpected);
+      expect(data.percentSeeded).to.equals(percentSeededExpected);
     });
 
-    xit("should query  the trustParticipant", async function () {
+    it("should query the new seedERC20 Holder correctly after a Seed.", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(500);
+
+      const holderId = `${seedContract.address.toLowerCase()} - ${seeder1.address.toLowerCase()}`;
+      const balanceExpected = await seedContract.balanceOf(seeder1.address);
+
+      const query = `
+        {
+          seedERC20 (id: "${seedContract.address.toLowerCase()}") {
+            holders {
+              id
+            }
+          }
+          holder (id: "${holderId}") {
+            address
+            balance
+          }
+        }
+      `;
+
+      const queryResponse = await subgraph({
+        query: query,
+      });
+
+      const dataSeedERC20 = queryResponse.data.seedERC20;
+      const dataHolder = queryResponse.data.holder;
+
+      expect(dataSeedERC20.holders).to.have.lengthOf(2);
+      expect(dataSeedERC20.holders).to.deep.include({ id: holderId });
+
+      expect(dataHolder.address).to.equals(seeder1.address.toLowerCase());
+      expect(dataHolder.balance).to.equals(balanceExpected);
+    });
+
+    it("should query  the trustParticipant correctly after seed", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
       const id = `${seeder1.address.toLowerCase()} - ${trust.address.toLowerCase()}`;
+      const seedBalanceExpected = await seedContract.balanceOf(seeder1.address);
+
+      // Calculated as `seedFeeClaimable = SeedERC20.balanceOf(this.user.address) * SeedERC20.seedFeePerUnit`
+      const seedFeeClaimableExpected = seedBalanceExpected.mul(
+        seederFee.div(seederUnits)
+      );
 
       const query = `
       {
-        trustParticipants {
-          id
-        }
-        trustParticipant(id: "${id}"){
-          seeds{
+        trust (id: "${trust.address.toLowerCase()}") {
+          trustParticipants {
             id
           }
+        }
+        trustParticipant(id: "${id}"){
+          address
+          seeds {
+            id
+          }
+          seedBalance
+          seedFeeClaimable
         }
       }
     `;
@@ -834,38 +1052,53 @@ describe("Subgraph Trusts Test", function () {
         query: query,
       })) as FetchResult;
 
-      const queryData = queryResponse.data;
+      const dataTrust = queryResponse.data.trust;
+      const data = queryResponse.data.trustParticipant;
 
-      expect(queryData.trustParticipants).to.have.lengthOf(1);
-      expect(queryData.trustParticipant.seeds).to.have.lengthOf(1);
+      // Trust participans should be updated after seed
+      expect(dataTrust.trustParticipants).to.have.lengthOf(1);
+
+      expect(data.seeds).to.have.lengthOf(1);
+      expect(data.address).to.equals(seeder1.address.toLowerCase());
+      expect(data.seedBalance).to.equals(seedBalanceExpected);
+      expect(data.seedFeeClaimable).to.equals(seedFeeClaimableExpected);
     });
 
-    xit("should query correclty after a second Seed.", async function () {
-      const recipient = trust.address;
-
-      // seeder need some cash, give enough each for seeding
+    it("should query correclty the seeds after a second Seed.", async function () {
+      // seeder need some cash, give enough for seeding
       await reserve.transfer(seeder2.address, seedPrice.mul(seeder2Units));
 
-      const seederContract2 = seedContract.connect(seeder2);
-      const reserve2 = reserve.connect(seeder2);
+      await reserve
+        .connect(seeder2)
+        .approve(seedContract.address, seedPrice.mul(seeder2Units));
 
-      await reserve2.approve(seedContract.address, seedPrice.mul(seeder2Units));
+      // seeder2 seed the contract. Save the tx to get the args
+      transaction = await seedContract
+        .connect(seeder2)
+        .seed(minSeedUnits, seeder2Units);
 
-      // seeders send reserve to seeder contract
-      await seederContract2.seed(minSeedUnits, seeder2Units);
+      const seedId = transaction.hash.toLowerCase();
 
-      // Recipient gains infinite approval on reserve token withdrawals from seed contract
-      await reserve.allowance(seedContract.address, recipient);
+      // Get the values from event
+      const { tokensSeeded, reserveReceived } = await Util.getEventArgs(
+        transaction,
+        "Seed",
+        seedContract
+      );
 
-      // Query the seedERC20 to see the new status ...
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
 
-      const seedQuery = `
+      const query = `
         {
-          seedERC20 (id: "${seedContract.address.toLowerCase()}") {
-            seederUnitsAvail
-            seeds{
+          seeds {
+            id
+          }
+          seed (id: "${seedId}") {
+            caller
+            reserveReceived
+            tokensSeeded
+            seedERC20 {
               id
             }
           }
@@ -873,92 +1106,250 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: seedQuery,
+        query: query,
       });
-      const seedErc20Data = queryResponse.data.seedERC20;
+      const dataSeeds = queryResponse.data.seeds;
+      const dataSeed = queryResponse.data.seed;
 
-      expect(seedErc20Data.seeds).to.have.lengthOf(2);
-      expect(seedErc20Data.seederUnitsAvail).to.equal("0");
+      expect(dataSeeds).to.have.lengthOf(2);
+      expect(dataSeeds.holders).to.deep.include({ id: seedId });
+
+      expect(dataSeed.caller).to.equal(seeder2.address.toLowerCase());
+      expect(dataSeed.seedERC20.id).to.equal(
+        seedContract.address.toLowerCase()
+      );
+
+      // Get these values with the Seed event
+      expect(dataSeed.reserveReceived).to.equal(reserveReceived);
+      expect(dataSeed.tokensSeeded).to.equal(tokensSeeded);
     });
 
-    xit("Should query after Start Dutch Auction.", async function () {
-      const crp = new ethers.Contract(
-        await trust.crp(),
-        configurableRightsPoolJson.abi,
-        creator
-      ) as ConfigurableRightsPool;
-
-      const trustContract1 = trust.connect(signer1);
-
-      const prevBlock = await ethers.provider.getBlockNumber();
-      await trustContract1.startDutchAuction();
-
+    it("should query the distribution status after full seeded", async function () {
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced(500);
 
-      const dutchAuctionQuery = `
+      // When a seed is made and the last units was seeded, the seed send the reserve
+      // to the trust, so the trust should have the Status as `distributionStatus.Seeded`
+      // but it is not already Trading because startDutchAuction is not called yet
+      // Maybe using getDistributionStatus after every seed event could work (?)
+      const query = `
         {
-          dutchAuction(id: "${trust.address.toLowerCase()}"){
-            starterAddress
-            pool
-            finalAuctionBlock
+          distributionProgress(id: "${trust.address.toLowerCase()}"){
+            distributionStatus
+            distributionStartBlock
+            distributionEndBlock
           }
         }
       `;
 
       const queryResponse = await subgraph({
-        query: dutchAuctionQuery,
+        query: query,
       });
-      const dutchAuctionData = queryResponse.data.dutchAuction;
+      const data = queryResponse.data.distributionProgress;
 
-      expect(dutchAuctionData.starterAddress).to.equals(
-        signer1.address.toLowerCase()
-      );
-      expect(dutchAuctionData.pool).to.equals(
-        (await crp.bPool()).toLowerCase()
-      );
-
-      expect(parseInt(dutchAuctionData.finalAuctionBlock, 10)).to.be.gte(
-        prevBlock + minimumTradingDuration
-      );
+      expect(data.distributionStatus).to.be.equals(DistributionStatus.Seeded);
+      expect(data.distributionStartBlock).to.be.null;
+      expect(data.distributionEndBlock).to.be.null;
     });
 
-    xit("should query the correct distribution status", async function () {
-      // The distribution status now should be distributionStatus.Seeded
+    it("Should query the correct DutchAuction entity after StartDutchAuction.", async function () {
+      // The signer1 (arbitrary), can startDutchAuction
+      // Saving the tx
+      transaction = await trust.connect(signer1).startDutchAuction();
+
+      const { finalAuctionBlock } = await Util.getEventArgs(
+        transaction,
+        "StartDutchAuction",
+        trust
+      );
+
+      bPoolContract = (await Util.poolContracts(creator, trust)).bPool;
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1000);
+
+      const query = `
+        {
+          dutchAuctions {
+            id
+            starterAddress
+            enderAddress
+            pool
+            finalAuctionBlock
+            finalBalance
+            seederPay
+            creatorPay
+            tokenPay
+            poolDust
+          }
+        }
+      `;
+
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const dutchAuctionsData = queryResponse.data.dutchAuctions;
+      const data = dutchAuctionsData[0];
+
+      expect(dutchAuctionsData).to.have.lengthOf(1);
+
+      expect(data.id).to.be.equals(trust.address.toLowerCase());
+      expect(data.starterAddress).to.equals(signer1.address.toLowerCase());
+      expect(data.pool).to.equals(bPoolContract.address.toLowerCase());
+      expect(data.finalAuctionBlock).to.equals(finalAuctionBlock);
+
+      // Should be null, just to make it explicit
+      expect(data.enderAddress).to.be.null;
+      expect(data.finalBalance).to.be.null;
+      expect(data.seederPay).to.be.null;
+      expect(data.creatorPay).to.be.null;
+      expect(data.tokenPay).to.be.null;
+      expect(data.poolDust).to.be.null;
     });
 
-    xit("Single Swap test", async function () {
-      // Copy the properties of the trust. I think we should make a scope for this trust.
-      const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
-      const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
-      const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
-      const seederFee = ethers.BigNumber.from("100" + sixZeros);
+    it("should query the correct DistributionProgress when start", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(500);
 
-      const signers = await ethers.getSigners();
-      const [crp, bPool] = await Util.poolContracts(signers, trust);
+      // Using the tx block
+      const startBlock = transaction.blockNumber;
+      const endBlock = (
+        await Util.getEventArgs(transaction, "StartDutchAuction", trust)
+      ).finalAuctionBlock;
 
-      const finalValuation = redeemInit
-        .add(minimumCreatorRaise)
-        .add(seederFee)
-        .add(reserveInit);
-      const reserveSpend = finalValuation.div(10);
+      const poolReserveBalanceExpected = await reserve.balanceOf(
+        bPoolContract.address
+      );
+      const poolTokenBalanceExpected = await redeemableERC20Contract.balanceOf(
+        bPoolContract.address
+      );
 
-      // give signer some reserve
+      // poolReserveBalance - reserveInit
+      const amountRaisedExpected = poolReserveBalanceExpected.sub(reserveInit);
+
+      // amountRaised / minimumRaise
+      const percentRaisedExpected = amountRaisedExpected.div(
+        minimumCreatorRaise.add(redeemInit).add(seederFee)
+      );
+
+      // poolTokenBalance / RedeemableERC20.totalSupply
+      const percentAvailableExpected = poolTokenBalanceExpected.div(
+        redeemableERC20Config.initialSupply
+      );
+
+      const query = `
+        {
+          distributionProgress (id: "${trust.address.toLowerCase()}") {
+            distributionStatus
+            distributionStartBlock
+            distributionEndBlock
+            poolReserveBalance
+            poolTokenBalance
+            amountRaised
+            percentRaised
+            percentAvailable
+          }
+        }
+      `;
+
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const data = queryResponse.data.distributionProgress;
+
+      expect(data.distributionStatus).to.equals(DistributionStatus.Trading);
+      expect(data.distributionStartBlock).to.equals(startBlock.toString());
+      expect(data.distributionEndBlock).to.equals(endBlock.toString());
+
+      expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
+      expect(data.poolTokenBalance).to.equals(poolTokenBalanceExpected);
+      expect(data.amountRaised).to.equals(amountRaisedExpected);
+      expect(data.percentRaised).to.equals(percentRaisedExpected);
+      expect(data.percentAvailable).to.equals(percentAvailableExpected);
+    });
+
+    it("should query the Pool correclty when the Trade start", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(500);
+
+      const poolReserveBalanceExpected = await reserve.balanceOf(
+        bPoolContract.address
+      );
+      const poolTokenBalanceExpected = await redeemableERC20Contract.balanceOf(
+        bPoolContract.address
+      );
+
+      // Using the tx saved
+      const poolDeployBlock = transaction.blockNumber;
+      const poolDeployTimestamp = transaction.timestamp;
+
+      const query = `
+        {
+          pools {
+            id
+            trust
+            reserve
+            redeemable
+            poolBalanceReserve
+            poolTokenBalance
+            numberOfSwaps
+            swaps {
+              id
+            }
+            deployBlock
+            deployTimestamp
+          }
+        }
+      `;
+
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const dataPools = queryResponse.data.pools;
+      const data = dataPools[0];
+
+      expect(dataPools).to.have.lengthOf(1);
+
+      expect(data.id).to.equals(bPoolContract.address.toLowerCase());
+      expect(data.trust).to.equals(trust.address.toLowerCase());
+      expect(data.reserve).to.equals(reserve.address.toLowerCase());
+      expect(data.reserve).to.equals(reserve.address.toLowerCase());
+      expect(data.redeemable).to.equals(
+        redeemableERC20Contract.address.toLowerCase()
+      );
+
+      expect(data.poolBalanceReserve).to.equals(poolReserveBalanceExpected);
+      expect(data.poolTokenBalance).to.equals(poolTokenBalanceExpected);
+      expect(data.numberOfSwaps).to.equals("0");
+      expect(data.swaps).to.have.lengthOf(0);
+
+      expect(data.deployBlock).to.equals(poolDeployBlock.toString());
+      expect(data.deployTimestamp).to.equals(poolDeployTimestamp.toString());
+    });
+
+    it("Single Swap test", async function () {
+      const reserveSpend = successLevel.div(10);
+
+      // give to signer some reserve
       await reserve.transfer(signer1.address, reserveSpend);
 
-      const reserveSigner = reserve.connect(signer1);
-      const crpSigner = crp.connect(signer1);
-      const bPoolSigner = bPool.connect(signer1);
+      await reserve
+        .connect(signer1)
+        .approve(bPoolContract.address, reserveSpend);
 
-      await reserveSigner.approve(bPool.address, reserveSpend);
-      await crpSigner.pokeWeights();
-      await bPoolSigner.swapExactAmountIn(
-        reserve.address,
-        reserveSpend,
-        await trust.token(),
-        ethers.BigNumber.from("1"),
-        ethers.BigNumber.from("1000000" + sixZeros)
-      );
+      await crpContract.connect(signer1).pokeWeights();
+
+      await bPoolContract
+        .connect(signer1)
+        .swapExactAmountIn(
+          reserve.address,
+          reserveSpend,
+          await trust.token(),
+          ethers.BigNumber.from("1"),
+          ethers.BigNumber.from("1000000" + sixZeros)
+        );
+
+      // Query the RedeemableERC20 entity
       /**
        * Here is a single swap tx to query all the changes before and after the swap with the:
        * - Pool Entity with the numberOfSwaps, the contracts the poolBalanceReserve and the initial
@@ -972,7 +1363,7 @@ describe("Subgraph Trusts Test", function () {
       await waitForSubgraphToBeSynced(1000);
     });
 
-    xit("Swaps test", async function () {
+    it("Swaps test", async function () {
       // Copy the properties of the trust. I think we should make a scope for this trust.
       const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
       const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -980,7 +1371,7 @@ describe("Subgraph Trusts Test", function () {
       const seederFee = ethers.BigNumber.from("100" + sixZeros);
 
       const signers = await ethers.getSigners();
-      const [crp, bPool] = await Util.poolContracts(signers, trust);
+      bPoolContract = (await Util.poolContracts(creator, trust)).bPool;
 
       const finalValuation = redeemInit
         .add(minimumCreatorRaise)
@@ -996,10 +1387,10 @@ describe("Subgraph Trusts Test", function () {
         await reserve.transfer(signer.address, spend);
 
         const reserveSigner = reserve.connect(signer);
-        const crpSigner = crp.connect(signer);
-        const bPoolSigner = bPool.connect(signer);
+        const crpSigner = crpContract.connect(signer);
+        const bPoolSigner = bPoolContract.connect(signer);
 
-        await reserveSigner.approve(bPool.address, spend);
+        await reserveSigner.approve(bPoolContract.address, spend);
         await crpSigner.pokeWeights();
         await bPoolSigner.swapExactAmountIn(
           reserve.address,
@@ -1010,7 +1401,9 @@ describe("Subgraph Trusts Test", function () {
         );
       };
       let swaps = 1;
-      while ((await reserve.balanceOf(bPool.address)).lte(finalValuation)) {
+      while (
+        (await reserve.balanceOf(bPoolContract.address)).lte(finalValuation)
+      ) {
         await swapReserveForTokens(signer1, reserveSpend);
         swaps++;
         /**
@@ -1021,7 +1414,7 @@ describe("Subgraph Trusts Test", function () {
       }
     });
 
-    xit("End Dutch Auction test", async function () {
+    it("End Dutch Auction test", async function () {
       // Trust properties
       const seederFee = ethers.BigNumber.from("100" + sixZeros);
       const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -1054,7 +1447,7 @@ describe("Subgraph Trusts Test", function () {
       await waitForSubgraphToBeSynced(1000);
     });
 
-    xit("Trust Owner pulls reserve", async function () {
+    it("Trust Owner pulls reserve", async function () {
       await reserve
         .connect(creator)
         .transferFrom(
@@ -1064,7 +1457,7 @@ describe("Subgraph Trusts Test", function () {
         );
     });
 
-    xit("Seeder pull erc20", async function () {
+    it("Seeder pull erc20", async function () {
       // seeder1 pulls erc20 from SeedERC20 contract
       await seedContract
         .connect(seeder1)
@@ -1073,25 +1466,24 @@ describe("Subgraph Trusts Test", function () {
         );
     });
 
-    xit("Redeem seed test", async function () {
+    it("Redeem seed test", async function () {
       const seederContract1 = seedContract.connect(seeder1);
       const seeder1Units = 4;
       await seederContract1.redeem(seeder1Units, 0);
     });
 
-    xit("Pull ERC20 tokens ", async function () {
-      const token = new ethers.Contract(
-        await trust.token(),
-        redeemableTokenJson.abi,
-        creator
-      ) as RedeemableERC20;
-
-      await token
+    it("Pull ERC20 tokens ", async function () {
+      await redeemableERC20Contract
         .connect(signer1)
-        .pullERC20(await reserve.allowance(trust.address, token.address));
+        .pullERC20(
+          await reserve.allowance(
+            trust.address,
+            redeemableERC20Contract.address
+          )
+        );
     });
 
-    xit("Redeem RedeemableERC20 test", async function () {
+    it("Redeem RedeemableERC20 test", async function () {
       const token = new ethers.Contract(
         await trust.token(),
         redeemableTokenJson.abi,
@@ -1104,6 +1496,12 @@ describe("Subgraph Trusts Test", function () {
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
+
+      // Query the RedeemableERC20, Redeems, TreasuryAssets
     });
   });
+
+  // Trust with address seeder (user)
+  // Redeemable with Admin as User/signer
+  // Everyone can call newTreasuryAsset and make sure
 });

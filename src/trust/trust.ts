@@ -198,6 +198,8 @@ function createSeedERC20(event: Initialize): string {
     seedERC20.redeemSeed = []
     seedERC20.seederUnits = seedERC20Contract.totalSupply()
     seedERC20.seederUnitsAvail = seedERC20Contract.totalSupply()
+    seedERC20.seededAmount = ZERO_BI
+    seedERC20.percentSeeded = ZERO_BI
     seedERC20.save()
 
     let context = new DataSourceContext()
