@@ -8,13 +8,13 @@ export function handleInitialize( event: Initialize): void {
     let erc20 = getERC20(event)
     erc20.save()
     erc20BalanceTier.token = erc20.id
+    erc20BalanceTier.deployer = event.params.sender
     erc20BalanceTier.save()   
 }
 export function handleInitializeValueTier( event: InitializeValueTier): void {
-
 }
-export function handleTierChange( event: TierChange): void {
 
+export function handleTierChange( event: TierChange): void {
 }
 
 function getERC20(event: Initialize): ERC20 {

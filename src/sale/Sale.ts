@@ -96,7 +96,6 @@ export function handleEnd(event: End): void {
 export function handleInitialize(event: Initialize): void {
     let sale = Sale.load(event.address.toHex())
     
-    
     let token = getERC20(event.params.token, event.block)
     sale.token = token.id
     let reserve = getERC20(event.params.config.reserve, event.block)
@@ -104,6 +103,7 @@ export function handleInitialize(event: Initialize): void {
 
     let tokenContrct = ERC20Contract.bind(event.params.token)
 
+    sale.deployer = event.params.sender
     sale.recipient = event.params.config.recipient
     sale.cooldownDuration = event.params.config.cooldownDuration
     sale.minimumRaise = event.params.config.minimumRaise

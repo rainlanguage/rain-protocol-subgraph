@@ -14,8 +14,8 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - NewChild
-        - Implementation
+        - TrustFactory
+        - Trust
       abis:
         - name: TrustFactory
           file: ./abis/TrustFactory.json
@@ -47,8 +47,8 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - NewChild
-        - Implementation
+        - VerifyFactory
+        - Verify
       abis:
         - name: VerifyFactory
           file: ./abis/verify/VerifyFactory.json
@@ -70,8 +70,8 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - NewChild
-        - Implementation
+        - ERC20BalanceTierFactory
+        - ERC20BalanceTier
       abis:
         - name: ERC20BalanceTierFactory
           file: ./abis/tier/ERC20BalanceTierFactory.json
@@ -97,8 +97,8 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - NewChild
-        - Implementation
+        - ERC20TransferTierFactory
+        - ERC20TransferTier
       abis:
         - name: ERC20TransferTierFactory
           file: ./abis/tier/ERC20TransferTierFactory.json
@@ -122,8 +122,8 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - NewChild
-        - Implementation
+        - CombineTierFactory
+        - CombineTier
       abis:
         - name: CombineTierFactory
           file: ./abis/tier/CombineTierFactory.json
@@ -136,6 +136,31 @@ dataSources:
           handler: handleImplementation
       file: ./src/tier/CombineTierFactory.ts
   - kind: ethereum/contract
+    name: VerifyTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ verifyTierFactory }}"
+      abi: VerifyTierFactory
+      startBlock: {{ blockVerifyTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - VerifyTierFactory
+        - VerifyTier
+      abis:
+        - name: VerifyTierFactory
+          file: ./abis/tier/VerifyTierFactory.json
+        - name: VerifyTier
+          file: ./abis/tier/VerifyTier.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/VerifyTierFactory.ts
+  - kind: ethereum/contract
     name: SaleFactory
     network: {{ network }}
     source:
@@ -147,8 +172,8 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - NewChild
-        - Implementation
+        - SaleFactory
+        - Sale
       abis:
         - name: SaleFactory
           file: ./abis/sale/SaleFactory.json
@@ -159,8 +184,7 @@ dataSources:
           handler: handleNewChild
         - event: Implementation(address,address)
           handler: handleImplementation
-      file: ./src/sale/SaleFactory.ts
-  
+      file: ./src/sale/SaleFactory.ts  
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -172,13 +196,14 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Construction
-        - CreatorFundsRelease
-        - EndDutchAuction
-        - Initialize
-        - Notice
-        - PhaseScheduled
-        - StartDutchAuction
+        - Trust
+        - Contract
+        - DistributionProgress
+        - ReserveERC20
+        - RedeemableERC20
+        - SeedERC20
+        - Pool
+        - CRP
       abis:
         - name: Trust
           file: ./abis/Trust.json
@@ -211,9 +236,9 @@ templates:
       language: wasm/assemblyscript
       entities:
         - Seed
-        - Initialize
         - Unseed
-        - Transfer
+        - SeedERC20
+        - Holder
       abis:
         - name: SeedERC20
           file: ./abis/SeedERC20.json
@@ -239,13 +264,12 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Initialize
-        - Receiver
-        - Sender
-        - Transfer
-        - ERC20PullInitialize
-        - Redeem
+        - ERC20Pull
+        - Holder
+        - RedeemableERC20
         - TreasuryAsset
+        - TreasuryAssetCaller
+        - Redeem
       abis:
         - name: ERC20
           file: ./abis/ERC20.json
@@ -279,7 +303,9 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - LOG_SWAP
+        - Pool
+        - Swap
+        - Trust
       abis:
         - name: Pool
           file: ./abis/Pool.json
@@ -303,9 +329,8 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Initialize
-        - InitializeValueTier
-        - TierChange
+        - ERC20
+        - ERC20BalanceTier
       abis:
         - name: ERC20BalanceTier
           file: ./abis/tier/ERC20BalanceTier.json
@@ -329,9 +354,10 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Initialize
-        - InitializeValueTier
+        - ERC20
+        - ERC20TransferTier
         - TierChange
+        - TierLevel
       abis:
         - name: ERC20TransferTier
           file: ./abis/tier/ERC20TransferTier.json
@@ -366,6 +392,28 @@ templates:
           handler: handleTierChange
       file: ./src/tier/CombineTier.ts
   - kind: ethereum/contract
+    name: VerifyTierTemplate
+    network: {{ network }}
+    source:
+      abi: VerifyTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - VerifyTier
+      abis:
+        - name: VerifyTier
+          file: ./abis/tier/VerifyTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Initialize(address,address)
+          handler: handleInitialize
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/VerifyTier.ts
+  - kind: ethereum/contract
     name: SaleTemplate
     network: {{ network }}
     source:
@@ -375,14 +423,18 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Buy
-        - Construct
-        - CooldownInitialize
-        - CooldownTriggered
-        - End
-        - Initialize
-        - Refund
-        - Start
+        - Sale
+        - SaleFactory
+        - ERC20
+        - SaleStart
+        - CanStartStateConfig
+        - CanEndStateConfig
+        - CalculatePriceStateConfig 
+        - SaleEnd
+        - SaleBuy
+        - SaleFeeRecipient
+        - SaleReceipt
+        - SaleRefund
       abis:
         - name: Sale
           file: ./abis/sale/Sale.json

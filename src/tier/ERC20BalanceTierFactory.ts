@@ -12,7 +12,6 @@ export function handleNewChild(event: NewChild): void {
     erc20BalanceTier.address = event.params.child
     erc20BalanceTier.deployBlock = event.block.number
     erc20BalanceTier.deployTimestamp = event.block.timestamp
-    erc20BalanceTier.deployer = event.params.sender
     erc20BalanceTier.factory = event.address.toHex()
     erc20BalanceTier.tierValues = erc20BalanceTierContract.tierValues()
 

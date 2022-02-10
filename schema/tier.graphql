@@ -10,7 +10,7 @@ interface TierContract {
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    deployer: Bytes #address of the deployer - get from event Initialize.sender
     factory: TierFactory #the factory that deployed this contract
 }
 
@@ -26,7 +26,7 @@ type VerifyTier implements TierContract @entity {
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes! #address of the deployer - get from event Initialize.verify
+    deployer: Bytes #address of the deployer - get from event Initialize.verify
     factory: TierFactory #the factory that deployed this contract
 
     # verifyContract: Verify! #the Verify contract checked for reports - from event Initialize.verify
@@ -45,7 +45,7 @@ type ERC20BalanceTier implements TierContract  @entity{
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    deployer: Bytes #address of the deployer - get from event Initialize.sender
     factory: TierFactory #the factory that deployed this contract
 
     token: ERC20 #map by id = Intialize.erc20
@@ -75,7 +75,7 @@ type ERC20TransferTier implements TierContract @entity{
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    deployer: Bytes #address of the deployer - get from event Initialize.sender
     factory: TierFactory #the factory that deployed this contract
 
     token: ERC20 #map by id = Intialize.erc20
@@ -119,7 +119,7 @@ type ERC721BalanceTier implements TierContract @entity{
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    deployer: Bytes #address of the deployer - get from event Initialize.sender
     factory: TierFactory #the factory that deployed this contract
 
     token: ERC721 #map by id = Intialize.erc20
@@ -148,7 +148,7 @@ type CombineTier implements TierContract @entity{
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes! #address of the deployer - get from the Snapshot event emitted by this contract - Snapshot.sender
+    deployer: Bytes #address of the deployer - get from the Snapshot event emitted by this contract - Snapshot.sender
     factory: TierFactory #the factory that deployed this contract
 
     state: Bytes #from event Snapshot.state
@@ -159,7 +159,7 @@ type UnknownTier implements TierContract @entity{
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    deployer: Bytes #address of the deployer - get from event Initialize.sender
     factory: TierFactory #is this possible when using the TierContract interface?
 }
 

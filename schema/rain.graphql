@@ -124,16 +124,6 @@ type ReserveERC20 @entity{
     deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
-type Redeemable @entity{
-    id: ID!
-    symbol: String!
-    totalSupply: BigInt!
-    decimals: Int!
-    name: String!
-    deployBlock: BigInt! #the block the contract was deployed
-    deployTimestamp: BigInt! #the timestamp the contract was deployed
-}
-
 type Pool @entity{
     id: ID!
     trust: Trust! #the trust that is the owner of this pool

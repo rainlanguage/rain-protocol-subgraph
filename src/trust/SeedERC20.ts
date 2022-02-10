@@ -1,6 +1,6 @@
 
 import { dataSource, log } from "@graphprotocol/graph-ts";
-import { Seed, Unseed, SeedERC20, Holder, Trust } from "../../generated/schema";
+import { Seed, Unseed, SeedERC20, Holder } from "../../generated/schema";
 import { Initialize, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../../generated/templates/SeedERC20Template/SeedERC20";
 import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "../utils";
 import { SeedERC20 as SeedERC20Contract } from "../../generated/TrustFactory/SeedERC20"

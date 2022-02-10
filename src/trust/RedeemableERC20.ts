@@ -1,4 +1,4 @@
-import { ERC20Pull, Holder, RedeemableERC20, TreasuryAsset, TreasuryAssetCaller, Redeem, TrustParticipant} from "../../generated/schema"
+import { ERC20Pull, Holder, RedeemableERC20, TreasuryAsset, TreasuryAssetCaller, Redeem} from "../../generated/schema"
 import { Initialize, Receiver, Sender, Transfer, ERC20PullInitialize, Redeem as RedeemEvent , TreasuryAsset as TreasuryAssetEvent} from "../../generated/templates/RedeemableERC20Template/RedeemableERC20"
 import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "../utils"
 import { RedeemableERC20 as RedeemabaleERC20Contract } from "../../generated/TrustFactory/RedeemableERC20"

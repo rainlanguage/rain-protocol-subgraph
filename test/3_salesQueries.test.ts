@@ -207,6 +207,7 @@ describe("Sales queries test", function () {
           children {
             id
           }
+          redeemableERC20Factory
         }
       }
     `;
@@ -920,7 +921,7 @@ describe("Sales queries test", function () {
 
       const saleData = response.data.sale;
 
-      expect(saleData.buys).to.have.lengthOf(2);
+      expect(saleData.buys).to.have.length(2);
       expect(saleData.endEvent.id).to.equals(transaction.hash.toLowerCase());
       expect(saleData.unitsAvailable).to.equals(newUnitsAvailable);
       expect(saleData.totalRaised).to.equals(totalRaised);
@@ -954,10 +955,10 @@ describe("Sales queries test", function () {
         query: query,
       })) as FetchResult;
 
-      const saleEndData = response.data.sale;
+      const saleEndData = response.data.saleEnd;
 
-      expect(saleEndData.block).to.equals(transaction.blockNumber);
-      expect(saleEndData.timestamp).to.equals(transaction.timestamp);
+      expect(parseInt(saleEndData.block)).to.equals(transaction.blockNumber);
+      expect(parseInt(saleEndData.timestamp)).to.equals(transaction.timestamp);
       expect(saleEndData.sender).to.equals(signer1.address.toLowerCase());
       expect(saleEndData.saleStatus).to.equals(Status.SUCCESS);
       expect(saleEndData.transactionHash).to.equals(

@@ -1,6 +1,7 @@
 /* eslint-disable node/no-missing-import */
 /* eslint-disable no-unused-vars */
 import { Contract, Signer, ContractTransaction, BytesLike } from "ethers";
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Result, concat, hexlify, Hexable, zeroPad } from "ethers/lib/utils";
 import { createApolloFetch } from "apollo-fetch";
 import fs from "fs";
@@ -32,7 +33,6 @@ import type {
   TrustRedeemableERC20ConfigStruct,
   TrustSeedERC20ConfigStruct,
 } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 interface SyncedSubgraphType {
   synced: boolean;
@@ -257,20 +257,23 @@ export const trustDeploy = async (
 };
 
 export const poolContracts = async (
-  signers: any[],
+  signer: Signer | SignerWithAddress,
   trust: Trust & Contract
-): Promise<[ConfigurableRightsPool & Contract, BPool & Contract]> => {
+): Promise<{
+  crp: ConfigurableRightsPool & Contract;
+  bPool: BPool & Contract;
+}> => {
   const crp = new ethers.Contract(
     await trust.crp(),
     ConfigurableRightsPoolJson.abi,
-    signers[0]
+    signer
   ) as ConfigurableRightsPool & Contract;
   const bPool = new ethers.Contract(
     await crp.bPool(),
     BPoolJson.abi,
-    signers[0]
+    signer
   ) as BPool & Contract;
-  return [crp, bPool];
+  return { crp, bPool };
 };
 
 export const waitForBlock = async (blockNumber: any): Promise<any> => {
