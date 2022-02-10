@@ -68,6 +68,32 @@ import {
   NOTICE_QUERY,
   QUERY,
 } from "./utils/queries";
+
+import {
+  // Signers
+  deployer,
+  creator,
+  seeder1,
+  seeder2,
+  signer1,
+  signer2,
+  admin,
+  // Contracts
+  trustFactory,
+  verifyFactory,
+  verifyTierFactory,
+  erc20BalanceTierFactory,
+  erc20TransferTierFactory,
+  combineTierFactory,
+  erc721BalanceTierFactory,
+} from "./1_trustQueries.test";
+
+let subgraph: ApolloFetch, trust: Trust, reserve: ReserveToken;
+
+const LEVELS = Array.from(Array(8).keys()).map((value) =>
+  ethers.BigNumber.from(++value + eighteenZeros).toString()
+); // [1,2,3,4,5,6,7,8]
+
 enum Status {
   Nil,
   Added,
@@ -75,93 +101,27 @@ enum Status {
   Banned,
 }
 
-xdescribe("Subgraph Tier Test", function () {
-  let subgraph: ApolloFetch,
-    verifyFactory: VerifyFactory,
-    verifyTierFactory: VerifyTierFactory,
-    erc20BalanceTierFactory: ERC20BalanceTierFactory,
-    erc20TransferTierFactory: ERC20TransferTierFactory,
-    combineTierFactory: CombineTierFactory,
-    erc721BalanceTierFactory: ERC721BalanceTierFactory,
-    reserve: ReserveToken,
-    trustFactory: TrustFactory,
-    trust: Trust;
-  // let ERC721BalanceTierFactory;
-
-  let deployer: SignerWithAddress,
-    admin: SignerWithAddress,
-    signer1: SignerWithAddress,
-    signer2: SignerWithAddress;
-
-  const LEVELS = Array.from(Array(8).keys()).map((value) =>
-    ethers.BigNumber.from(++value + eighteenZeros).toString()
-  ); // [1,2,3,4,5,6,7,8]
-
+describe("Subgraph Tier Test", function () {
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 
-  before("getting the factories", async function () {
-    const signers = await ethers.getSigners();
-    deployer = signers[0];
-    signer1 = signers[5];
-    signer2 = signers[6];
-    admin = signers[9];
-
+  before("connecting and deploy fresh contracts", async function () {
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
 
     const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
     const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
-    // Trust factory
-    trustFactory = getContract(
-      localInfoJson.trustFactory,
-      trustFactoryJson,
-      deployer
-    ) as TrustFactory;
-
-    // Verify factory
-    verifyFactory = getContract(
-      localInfoJson.verifyFactory,
-      verifyFactoryJson,
-      deployer
-    ) as VerifyFactory;
-
-    // Tiers factories
-    erc20BalanceTierFactory = getContract(
-      localInfoJson.erc20BalanceTierFactory,
-      erc20BalanceTierFactoryJson,
-      deployer
-    ) as ERC20BalanceTierFactory;
-
-    erc20TransferTierFactory = getContract(
-      localInfoJson.erc20TransferTierFactory,
-      erc20TransferTierFactoryJson,
-      deployer
-    ) as ERC20TransferTierFactory;
-
-    combineTierFactory = getContract(
-      localInfoJson.combineTierFactory,
-      combineTierFactoryJson,
-      deployer
-    ) as CombineTierFactory;
-
-    verifyTierFactory = getContract(
-      localInfoJson.verifyTierFactory,
-      verifyTierFactoryJson,
-      deployer
-    ) as VerifyTierFactory;
-
-    erc721BalanceTierFactory = getContract(
-      localInfoJson.erc721BalanceTierFactory,
-      erc721BalanceTierFactoryJson,
-      deployer
-    ) as ERC721BalanceTierFactory;
 
     // Connecting to the subgraph
     subgraph = Util.fetchSubgraph(
       localInfoJson.subgraphUser,
       localInfoJson.subgraphName
     );
+  });
+
+  describe("Verify factory - queries", function async() {
+    it("Verify", async function () {
+      //
+    });
   });
 
   describe("Verify Factories - queries", function () {
@@ -176,10 +136,9 @@ xdescribe("Subgraph Tier Test", function () {
     it("should query VerifyFactory correctly after construction", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
-
       const query = `
         {
-          verifyFactory   (id: "${verifyFactory.address.toLowerCase()}") {
+          verifyFactory (id: "${verifyFactory.address.toLowerCase()}") {
             address
             children {
               id
