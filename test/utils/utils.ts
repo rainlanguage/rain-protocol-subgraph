@@ -64,6 +64,13 @@ export enum Tier {
   EIGHT,
 }
 
+export interface VMState {
+  sources: Uint8Array[];
+  constants: any;
+  stackLength: number;
+  argumentsLength: number;
+}
+
 // Execute Child Processes
 const srcDir = path.join(__dirname, "..");
 export const exec = (cmd: string) => {
@@ -382,11 +389,11 @@ export const createEmptyBlock = async (count?: number): Promise<void> => {
 
 /**
  *
- * @param tx - transaction where event of the creation occurs
+ * @param tx - transaction where the child was created
  * @param contractFactory - contract factory that create the child
  * @param contractArtifact - the artifact of the child contract
  * @param signer - (optional) the signer that will be connected the child contract. Same as contractFactory if not provided
- * @returns A child contract connected to the signer
+ * @returns The child contract connected to the signer
  */
 export const getContractChild = async (
   tx: ContractTransaction,
@@ -436,4 +443,17 @@ export function getContract(
   signer: Signer | SignerWithAddress
 ): Contract {
   return new ethers.Contract(address, artifact.abi, signer) as Contract;
+}
+
+export function encodeStateExpected(state: VMState): string {
+  const encoder = ethers.utils.defaultAbiCoder;
+  const stack =
+    state.stackLength > 0 ? new Array(state.stackLength).fill(0) : [];
+  const argumentsLength =
+    state.argumentsLength > 0 ? new Array(state.argumentsLength).fill(0) : [];
+
+  return ethers.utils.defaultAbiCoder.encode(
+    ["tuple(uint256, uint256[], bytes[], uint256[], uint256[])"],
+    [0, stack, state.sources, state.constants, argumentsLength]
+  );
 }
