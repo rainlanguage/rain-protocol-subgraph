@@ -124,11 +124,20 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
         
         treasuryAsset.deployBlock = event.block.number
         treasuryAsset.deployTimestamp = event.block.timestamp
-        treasuryAsset.name = treasuryAssetContract.name()
-        treasuryAsset.symbol = treasuryAssetContract.symbol()
-        treasuryAsset.decimals = treasuryAssetContract.decimals()
-        treasuryAsset.totalSupply = treasuryAssetContract.totalSupply()
-        treasuryAsset.balance = treasuryAssetContract.balanceOf(event.address)
+        
+        let name = treasuryAssetContract.try_name()
+        let symbol = treasuryAssetContract.try_symbol()
+        let decimals = treasuryAssetContract.try_decimals()
+        let totalSupply = treasuryAssetContract.try_totalSupply()
+        let balance = treasuryAssetContract.try_balanceOf(event.address)
+        if(!(name.reverted || symbol.reverted || decimals.reverted || totalSupply.reverted || balance.reverted)){
+            treasuryAsset.name = name.value
+            treasuryAsset.symbol = symbol.value
+            treasuryAsset.decimals = decimals.value
+            treasuryAsset.totalSupply = totalSupply.value
+            treasuryAsset.balance = balance.value
+        }
+
         treasuryAsset.redeemableERC20 = redeemabaleERC20.id
         treasuryAsset.address = event.params.asset
         treasuryAsset.trust = context.getString("trust")

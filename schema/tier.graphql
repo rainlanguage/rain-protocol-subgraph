@@ -151,7 +151,7 @@ type CombineTier implements TierContract @entity{
     deployer: Bytes #address of the deployer - get from the Snapshot event emitted by this contract - Snapshot.sender
     factory: TierFactory #the factory that deployed this contract
 
-    state: Bytes #from event Snapshot.state
+    state: State #from event Snapshot.state
 }
 
 type UnknownTier implements TierContract @entity{
