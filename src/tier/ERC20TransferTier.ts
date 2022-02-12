@@ -9,7 +9,6 @@ export function handleInitialize( event: Initialize): void {
     let erc20 = getERC20(event)
     erc20.save()
     erc20TransferTier.token = erc20.id
-    erc20TransferTier.deployer = event.params.sender
     erc20TransferTier.save()   
 }
 

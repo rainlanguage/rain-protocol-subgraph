@@ -10,7 +10,7 @@ export function handleNewChild(event: NewChild): void {
     combineTier.address = event.params.child
     combineTier.deployBlock = event.block.number
     combineTier.deployTimestamp = event.block.timestamp
-    combineTier.deployer = event.params.sender
+    combineTier.deployer = event.transaction.from
     combineTier.factory = event.address.toHex()
 
     let children = combineTierFactory.children

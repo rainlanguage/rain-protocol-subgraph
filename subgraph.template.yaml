@@ -184,7 +184,32 @@ dataSources:
           handler: handleNewChild
         - event: Implementation(address,address)
           handler: handleImplementation
-      file: ./src/sale/SaleFactory.ts  
+      file: ./src/sale/SaleFactory.ts
+  - kind: ethereum/contract
+    name: GatedNFTFactory
+    network: {{ network }}
+    source:
+      address: "{{ saleFactory }}"
+      abi: GatedNFTFactory
+      startBlock: {{ blockSaleFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - GatedNFTFactory
+        - GatedNFT
+      abis:
+        - name: GatedNFTFactory
+          file: ./abis/gatedNFT/GatedNFTFactory.json
+        - name: GatedNFT
+          file: ./abis/gatedNFT/GatedNFT.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/gatedNFT/GatedNFTFactory.ts 
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -494,3 +519,27 @@ templates:
         - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
           handler: handleRoleRevoked
       file: ./src/verify/Verify.ts
+  - kind: ethereum/contract
+    name: GatedNFTTemplate
+    network: {{ network }}
+    source:
+      abi: GatedNFT
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - GatedNFT
+        - UpdatedRoyaltyRecipient
+        - OwnershipTransferred
+      abis:
+        - name: GatedNFT
+          file: ./abis/gatedNFT/GatedNFT.json
+      eventHandlers:
+        - event: CreatedGatedNFT(address,address,(string,string,string,string,string,bytes32,bytes32),address,uint256,uint256,uint8,uint256,address,uint256)
+          handler: handleCreatedGatedNFT
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: UpdatedRoyaltyRecipient(address)
+          handler: handleUpdatedRoyaltyRecipient
+      file: ./src/gatedNFT/GatedNFT.ts

@@ -21,6 +21,7 @@ export function handleNewChild(event: NewChild): void {
     erc20TransferTier.address = event.params.child
     erc20TransferTier.deployBlock = event.block.number
     erc20TransferTier.deployTimestamp = event.block.timestamp
+    erc20TransferTier.deployer = event.transaction.from
     erc20TransferTier.factory = event.address.toHex()
     erc20TransferTier.tierValues = erc20TransferTierContract.tierValues()
     

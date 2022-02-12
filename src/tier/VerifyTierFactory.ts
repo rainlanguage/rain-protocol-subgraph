@@ -10,6 +10,7 @@ export function handleNewChild(event: NewChild): void {
     verifyTier.address = event.params.child
     verifyTier.deployBlock = event.block.number
     verifyTier.deployTimestamp = event.block.timestamp
+    verifyTier.deployer = event.transaction.from
     verifyTier.factory = event.address.toHex()
 
     let children = verifyTierFactory.children
@@ -19,6 +20,7 @@ export function handleNewChild(event: NewChild): void {
     verifyTierFactory.save()
 
     verifyTier.save()
+    event.block
 
     VerifyTierTemplate.create(event.params.child)
 }

@@ -285,12 +285,12 @@ describe("Subgraph Trusts Test", function () {
     Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
     Util.writeFile(localInfoPath, JSON.stringify(localInfoJson, null, 4));
 
-    // Util.exec(`yarn deploy-build:localhost`);
+    Util.exec(`yarn deploy-build:localhost`);
 
-    // subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
+    subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
 
-    // await Util.delay(Util.wait);
-    // await waitForSubgraphToBeSynced(1000);
+    await Util.delay(Util.wait);
+    await waitForSubgraphToBeSynced(1000);
   });
 
   it("should query the trust factories", async function () {

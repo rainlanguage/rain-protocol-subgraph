@@ -31,6 +31,13 @@ export enum Status {
     REMOVED
 }
 
+export enum Transferrable {
+    NonTransferrable,
+    Transferrable,
+    TierGatedTransferrable
+}
+
+
 
 export {
     ZERO_BI,
