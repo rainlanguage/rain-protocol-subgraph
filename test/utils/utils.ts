@@ -85,6 +85,10 @@ interface State {
   arguments: BigNumber[];
 }
 
+export const LEVELS = Array.from(Array(8).keys()).map((value) =>
+  ethers.BigNumber.from(++value + eighteenZeros).toString()
+); // [1,2,3,4,5,6,7,8]
+
 // Execute Child Processes
 const srcDir = path.join(__dirname, "..");
 export const exec = (cmd: string) => {
