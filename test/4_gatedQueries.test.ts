@@ -53,13 +53,15 @@ const minimumStatus = 1;
 const maxPerAddress = 1;
 const transferrable = 0;
 const maxMintable = 100;
-const royaltyRecipient = signer1.address;
+let royaltyRecipient;
 const royaltyBPS = 1;
 
 describe("Subgraph GatedNFT test", function () {
   before("creating and connecting", async function () {
     const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
     const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
+
+    royaltyRecipient = signer1.address;
 
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
     tier = (await deploy(readWriteTierJson, deployer, [])) as ReadWriteTier;
