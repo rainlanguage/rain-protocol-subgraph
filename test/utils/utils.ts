@@ -1,6 +1,12 @@
 /* eslint-disable node/no-missing-import */
 /* eslint-disable no-unused-vars */
-import { Contract, Signer, ContractTransaction, BytesLike } from "ethers";
+import {
+  Contract,
+  Signer,
+  BigNumber,
+  ContractTransaction,
+  BytesLike,
+} from "ethers";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Result, concat, hexlify, Hexable, zeroPad } from "ethers/lib/utils";
 import { createApolloFetch } from "apollo-fetch";
@@ -66,9 +72,17 @@ export enum Tier {
 
 export interface VMState {
   sources: Uint8Array[];
-  constants: any;
+  constants: BigNumber[];
   stackLength: number;
   argumentsLength: number;
+}
+
+interface State {
+  stackIndex: BigNumber;
+  stack: BigNumber[];
+  sources: BytesLike[];
+  constants: BigNumber[];
+  arguments: BigNumber[];
 }
 
 // Execute Child Processes
@@ -445,15 +459,23 @@ export function getContract(
   return new ethers.Contract(address, artifact.abi, signer) as Contract;
 }
 
-export function encodeStateExpected(state: VMState): string {
-  const encoder = ethers.utils.defaultAbiCoder;
-  const stack =
-    state.stackLength > 0 ? new Array(state.stackLength).fill(0) : [];
-  const argumentsLength =
-    state.argumentsLength > 0 ? new Array(state.argumentsLength).fill(0) : [];
-
-  return ethers.utils.defaultAbiCoder.encode(
-    ["tuple(uint256, uint256[], bytes[], uint256[], uint256[])"],
-    [0, stack, state.sources, state.constants, argumentsLength]
+export function encodeStateExpected(vmStateConfig: VMState): State {
+  const stackIndex = ethers.BigNumber.from(0);
+  const stack = new Array(vmStateConfig.stackLength).fill(
+    ethers.BigNumber.from(0)
   );
+  const sources = vmStateConfig.sources.map((x) => ethers.utils.hexlify(x));
+  const constants = vmStateConfig.constants.map((x) =>
+    ethers.BigNumber.from(x)
+  );
+  const args = new Array(vmStateConfig.argumentsLength).fill(
+    ethers.BigNumber.from(0)
+  );
+  return {
+    stackIndex: stackIndex,
+    stack: stack,
+    sources: sources,
+    constants: constants,
+    arguments: args,
+  };
 }

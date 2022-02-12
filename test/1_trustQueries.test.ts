@@ -285,12 +285,12 @@ describe("Subgraph Trusts Test", function () {
     Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
     Util.writeFile(localInfoPath, JSON.stringify(localInfoJson, null, 4));
 
-    Util.exec(`yarn deploy-build:localhost`);
+    // Util.exec(`yarn deploy-build:localhost`);
 
-    subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
+    // subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
 
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
+    // await Util.delay(Util.wait);
+    // await waitForSubgraphToBeSynced(1000);
   });
 
   it("should query the trust factories", async function () {
@@ -612,7 +612,7 @@ describe("Subgraph Trusts Test", function () {
       await redeemableERC20Contract.newTreasuryAsset(nonErc20Address);
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced(1500);
 
       const id = `${redeemableERC20Contract.address.toLowerCase()} - ${nonErc20Address.toLowerCase()}`;
 
@@ -631,7 +631,9 @@ describe("Subgraph Trusts Test", function () {
       });
       const data = queryResponse.data;
 
-      expect(data.treasuryAsset.address).to.be.null;
+      expect(data.treasuryAsset.address).to.equals(
+        nonErc20Address.toLowerCase()
+      );
 
       expect(data.trust.id).to.equals(trust.address.toLowerCase());
     });
