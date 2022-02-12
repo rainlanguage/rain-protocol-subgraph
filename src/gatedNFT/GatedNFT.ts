@@ -4,6 +4,8 @@ import { HUNDRED_BD } from "../utils"
 
 export function handleCreatedGatedNFT(event: CreatedGatedNFT): void {
     let gatedNFT = GatedNFT.load(event.address.toHex())
+    gatedNFT.name = event.params.config.name
+    gatedNFT.symbol = event.params.config.symbol
     gatedNFT.creator = event.params.creator
     gatedNFT.minimumStatus = event.params.minimumStatus
     gatedNFT.maxMintable = event.params.maxMintable
@@ -24,10 +26,14 @@ export function handleOwnershipTransferred(event: OwnershipTransferredEvent): vo
     let gatedNFT = GatedNFT.load(event.address.toHex())
     let ownershipTransferred = new OwnershipTransferred(event.transaction.hash.toHex())
 
+    gatedNFT.owner = event.params.newOwner
+
     ownershipTransferred.emitter = event.address
     ownershipTransferred.sender = event.transaction.from
     ownershipTransferred.oldOwner = event.params.previousOwner
     ownershipTransferred.newOwner = event.params.newOwner
+    ownershipTransferred.block = event.block.number
+    ownershipTransferred.timestamp = event.block.timestamp
     ownershipTransferred.save()
 
     let ownershipHistory = gatedNFT.ownershipHistory
@@ -45,6 +51,8 @@ export function handleUpdatedRoyaltyRecipient(event: UpdatedRoyaltyRecipientEven
     updatedRoyaltyRecipient.nftContract = gatedNFT.id
     updatedRoyaltyRecipient.origin = event.transaction.from
     updatedRoyaltyRecipient.newRoyaltyRecipient = event.params.royaltyRecipient
+    updatedRoyaltyRecipient.block = event.block.number
+    updatedRoyaltyRecipient.timestamp = event.block.timestamp
 
     updatedRoyaltyRecipient.save()
 
