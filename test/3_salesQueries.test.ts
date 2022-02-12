@@ -957,8 +957,12 @@ xdescribe("Sales queries test", function () {
 
       const saleEndData = response.data.saleEnd;
 
-      expect(parseInt(saleEndData.block)).to.equals(transaction.blockNumber);
-      expect(parseInt(saleEndData.timestamp)).to.equals(transaction.timestamp);
+      expect(parseInt(saleEndData.block)).to.equals(
+        transaction.blockNumber.toString()
+      );
+      expect(parseInt(saleEndData.timestamp)).to.equals(
+        transaction.timestamp.toString()
+      );
       expect(saleEndData.sender).to.equals(signer1.address.toLowerCase());
       expect(saleEndData.saleStatus).to.equals(Status.SUCCESS);
       expect(saleEndData.transactionHash).to.equals(

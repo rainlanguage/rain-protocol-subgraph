@@ -1172,8 +1172,8 @@ describe("Subgraph Tier Test", function () {
       const data = queryResponse.data.combineTier;
 
       expect(data.address).to.equals(combineTier.address.toLowerCase());
-      expect(data.deployBlock).to.equals(transaction.blockNumber);
-      expect(data.deployTimestamp).to.equals(transaction.timestamp);
+      expect(data.deployBlock).to.equals(transaction.blockNumber.toString());
+      expect(data.deployTimestamp).to.equals(transaction.timestamp.toString());
       expect(data.deployer).to.equals(deployerExpected.toLowerCase());
       expect(data.factory.id).to.equals(
         combineTierFactory.address.toLowerCase()
@@ -1376,8 +1376,8 @@ describe("Subgraph Tier Test", function () {
       const data = queryResponse.data.erc721BalanceTier;
 
       expect(data.address).to.equals(erc721BalanceTier.address.toLowerCase());
-      expect(data.deployBlock).to.equals(transaction.blockNumber);
-      expect(data.deployTimestamp).to.equals(transaction.timestamp);
+      expect(data.deployBlock).to.equals(transaction.blockNumber.toString());
+      expect(data.deployTimestamp).to.equals(transaction.timestamp.toString());
       expect(data.deployer).to.equals(balanceTier721Creator);
 
       expect(data.factory.address).to.equals(
@@ -1413,10 +1413,10 @@ describe("Subgraph Tier Test", function () {
       expect(data.totalSupply).to.equals(await reserveNFT.totalSupply());
       expect(data.name).to.equals(await reserveNFT.name());
       expect(data.deployBlock).to.equals(
-        reserveNFT.deployTransaction.blockNumber
+        reserveNFT.deployTransaction.blockNumber.toString()
       );
       expect(data.deployTimestamp).to.equals(
-        reserveNFT.deployTransaction.timestamp
+        reserveNFT.deployTransaction.timestamp.toString()
       );
     });
   });
