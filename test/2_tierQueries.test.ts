@@ -22,6 +22,7 @@ import {
   zeroAddress,
   Tier,
   VMState,
+  LEVELS,
 } from "./utils/utils";
 
 // Artifacts
@@ -114,10 +115,6 @@ const enum Opcode {
   SELECT_LTE,
   ACCOUNT,
 }
-
-const LEVELS = Array.from(Array(8).keys()).map((value) =>
-  ethers.BigNumber.from(++value + eighteenZeros).toString()
-); // [1,2,3,4,5,6,7,8]
 
 let subgraph: ApolloFetch,
   trust: Trust,
@@ -1099,11 +1096,13 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryResponde = (await subgraph({
+      const queryResponse = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponde.data.combineTierFactories[0];
+      const data = queryResponse.data.combineTierFactories[0];
+
+      expect(queryResponse.data.combineTierFactories).to.have.lengthOf(1);
 
       expect(data.id).to.equals(combineTierFactory.address.toLowerCase());
       expect(data.address).to.equals(combineTierFactory.address.toLowerCase());
@@ -1135,11 +1134,11 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryResponde = (await subgraph({
+      const queryResponse = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponde.data.combineTierFactory;
+      const data = queryResponse.data.combineTierFactory;
 
       expect(data.children).to.have.lengthOf(1);
       expect(data.children[0].id).to.equals(combineTier.address.toLowerCase());
@@ -1166,11 +1165,11 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryResponde = (await subgraph({
+      const queryResponse = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponde.data.combineTier;
+      const data = queryResponse.data.combineTier;
 
       expect(data.address).to.equals(combineTier.address.toLowerCase());
       expect(data.deployBlock).to.equals(transaction.blockNumber);
@@ -1204,11 +1203,11 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryResponde = (await subgraph({
+      const queryResponse = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponde.data.combineTier.state;
+      const data = queryResponse.data.combineTier.state;
 
       expect(data.id).to.equals(transaction.hash.toLowerCase());
       expect(data.stackIndex).to.equals(stateExpected.stackIndex);
@@ -1247,11 +1246,11 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryResponde = (await subgraph({
+      const queryResponse = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponde.data.snapshots[0];
+      const data = queryResponse.data.snapshots[0];
 
       expect(data.sender).to.equal(combineTierCreator);
       expect(data.pointer).to.equal(pointerExpected);
@@ -1292,11 +1291,13 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryResponde = (await subgraph({
+      const queryResponse = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponde.data.erc721BalanceTierFactories[0];
+      const data = queryResponse.data.erc721BalanceTierFactories[0];
+
+      expect(queryResponse.data.erc721BalanceTierFactories).to.have.lengthOf(1);
 
       expect(data.id).to.equals(erc721BalanceTierFactory.address.toLowerCase());
       expect(data.address).to.equals(
@@ -1331,11 +1332,11 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryResponde = (await subgraph({
+      const queryResponse = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponde.data.erc721BalanceTierFactory;
+      const data = queryResponse.data.erc721BalanceTierFactory;
 
       expect(data.children).to.have.lengthOf(1);
       expect(data.children[0].id).to.equals(

@@ -32,6 +32,7 @@ import combineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/c
 import verifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
 import verifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
 import saleFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
+import gatedNFTFactoryJson from "@beehiveinnovation/rain-statusfi/artifacts/contracts/GatedNFTFactory.sol/GatedNFTFactory.json";
 
 // Types
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -49,10 +50,11 @@ import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/C
 import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
 import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
 import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
+import { GatedNFTFactory } from "@beehiveinnovation/rain-statusfi/typechain/GatedNFTFactory";
 
 import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
 import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { ITier } from "@beehiveinnovation/rain-protocol/typechain/ITier";
+import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
 import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20";
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
 import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
@@ -92,7 +94,7 @@ let subgraph: ApolloFetch,
   trust: Trust,
   crpContract: ConfigurableRightsPool,
   bPoolContract: BPool,
-  tier: ITier,
+  tier: ReadWriteTier,
   reserve: ReserveToken, // ERC20
   erc721Test: ERC721,
   transaction: ContractTransaction; // use to save/facilite a tx
@@ -110,7 +112,8 @@ export let seedERC20Factory: SeedERC20Factory,
   erc20TransferTierFactory: ERC20TransferTierFactory,
   combineTierFactory: CombineTierFactory,
   erc721BalanceTierFactory: ERC721BalanceTierFactory,
-  saleFactory: SaleFactory;
+  saleFactory: SaleFactory,
+  gatedNFTFactory: GatedNFTFactory;
 
 // Export signers
 export let deployer: SignerWithAddress,
@@ -146,7 +149,7 @@ describe("Subgraph Trusts Test", function () {
 
     reserve = (await deploy(reserveTokenJson, deployer, [])) as ReserveToken;
 
-    tier = (await deploy(readWriteTierJson, deployer, [])) as ITier;
+    tier = (await deploy(readWriteTierJson, deployer, [])) as ReadWriteTier;
     minimumTier = Tier.FOUR;
     await tier.setTier(signer1.address, Tier.FOUR, []);
 
@@ -236,6 +239,14 @@ describe("Subgraph Trusts Test", function () {
     ])) as SaleFactory;
     const saleFactoryBlock = saleFactory.deployTransaction.blockNumber;
 
+    // GatedNFTFactory
+    gatedNFTFactory = (await deploy(
+      gatedNFTFactoryJson,
+      deployer,
+      []
+    )) as GatedNFTFactory;
+    const gatedNFTFactoryBlock = gatedNFTFactory.deployTransaction.blockNumber;
+
     // Saving data in JSON
     const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
     const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
@@ -267,6 +278,9 @@ describe("Subgraph Trusts Test", function () {
 
     configLocal.saleFactory = saleFactory.address;
     configLocal.blockSaleFactory = saleFactoryBlock;
+
+    configLocal.gatedNFTFactory = gatedNFTFactory.address;
+    configLocal.blockGatedNFTFactory = gatedNFTFactoryBlock;
 
     // localInfo.json - Tests (This will be deprecated in our tests)
     localInfoJson.subgraphUser = subgraphUser;
