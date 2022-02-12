@@ -22,14 +22,13 @@
     "test": "hardhat test",
     "test-trust": "hardhat test test/1_trustQueries.test.ts",
     "test-tier": "hardhat test test/2_tierQueries.test.ts",
-    "test-sales": "hardhat test test/3_salesQueries.test.ts",
-    "postinstall": "cd node_modules/@beehiveinnovation/rain-protocol && yarn install --ignore-scripts && yarn build"
+    "test-sales": "hardhat test test/3_salesQueries.test.ts"
   },
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",
     "@beehiveinnovation/configurable-rights-pool": "^0.0.1",
     "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#develop-sale",
-    "@beehiveinnovation/rain-statusfi": "https://github.com/beehive-innovation/rain-statusfi.git#mvp",
+    "@beehiveinnovation/rain-statusfi": "git+https://github.com/beehive-innovation/rain-statusfi.git#mvp",
     "@graphprotocol/graph-cli": "0.21.0",
     "@graphprotocol/graph-ts": "0.20.0",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
