@@ -189,9 +189,9 @@ dataSources:
     name: GatedNFTFactory
     network: {{ network }}
     source:
-      address: "{{ saleFactory }}"
+      address: "{{ gatedNFTFactory }}"
       abi: GatedNFTFactory
-      startBlock: {{ blockSaleFactory }}
+      startBlock: {{ blockGatedNFTFactory }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

@@ -8,9 +8,11 @@ type GatedNFTFactory @entity {
 type GatedNFT @entity {
     id: ID! #contract address
     address: Bytes! #contract address
+    deployBlock: BigInt
+    deployTimestamp: BigInt
     creator: Bytes #from event CreatedGatedNFT.creator
-    name: String!
-    symbol: String!
+    name: String
+    symbol: String
     description: String
     animationUrl: String
     imageUrl: String
@@ -27,11 +29,12 @@ type GatedNFT @entity {
     royaltyPercent: BigDecimal # = royaltyBPS / 100
     royaltyRecipientHistory: [UpdatedRoyaltyRecipient!]
     ownershipHistory: [OwnershipTransferred!]
-
 }
 
 type UpdatedRoyaltyRecipient @entity {
     id: ID! #tx hash
+    block: BigInt
+    timestamp: BigInt
     nftContract: GatedNFT! #contract that emitted the event
     origin: Bytes! #event.transaction.from
     newRoyaltyRecipient: Bytes! #from event.royaltyRecipient
@@ -39,6 +42,8 @@ type UpdatedRoyaltyRecipient @entity {
 
 type OwnershipTransferred @entity {
     id: ID! #txHash
+    block: BigInt
+    timestamp: BigInt
     emitter: Bytes! #contract that emitted the event
     sender: Bytes! #sender of the tx
     oldOwner: Bytes! #from event.oldOwner

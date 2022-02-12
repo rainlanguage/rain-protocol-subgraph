@@ -4,7 +4,7 @@
 
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { ContractTransaction } from "ethers";
+import { ContractTransaction, Signer } from "ethers";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
 import * as path from "path";
 import * as Util from "./utils/utils";
@@ -53,7 +53,7 @@ const minimumStatus = 1;
 const maxPerAddress = 1;
 const transferrable = 0;
 const maxMintable = 100;
-let royaltyRecipient;
+let royaltyRecipient: string;
 const royaltyBPS = 1;
 
 describe("Subgraph GatedNFT test", function () {
@@ -79,7 +79,7 @@ describe("Subgraph GatedNFT test", function () {
 
     // Giving the necessary amount to signer1 for a level 2
     const level2 = LEVELS[1];
-    await reserve.transfer(signer1.address, level2);
+    // await reserve.transfer(signer1.address, level2);
 
     // Connecting to the subgraph
     subgraph = Util.fetchSubgraph(
