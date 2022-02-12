@@ -13,6 +13,10 @@ Drop into a nix-shell.
 ```
 nix-shell
 ```
+This will install all the dependencies correctly. The first time will take a while.
+### Prepare setup
+You can deploy the subgraph to a existing node or locally with your own node. To prepare you should:
+
 ### Run tests
 To complete the setup, you need to run the necessary local nodes (Hardhat and TheGraph). Follow the next steps:
     - In the actual terminal run: `yarn hardhat-node` to start the hardhat local node.
