@@ -336,8 +336,8 @@ describe("Subgraph Tier Test", function () {
       expect(dataArray).to.have.lengthOf(1);
 
       expect(data.id).to.equals(verifyEventId);
-      expect(data.block).to.equals(deployBlock);
-      expect(data.timestamp).to.equals(deloyTimestamp);
+      expect(data.block).to.equals(deployBlock.toString());
+      expect(data.timestamp).to.equals(deloyTimestamp.toString());
       expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
 
       expect(data.verifyContract).to.equals(verify.address.toLowerCase());
@@ -585,7 +585,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  xdescribe("VerifyTier Factory - Queries", function () {
+  describe("VerifyTier Factory - Queries", function () {
     it("should query VerifyTierFactory correctly after construction", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
@@ -750,7 +750,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  xdescribe("ERC20BalanceTier Factory - Queries", function () {
+  describe("ERC20BalanceTier Factory - Queries", function () {
     let erc20BalanceTier: ERC20BalanceTier;
 
     it("should query ERC20BalanceTierFactory correctly after construction", async function () {
@@ -903,7 +903,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  xdescribe("ERC20TransferTier Factory - Queries", function () {
+  describe("ERC20TransferTier Factory - Queries", function () {
     let erc20TransferTier: ERC20TransferTier;
 
     it("should query ERC20TransferTierFactory correctly after construction", async function () {
@@ -1175,7 +1175,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  xdescribe("CombineTier Factory - Queries", function () {
+  describe("CombineTier Factory - Queries", function () {
     const sourceAlways = concat([op(Opcode.ALWAYS)]);
 
     const stateConfigAlways: VMState = {
@@ -1379,7 +1379,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  xdescribe("ERC721BalanceTier Factory - Queries", function () {
+  describe("ERC721BalanceTier Factory - Queries", function () {
     it("should query ERC721BalanceTierFactory correctly", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
@@ -1535,7 +1535,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  xdescribe("UnknownTiers - Queries", function () {
+  describe("UnknownTiers - Queries", function () {
     // All are contracts "independents" - deployed without the factory indexed
     let verify: Verify,
       verifyTier: VerifyTier,

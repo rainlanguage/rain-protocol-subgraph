@@ -218,7 +218,9 @@ describe("Subgraph GatedNFT test", function () {
             id
             address
             deployer
-            factory
+            factory {
+              id
+            }
           }
         }
       }
@@ -233,7 +235,7 @@ describe("Subgraph GatedNFT test", function () {
     expect(data.id).to.equals(erc20BalanceTier.address.toLowerCase());
     expect(data.address).to.equals(erc20BalanceTier.address.toLowerCase());
     expect(data.deployer).to.equals(deployerExpected.toLowerCase());
-    expect(data.factory).to.equals(
+    expect(data.factory.id).to.equals(
       erc20BalanceTierFactory.address.toLowerCase()
     );
   });

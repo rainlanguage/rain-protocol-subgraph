@@ -142,10 +142,18 @@ function createReserveERC20(event: Initialize): string {
         return reserveERC20.id
     reserveERC20.deployBlock= event.block.number
     reserveERC20.deployTimestamp= event.block.timestamp
-    reserveERC20.name = reserveERC20Contract.name()
-    reserveERC20.symbol = reserveERC20Contract.symbol()
-    reserveERC20.totalSupply = reserveERC20Contract.totalSupply()
-    reserveERC20.decimals = reserveERC20Contract.decimals()
+
+    let name = reserveERC20Contract.try_name()
+    let symbol = reserveERC20Contract.try_symbol()
+    let decimals = reserveERC20Contract.try_decimals()
+    let totalSupply = reserveERC20Contract.try_totalSupply()
+    if(!(name.reverted || symbol.reverted || decimals.reverted || totalSupply.reverted)){
+        reserveERC20.name = name.value
+        reserveERC20.symbol = symbol.value
+        reserveERC20.decimals = decimals.value
+        reserveERC20.totalSupply = totalSupply.value
+    }
+
     reserveERC20.save()
     return reserveERC20.id
 }
@@ -160,10 +168,18 @@ function createRedeemableERC20(event: Initialize): string {
         return redeemableERC20.id
     redeemableERC20.deployBlock= event.block.number
     redeemableERC20.deployTimestamp= event.block.timestamp
-    redeemableERC20.name = redeemableERC20Contract.name()
-    redeemableERC20.symbol = redeemableERC20Contract.symbol()
-    redeemableERC20.totalSupply = redeemableERC20Contract.totalSupply()
-    redeemableERC20.decimals = redeemableERC20Contract.decimals()
+
+    let name = redeemableERC20Contract.try_name()
+    let symbol = redeemableERC20Contract.try_symbol()
+    let decimals = redeemableERC20Contract.try_decimals()
+    let totalSupply = redeemableERC20Contract.try_totalSupply()
+    if(!(name.reverted || symbol.reverted || decimals.reverted || totalSupply.reverted)){
+        redeemableERC20.name = name.value
+        redeemableERC20.symbol = symbol.value
+        redeemableERC20.decimals = decimals.value
+        redeemableERC20.totalSupply = totalSupply.value
+    }
+
 
     redeemableERC20.redeems = []
     redeemableERC20.treasuryAssets = []
@@ -187,17 +203,25 @@ function createSeedERC20(event: Initialize): string {
         return seedERC20.id
     seedERC20.deployBlock = event.block.number
     seedERC20.deployTimestamp = event.block.timestamp
-    seedERC20.name = seedERC20Contract.name()
-    seedERC20.symbol = seedERC20Contract.symbol()
-    seedERC20.totalSupply = seedERC20Contract.totalSupply()
-    seedERC20.decimals = seedERC20Contract.decimals()
+
+    let name = seedERC20Contract.try_name()
+    let symbol = seedERC20Contract.try_symbol()
+    let decimals = seedERC20Contract.try_decimals()
+    let totalSupply = seedERC20Contract.try_totalSupply()
+    if(!(name.reverted || symbol.reverted || decimals.reverted || totalSupply.reverted)){
+        seedERC20.name = name.value
+        seedERC20.symbol = symbol.value
+        seedERC20.decimals = decimals.value
+        seedERC20.totalSupply = totalSupply.value
+        seedERC20.seederUnits = totalSupply.value
+        seedERC20.seederUnitsAvail = totalSupply.value
+    }
     seedERC20.seederFee = event.params.config.seederFee
     seedERC20.seeds = []
     seedERC20.unseeds = []
     seedERC20.holders = []
     seedERC20.redeemSeed = []
-    seedERC20.seederUnits = seedERC20Contract.totalSupply()
-    seedERC20.seederUnitsAvail = seedERC20Contract.totalSupply()
+    
     seedERC20.seededAmount = ZERO_BI
     seedERC20.percentSeeded = ZERO_BI
     seedERC20.save()

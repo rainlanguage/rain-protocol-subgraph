@@ -1,6 +1,7 @@
 import { CreatedGatedNFT, OwnershipTransferred as OwnershipTransferredEvent, UpdatedRoyaltyRecipient as UpdatedRoyaltyRecipientEvent} from "../../generated/templates/GatedNFTTemplate/GatedNFT"
-import { GatedNFT, UpdatedRoyaltyRecipient, OwnershipTransferred} from "../../generated/schema"
-import { HUNDRED_BD } from "../utils"
+import { GatedNFT, UpdatedRoyaltyRecipient, OwnershipTransferred, ERC20BalanceTier, ERC20TransferTier, ERC721BalanceTier, CombineTier, VerifyTier, UnknownTier} from "../../generated/schema"
+import { HUNDRED_BD, ZERO_ADDRESS, ZERO_BI } from "../utils"
+import { Address, log } from "@graphprotocol/graph-ts"
 
 export function handleCreatedGatedNFT(event: CreatedGatedNFT): void {
     let gatedNFT = GatedNFT.load(event.address.toHex())
@@ -19,6 +20,8 @@ export function handleCreatedGatedNFT(event: CreatedGatedNFT): void {
     gatedNFT.imageHash = event.params.config.imageHash
     gatedNFT.imageUrl = event.params.config.imageUrl
     gatedNFT.description = event.params.config.description
+    gatedNFT.tier = getTier(event.params.tier.toHex())
+
     gatedNFT.save()
 }
 
@@ -60,4 +63,33 @@ export function handleUpdatedRoyaltyRecipient(event: UpdatedRoyaltyRecipientEven
     royaltyRecipientHistory.push(updatedRoyaltyRecipient.id)
     gatedNFT.royaltyRecipientHistory = royaltyRecipientHistory
     gatedNFT.save()
+}
+
+
+function getTier(tierAddress: string): string {
+    let eRC20BalanceTier = ERC20BalanceTier.load(tierAddress)
+    if(eRC20BalanceTier != null)
+        return eRC20BalanceTier.id 
+    let eRC20TransferTier = ERC20TransferTier.load(tierAddress)
+    if(eRC20TransferTier != null)
+        return eRC20TransferTier.id
+    let eRC721BalanceTier = ERC721BalanceTier.load(tierAddress)
+    if(eRC721BalanceTier != null)
+        return eRC721BalanceTier.id
+    let combineTier = CombineTier.load(tierAddress)
+    if(combineTier != null)
+        return combineTier.id
+    let verifyTier = VerifyTier.load(tierAddress)
+    if(verifyTier != null)
+        return verifyTier.id
+    let uknownTier = UnknownTier.load(tierAddress)
+    if(uknownTier == null){
+        uknownTier = new UnknownTier(tierAddress)
+        uknownTier.address = Address.fromString(tierAddress)
+        uknownTier.deployBlock =ZERO_BI
+        uknownTier.deployTimestamp = ZERO_BI
+        uknownTier.deployer = Address.fromString(ZERO_ADDRESS)
+        uknownTier.save()
+    }
+    return uknownTier.id
 }

@@ -204,10 +204,17 @@ function getERC20(token: Address, block: ethereum.Block): ERC20 {
         erc20 = new ERC20(token.toHex())
         erc20.deployBlock = block.number
         erc20.deployTimestamp = block.timestamp
-        erc20.name = erc20Contract.name()
-        erc20.symbol = erc20Contract.symbol()
-        erc20.decimals = erc20Contract.decimals()
-        erc20.totalSupply = erc20Contract.totalSupply()
+
+        let name = erc20Contract.try_name()
+        let symbol = erc20Contract.try_symbol()
+        let decimals = erc20Contract.try_decimals()
+        let totalSupply = erc20Contract.try_totalSupply()
+        if(!(name.reverted || symbol.reverted || decimals.reverted || totalSupply.reverted)){
+            erc20.name = name.value
+            erc20.symbol = symbol.value
+            erc20.decimals = decimals.value
+            erc20.totalSupply = totalSupply.value
+        }
     }
     return erc20 as ERC20
 }
