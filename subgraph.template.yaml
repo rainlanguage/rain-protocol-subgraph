@@ -210,6 +210,32 @@ dataSources:
         - event: Implementation(address,address)
           handler: handleImplementation
       file: ./src/gatedNFT/GatedNFTFactory.ts 
+  - kind: ethereum/contract
+    name: RedeemableERC20ClaimEscrow
+    network: {{ network }}
+    source:
+      address: "{{ gatedNFTFactory }}"
+      abi: RedeemableERC20ClaimEscrow
+      startBlock: {{ blockGatedNFTFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - GatedNFTFactory
+      abis:
+        - name: RedeemableERC20ClaimEscrow
+          file: ./abis/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.json
+      eventHandlers:
+        - event: Deposit(address,address,address,address,uint256,uint256)
+          handler: handleDeposit
+        - event: PendingDeposit(address,address,address,address,uint256)
+          handler: handlePendingDeposit
+        - event: Undeposit(address,address,address,uint256,uint256)
+          handler: handleUndeposit
+        - event: Withdraw(address,address,address,address,uint256,uint256)
+          handler: handleWithdraw
+      file: ./src/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.ts 
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -495,7 +521,14 @@ templates:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Approve
+        - Verify
+        - VerifyAddress
+        - VerifyApprove
+        - VerifyBan
+        - VerifyRemove
+        - VerifyRequestApprove
+        - VerifyRequestBan
+        - VerifyRequestRemove
       abis:
         - name: Verify
           file: ./abis/verify/Verify.json
