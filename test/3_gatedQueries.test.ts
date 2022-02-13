@@ -51,7 +51,7 @@ const configGated = {
 };
 const minimumStatus = 1;
 const maxPerAddress = 1;
-const transferrable = 0;
+const transferrable = 1;
 const maxMintable = 100;
 let royaltyRecipient: string;
 const royaltyBPS = 1;
@@ -128,16 +128,18 @@ describe("Subgraph GatedNFT test", function () {
   });
 
   it("should query the GatedNFT child from factory after creation", async function () {
-    transaction = await gatedNFTFactory.createChildTyped(
-      configGated,
-      erc20BalanceTier.address,
-      minimumStatus,
-      maxPerAddress,
-      transferrable,
-      maxMintable,
-      royaltyRecipient,
-      royaltyBPS
-    );
+    transaction = await gatedNFTFactory
+      .connect(signer1)
+      .createChildTyped(
+        configGated,
+        erc20BalanceTier.address,
+        minimumStatus,
+        maxPerAddress,
+        transferrable,
+        maxMintable,
+        royaltyRecipient,
+        royaltyBPS
+      );
 
     gatedNFT = (await Util.getContractChild(
       transaction,
@@ -168,24 +170,23 @@ describe("Subgraph GatedNFT test", function () {
     expect(data.children[0].id).to.equals(gatedNFT.address.toLowerCase());
   });
 
-  xit("should query the GatedNFT correctly after creation", async function () {
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
-
-    // The signer assigned to the instance
-    const creatorExpected = await gatedNFTFactory.signer.getAddress();
-    const ownerExpected = await gatedNFTFactory.signer.getAddress();
+  it("should query the GatedNFT correctly after creation", async function () {
+    const deployBlock = transaction.blockNumber;
+    const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
+      .timestamp;
+    // The signer use to call the factory
+    const creatorExpected = signer1.address;
+    const ownerExpected = signer1.address;
 
     const query = `
       {
         gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
           address
           creator
-          tier {
-            id
-          }
           owner
           royaltyRecipientHistory
+          deployBlock
+          deployTimestamp
         }
       }
     `;
@@ -196,18 +197,48 @@ describe("Subgraph GatedNFT test", function () {
 
     const data = queryResponse.data.gatedNFT;
 
+    expect(data.royaltyRecipientHistory).to.be.empty;
     expect(data.address).to.equals(gatedNFT.address.toLowerCase());
     expect(data.creator).to.equals(creatorExpected.toLowerCase());
-    expect(data.tier.id).to.equals(erc20BalanceTier.address.toLowerCase());
     expect(data.owner).to.equals(ownerExpected.toLowerCase());
 
-    expect(data.royaltyRecipientHistory).to.be.empty;
+    expect(data.deployBlock).to.equals(deployBlock.toString());
+    expect(data.deployTimestamp).to.equals(deloyTimestamp.toString());
   });
 
-  xit("should query the GatedNFT properties information correctly after creation", async function () {
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
+  it("should query the tier contract in GatedNFT correctly", async function () {
+    // await waitForSubgraphToBeSynced(500);
 
+    const deployerExpected = await erc20BalanceTierFactory.signer.getAddress();
+
+    const query = `
+      {
+        gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
+          tier {
+            id
+            address
+            deployer
+            factory
+          }
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query: query,
+    })) as FetchResult;
+
+    const data = queryResponse.data.gatedNFT.tier;
+
+    expect(data.id).to.equals(erc20BalanceTier.address.toLowerCase());
+    expect(data.address).to.equals(erc20BalanceTier.address.toLowerCase());
+    expect(data.deployer).to.equals(deployerExpected.toLowerCase());
+    expect(data.factory).to.equals(
+      erc20BalanceTierFactory.address.toLowerCase()
+    );
+  });
+
+  it("should query the GatedNFT properties information correctly after creation", async function () {
     const query = `
       {
         gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
@@ -238,10 +269,7 @@ describe("Subgraph GatedNFT test", function () {
     expect(data.imageHash).to.equals(configGated.imageHash);
   });
 
-  xit("should query the GatedNFT configuration information correctly after creation", async function () {
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
-
+  it("should query the GatedNFT configuration information correctly after creation", async function () {
     const royaltyPercentExpected = royaltyBPS / 100;
     const query = `
       {
@@ -265,7 +293,7 @@ describe("Subgraph GatedNFT test", function () {
 
     expect(data.minimumStatus).to.equals(minimumStatus.toString());
     expect(data.maxPerAddress).to.equals(maxPerAddress.toString());
-    expect(data.transferrable).to.equals(transferrable.toString());
+    expect(data.transferrable).to.equals(transferrable);
     expect(data.maxMintable).to.equals(maxMintable.toString());
 
     expect(data.royaltyRecipient).to.equals(royaltyRecipient.toLowerCase());
@@ -273,13 +301,15 @@ describe("Subgraph GatedNFT test", function () {
     expect(data.royaltyPercent).to.equals(royaltyPercentExpected.toString());
   });
 
-  xit("should query the initial owner correctly", async function () {
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
-
+  it("should query the initial owner correctly", async function () {
     // The signer assigned to the instance
-    const senderExpected = await gatedNFTFactory.signer.getAddress();
-    const newOwnerExpected = await gatedNFTFactory.signer.getAddress();
+    const senderExpected = signer1.address;
+    const newOwnerExpected = signer1.address;
+
+    const deployBlock = transaction.blockNumber;
+    const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
+      .timestamp;
+
     const query = `
       {
         gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
@@ -288,10 +318,10 @@ describe("Subgraph GatedNFT test", function () {
           }
         }
         ownershipTransferred (id: "${transaction.hash.toLowerCase()}") {
-          emitter: Bytes! #contract that emitted the event
-          sender: Bytes! #sender of the tx
-          oldOwner: Bytes! #from event.oldOwner
-          newOwner: Bytes! #from event.newOwner
+          emitter
+          sender
+          oldOwner
+          newOwner
           block
           timestamp
         }
@@ -303,31 +333,35 @@ describe("Subgraph GatedNFT test", function () {
     })) as FetchResult;
 
     const dataGated = queryResponse.data.gatedNFT.ownershipHistory;
-    const dataOwnership = queryResponse.data.gatedNFT.ownershipTransferred;
+    const dataOwnership = queryResponse.data.ownershipTransferred;
 
     expect(dataGated).to.have.lengthOf(1);
-    expect(dataGated[0]).to.equals(transaction.hash.toLowerCase());
+    expect(dataGated[0].id).to.equals(transaction.hash.toLowerCase());
 
     expect(dataOwnership.emitter).to.equals(gatedNFT.address.toLowerCase());
     expect(dataOwnership.sender).to.equals(senderExpected.toLowerCase());
 
-    expect(dataOwnership.oldOwner).to.equals(Util.zeroAddress.toLowerCase());
+    expect(dataOwnership.oldOwner).to.equals(
+      gatedNFTFactory.address.toLowerCase()
+    );
     expect(dataOwnership.newOwner).to.equals(newOwnerExpected.toLowerCase());
 
-    expect(dataOwnership.block).to.equals(transaction.blockNumber.toString());
-    expect(dataOwnership.timestamp).to.equals(transaction.timestamp.toString());
-    // block
-    // timestamp
+    expect(dataOwnership.block).to.equals(deployBlock.toString());
+    expect(dataOwnership.timestamp).to.equals(deloyTimestamp.toString());
   });
 
-  xit("should query correctly after an updateRoyaltyRecipient", async function () {
+  it("should query correctly after an updateRoyaltyRecipient", async function () {
     // Updating the RoyaltyRecipient
     transaction = await gatedNFT
       .connect(signer1)
       .updateRoyaltyRecipient(signer2.address);
 
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
+    const deployBlock = transaction.blockNumber;
+    const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
+      .timestamp;
+
+    await Util.delay(Util.wait * 2);
+    await waitForSubgraphToBeSynced(1200);
 
     const query = `
       {
@@ -341,7 +375,7 @@ describe("Subgraph GatedNFT test", function () {
           nftContract {
             address
           }
-          origin: Bytes! #event.transaction.from
+          origin
           newRoyaltyRecipient
           block
           timestamp
@@ -355,7 +389,6 @@ describe("Subgraph GatedNFT test", function () {
 
     const dataGate = queryResponse.data.gatedNFT;
     const dataUpdatedRoyalty = queryResponse.data.updatedRoyaltyRecipient;
-
     expect(dataGate.royaltyRecipient).to.equals(signer2.address.toLowerCase());
     expect(dataGate.royaltyRecipientHistory).to.have.lengthOf(1);
 
@@ -366,13 +399,117 @@ describe("Subgraph GatedNFT test", function () {
     expect(dataUpdatedRoyalty.newRoyaltyRecipient).to.equals(
       signer2.address.toLowerCase()
     );
-    expect(dataUpdatedRoyalty.block).to.equals(
-      transaction.blockNumber.toString()
-    );
-    expect(dataUpdatedRoyalty.timestamp).to.equals(
-      transaction.timestamp.toString()
-    );
+    expect(dataUpdatedRoyalty.block).to.equals(deployBlock.toString());
+    expect(dataUpdatedRoyalty.timestamp).to.equals(deloyTimestamp.toString());
   });
 
-  xit("should query correctly after a transferOwnership");
+  it("should query correctly after a transferOwnership", async function () {
+    // Call to transfer ownership
+    transaction = await gatedNFT
+      .connect(signer1)
+      .transferOwnership(signer2.address);
+
+    const ownershipTransferId = transaction.hash.toLowerCase();
+    const deployBlock = transaction.blockNumber;
+    const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
+      .timestamp;
+
+    await Util.delay(Util.wait * 2);
+    await waitForSubgraphToBeSynced(1200);
+
+    const query = `
+      {
+        gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
+          owner
+          ownershipHistory {
+            id
+          }
+        }
+        ownershipTransferred (id: "${ownershipTransferId}") {
+          block
+          timestamp
+          emitter
+          sender
+          oldOwner
+          newOwner
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query: query,
+    })) as FetchResult;
+
+    const dataGate = queryResponse.data.gatedNFT;
+    const dataOwnership = queryResponse.data.ownershipTransferred;
+
+    expect(dataGate.owner).to.equals(signer2.address.toLowerCase());
+    expect(dataGate.ownershipHistory).to.have.lengthOf(2);
+    expect(dataGate.ownershipHistory).to.deep.include({
+      id: ownershipTransferId,
+    });
+
+    expect(dataOwnership.emitter).to.equals(gatedNFT.address.toLowerCase());
+    expect(dataOwnership.sender).to.equals(signer1.address.toLowerCase());
+    expect(dataOwnership.oldOwner).to.equals(signer1.address.toLowerCase());
+    expect(dataOwnership.newOwner).to.equals(signer2.address.toLowerCase());
+
+    expect(dataOwnership.block).to.equals(deployBlock.toString());
+    expect(dataOwnership.timestamp).to.equals(deloyTimestamp.toString());
+  });
+
+  it("should continue querying if a non-ITier address is provide as TierContract", async function () {
+    transaction = await gatedNFTFactory
+      .connect(signer1)
+      .createChildTyped(
+        configGated,
+        Util.zeroAddress,
+        minimumStatus,
+        maxPerAddress,
+        transferrable,
+        maxMintable,
+        royaltyRecipient,
+        royaltyBPS
+      );
+
+    const gatedWrongTier = (await Util.getContractChild(
+      transaction,
+      gatedNFTFactory,
+      gatedNFTJson
+    )) as GatedNFT;
+
+    await Util.delay(Util.wait * 2);
+    await waitForSubgraphToBeSynced(1200);
+
+    const query = `
+      {
+        gatedNFTFactory (id: "${gatedNFTFactory.address.toLowerCase()}") {
+          children {
+            id
+          }
+        }
+        gatedNFT (id: "${gatedWrongTier.address.toLowerCase()}") {
+          address
+          tier {
+            id
+          }
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query: query,
+    })) as FetchResult;
+
+    const dataFactory = queryResponse.data.gatedNFTFactory;
+    const dataGate = queryResponse.data.gatedNFT;
+
+    expect(dataFactory.children).to.have.lengthOf(2);
+    expect(dataFactory.children).to.deep.include({
+      id: gatedWrongTier.address.toLowerCase(),
+    });
+
+    expect(dataGate.address).to.equals(gatedWrongTier.address.toLowerCase());
+    expect(dataGate.tier).to.be.null; // Because cannot is not a TierContract
+  });
 });

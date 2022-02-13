@@ -36,7 +36,12 @@ import gatedNFTFactoryJson from "@beehiveinnovation/rain-statusfi/artifacts/cont
 
 // Types
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import type { BigNumber, Contract, ContractTransaction } from "ethers";
+import type {
+  BigNumber,
+  Contract,
+  ContractTransaction,
+  ContractReceipt,
+} from "ethers";
 
 import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
 import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
@@ -323,7 +328,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  it("should get all the contracts from the Trust Construction Event", async function () {
+  xit("should get all the contracts from the Trust Construction Event", async function () {
     await Util.delay(Util.wait);
     await waitForSubgraphToBeSynced(1000);
 
@@ -348,7 +353,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  describe("Single Trust test", function () {
+  xdescribe("Single Trust test", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -1382,7 +1387,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Using the tx saved
       const poolDeployBlock = transaction.blockNumber;
-      const poolDeployTimestamp = transaction.timestamp;
+      const poolDeployTimestamp = transaction.timestamp; //
 
       const query = `
         {

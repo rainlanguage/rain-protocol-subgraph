@@ -21,8 +21,9 @@
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
     "test": "hardhat test",
     "test-trust": "hardhat test test/1_trustQueries.test.ts",
-    "test-tier": "hardhat test test/2_tierQueries.test.ts",
-    "test-sales": "hardhat test test/3_salesQueries.test.ts"
+    "test-sales": "hardhat test test/2_salesQueries.test.ts",
+    "test-gated": "hardhat test test/3_gatedQueries.test.ts",
+    "test-tier": "hardhat test test/4_tierQueries.test.ts"
   },
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",
