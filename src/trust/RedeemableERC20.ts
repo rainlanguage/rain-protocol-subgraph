@@ -158,5 +158,14 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     callers.push(caller.id)
     treasuryAsset.callers = callers
 
+    redeemabaleERC20.treasuryAssets.push(treasuryAsset.id)
+    redeemabaleERC20.save()
+
+    let rERC20treasuryAssets = redeemabaleERC20.treasuryAssets
+    rERC20treasuryAssets.push(treasuryAsset.id)
+    redeemabaleERC20.treasuryAssets = rERC20treasuryAssets
+
+    redeemabaleERC20.save()
+
     treasuryAsset.save()
 }

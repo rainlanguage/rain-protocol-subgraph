@@ -411,24 +411,40 @@ export const createEmptyBlock = async (count?: number): Promise<void> => {
  * @param contractFactory - contract factory that create the child
  * @param contractArtifact - the artifact of the child contract
  * @param signer - (optional) the signer that will be connected the child contract. Same as contractFactory if not provided
+ * @param eventName - (optional) the event where the address was emitted. By default "NewChild"
+ * @param eventArg - (optional) the arg of the event that contain the address. By default "child"
  * @returns The child contract connected to the signer
  */
 export const getContractChild = async (
   tx: ContractTransaction,
   contractFactory: Contract,
   contractArtifact: Artifact,
-  signer?: SignerWithAddress
+  signer?: SignerWithAddress,
+  eventName: string = "NewChild",
+  eventArg: string = "child"
 ): Promise<Contract> => {
   const contractChild = new ethers.Contract(
     ethers.utils.hexZeroPad(
       ethers.utils.hexStripZeros(
-        (await getEventArgs(tx, "NewChild", contractFactory)).child
+        (await getEventArgs(tx, eventName, contractFactory))[eventArg]
       ),
       20 // address bytes length
     ),
     contractArtifact.abi,
     signer || contractFactory.signer
   ) as Contract;
+
+  if (!ethers.utils.isAddress(contractChild.address)) {
+    throw new Error(
+      `invalid trust address: ${contractChild.address} (${contractChild.address.length} chars)`
+    );
+  }
+
+  await contractChild.deployed();
+
+  // @ts-ignore
+  contractChild.deployTransaction = tx;
+
   return contractChild;
 };
 
