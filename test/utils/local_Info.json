@@ -1,14 +1,14 @@
 {
     "subgraphUser": "vishalkale151071",
     "subgraphName": "rain-protocol",
-    "trustFactory": "0x02b0B4EFd909240FCB2Eb5FAe060dC60D112E3a4",
-    "redeemableERC20Factory": "0x32EEce76C2C2e8758584A83Ee2F522D4788feA0f",
-    "seedERC20Factory": "0x01c1DeF3b91672704716159C9041Aeca392DdFfb",
-    "verifyFactory": "0x638A246F0Ec8883eF68280293FFE8Cfbabe61B44",
-    "erc20BalanceTierFactory": "0x6C2d83262fF84cBaDb3e416D527403135D757892",
-    "erc20TransferTierFactory": "0xFD6F7A6a5c21A3f503EBaE7a473639974379c351",
-    "combineTierFactory": "0xa6e99A4ED7498b3cdDCBB61a6A607a4925Faa1B7",
-    "verifyTierFactory": "0x5302E909d1e93e30F05B5D6Eea766363D14F9892",
-    "erc721BalanceTierFactory": "0x0ed64d01D0B4B655E410EF1441dD677B695639E7",
-    "saleFactory": "0x4bf010f1b9beDA5450a8dD702ED602A104ff65EE"
+    "trustFactory": "0xD28F3246f047Efd4059B24FA1fa587eD9fa3e77F",
+    "redeemableERC20Factory": "0x8B342f4Ddcc71Af65e4D2dA9CD00cc0E945cFD12",
+    "seedERC20Factory": "0xE2307e3710d108ceC7a4722a020a050681c835b3",
+    "verifyFactory": "0x15F2ea83eB97ede71d84Bd04fFF29444f6b7cd52",
+    "erc20BalanceTierFactory": "0x0B32a3F8f5b7E5d315b9E52E640a49A89d89c820",
+    "erc20TransferTierFactory": "0xF357118EBd576f3C812c7875B1A1651a7f140E9C",
+    "combineTierFactory": "0x519b05b3655F4b89731B677d64CEcf761f4076f6",
+    "verifyTierFactory": "0x057cD3082EfED32d5C907801BF3628B27D88fD80",
+    "erc721BalanceTierFactory": "0xb6057e08a11da09a998985874FE2119e98dB3D5D",
+    "saleFactory": "0xad203b3144f8c09a20532957174fc0366291643c"
 }

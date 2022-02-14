@@ -3,14 +3,14 @@ import { Initialize, Receiver, Sender, Transfer, ERC20PullInitialize, Redeem as 
 import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "../utils"
 import { RedeemableERC20 as RedeemabaleERC20Contract } from "../../generated/TrustFactory/RedeemableERC20"
 import { ERC20 } from "../../generated/TrustFactory/ERC20"
-import { dataSource, log } from "@graphprotocol/graph-ts"
+import { dataSource ,log } from "@graphprotocol/graph-ts"
 
 export function handleInitialize(event: Initialize): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
 
     redeemabaleERC20.sender = event.params.sender
     redeemabaleERC20.admin = event.params.admin
-    // redeemabaleERC20.minimumTier = event.params.minimumTier
+    redeemabaleERC20.minimumTier = event.params.minimumTier
 
     redeemabaleERC20.save()
 }
@@ -80,14 +80,13 @@ export function handleRedeem(event: RedeemEvent): void {
     let totalRedeems = redeemableERC20.redeems.length
     let redeem = new Redeem(event.transaction.hash.toHex() + "-" + totalRedeems.toString())
     let treasuryAsset = TreasuryAsset.load(event.address.toHex() + " - " + event.params.treasuryAsset.toHex())
-    let values = event.params.redeemAmounts
     let context = dataSource.context()
 
     redeem.redeemableERC20 = redeemableERC20.id
     redeem.caller = event.params.sender
     redeem.treasuryAsset = treasuryAsset.id
-    redeem.treasuryAssetAmount = values[0]
-    redeem.redeemAmount = values[1]
+    redeem.treasuryAssetAmount = event.params.assetAmount
+    redeem.redeemAmount = event.params.redeemAmount
     redeem.deployBlock = event.block.number
     redeem.deployTimestamp = event.block.timestamp
     redeem.trust = context.getString("trust")
