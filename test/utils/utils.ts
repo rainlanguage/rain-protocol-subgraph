@@ -391,7 +391,7 @@ export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const wait = 500;
+export const wait = 1000;
 
 export const createEmptyBlock = async (count?: number): Promise<void> => {
   const signers = await ethers.getSigners();

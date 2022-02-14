@@ -216,7 +216,7 @@ dataSources:
     source:
       address: "{{ redeemableERC20ClaimEscrow }}"
       abi: RedeemableERC20ClaimEscrow
-      startBlock: {{ redeemableERC20ClaimEscrowBlock }}
+      startBlock: {{ blockRedeemableERC20ClaimEscrow }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -250,7 +250,7 @@ templates:
         - Trust
         - Contract
         - DistributionProgress
-        - ReserveERC20
+        - ERC20
         - RedeemableERC20
         - SeedERC20
         - Pool

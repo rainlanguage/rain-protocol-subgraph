@@ -295,7 +295,7 @@ describe("Subgraph Trusts Test", function () {
     configLocal.blockGatedNFTFactory = gatedNFTFactoryBlock;
 
     configLocal.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
-    configLocal.redeemableERC20ClaimEscrowBlock =
+    configLocal.blockRedeemableERC20ClaimEscrow =
       redeemableERC20ClaimEscrowBlock;
 
     // localInfo.json - Tests (This will be deprecated in our tests)

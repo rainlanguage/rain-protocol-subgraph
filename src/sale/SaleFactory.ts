@@ -22,7 +22,7 @@ export function handleNewChild(event: NewChild): void {
     let saleFactory = SaleFactory.load(event.address.toHex())
     let sale = new Sale(event.params.child.toHex())
     sale.address = event.params.child
-    sale.deployer = event.params.sender
+    sale.deployer = event.transaction.from
     sale.deployBlock = event.block.number
     sale.deployTimestamp = event.block.timestamp
     sale.factory = saleFactory.id

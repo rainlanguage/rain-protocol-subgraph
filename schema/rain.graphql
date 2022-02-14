@@ -50,7 +50,7 @@ type Notice @entity{
 # src/trust.ts/handleInitialize
 type Contract @entity {
     id: ID!
-    reserveERC20: ReserveERC20 #Trust.getContracts() => address reserveERC20
+    reserveERC20: ERC20 #Trust.getContracts() => address reserveERC20
     redeemableERC20: RedeemableERC20 #Trust.getContracts() => address redeemableERC20
     seeder: SeedERC20 #Trust.getContracts() => address seeder
     tier: Bytes #Trust.getContracts() => address tier
@@ -114,20 +114,10 @@ type RedeemableERC20Pool @entity{
     deployTimestamp: BigInt! #the timestamp the contract was deployed
 }
 
-type ReserveERC20 @entity{
-    id: ID!
-    symbol: String
-    totalSupply: BigInt
-    decimals: Int
-    name: String
-    deployBlock: BigInt! #the block the contract was deployed
-    deployTimestamp: BigInt! #the timestamp the contract was deployed
-}
-
 type Pool @entity{
     id: ID!
     trust: Trust! #the trust that is the owner of this pool
-    reserve: ReserveERC20 #the reserve token for this trust
+    reserve: ERC20 #the reserve token for this trust
     redeemable: RedeemableERC20 #the redeemable token for this trust
     poolBalanceReserve: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
     poolTokenBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance

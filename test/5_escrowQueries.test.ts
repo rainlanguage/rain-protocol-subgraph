@@ -33,7 +33,7 @@ let subgraph: ApolloFetch,
   tier: ReadWriteTier,
   transaction: ContractTransaction; // use to save/facilite a tx;
 
-describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
+xdescribe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before("creating and connecting", async function () {
     const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
     const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
@@ -48,7 +48,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     );
   });
 
-  it("should query GatedNFTFactory correctly after construction", async function () {
+  it("should query RedeemableERC20ClaimEscrow correctly after construction", async function () {
     await Util.delay(Util.wait);
     await waitForSubgraphToBeSynced(1000);
 

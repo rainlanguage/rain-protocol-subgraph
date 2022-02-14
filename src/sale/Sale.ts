@@ -1,8 +1,9 @@
-import { Address, dataSource, ethereum, log } from "@graphprotocol/graph-ts"
+import { Address, dataSource, DataSourceContext, ethereum, log } from "@graphprotocol/graph-ts"
 import { Buy, Construct, CooldownInitialize, CooldownTriggered, End, Initialize, Refund, Start} from "../../generated/SaleFactory/Sale"
-import { Sale, SaleFactory, ERC20, SaleStart, CanStartStateConfig, CanEndStateConfig, CalculatePriceStateConfig, SaleEnd, SaleBuy, SaleFeeRecipient, SaleReceipt, SaleRefund } from "../../generated/schema"
+import { Sale, SaleFactory, ERC20, SaleStart, CanStartStateConfig, CanEndStateConfig, CalculatePriceStateConfig, SaleEnd, SaleBuy, SaleFeeRecipient, SaleReceipt, SaleRefund, RedeemableERC20 } from "../../generated/schema"
+import { RedeemableERC20Template } from "../../generated/templates"
 import { ERC20 as ERC20Contract} from "../../generated/templates/SaleTemplate/ERC20"
-import { ETHER, HUNDRED_BD, SaleStatus, ZERO_BI } from "../utils"
+import { ETHER, HUNDRED_BD, SaleStatus, ZERO_ADDRESS, ZERO_BI } from "../utils"
 
 export function handleBuy(event: Buy): void {
     let sale = Sale.load(event.address.toHex())
@@ -96,14 +97,13 @@ export function handleEnd(event: End): void {
 export function handleInitialize(event: Initialize): void {
     let sale = Sale.load(event.address.toHex())
     
-    let token = getERC20(event.params.token, event.block)
+    let token = getRedeemableERC20(event.params.token, event.block)
     sale.token = token.id
     let reserve = getERC20(event.params.config.reserve, event.block)
     sale.reserve = reserve.id
 
     let tokenContrct = ERC20Contract.bind(event.params.token)
-
-    sale.deployer = event.params.sender
+    
     sale.recipient = event.params.config.recipient
     sale.cooldownDuration = event.params.config.cooldownDuration
     sale.minimumRaise = event.params.config.minimumRaise
@@ -217,6 +217,39 @@ function getERC20(token: Address, block: ethereum.Block): ERC20 {
         }
     }
     return erc20 as ERC20
+}
+
+function getRedeemableERC20(token: Address, block: ethereum.Block): RedeemableERC20 {
+    let redeemableERC20 = RedeemableERC20.load(token.toHex())
+    let erc20Contract = ERC20Contract.bind(token)
+    if(redeemableERC20 == null){
+        redeemableERC20 = new RedeemableERC20(token.toHex())
+        redeemableERC20.deployBlock = block.number
+        redeemableERC20.deployTimestamp = block.timestamp
+
+        let name = erc20Contract.try_name()
+        let symbol = erc20Contract.try_symbol()
+        let decimals = erc20Contract.try_decimals()
+        let totalSupply = erc20Contract.try_totalSupply()
+        if(!(name.reverted || symbol.reverted || decimals.reverted || totalSupply.reverted)){
+            redeemableERC20.name = name.value
+            redeemableERC20.symbol = symbol.value
+            redeemableERC20.decimals = decimals.value
+            redeemableERC20.totalSupply = totalSupply.value
+        }
+        redeemableERC20.redeems = []
+        redeemableERC20.treasuryAssets = []
+        redeemableERC20.holders = []
+        redeemableERC20.grantedReceivers = []
+        redeemableERC20.grantedSenders = []
+
+        redeemableERC20.save()
+        let context = new DataSourceContext()
+        context.setString("trust", ZERO_ADDRESS)
+        RedeemableERC20Template.createWithContext(token, context)
+    }
+    
+    return redeemableERC20 as RedeemableERC20
 }
 
 function updateFeeRecipient(recipient: SaleFeeRecipient): void {

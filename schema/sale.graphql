@@ -13,7 +13,7 @@ type Sale @entity{
     deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes! #address of the deployer - get from event Initialize.sender
     factory: SaleFactory! #the factory that deployed this contract
-    token: ERC20 #from Intialize.token
+    token: RedeemableERC20 #from Intialize.token
     reserve: ERC20 #from Initialize.config.reserve
     canStartStateConfig: CanStartStateConfig #from Initialize.config.canStartStateConfig
     canEndStateConfig: CanEndStateConfig #from Initialize.config.canEndStateConfig
