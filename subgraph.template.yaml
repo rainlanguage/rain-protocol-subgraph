@@ -332,14 +332,14 @@ templates:
         - event: Initialize(address,address,uint256)
           handler: handleInitialize
         - event: Receiver(address,address)
-          handler: handleInitialize
+          handler: handleReceiver
         - event: Sender(address,address)
           handler: handleSender
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
         - event: ERC20PullInitialize(address,address,address)
           handler: handleERC20PullInitialize
-        - event: Redeem(address,address,uint256[2])
+        - event: Redeem(address,address,uint256,uint256)
           handler: handleRedeem
         - event: TreasuryAsset(address,address)
           handler: handleTreasuryAsset
