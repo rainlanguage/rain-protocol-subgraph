@@ -214,9 +214,9 @@ dataSources:
     name: RedeemableERC20ClaimEscrow
     network: {{ network }}
     source:
-      address: "{{ gatedNFTFactory }}"
+      address: "{{ redeemableERC20ClaimEscrow }}"
       abi: RedeemableERC20ClaimEscrow
-      startBlock: {{ blockGatedNFTFactory }}
+      startBlock: {{ redeemableERC20ClaimEscrowBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

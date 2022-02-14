@@ -33,6 +33,7 @@ import verifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/co
 import verifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
 import saleFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
 import gatedNFTFactoryJson from "@beehiveinnovation/rain-statusfi/artifacts/contracts/GatedNFTFactory.sol/GatedNFTFactory.json";
+import redeemableERC20ClaimEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/RedeemableERC20ClaimEscrow.sol/RedeemableERC20ClaimEscrow.json";
 
 // Types
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -56,6 +57,7 @@ import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/Ve
 import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
 import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
 import { GatedNFTFactory } from "@beehiveinnovation/rain-statusfi/typechain/GatedNFTFactory";
+import { RedeemableERC20ClaimEscrow } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20ClaimEscrow";
 
 import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
 import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
@@ -118,7 +120,8 @@ export let seedERC20Factory: SeedERC20Factory,
   combineTierFactory: CombineTierFactory,
   erc721BalanceTierFactory: ERC721BalanceTierFactory,
   saleFactory: SaleFactory,
-  gatedNFTFactory: GatedNFTFactory;
+  gatedNFTFactory: GatedNFTFactory,
+  redeemableERC20ClaimEscrow: RedeemableERC20ClaimEscrow;
 
 // Export signers
 export let deployer: SignerWithAddress,
@@ -252,6 +255,15 @@ describe("Subgraph Trusts Test", function () {
     )) as GatedNFTFactory;
     const gatedNFTFactoryBlock = gatedNFTFactory.deployTransaction.blockNumber;
 
+    // RedeemableERC20ClaimEscrow
+    redeemableERC20ClaimEscrow = (await deploy(
+      redeemableERC20ClaimEscrowJson,
+      deployer,
+      []
+    )) as RedeemableERC20ClaimEscrow;
+    const redeemableERC20ClaimEscrowBlock =
+      redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
+
     // Saving data in JSON
     const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
     const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
@@ -286,6 +298,10 @@ describe("Subgraph Trusts Test", function () {
 
     configLocal.gatedNFTFactory = gatedNFTFactory.address;
     configLocal.blockGatedNFTFactory = gatedNFTFactoryBlock;
+
+    configLocal.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
+    configLocal.redeemableERC20ClaimEscrowBlock =
+      redeemableERC20ClaimEscrowBlock;
 
     // localInfo.json - Tests (This will be deprecated in our tests)
     localInfoJson.subgraphUser = subgraphUser;
