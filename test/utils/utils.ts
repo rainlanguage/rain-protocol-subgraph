@@ -298,6 +298,12 @@ export const poolContracts = async (
     BPoolJson.abi,
     signer
   ) as BPool & Contract;
+
+  // @ts-ignore
+  crp.deployTransaction = trust.deployTransaction;
+  // @ts-ignore
+  bPool.deployTransaction = trust.deployTransaction;
+
   return { crp, bPool };
 };
 
