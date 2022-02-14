@@ -10,7 +10,7 @@ import {
     StartDutchAuction
 } from '../../generated/TrustFactory/Trust'
 
-import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ReserveERC20, SeedERC20, Trust, TrustFactory } from "../../generated/schema"
+import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ERC20 as ERC20Schema, SeedERC20, Trust, TrustFactory } from "../../generated/schema"
 import { dataSource, DataSourceContext, log } from '@graphprotocol/graph-ts'
 import { ERC20 } from "../../generated/TrustFactory/ERC20"
 import { Trust as TrustContract } from "../../generated/TrustFactory/Trust"
@@ -133,11 +133,11 @@ function createConfigurableRightPool(event: Initialize): string {
 }
 
 function createReserveERC20(event: Initialize): string {
-    let reserveERC20 = ReserveERC20.load(event.params.config.reserve.toHex())
+    let reserveERC20 = ERC20Schema.load(event.params.config.reserve.toHex())
     let reserveERC20Contract = ERC20.bind(event.params.config.reserve)
 
     if(reserveERC20 == null)
-        reserveERC20 = new ReserveERC20(event.params.config.reserve.toHex())
+        reserveERC20 = new ERC20Schema(event.params.config.reserve.toHex())
     else
         return reserveERC20.id
     reserveERC20.deployBlock= event.block.number

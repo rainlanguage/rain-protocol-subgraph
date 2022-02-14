@@ -300,7 +300,7 @@ describe("Subgraph Trusts Test", function () {
     configLocal.blockGatedNFTFactory = gatedNFTFactoryBlock;
 
     configLocal.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
-    configLocal.redeemableERC20ClaimEscrowBlock =
+    configLocal.blockRedeemableERC20ClaimEscrow =
       redeemableERC20ClaimEscrowBlock;
 
     // localInfo.json - Tests (This will be deprecated in our tests)
@@ -344,7 +344,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  xit("should get all the contracts from the Trust Construction Event", async function () {
+  it("should get all the contracts from the Trust Construction Event", async function () {
     await Util.delay(Util.wait);
     await waitForSubgraphToBeSynced(1000);
 
@@ -369,7 +369,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  xdescribe("Single Trust test", function () {
+  describe("Single Trust test", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
