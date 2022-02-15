@@ -52,6 +52,18 @@ import type {
 } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
 import { isContext } from "vm";
 
+import {
+  deployer,
+  signer1,
+  signer2,
+  recipient,
+  saleFactory,
+  feeRecipient,
+  erc20BalanceTierFactory,
+  redeemableERC20Factory,
+  trustFactory,
+} from "./1_trustQueries.test";
+
 enum Status {
   PENDING,
   ACTIVE,
@@ -124,55 +136,24 @@ interface BuyConfig {
   maximumPrice: BigNumber;
 }
 
-xdescribe("Sales queries test", function () {
-  let subgraph: ApolloFetch,
-    reserve: ReserveToken,
-    redeemableERC20Factory: RedeemableERC20Factory,
-    readWriteTier: ReadWriteTier,
-    saleFactory: SaleFactory,
-    sale: Sale,
-    redeemableERC20Token: RedeemableERC20,
-    trustFactory: TrustFactory;
+let subgraph: ApolloFetch,
+  reserve: ReserveToken,
+  readWriteTier: ReadWriteTier,
+  sale: Sale,
+  redeemableERC20Token: RedeemableERC20,
+  startBlock: number,
+  canStartStateConfig: StateConfig,
+  canEndStateConfig: StateConfig,
+  calculatePriceStateConfig: StateConfig,
+  buyConfig: BuyConfig,
+  transaction: ContractTransaction; // Use to save the tx between statements
 
-  let deployer: SignerWithAddress,
-    recipient: SignerWithAddress,
-    feeRecipient: SignerWithAddress,
-    signer1: SignerWithAddress;
-
-  let startBlock: number,
-    canStartStateConfig: StateConfig,
-    canEndStateConfig: StateConfig,
-    calculatePriceStateConfig: StateConfig,
-    buyConfig: BuyConfig;
-
-  // Use to save the tx between statements
-  let transaction: ContractTransaction;
-
+describe("Sales queries test", function () {
   before("getting the factory", async function () {
-    const signers = await ethers.getSigners();
-    deployer = signers[0];
-    recipient = signers[1];
-    feeRecipient = signers[2];
-    signer1 = signers[3];
-
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
 
     const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
     const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
-    // Trust factory
-    trustFactory = getContract(
-      localInfoJson.trustFactory,
-      trustFactoryJson,
-      deployer
-    ) as TrustFactory;
-
-    // redeemableERC20Factory
-    redeemableERC20Factory = getContract(
-      localInfoJson.redeemableERC20Factory,
-      redeemableERC20FactoryJson,
-      deployer
-    ) as RedeemableERC20Factory;
 
     // New readWriteTier
     readWriteTier = (await deploy(
@@ -180,13 +161,6 @@ xdescribe("Sales queries test", function () {
       deployer,
       []
     )) as ReadWriteTier;
-
-    // Sale factory existing
-    saleFactory = getContract(
-      localInfoJson.saleFactory,
-      saleFactoryJson,
-      deployer
-    ) as SaleFactory;
 
     // Connecting to the subgraph
     subgraph = Util.fetchSubgraph(

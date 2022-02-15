@@ -135,6 +135,8 @@ export let deployer: SignerWithAddress,
   seeder2: SignerWithAddress,
   signer1: SignerWithAddress,
   signer2: SignerWithAddress,
+  recipient: SignerWithAddress,
+  feeRecipient: SignerWithAddress,
   admin: SignerWithAddress;
 
 describe("Subgraph Trusts Test", function () {
@@ -148,6 +150,8 @@ describe("Subgraph Trusts Test", function () {
     seeder2 = signers[3];
     signer1 = signers[4];
     signer2 = signers[5];
+    recipient = signers[6];
+    feeRecipient = signers[7];
     admin = signers[9];
 
     [crpFactory, bFactory] = (await Util.balancerDeploy(deployer)) as [
@@ -1093,7 +1097,7 @@ describe("Subgraph Trusts Test", function () {
       const queryResponse = await subgraph({
         query: query,
       });
-      console.log("SeedERC20Data : ", queryResponse.data.seedERC20.seeds.length)
+
       const seedERC20Data = queryResponse.data.seedERC20;
       expect(seedERC20Data.seeds.length).to.equals(0);
       expect(seedERC20Data.unseeds.length).to.equals(0);
