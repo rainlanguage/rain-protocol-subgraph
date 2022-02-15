@@ -1092,7 +1092,6 @@ describe("Subgraph Trusts Test", function () {
       const queryResponse = await subgraph({
         query: query,
       });
-      console.log("SeedERC20Data : ", queryResponse.data.seedERC20.seeds.length)
       const seedERC20Data = queryResponse.data.seedERC20;
       expect(seedERC20Data.seeds.length).to.equals(0);
       expect(seedERC20Data.unseeds.length).to.equals(0);

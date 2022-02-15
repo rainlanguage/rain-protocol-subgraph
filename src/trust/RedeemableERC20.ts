@@ -175,6 +175,7 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
 export function handleTierByConstructionInitialize(event: TierByConstructionInitialize): void {
     let context = dataSource.context()
     let contracts = Contract.load(context.getString("trust"))
+    log.info("Contracts : {}", [contracts.id])
     contracts.tier = getTier(event.params.tierContract.toHex())
     contracts.save()
 }
