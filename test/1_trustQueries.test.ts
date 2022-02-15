@@ -997,12 +997,12 @@ describe("Subgraph Trusts Test", function () {
       expect(data.seederUnits).to.equals(seederUnits.toString());
 
       expect(data.seedFeePerUnit).to.equals(seedFeePerUnitExpected);
-      // expect(data.seedPrice).to.equals(seedPrice);
+      expect(data.seedPrice).to.equals(seedPrice);
 
       // This could be catch it with the `CooldownInitialize` event in SeedERC20 contract initialization
-      // expect(data.seederCooldownDuration).to.equals(
-      //   seederCooldownDuration.toString()
-      // );
+      expect(data.seederCooldownDuration).to.equals(
+        seederCooldownDuration.toString()
+      );
     });
 
     it("should query the reference addresses in SeedContract correctly", async function () {
@@ -1026,9 +1026,9 @@ describe("Subgraph Trusts Test", function () {
       const data = queryResponse.data.seedERC20;
 
       expect(data.sender).to.equals(deployer.address.toLowerCase());
-      // expect(data.recipient).to.equals(trust.address.toLowerCase());
       expect(data.reserve).to.equals(reserve.address.toLowerCase());
       expect(data.factory).to.equals(seedERC20Factory.address.toLowerCase());
+      expect(data.recipient).to.equals(trust.address.toLowerCase());
     });
 
     it("should query the initial Seed Holder correctly", async function () {
