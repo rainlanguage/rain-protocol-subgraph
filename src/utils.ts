@@ -1,5 +1,5 @@
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
-import { Contract, TrustParticipant } from '../generated/schema'
+import { Contract, Trust, TrustParticipant } from '../generated/schema'
 import { SeedERC20 } from "../generated/TrustFactory/SeedERC20"
 import { RedeemableERC20 } from "../generated/TrustFactory/RedeemableERC20"
 
@@ -62,6 +62,12 @@ export function getTrustParticipent(participant: Address, trust: string) : Trust
         trustParticipant.redeems = []
         trustParticipant.redeemSeeds = []
         trustParticipant.swaps = []
+
+        let trustEntity = Trust.load(trust)
+        let tp = trustEntity.trustParticipants
+        tp.push(trustParticipant.id)
+        trustEntity.trustParticipants = tp
+        trustEntity.save()
     }
     trustParticipant.seedBalance = seedERC20Contract.balanceOf(participant)
     trustParticipant.tokenBalance = redeemableERC20Contract.balanceOf(participant)
