@@ -301,8 +301,8 @@ function updateSale(sale: Sale): void {
         totalOut = totalIn.plus(saleRefund.totalOut)
         refundFee = refundFee.plus(saleRefund.fee)
     }
-
-    sale.totalRaised = totalIn.minus(totalOut)
+    if(sale.saleStatus == SaleStatus.Active)
+        sale.totalRaised = totalIn.minus(totalOut)
     sale.totalFees = buyFee.minus(refundFee)
     sale.percentRaised = sale.totalRaised.toBigDecimal().div(sale.minimumRaise.toBigDecimal()).times(HUNDRED_BD)
     sale.save()

@@ -60,7 +60,6 @@ export function handleUnseed(event: UnseedEvent): void {
 
 export function handleInitialize(event: Initialize): void {
     let seedERC20 = SeedERC20.load(event.address.toHex())
-    seedERC20.sender = event.params.sender
     seedERC20.factory = event.params.sender
     seedERC20.recipient = event.params.recipient
     seedERC20.reserve = event.params.reserve

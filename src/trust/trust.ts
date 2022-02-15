@@ -59,6 +59,7 @@ export function handleInitialize(event: Initialize): void {
     contracts.seeder = createSeedERC20(event)
     contracts.redeemableERC20 = createRedeemableERC20(event)
     contracts.save()
+ 
     
     // DistributionProgess creation
 
@@ -99,7 +100,6 @@ export function handleNotice(event: Notice): void {
 }
 
 export function handlePhaseScheduled(event: PhaseScheduled): void {
-
 }
 
 export function handleStartDutchAuction(event: StartDutchAuction): void {
@@ -196,6 +196,9 @@ function createRedeemableERC20(event: Initialize): string {
 
 function createSeedERC20(event: Initialize): string {
     let seedERC20 = SeedERC20.load(event.params.seeder.toHex())
+    let trust = Trust.load(event.address.toHex())
+    let trustFactory = TrustFactory.load(trust.factory.toHex())
+
     let seedERC20Contract = ERC20.bind(event.params.seeder)
     if(seedERC20 == null)
         seedERC20 = new SeedERC20(event.params.seeder.toHex())
@@ -203,6 +206,9 @@ function createSeedERC20(event: Initialize): string {
         return seedERC20.id
     seedERC20.deployBlock = event.block.number
     seedERC20.deployTimestamp = event.block.timestamp
+    seedERC20.reserve = event.params.config.reserve
+    seedERC20.factory = trustFactory.seedERC20Factory
+    seedERC20.sender = event.transaction.from
 
     let name = seedERC20Contract.try_name()
     let symbol = seedERC20Contract.try_symbol()
@@ -216,7 +222,10 @@ function createSeedERC20(event: Initialize): string {
         seedERC20.seederUnits = totalSupply.value
         seedERC20.seederUnitsAvail = totalSupply.value
     }
+    
     seedERC20.seederFee = event.params.config.seederFee
+    seedERC20.seedFeePerUnit = event.params.config.seederFee.div(totalSupply.value)
+
     seedERC20.seeds = []
     seedERC20.unseeds = []
     seedERC20.holders = []
@@ -229,6 +238,7 @@ function createSeedERC20(event: Initialize): string {
     let context = new DataSourceContext()
     context.setString("trust", event.address.toHex())
     SeedERC20Template.createWithContext(event.params.seeder, context)
+    log.info("Seed Template create Block : {}", [event.block.number.toString()])
     return seedERC20.id
 }
 

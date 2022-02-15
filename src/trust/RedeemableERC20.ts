@@ -28,7 +28,7 @@ export function handleReceiver(event: Receiver): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
     let grantedReceivers = redeemabaleERC20.grantedReceivers
     grantedReceivers.push(event.params.grantedReceiver)
-    redeemabaleERC20.grantedSenders = grantedReceivers
+    redeemabaleERC20.grantedReceivers = grantedReceivers
     redeemabaleERC20.save()
 }
 
