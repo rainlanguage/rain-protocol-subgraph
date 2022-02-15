@@ -1,9 +1,9 @@
-import { ERC20Pull, Holder, RedeemableERC20, TreasuryAsset, TreasuryAssetCaller, Redeem} from "../../generated/schema"
+import { ERC20Pull, Holder, RedeemableERC20, TreasuryAsset, TreasuryAssetCaller, Redeem, Contract, ERC20BalanceTier, ERC20TransferTier, ERC721BalanceTier, VerifyTier, CombineTier, UnknownTier} from "../../generated/schema"
 import { Initialize, Receiver, Sender, Transfer, ERC20PullInitialize, Redeem as RedeemEvent , TreasuryAsset as TreasuryAssetEvent} from "../../generated/templates/RedeemableERC20Template/RedeemableERC20"
 import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "../utils"
-import { RedeemableERC20 as RedeemabaleERC20Contract } from "../../generated/TrustFactory/RedeemableERC20"
+import { RedeemableERC20 as RedeemabaleERC20Contract, TierByConstructionInitialize } from "../../generated/TrustFactory/RedeemableERC20"
 import { ERC20 } from "../../generated/TrustFactory/ERC20"
-import { dataSource ,log } from "@graphprotocol/graph-ts"
+import { Address, dataSource ,log } from "@graphprotocol/graph-ts"
 
 export function handleInitialize(event: Initialize): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
@@ -170,4 +170,39 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     redeemabaleERC20.save()
 
     treasuryAsset.save()
+}
+
+export function handleTierByConstructionInitialize(event: TierByConstructionInitialize): void {
+    let context = dataSource.context()
+    let contracts = Contract.load(context.getString("trust"))
+    contracts.tier = getTier(event.params.tierContract.toHex())
+    contracts.save()
+}
+
+function getTier(tierAddress: string): string {
+    let eRC20BalanceTier = ERC20BalanceTier.load(tierAddress)
+    if(eRC20BalanceTier != null)
+        return eRC20BalanceTier.id 
+    let eRC20TransferTier = ERC20TransferTier.load(tierAddress)
+    if(eRC20TransferTier != null)
+        return eRC20TransferTier.id
+    let eRC721BalanceTier = ERC721BalanceTier.load(tierAddress)
+    if(eRC721BalanceTier != null)
+        return eRC721BalanceTier.id
+    let combineTier = CombineTier.load(tierAddress)
+    if(combineTier != null)
+        return combineTier.id
+    let verifyTier = VerifyTier.load(tierAddress)
+    if(verifyTier != null)
+        return verifyTier.id
+    let uknownTier = UnknownTier.load(tierAddress)
+    if(uknownTier == null){
+        uknownTier = new UnknownTier(tierAddress)
+        uknownTier.address = Address.fromString(tierAddress)
+        uknownTier.deployBlock =ZERO_BI
+        uknownTier.deployTimestamp = ZERO_BI
+        uknownTier.deployer = Address.fromString(ZERO_ADDRESS)
+        uknownTier.save()
+    }
+    return uknownTier.id
 }
