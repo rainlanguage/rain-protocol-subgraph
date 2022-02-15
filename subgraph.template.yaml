@@ -298,7 +298,7 @@ templates:
       eventHandlers:
         - event: Seed(address,uint256,uint256)
           handler: handleSeed
-        - event: Initialize(address,address,address,uint256,uint256)
+        - event: Initialize(address,address,address,uint256)
           handler: handleInitialize
         - event: Unseed(address,uint256,uint256)
           handler: handleUnseed

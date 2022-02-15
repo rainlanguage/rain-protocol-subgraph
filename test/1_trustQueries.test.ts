@@ -444,7 +444,7 @@ describe("Subgraph Trusts Test", function () {
         },
         { gasLimit: 15000000 }
       )) as Trust;
-      console.log("trust contract create block ", trust.deployTransaction.blockNumber)
+
       // Creating the instance for contracts
       redeemableERC20Contract = (await getContractChild(
         trust.deployTransaction,
