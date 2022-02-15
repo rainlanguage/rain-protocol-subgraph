@@ -1092,12 +1092,11 @@ describe("Subgraph Trusts Test", function () {
       const queryResponse = await subgraph({
         query: query,
       });
-
+      console.log("SeedERC20Data : ", queryResponse.data.seedERC20.seeds.length)
       const seedERC20Data = queryResponse.data.seedERC20;
-      expect(seedERC20Data.seeds).to.be.lengthOf(0);
-      expect(seedERC20Data.unseeds).to.be.lengthOf(0);
-      expect(seedERC20Data.redeemSeed).to.be.lengthOf(0);
-
+      expect(seedERC20Data.seeds.length).to.equals(0);
+      expect(seedERC20Data.unseeds.length).to.equals(0);
+      expect(seedERC20Data.redeemSeed.length).to.equals(0);
       expect(seedERC20Data.seederUnitsAvail).to.equals(
         seedERC20Config.initialSupply.toString() // Any tx was made with this seed yet
       );
