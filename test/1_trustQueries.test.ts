@@ -1016,6 +1016,7 @@ describe("Subgraph Trusts Test", function () {
             sender
             reserve
             factory
+            recipient
           }
         }
       `;
