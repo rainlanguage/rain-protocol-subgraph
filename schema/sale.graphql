@@ -73,6 +73,7 @@ type SaleBuy @entity{
     block: BigInt! #block of the event
     transactionHash: Bytes! #txHash of the event
     timestamp: BigInt! #timestamp of event
+    sender: Bytes! #Buy.sender
     saleContract: Sale! #Sale that emitted the event
     saleContractAddress: Bytes! #address of the sale contract
     feeRecipient: SaleFeeRecipient! # created/referenced by id {Sale.address}+{Buy.feeRecipient}
@@ -91,6 +92,7 @@ type SaleRefund @entity{
     block: BigInt! #block of the event
     transactionHash: Bytes! #txHash of the event
     timestamp: BigInt! #timestamp of event
+    sender: Bytes! #Buy.sender
     saleContract: Sale! #Sale that emitted the event
     saleContractAddress: Bytes! #address of the sale contract
     fee: BigInt! #from refunds.fee

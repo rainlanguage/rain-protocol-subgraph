@@ -13,3 +13,5 @@ docker/data
 ## IDE
 .idea
 .vscode
+
+test/helper.txt

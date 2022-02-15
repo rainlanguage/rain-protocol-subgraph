@@ -9,6 +9,7 @@ export function handleInitialize(event: Initialize): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
 
     redeemabaleERC20.sender = event.params.sender
+    redeemabaleERC20.factory = event.params.sender
     redeemabaleERC20.admin = event.params.admin
     redeemabaleERC20.minimumTier = event.params.minimumTier
 
@@ -32,39 +33,41 @@ export function handleReceiver(event: Receiver): void {
 }
 
 export function handleTransfer(event: Transfer): void {
-    let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
-    let redeemabaleERC20Contract = RedeemabaleERC20Contract.bind(event.address)
+    if (event.params.value != ZERO_BI) {
+        let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
+        let redeemabaleERC20Contract = RedeemabaleERC20Contract.bind(event.address)
+
+        let holders = redeemabaleERC20.holders
+        if(event.params.from.toHex() != ZERO_ADDRESS){
+            let sender = Holder.load(event.address.toHex() + " - " + event.params.from.toHex())
+            if(sender == null){
+                sender = new Holder(event.address.toHex() + " - " + event.params.from.toHex())
+                sender.balance = redeemabaleERC20Contract.balanceOf(event.params.from)
+            }
+            sender.balance = sender.balance.minus(event.params.value)
+        }
     
-    let holders = redeemabaleERC20.holders
-    if(event.params.from.toHex() != ZERO_ADDRESS){
-        let sender = Holder.load(event.address.toHex() + " - " + event.params.from.toHex())
-        if(sender == null){
-            sender = new Holder(event.address.toHex() + " - " + event.params.from.toHex())
-            sender.balance = redeemabaleERC20Contract.balanceOf(event.params.from)
-        }
-        sender.balance = sender.balance.minus(event.params.value)
+        if(event.params.to.toHex() != ZERO_ADDRESS){
+            let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
+            if(receiver == null){
+                receiver = new Holder(event.address.toHex() + " - " + event.params.to.toHex())
+                receiver.balance = ZERO_BI
+            }
+            receiver.balance = receiver.balance.plus(event.params.value)
+            receiver.address = event.params.to
+            receiver.save()
+    
+            if(!holders.includes(receiver.id)){
+                holders.push(receiver.id)
+                redeemabaleERC20.holders = holders
+                redeemabaleERC20.save()
+            }
+        }  
     }
-
-    if(event.params.to.toHex() != ZERO_ADDRESS){
-        let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
-        if(receiver == null){
-            receiver = new Holder(event.address.toHex() + " - " + event.params.to.toHex())
-            receiver.balance = ZERO_BI
-        }
-        receiver.balance = receiver.balance.plus(event.params.value)
-        receiver.address = event.params.to
-        receiver.save()
-
-        if(!holders.includes(receiver.id)){
-            holders.push(receiver.id)
-            redeemabaleERC20.holders = holders
-            redeemabaleERC20.save()
-        }
-    }  
 }
 
 export function handleERC20PullInitialize(event: ERC20PullInitialize): void {
-    let erc20pull = new ERC20Pull(event.transaction.hash.toHex())
+    let erc20pull = new ERC20Pull(event.address.toHex())
     erc20pull.sender = event.params.sender
     erc20pull.tokenSender = event.params.tokenSender
     erc20pull.token = event.params.token

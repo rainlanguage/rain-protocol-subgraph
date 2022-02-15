@@ -56,7 +56,7 @@ const maxMintable = 100;
 let royaltyRecipient: string;
 const royaltyBPS = 1;
 
-xdescribe("Subgraph GatedNFT test", function () {
+describe("Subgraph GatedNFT test", function () {
   before("creating and connecting", async function () {
     const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
     const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
@@ -79,7 +79,7 @@ xdescribe("Subgraph GatedNFT test", function () {
 
     // Giving the necessary amount to signer1 for a level 2
     const level2 = LEVELS[1];
-    // await reserve.transfer(signer1.address, level2);
+    await reserve.transfer(signer1.address, level2);
 
     // Connecting to the subgraph
     subgraph = Util.fetchSubgraph(
@@ -147,8 +147,8 @@ xdescribe("Subgraph GatedNFT test", function () {
       gatedNFTJson
     )) as GatedNFT;
 
-    await Util.delay(Util.wait * 2);
-    await waitForSubgraphToBeSynced(1500);
+    await Util.delay(Util.wait);
+    await waitForSubgraphToBeSynced(1000);
 
     const query = `
       {
@@ -362,8 +362,8 @@ xdescribe("Subgraph GatedNFT test", function () {
     const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
       .timestamp;
 
-    await Util.delay(Util.wait * 2);
-    await waitForSubgraphToBeSynced(1200);
+    await Util.delay(Util.wait);
+    await waitForSubgraphToBeSynced(1000);
 
     const query = `
       {
@@ -416,8 +416,8 @@ xdescribe("Subgraph GatedNFT test", function () {
     const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
       .timestamp;
 
-    await Util.delay(Util.wait * 2);
-    await waitForSubgraphToBeSynced(1200);
+    await Util.delay(Util.wait);
+    await waitForSubgraphToBeSynced(1000);
 
     const query = `
       {
@@ -480,7 +480,7 @@ xdescribe("Subgraph GatedNFT test", function () {
       gatedNFTJson
     )) as GatedNFT;
 
-    await Util.delay(Util.wait * 2);
+    await Util.delay(Util.wait);
     await waitForSubgraphToBeSynced(1200);
 
     const query = `
@@ -512,6 +512,6 @@ xdescribe("Subgraph GatedNFT test", function () {
     });
 
     expect(dataGate.address).to.equals(gatedWrongTier.address.toLowerCase());
-    expect(dataGate.tier).to.be.null; // Because cannot is not a TierContract
+    expect(dataGate.tier.id).to.equals(Util.zeroAddress.toLowerCase());
   });
 });

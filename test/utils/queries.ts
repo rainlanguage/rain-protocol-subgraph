@@ -70,7 +70,6 @@ export function getContracts(contract: string) :string {
       contract(id:"${contract}"){
         crp {
           id
-          
         }
         reserveERC20 {
           id

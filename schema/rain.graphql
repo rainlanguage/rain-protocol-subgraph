@@ -53,7 +53,7 @@ type Contract @entity {
     reserveERC20: ERC20 #Trust.getContracts() => address reserveERC20
     redeemableERC20: RedeemableERC20 #Trust.getContracts() => address redeemableERC20
     seeder: SeedERC20 #Trust.getContracts() => address seeder
-    tier: Bytes #Trust.getContracts() => address tier
+    tier: TierContract #Trust.getContracts() => address tier
     crp: CRP #Trust.getContracts() => address crp
     pool: Pool #Trust.getContracts() => address pool
 }
@@ -146,6 +146,7 @@ type RedeemableERC20 @entity {
     id: ID!
     sender: Bytes
     admin: Bytes
+    factory: Bytes #Trust.redeemableERC20Factory()
     grantedReceivers: [Bytes!]
     grantedSenders: [Bytes!]
     redeems: [Redeem!] #Redeem event in RedeemableERC20.sol

@@ -137,7 +137,6 @@ export const waitForSubgraphToBeSynced = async (delay: number) =>
             } 
           }`,
         });
-        // console.log("Health : ", result.data)
         if (result.data.indexingStatusForCurrentVersion.synced === true) {
           resolve({ synced: true });
         } else {
@@ -505,3 +504,11 @@ export function encodeStateExpected(vmStateConfig: VMState): State {
     arguments: args,
   };
 }
+
+export const getTxTimeblock = async (
+  tx: ContractTransaction
+): Promise<[number, number]> => {
+  const block = tx.blockNumber;
+  const timestamp = (await ethers.provider.getBlock(block)).timestamp;
+  return [block, timestamp];
+};

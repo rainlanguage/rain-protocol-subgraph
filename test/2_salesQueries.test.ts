@@ -449,20 +449,30 @@ describe("Sales queries test", function () {
 
       // expect(startData.sources).to.equals(canStartStateConfig.sources);
       // expect(startData.constants).to.equals(canStartStateConfig.constants.map(ele => ele.toString()));
-      expect(startData.stackLength).to.equals(canStartStateConfig.stackLength.toString());
-      expect(startData.argumentsLength).to.equals(canStartStateConfig.argumentsLength.toString());
+      expect(startData.stackLength).to.equals(
+        canStartStateConfig.stackLength.toString()
+      );
+      expect(startData.argumentsLength).to.equals(
+        canStartStateConfig.argumentsLength.toString()
+      );
 
       // expect(endData.sources).to.equals(canEndStateConfig.sources);
       // expect(endData.constants).to.equals(canEndStateConfig.constants.map(ele => ele.toString()));
-      expect(endData.stackLength).to.equals(canEndStateConfig.stackLength.toString());
+      expect(endData.stackLength).to.equals(
+        canEndStateConfig.stackLength.toString()
+      );
       expect(endData.argumentsLength).to.equals(
         canEndStateConfig.argumentsLength.toString()
       );
 
       // expect(calculatePriceData.sources).to.equals(calculatePriceStateConfig.sources);
       // expect(calculatePriceData.constants).to.equals(calculatePriceStateConfig.constants.map(ele => ele.toString()));
-      expect(calculatePriceData.stackLength).to.equals(calculatePriceStateConfig.stackLength.toString());
-      expect(calculatePriceData.argumentsLength).to.equals(calculatePriceStateConfig.argumentsLength.toString());
+      expect(calculatePriceData.stackLength).to.equals(
+        calculatePriceStateConfig.stackLength.toString()
+      );
+      expect(calculatePriceData.argumentsLength).to.equals(
+        calculatePriceStateConfig.argumentsLength.toString()
+      );
     });
 
     it("should query the correct ERC20 tokens", async function () {
@@ -524,8 +534,12 @@ describe("Sales queries test", function () {
       expect(redeemableERC20Data.redeems).to.be.empty;
       expect(redeemableERC20Data.minimumTier).to.equals(Tier.ZERO.toString());
       expect(redeemableERC20Data.name).to.equals(redeemableERC20Config.name);
-      expect(redeemableERC20Data.symbol).to.equals(redeemableERC20Config.symbol);
-      expect(redeemableERC20Data.totalSupply).to.equals(redeemableERC20Config.initialSupply);
+      expect(redeemableERC20Data.symbol).to.equals(
+        redeemableERC20Config.symbol
+      );
+      expect(redeemableERC20Data.totalSupply).to.equals(
+        redeemableERC20Config.initialSupply
+      );
     });
 
     it("should query the SaleRedeemableERC20 entity correctly", async function () {
@@ -596,7 +610,7 @@ describe("Sales queries test", function () {
           }
         }
       `;
-        ethers.provider.
+
       const response = (await subgraph({
         query: query,
       })) as FetchResult;
