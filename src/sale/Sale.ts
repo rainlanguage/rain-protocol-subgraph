@@ -1,6 +1,6 @@
 import { Address, dataSource, DataSourceContext, ethereum, log } from "@graphprotocol/graph-ts"
 import { Buy, Construct, CooldownInitialize, CooldownTriggered, End, Initialize, Refund, Start} from "../../generated/SaleFactory/Sale"
-import { Sale, SaleFactory, ERC20, SaleStart, CanStartStateConfig, CanEndStateConfig, CalculatePriceStateConfig, SaleEnd, SaleBuy, SaleFeeRecipient, SaleReceipt, SaleRefund, RedeemableERC20 } from "../../generated/schema"
+import { Sale, SaleFactory, ERC20, SaleStart, CanStartStateConfig, CanEndStateConfig, CalculatePriceStateConfig, SaleEnd, SaleBuy, SaleFeeRecipient, SaleReceipt, SaleRefund, RedeemableERC20, Contract } from "../../generated/schema"
 import { RedeemableERC20Template } from "../../generated/templates"
 import { ERC20 as ERC20Contract} from "../../generated/templates/SaleTemplate/ERC20"
 import { ETHER, HUNDRED_BD, SaleStatus, ZERO_ADDRESS, ZERO_BI } from "../utils"
@@ -19,6 +19,7 @@ export function handleBuy(event: Buy): void {
     saleBuy.desiredUnits = event.params.config_.desiredUnits
     saleBuy.maximumPrice = event.params.config_.maximumPrice
     saleBuy.fee = event.params.receipt.fee
+    saleBuy.sender = event.params.sender
 
     let receipt = new SaleReceipt(sale.id + " - " + event.params.receipt.id.toString())
     receipt.receiptId = event.params.receipt.id
@@ -154,6 +155,7 @@ export function handleRefund(event: Refund): void {
     saleRefund.saleContractAddress = event.address
     saleRefund.fee = event.params.receipt.fee
     saleRefund.feeRecipientAddress = event.params.receipt.feeRecipient
+    saleRefund.sender = event.params.sender
 
     let receipt = SaleReceipt.load(sale.id + " - " + event.params.receipt.id.toString())
     saleRefund.receipt = receipt.id
@@ -244,6 +246,13 @@ function getRedeemableERC20(token: Address, block: ethereum.Block): RedeemableER
         redeemableERC20.grantedSenders = []
 
         redeemableERC20.save()
+
+        let contracts = Contract.load(ZERO_ADDRESS)
+        if(contracts == null){
+            contracts = new Contract(ZERO_ADDRESS)
+            contracts.save()
+        }
+
         let context = new DataSourceContext()
         context.setString("trust", ZERO_ADDRESS)
         RedeemableERC20Template.createWithContext(token, context)

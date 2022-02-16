@@ -117,6 +117,8 @@ export function handleRedeem(event: RedeemEvent): void {
 
 export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
+    let redeemabaleERC20Contract = RedeemabaleERC20Contract.bind(event.address)
+
     let context = dataSource.context()
     let treasuryAsset = TreasuryAsset.load(event.address.toHex() + " - " + event.params.asset.toHex())
     if(treasuryAsset == null){
@@ -138,6 +140,7 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
             treasuryAsset.decimals = decimals.value
             treasuryAsset.totalSupply = totalSupply.value
             treasuryAsset.balance = balance.value
+            treasuryAsset.redemptionRatio = treasuryAsset.balance.div(redeemabaleERC20Contract.totalSupply())
         }
 
         treasuryAsset.redeemableERC20 = redeemabaleERC20.id
@@ -175,6 +178,7 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
 export function handleTierByConstructionInitialize(event: TierByConstructionInitialize): void {
     let context = dataSource.context()
     let contracts = Contract.load(context.getString("trust"))
+    log.info("Contracts : {}", [contracts.id])
     contracts.tier = getTier(event.params.tierContract.toHex())
     contracts.save()
 }
