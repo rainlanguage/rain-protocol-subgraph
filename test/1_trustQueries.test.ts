@@ -2847,8 +2847,6 @@ describe("Subgraph Trusts Test", function () {
       // The treasuryAssets ID
       const treasuryAssetsId = `${redeemableERC20Contract.address.toLowerCase()} - ${reserve.address.toLowerCase()}`;
       const redeemId = `${transaction.hash.toLowerCase()}-0`;
-      console.log("redeemId");
-      console.log(redeemId);
 
       const query = `
         {
@@ -2872,11 +2870,6 @@ describe("Subgraph Trusts Test", function () {
 
       expect(dataTAsset.redeems).to.have.lengthOf(1);
       expect(dataRedeemable.redeems).to.have.lengthOf(1);
-
-      console.log("dataTAsset.redeems");
-      console.log(dataTAsset.redeems);
-      console.log("dataRedeemable.redeems");
-      console.log(dataRedeemable.redeems);
 
       expect(dataTAsset.redeems).to.deep.include({ id: redeemId });
       expect(dataRedeemable.redeems).to.deep.include({ id: redeemId });
@@ -2906,5 +2899,121 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  describe("Trust with Seeder as user", function () {}); // This possibily break the sg
+  describe("Trust with a non-SeedERC20 contract as Seeder", function () {
+    // Properties of this trust
+    const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
+    const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
+    const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
+    const initialValuation = ethers.BigNumber.from("20000" + sixZeros);
+    const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
+    const minimumTradingDuration = 20;
+
+    const redeemableERC20Config = {
+      name: "Token",
+      symbol: "TKN",
+      distributor: Util.zeroAddress,
+      initialSupply: totalTokenSupply,
+    };
+    // - Seeder props
+    const seederFee = ethers.BigNumber.from("100" + sixZeros);
+    const seederUnits = 10;
+    const seedERC20Config = {
+      name: "SeedToken",
+      symbol: "SDT",
+      distributor: Util.zeroAddress,
+      initialSupply: seederUnits,
+    };
+    const seederCooldownDuration = 1;
+    const finalValuation = redeemInit
+      .add(minimumCreatorRaise)
+      .add(seederFee)
+      .add(reserveInit);
+
+    // This should force to no create a seed contract
+    let seederNonContract: string;
+
+    before("Create the trust", async function () {
+      // Giving the necessary amount to signer1 and signer2 for a level 4
+      minimumTier = Tier.FOUR;
+      const level4 = LEVELS[minimumTier - 1];
+      await reserve.transfer(signer1.address, level4);
+      await reserve.transfer(signer2.address, level4);
+
+      // This should force to no create a seed contract
+      seederNonContract = signer1.address;
+
+      const trustFactoryDeployer = trustFactory.connect(deployer); // make explicit
+
+      trust = (await Util.trustDeploy(
+        trustFactoryDeployer,
+        creator,
+        {
+          creator: creator.address,
+          minimumCreatorRaise,
+          seederFee,
+          redeemInit,
+          reserve: reserve.address,
+          reserveInit,
+          initialValuation,
+          finalValuation,
+          minimumTradingDuration,
+        },
+        {
+          erc20Config: redeemableERC20Config,
+          tier: erc20BalanceTier.address,
+          minimumTier,
+        },
+        {
+          seeder: seederNonContract, // This should force to no create a seed contract
+          cooldownDuration: seederCooldownDuration,
+          erc20Config: seedERC20Config,
+        },
+        { gasLimit: 15000000 }
+      )) as Trust;
+
+      // Creating the instance for contracts
+      redeemableERC20Contract = (await getContractChild(
+        trust.deployTransaction,
+        redeemableERC20Factory,
+        redeemableTokenJson
+      )) as RedeemableERC20;
+
+      // Get the CRP contract
+      crpContract = (await Util.poolContracts(creator, trust)).crp;
+
+      // Wait for Sync
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(2000);
+    });
+
+    it("should continue query if the seeder is a non-SeedERC20 contract", async function () {
+      const query = `
+        {
+          trust (id: "${trust.address.toLowerCase()}") {
+            contracts {
+              reserveERC20 {
+                id
+              }
+              redeemableERC20 {
+
+              }
+              seeder {
+                id
+              }
+            }
+          }
+        }
+      `;
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const data = queryResponse.data.trust.contracts;
+
+      expect(data.reserveERC20.id).to.equals(reserve.address.toLowerCase());
+      expect(data.redeemableERC20.id).to.equals(
+        redeemableERC20Contract.address.toLowerCase()
+      );
+      expect(data.seeder.id).to.equals(seederNonContract.toLowerCase());
+    });
+  });
 });
