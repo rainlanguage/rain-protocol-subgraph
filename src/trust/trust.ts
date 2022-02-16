@@ -11,11 +11,11 @@ import {
 } from '../../generated/TrustFactory/Trust'
 
 import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ERC20 as ERC20Schema, SeedERC20, Trust, TrustFactory } from "../../generated/schema"
-import { dataSource, DataSourceContext, log } from '@graphprotocol/graph-ts'
+import { Address, dataSource, DataSourceContext, log, BigInt } from '@graphprotocol/graph-ts'
 import { ERC20 } from "../../generated/TrustFactory/ERC20"
 import { Trust as TrustContract } from "../../generated/TrustFactory/Trust"
 import { PoolTemplate, RedeemableERC20Template, SeedERC20Template } from '../../generated/templates'
-import { ZERO_BI } from "../utils"
+import { HUNDRED_BD, ZERO_BI, BONE, MIN_WEIGHT, MAX_WEIGHT } from "../utils"
 
 export function handleConstruction(event: Construction): void {
     let context = dataSource.context()
@@ -60,7 +60,6 @@ export function handleInitialize(event: Initialize): void {
     contracts.redeemableERC20 = createRedeemableERC20(event)
     contracts.save()
  
-    
     // DistributionProgess creation
 
     let distributionProgress = new DistributionProgress(trustAddress.toHex())
@@ -72,7 +71,8 @@ export function handleInitialize(event: Initialize): void {
     distributionProgress.minimumTradingDuration = event.params.config.minimumTradingDuration
     distributionProgress.minimumCreatorRaise = event.params.config.minimumCreatorRaise
     distributionProgress.redeemInit = event.params.config.redeemInit
-
+    distributionProgress.minimumRaise = event.params.config.minimumCreatorRaise.plus(event.params.config.redeemInit).plus(event.params.config.seederFee)
+    distributionProgress.finalWeight = valuationWeight(event.params.config.reserveInit, event.params.config.finalValuation)
     distributionProgress.save()
 
     trust.contracts = contracts.id
@@ -100,6 +100,7 @@ export function handleNotice(event: Notice): void {
 }
 
 export function handlePhaseScheduled(event: PhaseScheduled): void {
+    
 }
 
 export function handleStartDutchAuction(event: StartDutchAuction): void {
@@ -118,6 +119,8 @@ export function handleStartDutchAuction(event: StartDutchAuction): void {
     let contracts = Contract.load(trustAddress.toHex())
     contracts.pool = createPool(event)
     contracts.save()
+
+    updatePoolBalance(contracts as Contract)
 }
 
 function createConfigurableRightPool(event: Initialize): string {
@@ -209,6 +212,7 @@ function createSeedERC20(event: Initialize): string {
     seedERC20.reserve = event.params.config.reserve
     seedERC20.factory = trustFactory.seedERC20Factory
     seedERC20.sender = event.transaction.from
+    seedERC20.seederFee = event.params.config.seederFee
 
     let name = seedERC20Contract.try_name()
     let symbol = seedERC20Contract.try_symbol()
@@ -221,10 +225,8 @@ function createSeedERC20(event: Initialize): string {
         seedERC20.totalSupply = totalSupply.value
         seedERC20.seederUnits = totalSupply.value
         seedERC20.seederUnitsAvail = totalSupply.value
+        seedERC20.seedFeePerUnit = event.params.config.seederFee.div(totalSupply.value)
     }
-    
-    seedERC20.seederFee = event.params.config.seederFee
-    seedERC20.seedFeePerUnit = event.params.config.seederFee.div(totalSupply.value)
 
     seedERC20.seeds = []
     seedERC20.unseeds = []
@@ -260,4 +262,58 @@ function createPool(event: StartDutchAuction): string {
     context.setString("trust", event.address.toHex())
     PoolTemplate.createWithContext(event.params.pool, context)
     return pool.id
+}
+
+function updatePoolBalance(contracts: Contract): void {
+    let reserveTokenContract = ERC20.bind(Address.fromString(contracts.reserveERC20))
+    let redeemableTokenContract = ERC20.bind(Address.fromString(contracts.redeemableERC20))
+
+    let distributionProgress = DistributionProgress.load(contracts.id)
+
+    let poolReserveBalance = reserveTokenContract.try_balanceOf(Address.fromString(contracts.pool))
+    let poolRedeemableBalance = redeemableTokenContract.try_balanceOf(Address.fromString(contracts.pool))
+
+    if(!(poolRedeemableBalance.reverted)){
+        distributionProgress.poolRedeemableBalance = poolRedeemableBalance.value
+        distributionProgress.percentAvailable = poolRedeemableBalance.value.toBigDecimal().div(redeemableTokenContract.totalSupply().toBigDecimal())
+    }
+    if(distributionProgress.poolReserveBalance != null && distributionProgress.reserveInit != null){
+        distributionProgress.amountRaised = distributionProgress.poolReserveBalance.minus(distributionProgress.reserveInit)
+    }
+
+    if(!(poolReserveBalance.reverted)){
+        distributionProgress.poolReserveBalance = poolReserveBalance.value
+        distributionProgress.percentRaised = distributionProgress.amountRaised.toBigDecimal().div(distributionProgress.minimumRaise.toBigDecimal())
+    }else{
+        log.info("Poola balance Failed. reserve {}, redeemable {}", [])
+    }
+    distributionProgress.finalWeight = valuationWeight(distributionProgress.reserveInit, distributionProgress.finalValuation)
+
+    distributionProgress.save()
+
+}
+
+function valuationWeight(reserveBalance_: BigInt, valuation_: BigInt): BigInt{
+    // let weight_ = (valuation_IBalancerConstants.BONE) /
+    //     reserveBalance_;
+    let weight = valuation_.times(BONE).div(reserveBalance_)
+    // require(
+    //     weight_ >= IBalancerConstants.MIN_WEIGHT,
+    //     "MIN_WEIGHT_VALUATION"
+    // );
+    if(weight >= MIN_WEIGHT)
+        return ZERO_BI
+    // The combined weight of both tokens cannot exceed the maximum even
+    // temporarily during a transaction so we need to subtract one for
+    // headroom.
+    // require(
+    //     (IBalancerConstants.MAX_WEIGHT - IBalancerConstants.BONE) >=
+    //         (IBalancerConstants.MIN_WEIGHT + weight_),
+    //     "MAX_WEIGHT_VALUATION"
+    // );
+
+    if(MAX_WEIGHT.minus(BONE) >= (MIN_WEIGHT.plus(weight)))
+        return ZERO_BI;
+    
+    return weight
 }

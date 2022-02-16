@@ -709,7 +709,7 @@ describe("Sales queries test", function () {
 
       const query = `
         {
-          saleBuy (id: "${transaction.hash.toLowerCase()}") {
+          saleBuy (id: "${transaction.blockHash.toLowerCase()}") {
             feeRecipientAddress
             fee
             minimumUnits
@@ -742,7 +742,7 @@ describe("Sales queries test", function () {
 
       const query = `
         {
-          saleBuy (id: "${transaction.hash.toLowerCase()}") {
+          saleBuy (id: "${transaction.blockHash.toLowerCase()}") {
             feeRecipient {
               address
             }

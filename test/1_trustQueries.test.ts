@@ -536,7 +536,9 @@ describe("Subgraph Trusts Test", function () {
           contract (id: "${trust.address.toLowerCase()}") {
             tier {
               id
-              factory
+              factory{
+                id
+              }
               deployBlock
               deployTimestamp
             }
@@ -554,7 +556,7 @@ describe("Subgraph Trusts Test", function () {
       // have inherit from TierByConstruction contract
       expect(data.id).to.equals(erc20BalanceTier.address.toLowerCase());
       expect(data.factory.id).to.equals(
-        erc20BalanceTierFactory.address.toString()
+        erc20BalanceTierFactory.address.toLowerCase()
       );
       expect(data.deployBlock).to.equals(deployBlock.toString());
       expect(data.deployTimestamp).to.equals(deployTime.toString());
@@ -2995,7 +2997,7 @@ describe("Subgraph Trusts Test", function () {
                 id
               }
               redeemableERC20 {
-
+                id
               }
               seeder {
                 id

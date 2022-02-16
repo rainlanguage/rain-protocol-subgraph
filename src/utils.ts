@@ -10,6 +10,10 @@ let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 let HUNDRED_BD = BigDecimal.fromString("100.0")
 let ETHER = BigInt.fromString("1000000000000000000")
 
+let BONE = BigInt.fromString("1000000000000000000")
+let MIN_WEIGHT = BONE
+let MAX_WEIGHT = BONE.times(BigInt.fromI32(50))
+
 export enum SaleStatus {
     Pending,
     Active,
@@ -45,7 +49,10 @@ export {
     ZERO_BD,
     HUNDRED_BD,
     ZERO_ADDRESS,
-    ETHER
+    ETHER,
+    BONE,
+    MAX_WEIGHT,
+    MIN_WEIGHT
 }
 
 export function getTrustParticipent(participant: Address, trust: string) : TrustParticipant {
