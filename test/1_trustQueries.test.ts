@@ -21,11 +21,8 @@ import {
 
 // Artifacts
 import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import readWriteTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
 import seedERC20Json from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
 import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
-import configurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
-import bPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
 import bPoolFeeEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/BPoolFeeEscrow.sol/BPoolFeeEscrow.json";
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 
@@ -65,7 +62,6 @@ import { RedeemableERC20ClaimEscrow } from "@beehiveinnovation/rain-protocol/typ
 
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
 import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20";
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
 import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
@@ -107,7 +103,6 @@ let subgraph: ApolloFetch,
   crpContract: ConfigurableRightsPool,
   bPoolContract: BPool,
   reserve: ReserveTokenTest, // ERC20
-  erc721Test: ERC721,
   erc20BalanceTier: ERC20BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
@@ -158,17 +153,6 @@ describe("Subgraph Trusts Test", function () {
       CRPFactory,
       BFactory
     ];
-
-    erc721Test = (await deploy(erc721TokenTestJson, deployer, [
-      "TokenERC721",
-      "T721",
-    ])) as ERC721;
-
-    reserve = (await deploy(
-      reserveTokenJson,
-      deployer,
-      []
-    )) as ReserveTokenTest;
 
     ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
       await Util.factoriesDeploy(crpFactory, bFactory, deployer));
@@ -405,6 +389,13 @@ describe("Subgraph Trusts Test", function () {
       .add(reserveInit);
 
     before("Create the trust", async function () {
+      // Deploying new reserve to test
+      reserve = (await deploy(
+        reserveTokenJson,
+        deployer,
+        []
+      )) as ReserveTokenTest;
+
       // Giving the necessary amount to signer1 and signer2 for a level 4
       minimumTier = Tier.FOUR;
       const level4 = LEVELS[minimumTier - 1];
@@ -830,6 +821,11 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should continue querying if `TreasuryAsset` is called with a non-ERC20", async function () {
+      const erc721Test = (await deploy(erc721TokenTestJson, deployer, [
+        "TokenERC721",
+        "T721",
+      ])) as ERC721;
+
       // Could be any non-erc20 address
       const nonErc20Address = erc721Test.address;
       transaction = await redeemableERC20Contract.newTreasuryAsset(
@@ -1158,7 +1154,7 @@ describe("Subgraph Trusts Test", function () {
             initialValuation
             reserveInit
             poolReserveBalance
-            poolTokenBalance
+            poolRedeemableBalance
             amountRaised
             percentRaised
             percentAvailable
@@ -2934,7 +2930,27 @@ describe("Subgraph Trusts Test", function () {
     // This should force to no create a seed contract
     let seederNonContract: string;
 
-    before("Create the trust", async function () {
+    before("Create the trust with user as Seeder", async function () {
+      // Deploying new reserve to test
+      reserve = (await deploy(
+        reserveTokenJson,
+        deployer,
+        []
+      )) as ReserveTokenTest;
+
+      // Deploying a new balanceTier to new Trust
+      erc20BalanceTier = (await Util.createChildTyped(
+        erc20BalanceTierFactory,
+        erc20BalanceTierJson,
+        [
+          {
+            erc20: reserve.address,
+            tierValues: LEVELS,
+          },
+        ],
+        deployer
+      )) as ERC20BalanceTier;
+
       // Giving the necessary amount to signer1 and signer2 for a level 4
       minimumTier = Tier.FOUR;
       const level4 = LEVELS[minimumTier - 1];
