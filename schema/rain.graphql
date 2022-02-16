@@ -63,6 +63,7 @@ type Contract @entity {
 # src/trust.ts/handleInitialize
 type DistributionProgress @entity {
     id:ID!
+    # When EndDutchAuction is called, distributionStatus could be Success or Fail
     distributionStatus: Int #Trust.getDistributionProgress() => DistributionStatus distributionStatus
     distributionStartBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionStartBlock
     distributionEndBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionEndBlock
