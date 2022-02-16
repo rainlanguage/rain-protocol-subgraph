@@ -297,23 +297,6 @@ function valuationWeight(reserveBalance_: BigInt, valuation_: BigInt): BigInt{
     // let weight_ = (valuation_IBalancerConstants.BONE) /
     //     reserveBalance_;
     let weight = valuation_.times(BONE).div(reserveBalance_)
-    // require(
-    //     weight_ >= IBalancerConstants.MIN_WEIGHT,
-    //     "MIN_WEIGHT_VALUATION"
-    // );
-    if(weight >= MIN_WEIGHT)
-        return ZERO_BI
-    // The combined weight of both tokens cannot exceed the maximum even
-    // temporarily during a transaction so we need to subtract one for
-    // headroom.
-    // require(
-    //     (IBalancerConstants.MAX_WEIGHT - IBalancerConstants.BONE) >=
-    //         (IBalancerConstants.MIN_WEIGHT + weight_),
-    //     "MAX_WEIGHT_VALUATION"
-    // );
-
-    if(MAX_WEIGHT.minus(BONE) >= (MIN_WEIGHT.plus(weight)))
-        return ZERO_BI;
     
     return weight
 }
