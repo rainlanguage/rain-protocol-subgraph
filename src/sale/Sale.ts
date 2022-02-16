@@ -307,7 +307,7 @@ function updateSale(sale: Sale): void {
 
     for(let i=0;i<refundLength;i++){
         let saleRefund = SaleRefund.load(saleRefunds.pop())
-        totalOut = totalIn.plus(saleRefund.totalOut)
+        totalOut = totalOut.plus(saleRefund.totalOut)
         refundFee = refundFee.plus(saleRefund.fee)
     }
     if(sale.saleStatus == SaleStatus.Active)

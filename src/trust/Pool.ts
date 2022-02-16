@@ -37,12 +37,4 @@ export function handleLOG_SWAP(event: LOG_SWAP): void {
     trustParticipant.swaps = tswaps
     
     trustParticipant.save()
-
-    let trust = Trust.load(context.getString("trust"))
-    let trustParticipants = trust.trustParticipants
-    if(!trustParticipants.includes(trustParticipant.id)){
-        trustParticipants.push(trustParticipant.id)
-        trust.trustParticipants = trustParticipants
-        trust.save()
-    }
 }
