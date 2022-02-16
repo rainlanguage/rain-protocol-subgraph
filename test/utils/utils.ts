@@ -27,10 +27,13 @@ import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPo
 // Rain protocol contracts
 import RedeemableERC20Factory from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
 import SeedERC20Factory from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
-import TrustFactory from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
+import TrustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
+import SaleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
 
 // Types
+import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
+import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
 import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
 import type { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
 import type {
@@ -39,6 +42,12 @@ import type {
   TrustRedeemableERC20ConfigStruct,
   TrustSeedERC20ConfigStruct,
 } from "@beehiveinnovation/rain-protocol/typechain/Trust";
+
+import type {
+  Sale,
+  SaleConfigStruct,
+  SaleRedeemableERC20ConfigStruct,
+} from "@beehiveinnovation/rain-protocol/typechain/Sale";
 
 interface SyncedSubgraphType {
   synced: boolean;
@@ -224,10 +233,10 @@ export const factoriesDeploy = async (
     maxRaiseDuration: MAX_RAISE_DURATION_TESTING,
   };
 
-  const iface = new ethers.utils.Interface(TrustFactory.abi);
+  const iface = new ethers.utils.Interface(TrustFactoryJson.abi);
   const trustFactoryFactory = new ethers.ContractFactory(
     iface,
-    TrustFactory.bytecode,
+    TrustFactoryJson.bytecode,
     signer
   );
   const trustFactory = await trustFactoryFactory.deploy(TrustFactoryArgs);
@@ -240,44 +249,65 @@ export const factoriesDeploy = async (
 };
 
 export const trustDeploy = async (
-  trustFactory: any,
-  creator: any,
+  trustFactory: TrustFactory,
+  creator: SignerWithAddress,
   trustConfig: TrustConfigStruct,
   trustRedeemableERC20Config: TrustRedeemableERC20ConfigStruct,
   trustSeedERC20Config: TrustSeedERC20ConfigStruct,
   ...args: any
 ): Promise<Trust> => {
-  const txDeploy = await trustFactory.createChildTyped(
-    trustConfig,
-    trustRedeemableERC20Config,
-    trustSeedERC20Config,
-    ...args
-  );
-  // Getting the address, and get the contract abstraction
-  const trust = new ethers.Contract(
-    ethers.utils.hexZeroPad(
-      ethers.utils.hexStripZeros(
-        (await getEventArgs(txDeploy, "NewChild", trustFactory)).child
-      ),
-      20 // address bytes length
-    ),
-    TrustJson.abi,
+  // Creating the trust contract child
+  const trust = (await createChildTyped(
+    trustFactory,
+    TrustJson,
+    [trustConfig, trustRedeemableERC20Config, trustSeedERC20Config, ...args],
     creator
-  ) as Trust & Contract;
-
-  if (!ethers.utils.isAddress(trust.address)) {
-    throw new Error(
-      `invalid trust address: ${trust.address} (${trust.address.length} chars)`
-    );
-  }
-
-  await trust.deployed();
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  trust.deployTransaction = txDeploy;
+  )) as Trust & Contract;
 
   return trust;
+};
+
+export const saleDeploy = async (
+  saleFactory: SaleFactory,
+  creator: SignerWithAddress,
+  saleConfig: SaleConfigStruct,
+  saleRedeemableERC20Config: SaleRedeemableERC20ConfigStruct,
+  ...args: any
+): Promise<Sale> => {
+  // Creating the sale contract child
+  const sale = (await createChildTyped(
+    saleFactory,
+    SaleJson,
+    [saleConfig, saleRedeemableERC20Config, ...args],
+    creator
+  )) as Sale & Contract;
+
+  return sale;
+};
+
+/**
+ * @param factory - the factory that contain the `createChildTyped()` function to create a child.
+ * @param childtArtifact - the child artifact that will be created.
+ * @param args - the arguments necessaries to create the child. Should be passed inside an array.
+ * @param creator - (optional) the signer that will be connected the child contract. Same as contractFactory if not provided
+ * @returns The child contract connected to the signer
+ */
+export const createChildTyped = async (
+  factory: Contract,
+  childtArtifact: Artifact,
+  args: any[],
+  creator?: SignerWithAddress
+): Promise<Contract> => {
+  const txDeploy = await factory.createChildTyped(...args);
+
+  const child = (await getContractChild(
+    txDeploy,
+    factory,
+    childtArtifact,
+    creator || null
+  )) as Contract;
+
+  return child;
 };
 
 export const poolContracts = async (
@@ -474,14 +504,6 @@ export function bytify(
  */
 export function op(code: number, erand = 0): Uint8Array {
   return concat([bytify(code), bytify(erand)]);
-}
-
-export function getContract(
-  address: string,
-  artifact: Artifact,
-  signer: Signer | SignerWithAddress
-): Contract {
-  return new ethers.Contract(address, artifact.abi, signer) as Contract;
 }
 
 export function encodeStateExpected(vmStateConfig: VMState): State {
