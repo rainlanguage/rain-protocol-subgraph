@@ -57,6 +57,10 @@ export function handleBuy(event: Buy): void {
     sbuys.push(saleBuy.id)
     sale.buys = sbuys
 
+    let saleTransactions = sale.saleTransactions
+    saleTransactions.push(saleBuy.id)
+    sale.saleTransactions = saleTransactions
+
     sale.save()
 
     updateSale(sale as Sale)
@@ -180,7 +184,12 @@ export function handleRefund(event: Refund): void {
     
     let saleBuy = SaleBuy.load(receipt.saleTransaction)
     saleBuy.refunded = true
+    saleBuy.refundEvent = saleRefund.id
     saleBuy.save()
+
+    let saleTransactions = sale.saleTransactions
+    saleTransactions.push(saleRefund.id)
+    sale.saleTransactions = saleTransactions
     
     sale.save()
 

@@ -32,6 +32,7 @@ export function handleNewChild(event: NewChild): void {
     sale.percentRaised = ZERO_BD
     sale.buys = []
     sale.refunds = []
+    sale.saleTransactions = []
     sale.save()
 
     let children = saleFactory.children

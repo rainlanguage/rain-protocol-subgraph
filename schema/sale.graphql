@@ -26,6 +26,7 @@ type Sale @entity{
     endEvent: SaleEnd #from End event on Sale
     buys: [SaleBuy!] #all buy events
     refunds: [SaleRefund!] #all refund events
+    saleTransactions: [SaleTransaction!] #all SaleBuys and SaleRefunds
     # extra calculated fields
     unitsAvailable: BigInt # token.balanceOf(Sale.address) - initially set on the Initialize event, then updates after every Buy/Refund event.
     totalRaised: BigInt # get this by adding totalIn from all SaleBuy entities, and subtracting totalOut from all SaleRefund entities
@@ -67,8 +68,22 @@ type SaleEnd @entity{
     saleStatus: Int! #get from event End.saleStatus
 }
 
+interface SaleTransaction {
+    id: ID! #txHash
+    block: BigInt! #block of the event
+    transactionHash: Bytes! #txHash of the event
+    timestamp: BigInt! #timestamp of event
+    sender: Bytes!
+    saleContract: Sale! #Sale that emitted the event
+    saleContractAddress: Bytes! #address of the sale contract
+    feeRecipient: SaleFeeRecipient!
+    feeRecipientAddress: Bytes!
+    receipt: SaleReceipt!
+}
+
+
 # from the Buy event on Sale
-type SaleBuy @entity{
+type SaleBuy implements SaleTransaction @entity{
     id: ID! #txHash
     block: BigInt! #block of the event
     transactionHash: Bytes! #txHash of the event
@@ -85,10 +100,11 @@ type SaleBuy @entity{
     receipt: SaleReceipt! #from Buy.receipt
     totalIn: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18)
     refunded: Boolean!
+    refundEvent: SaleRefund
 }
 
 # from the Refund event on Sale
-type SaleRefund @entity{
+type SaleRefund implements SaleTransaction @entity{
     id: ID! #txHash
     block: BigInt! #block of the event
     transactionHash: Bytes! #txHash of the event
