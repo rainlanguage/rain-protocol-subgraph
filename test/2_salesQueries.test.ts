@@ -204,11 +204,11 @@ describe("Sales queries test", function () {
   });
 
   describe("Success sale - Queries", function () {
+    const fee = ethers.BigNumber.from("1").mul(Util.RESERVE_ONE);
     const saleTimeout = 30;
     const minimumRaise = ethers.BigNumber.from("100000").mul(Util.RESERVE_ONE);
     const cooldownDuration = 1;
     const dustSize = 0;
-    const fee = ethers.BigNumber.from("1").mul(Util.RESERVE_ONE);
 
     const totalTokenSupply = ethers.BigNumber.from("2000").mul(Util.ONE);
     const redeemableERC20Config = {
@@ -218,24 +218,32 @@ describe("Sales queries test", function () {
       initialSupply: totalTokenSupply,
     };
 
-    const basePrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+    const basePrice = ethers.BigNumber.from("100").mul(Util.RESERVE_ONE);
+    const balanceMultiplier = ethers.BigNumber.from("100").mul(
+      Util.RESERVE_ONE
+    );
 
-    const supplyDivisor = ethers.BigNumber.from("1" + Util.sixteenZeros);
-
-    const constants = [basePrice, supplyDivisor];
+    const constants = [basePrice, balanceMultiplier];
     const vBasePrice = op(Opcode.VAL, 0);
-    const vSupplyDivisor = op(Opcode.VAL, 1);
+    const vFractionMultiplier = op(Opcode.VAL, 1);
 
+    // prettier-ignore
     const sources = [
       concat([
-        // ((CURRENT_BUY_UNITS priceDivisor /) 75 +)
-        op(Opcode.CURRENT_BUY_UNITS),
-        vSupplyDivisor,
-        op(Opcode.DIV, 2),
-        vBasePrice,
-        op(Opcode.ADD, 2),
+          vBasePrice,
+              vFractionMultiplier,
+                op(Opcode.TOKEN_ADDRESS),
+                op(Opcode.SENDER),
+              op(Opcode.ERC20_BALANCE_OF),
+            op(Opcode.MUL, 2),
+              op(Opcode.TOKEN_ADDRESS),
+            op(Opcode.ERC20_TOTAL_SUPPLY),
+          op(Opcode.DIV, 2),
+        op(Opcode.SUB, 2),
       ]),
     ];
+
+    const supplyDivisor = ethers.BigNumber.from("1" + Util.sixteenZeros);
 
     let startBlock: number,
       canStartStateConfig: StateConfig,
@@ -255,7 +263,7 @@ describe("Sales queries test", function () {
       calculatePriceStateConfig = {
         sources,
         constants,
-        stackLength: 3,
+        stackLength: 6,
         argumentsLength: 0,
       };
 
@@ -552,6 +560,7 @@ describe("Sales queries test", function () {
         startBlock - (await ethers.provider.getBlockNumber())
       );
 
+      // Starting with signer1
       const tx = await sale.connect(signer1).start();
 
       await Util.delay(Util.wait);
@@ -594,11 +603,14 @@ describe("Sales queries test", function () {
 
     it("should recognize the saleBuy after a buy correctly", async function () {
       // Values to Buy
-      const desiredUnits0 = totalTokenSupply.div(10);
-      const expectedPrice0 = basePrice.add(desiredUnits0.div(supplyDivisor));
-      const expectedCost0 = expectedPrice0.mul(desiredUnits0).div(Util.ONE);
+      const signer1Balance0 = await redeemableERC20Contract.balanceOf(
+        signer1.address
+      );
 
-      const amount = await reserve.balanceOf(deployer.address);
+      const desiredUnits0 = totalTokenSupply.div(10);
+      const expectedPrice0 = basePrice;
+
+      const expectedCost0 = expectedPrice0.mul(desiredUnits0).div(Util.ONE);
 
       buyConfig = {
         feeRecipient: feeRecipient.address,
@@ -609,16 +621,23 @@ describe("Sales queries test", function () {
       };
 
       // give signer1 reserve to cover cost + fee
-      // await reserve.transfer(signer1.address, expectedCost0.add(fee));
-      await reserve.connect(deployer).transfer(signer1.address, amount);
+      await reserve.transfer(signer1.address, expectedCost0.add(fee));
 
-      await reserve.connect(signer1).approve(sale.address, amount);
-      // .approve(sale.address, expectedCost0.add(fee));
+      await reserve
+        .connect(signer1)
+        .approve(sale.address, expectedCost0.add(fee));
 
+      // give signer1 reserve to cover cost + fee
+      await reserve.transfer(signer1.address, expectedCost0.add(fee));
+
+      await reserve
+        .connect(signer1)
+        .approve(sale.address, expectedCost0.add(fee));
+
+      // buy 10% of total supply
       transaction = await sale.connect(signer1).buy(buyConfig);
 
-      const receipt = (await Util.getEventArgs(transaction, "Buy", sale))
-        .receipt;
+      const { receipt } = await Util.getEventArgs(transaction, "Buy", sale);
 
       const totalInCalculated = ethers.BigNumber.from(receipt.units)
         .mul(receipt.price)
@@ -629,7 +648,7 @@ describe("Sales queries test", function () {
       totalFees = totalFees.add(fee);
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced(1500);
 
       const query = `
         {
@@ -663,7 +682,7 @@ describe("Sales queries test", function () {
       );
     });
 
-    xit("should query sale properties after buy correctly", async function () {
+    it("should query sale properties after buy correctly", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
@@ -695,13 +714,11 @@ describe("Sales queries test", function () {
       expect(saleData.totalFees).to.equals(totalFees);
     });
 
-    xit("should query the Buy config values correctly", async function () {
+    it("should query the Buy config values correctly", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
       const txHash = transaction.hash.toLowerCase();
-      console.log("txHash");
-      console.log(txHash);
 
       const query = `
         {
@@ -730,7 +747,7 @@ describe("Sales queries test", function () {
       );
     });
 
-    xit("should query the SaleFeeRecipient after a buy", async function () {
+    it("should query the SaleFeeRecipient after a buy", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
@@ -775,7 +792,7 @@ describe("Sales queries test", function () {
       expect(saleFeeRecipientData.refunds).to.be.empty;
     });
 
-    xit("should query the Receipt after a buy", async function () {
+    it("should query the Receipt after a buy", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
@@ -826,7 +843,7 @@ describe("Sales queries test", function () {
       expect(saleReceipttData.price).to.equals(receipt.price);
     });
 
-    xit("should query after minimum raise met correctly", async function () {
+    it("should query after minimum raise met correctly", async function () {
       // Buy all the remain supply to end
       const desiredUnits0 = await redeemableERC20Contract.balanceOf(
         sale.address
@@ -904,7 +921,7 @@ describe("Sales queries test", function () {
       expect(saleData.saleStatus).to.equals(Status.SUCCESS);
     });
 
-    xit("should query SaleEnd after a sale end correctly", async function () {
+    it("should query SaleEnd after a sale end correctly", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
@@ -944,8 +961,6 @@ describe("Sales queries test", function () {
         sale.address.toLowerCase()
       );
     });
-
-    /* */
   });
 
   describe("Failed sale? - Query", function () {

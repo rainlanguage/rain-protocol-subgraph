@@ -283,7 +283,11 @@ function updatePoolBalance(contracts: Contract): void {
 
     if(!(poolReserveBalance.reverted)){
         distributionProgress.poolReserveBalance = poolReserveBalance.value
-        distributionProgress.percentRaised = distributionProgress.amountRaised.toBigDecimal().div(distributionProgress.minimumRaise.toBigDecimal())
+        if (distributionProgress.minimumRaise == ZERO_BI) {
+            distributionProgress.percentRaised = HUNDRED_BD
+        } else {
+            distributionProgress.percentRaised = distributionProgress.amountRaised.toBigDecimal().div(distributionProgress.minimumRaise.toBigDecimal())
+        }
     }else{
         log.info("Poola balance Failed. reserve {}, redeemable {}", [])
     }
