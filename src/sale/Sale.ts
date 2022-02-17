@@ -313,6 +313,10 @@ function updateSale(sale: Sale): void {
     if(sale.saleStatus == SaleStatus.Active)
         sale.totalRaised = totalIn.minus(totalOut)
     sale.totalFees = buyFee.minus(refundFee)
-    sale.percentRaised = sale.totalRaised.toBigDecimal().div(sale.minimumRaise.toBigDecimal()).times(HUNDRED_BD)
+
+    if(sale.minimumRaise == ZERO_BI)
+        sale.percentRaised = HUNDRED_BD
+    else
+        sale.percentRaised = sale.totalRaised.toBigDecimal().div(sale.minimumRaise.toBigDecimal()).times(HUNDRED_BD)
     sale.save()
 }

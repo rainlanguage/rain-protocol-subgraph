@@ -5,7 +5,7 @@ generated
 subgraph.yaml
 artifacts
 cache
-config
+config/localhost.json
 schema.graphql
 
 docker/data
