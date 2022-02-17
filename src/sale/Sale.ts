@@ -10,6 +10,7 @@ export function handleBuy(event: Buy): void {
     let saleBuy = new SaleBuy(event.transaction.hash.toHex())
 
     saleBuy.block = event.block.number
+    saleBuy.refunded = false
     saleBuy.transactionHash = event.transaction.hash
     saleBuy.timestamp = event.block.timestamp
     saleBuy.saleContract = sale.id
@@ -23,6 +24,7 @@ export function handleBuy(event: Buy): void {
 
     let receipt = new SaleReceipt(sale.id + " - " + event.params.receipt.id.toString())
     receipt.receiptId = event.params.receipt.id
+    receipt.saleTransaction = event.transaction.hash.toHex()
     receipt.feeRecipient = event.params.receipt.feeRecipient
     receipt.fee = event.params.receipt.fee
     receipt.units = event.params.receipt.units
@@ -175,7 +177,11 @@ export function handleRefund(event: Refund): void {
     let srefunds = sale.refunds
     srefunds.push(saleRefund.id)
     sale.refunds = srefunds
-
+    
+    let saleBuy = SaleBuy.load(receipt.saleTransaction)
+    saleBuy.refunded = true
+    saleBuy.save()
+    
     sale.save()
 
     updateSale(sale as Sale)

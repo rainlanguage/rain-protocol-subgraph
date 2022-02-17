@@ -21,11 +21,8 @@ import {
 
 // Artifacts
 import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import readWriteTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
 import seedERC20Json from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
 import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
-import configurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
-import bPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
 import bPoolFeeEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/BPoolFeeEscrow.sol/BPoolFeeEscrow.json";
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 
@@ -65,7 +62,6 @@ import { RedeemableERC20ClaimEscrow } from "@beehiveinnovation/rain-protocol/typ
 
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
 import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20";
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
 import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
@@ -107,7 +103,6 @@ let subgraph: ApolloFetch,
   crpContract: ConfigurableRightsPool,
   bPoolContract: BPool,
   reserve: ReserveTokenTest, // ERC20
-  erc721Test: ERC721,
   erc20BalanceTier: ERC20BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
@@ -158,17 +153,6 @@ describe("Subgraph Trusts Test", function () {
       CRPFactory,
       BFactory
     ];
-
-    erc721Test = (await deploy(erc721TokenTestJson, deployer, [
-      "TokenERC721",
-      "T721",
-    ])) as ERC721;
-
-    reserve = (await deploy(
-      reserveTokenJson,
-      deployer,
-      []
-    )) as ReserveTokenTest;
 
     ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
       await Util.factoriesDeploy(crpFactory, bFactory, deployer));
@@ -367,7 +351,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  describe("Single Trust test", function () {
+  describe("Trust happy path queries", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -405,6 +389,13 @@ describe("Subgraph Trusts Test", function () {
       .add(reserveInit);
 
     before("Create the trust", async function () {
+      // Deploying new reserve to test
+      reserve = (await deploy(
+        reserveTokenJson,
+        deployer,
+        []
+      )) as ReserveTokenTest;
+
       // Giving the necessary amount to signer1 and signer2 for a level 4
       minimumTier = Tier.FOUR;
       const level4 = LEVELS[minimumTier - 1];
@@ -830,6 +821,11 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should continue querying if `TreasuryAsset` is called with a non-ERC20", async function () {
+      const erc721Test = (await deploy(erc721TokenTestJson, deployer, [
+        "TokenERC721",
+        "T721",
+      ])) as ERC721;
+
       // Could be any non-erc20 address
       const nonErc20Address = erc721Test.address;
       transaction = await redeemableERC20Contract.newTreasuryAsset(
@@ -1158,7 +1154,7 @@ describe("Subgraph Trusts Test", function () {
             initialValuation
             reserveInit
             poolReserveBalance
-            poolTokenBalance
+            poolRedeemableBalance
             amountRaised
             percentRaised
             percentAvailable
@@ -2934,12 +2930,31 @@ describe("Subgraph Trusts Test", function () {
     // This should force to no create a seed contract
     let seederNonContract: string;
 
-    before("Create the trust", async function () {
+    before("Create the trust with user as Seeder", async function () {
+      // Deploying new reserve to test
+      reserve = (await deploy(
+        reserveTokenJson,
+        deployer,
+        []
+      )) as ReserveTokenTest;
+
+      // Deploying a new balanceTier to new Trust
+      erc20BalanceTier = (await Util.createChildTyped(
+        erc20BalanceTierFactory,
+        erc20BalanceTierJson,
+        [
+          {
+            erc20: reserve.address,
+            tierValues: LEVELS,
+          },
+        ],
+        deployer
+      )) as ERC20BalanceTier;
+
       // Giving the necessary amount to signer1 and signer2 for a level 4
       minimumTier = Tier.FOUR;
       const level4 = LEVELS[minimumTier - 1];
       await reserve.transfer(signer1.address, level4);
-      await reserve.transfer(signer2.address, level4);
 
       // This should force to no create a seed contract
       seederNonContract = signer1.address;
@@ -2984,7 +2999,7 @@ describe("Subgraph Trusts Test", function () {
       crpContract = (await Util.poolContracts(creator, trust)).crp;
 
       // Wait for Sync
-      await Util.delay(Util.wait);
+      await Util.delay(Util.wait * 2);
       await waitForSubgraphToBeSynced(2000);
     });
 
@@ -3016,6 +3031,185 @@ describe("Subgraph Trusts Test", function () {
         redeemableERC20Contract.address.toLowerCase()
       );
       expect(data.seeder.id).to.equals(seederNonContract.toLowerCase());
+    });
+  });
+
+  describe("Trust with a zero as minimunRaise", function () {
+    // Properties of this trust
+    const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
+    const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
+    const initialValuation = ethers.BigNumber.from("20000" + sixZeros);
+    const minimumTradingDuration = 20;
+
+    const redeemableERC20Config = {
+      name: "Token",
+      symbol: "TKN",
+      distributor: Util.zeroAddress,
+      initialSupply: totalTokenSupply,
+    };
+    // - Seeder props
+    const seederUnits = 10;
+    const seedERC20Config = {
+      name: "SeedToken",
+      symbol: "SDT",
+      distributor: Util.zeroAddress,
+      initialSupply: seederUnits,
+    };
+    const seederCooldownDuration = 1;
+
+    // Values necessaries to get minimumRaise as 0
+    // minimumRaise: minimumCreatorRaise + redeemInit + seederFee
+    const redeemInit = ethers.BigNumber.from(0);
+    const minimumCreatorRaise = ethers.BigNumber.from(0);
+    const seederFee = ethers.BigNumber.from(0);
+
+    const finalValuation = redeemInit
+      .add(minimumCreatorRaise)
+      .add(seederFee)
+      .add(reserveInit);
+
+    const seedPrice = reserveInit.div(seederUnits);
+
+    before("Trust with values to get minimumRaise zero", async function () {
+      // Deploying new reserve to test
+      reserve = (await deploy(
+        reserveTokenJson,
+        deployer,
+        []
+      )) as ReserveTokenTest;
+
+      // Deploying a new balanceTier to new Trust
+      erc20BalanceTier = (await Util.createChildTyped(
+        erc20BalanceTierFactory,
+        erc20BalanceTierJson,
+        [
+          {
+            erc20: reserve.address,
+            tierValues: LEVELS,
+          },
+        ],
+        deployer
+      )) as ERC20BalanceTier;
+
+      // Giving the necessary amount to signer1 and signer2 for a level 4
+      minimumTier = Tier.FOUR;
+      const level4 = LEVELS[minimumTier - 1];
+      await reserve.transfer(signer1.address, level4);
+      await reserve.transfer(signer2.address, level4);
+
+      trust = (await Util.trustDeploy(
+        trustFactory,
+        creator,
+        {
+          creator: creator.address,
+          minimumCreatorRaise,
+          seederFee,
+          redeemInit,
+          reserve: reserve.address,
+          reserveInit,
+          initialValuation,
+          finalValuation,
+          minimumTradingDuration,
+        },
+        {
+          erc20Config: redeemableERC20Config,
+          tier: erc20BalanceTier.address,
+          minimumTier,
+        },
+        {
+          seeder: Util.zeroAddress, // This should force to no create a seed contract
+          cooldownDuration: seederCooldownDuration,
+          erc20Config: seedERC20Config,
+        },
+        { gasLimit: 15000000 }
+      )) as Trust;
+
+      // Creating the instance for contracts
+      redeemableERC20Contract = (await getContractChild(
+        trust.deployTransaction,
+        redeemableERC20Factory,
+        redeemableTokenJson
+      )) as RedeemableERC20;
+
+      seedContract = (await getContractChild(
+        trust.deployTransaction,
+        seedERC20Factory,
+        seedERC20Json
+      )) as SeedERC20;
+
+      // Get the CRP contract
+      crpContract = (await Util.poolContracts(creator, trust)).crp;
+    });
+
+    it("should query percentRaised as 100 percent raised after swap", async function () {
+      // Prepare all to make a swap and query percerntRaised
+      const seeder1Units = 4;
+      const seeder2Units = 6;
+
+      // seeders needs cash to seed
+      await reserve.transfer(seeder1.address, seedPrice.mul(seeder1Units));
+      await reserve.transfer(seeder2.address, seedPrice.mul(seeder2Units));
+
+      await reserve
+        .connect(seeder1)
+        .approve(seedContract.address, seedPrice.mul(seeder1Units));
+      await reserve
+        .connect(seeder2)
+        .approve(seedContract.address, seedPrice.mul(seeder2Units));
+
+      // seeders send reserve to seeder contract
+      await seedContract.connect(seeder1).seed(0, seeder1Units);
+      await seedContract.connect(seeder2).seed(0, seeder2Units);
+
+      // Trust gains infinite approval on reserve token withdrawals from seed contract
+      await reserve.allowance(seedContract.address, trust.address);
+
+      // Start the distribution
+      await trust.startDutchAuction();
+
+      bPoolContract = (await Util.poolContracts(creator, trust)).bPool;
+
+      // give signer some reserve
+      const reserveSpend = finalValuation.div(10);
+      await reserve.transfer(signer1.address, reserveSpend);
+
+      await reserve
+        .connect(signer1)
+        .approve(bPoolContract.address, reserveSpend);
+      await crpContract.connect(signer1).pokeWeights();
+
+      // Make the swap
+      await bPoolContract
+        .connect(signer1)
+        .swapExactAmountIn(
+          reserve.address,
+          reserveSpend,
+          await trust.token(),
+          ethers.BigNumber.from("1"),
+          ethers.BigNumber.from("1000000" + sixZeros)
+        );
+
+      // Wait for the Sync
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(2000);
+
+      const query = `
+        {
+          trust (id: "${trust.address.toLowerCase()}") {
+            distributionProgress {
+              minimumRaise
+              percentRaised
+            }
+          }
+        }
+      `;
+      const queryResponse = await subgraph({
+        query: query,
+      });
+      const data = queryResponse.data.trust.distributionProgress;
+
+      expect(data.minimumRaise).to.equals("0");
+      expect(data.percentRaised).to.equals("100.0");
     });
   });
 });

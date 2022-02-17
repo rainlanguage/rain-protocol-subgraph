@@ -56,7 +56,7 @@ const maxMintable = 100;
 let royaltyRecipient: string;
 const royaltyBPS = 1;
 
-xdescribe("Subgraph GatedNFT test", function () {
+describe("Subgraph GatedNFT test", function () {
   before("creating and connecting", async function () {
     const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
     const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));

@@ -14,7 +14,6 @@ import * as Util from "./utils/utils";
 import {
   op,
   deploy,
-  getContract,
   getContractChild,
   waitForSubgraphToBeSynced,
   eighteenZeros,
@@ -126,7 +125,7 @@ let subgraph: ApolloFetch,
   erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
-xdescribe("Subgraph Tier Test", function () {
+describe("Subgraph Tier Test", function () {
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 

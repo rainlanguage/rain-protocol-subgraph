@@ -14,9 +14,9 @@ import {
   op,
   deploy,
   waitForSubgraphToBeSynced,
-  getContract,
   eighteenZeros,
   Tier,
+  LEVELS,
 } from "./utils/utils";
 import {
   getContracts,
@@ -26,21 +26,13 @@ import {
   QUERY,
 } from "./utils/queries";
 
-import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
-import redeemableERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
-import readwriteTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
-import redeemableERC20Json from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
+import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
+import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
+import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 
-import saleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
-
-import saleFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
-import trustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
-
-import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
-import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
-import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
+import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
+import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
-import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import type {
   BuyEvent,
   Sale,
@@ -54,6 +46,7 @@ import { isContext } from "vm";
 
 import {
   deployer,
+  creator,
   signer1,
   signer2,
   recipient,
@@ -97,12 +90,20 @@ const enum Opcode {
   SATURATING_DIFF,
   UPDATE_BLOCKS_FOR_TIER_RANGE,
   SELECT_LTE,
+  ERC20_BALANCE_OF,
+  ERC20_TOTAL_SUPPLY,
+  ERC721_BALANCE_OF,
+  ERC721_OWNER_OF,
+  ERC1155_BALANCE_OF,
+  ERC1155_BALANCE_OF_BATCH,
   REMAINING_UNITS,
   TOTAL_RESERVE_IN,
   LAST_BUY_BLOCK,
   LAST_BUY_UNITS,
   LAST_BUY_PRICE,
   CURRENT_BUY_UNITS,
+  TOKEN_ADDRESS,
+  RESERVE_ADDRESS,
 }
 
 const afterBlockNumberConfig = (blockNumber: number) => {
@@ -137,30 +138,36 @@ interface BuyConfig {
 }
 
 let subgraph: ApolloFetch,
-  reserve: ReserveToken,
-  readWriteTier: ReadWriteTier,
+  reserve: ReserveTokenTest,
+  erc20BalanceTier: ERC20BalanceTier,
   sale: Sale,
-  redeemableERC20Token: RedeemableERC20,
-  startBlock: number,
-  canStartStateConfig: StateConfig,
-  canEndStateConfig: StateConfig,
-  calculatePriceStateConfig: StateConfig,
+  redeemableERC20Contract: RedeemableERC20,
   buyConfig: BuyConfig,
   transaction: ContractTransaction; // Use to save the tx between statements
 
 describe("Sales queries test", function () {
   before("getting the factory", async function () {
-    reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
+    reserve = (await deploy(
+      reserveTokenJson,
+      deployer,
+      []
+    )) as ReserveTokenTest;
+
+    // Deploying a new Tier Contract
+    erc20BalanceTier = (await Util.createChildTyped(
+      erc20BalanceTierFactory,
+      erc20BalanceTierJson,
+      [
+        {
+          erc20: reserve.address,
+          tierValues: LEVELS,
+        },
+      ],
+      deployer
+    )) as ERC20BalanceTier;
 
     const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
     const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
-    // New readWriteTier
-    readWriteTier = (await deploy(
-      readwriteTierJson,
-      deployer,
-      []
-    )) as ReadWriteTier;
 
     // Connecting to the subgraph
     subgraph = Util.fetchSubgraph(
@@ -170,11 +177,8 @@ describe("Sales queries test", function () {
   });
 
   it("should query the saleFactory after construction correctly", async function () {
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
-
     // The redeemableERC20Factory entity not exist yet, but Josh said that maybe will be implemented
-    const saleFactoryQuery = `
+    const query = `
       {
         saleFactory (id: "${saleFactory.address.toLowerCase()}") {
           address
@@ -186,30 +190,25 @@ describe("Sales queries test", function () {
       }
     `;
 
-    const saleFactoryQueryResponse = (await subgraph({
-      query: saleFactoryQuery,
+    const queryResponse = (await subgraph({
+      query: query,
     })) as FetchResult;
 
-    const saleFactoryData = saleFactoryQueryResponse.data.saleFactory;
+    const data = queryResponse.data.saleFactory;
 
-    expect(saleFactoryData.address).to.equals(
-      saleFactory.address.toLowerCase()
-    );
-    expect(saleFactoryData.children).to.be.empty;
-    expect(saleFactoryData.redeemableERC20Factory).to.equals(
+    expect(data.children).to.be.empty;
+    expect(data.address).to.equals(saleFactory.address.toLowerCase());
+    expect(data.redeemableERC20Factory).to.equals(
       redeemableERC20Factory.address.toLowerCase()
     );
   });
 
   describe("Success sale - Queries", function () {
-    let totalFees: BigNumber = ethers.BigNumber.from(0);
-    let totalRaised: BigNumber = ethers.BigNumber.from(0);
-
+    const fee = ethers.BigNumber.from("1").mul(Util.RESERVE_ONE);
     const saleTimeout = 30;
     const minimumRaise = ethers.BigNumber.from("100000").mul(Util.RESERVE_ONE);
     const cooldownDuration = 1;
     const dustSize = 0;
-    const fee = ethers.BigNumber.from("1").mul(Util.RESERVE_ONE);
 
     const totalTokenSupply = ethers.BigNumber.from("2000").mul(Util.ONE);
     const redeemableERC20Config = {
@@ -219,76 +218,92 @@ describe("Sales queries test", function () {
       initialSupply: totalTokenSupply,
     };
 
-    const basePrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+    const basePrice = ethers.BigNumber.from("100").mul(Util.RESERVE_ONE);
+    const balanceMultiplier = ethers.BigNumber.from("100").mul(
+      Util.RESERVE_ONE
+    );
 
-    const supplyDivisor = ethers.BigNumber.from("1" + Util.sixteenZeros);
-
-    const constants = [basePrice, supplyDivisor];
+    const constants = [basePrice, balanceMultiplier];
     const vBasePrice = op(Opcode.VAL, 0);
-    const vSupplyDivisor = op(Opcode.VAL, 1);
+    const vFractionMultiplier = op(Opcode.VAL, 1);
 
+    // prettier-ignore
     const sources = [
       concat([
-        // ((CURRENT_BUY_UNITS priceDivisor /) 75 +)
-        op(Opcode.CURRENT_BUY_UNITS),
-        vSupplyDivisor,
-        op(Opcode.DIV, 2),
-        vBasePrice,
-        op(Opcode.ADD, 2),
+          vBasePrice,
+              vFractionMultiplier,
+                op(Opcode.TOKEN_ADDRESS),
+                op(Opcode.SENDER),
+              op(Opcode.ERC20_BALANCE_OF),
+            op(Opcode.MUL, 2),
+              op(Opcode.TOKEN_ADDRESS),
+            op(Opcode.ERC20_TOTAL_SUPPLY),
+          op(Opcode.DIV, 2),
+        op(Opcode.SUB, 2),
       ]),
     ];
 
+    const supplyDivisor = ethers.BigNumber.from("1" + Util.sixteenZeros);
+
+    let startBlock: number,
+      canStartStateConfig: StateConfig,
+      canEndStateConfig: StateConfig,
+      calculatePriceStateConfig: StateConfig;
+
+    // To have a control in sale
+    let totalFees: BigNumber = ethers.BigNumber.from(0);
+    let totalRaised: BigNumber = ethers.BigNumber.from(0);
+
     before("creating the sale child", async function () {
-      startBlock = (await ethers.provider.getBlockNumber()) + 1;
-
+      // 2 blocks from now
+      startBlock = (await ethers.provider.getBlockNumber()) + 2;
       canStartStateConfig = afterBlockNumberConfig(startBlock);
-
       canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
 
       calculatePriceStateConfig = {
-        sources: sources,
-        constants: constants,
-        stackLength: 3,
+        sources,
+        constants,
+        stackLength: 6,
         argumentsLength: 0,
       };
 
-      const tx = await saleFactory.createChildTyped(
+      sale = await Util.saleDeploy(
+        saleFactory,
+        creator,
         {
-          canStartStateConfig: canStartStateConfig,
-          canEndStateConfig: canEndStateConfig,
-          calculatePriceStateConfig: calculatePriceStateConfig,
+          canStartStateConfig,
+          canEndStateConfig,
+          calculatePriceStateConfig,
           recipient: recipient.address,
           reserve: reserve.address,
-          cooldownDuration: cooldownDuration,
+          cooldownDuration,
           minimumRaise,
-          dustSize: dustSize,
+          dustSize,
         },
         {
           erc20Config: redeemableERC20Config,
-          tier: readWriteTier.address,
+          tier: erc20BalanceTier.address,
           minimumTier: Tier.ZERO,
         }
       );
 
-      // Saving the actual sale
-      sale = (await Util.getContractChild(tx, saleFactory, saleJson)) as Sale;
+      // Creating the instance for contracts
+      redeemableERC20Contract = (await Util.getContractChild(
+        sale.deployTransaction,
+        redeemableERC20Factory,
+        redeemableTokenJson
+      )) as RedeemableERC20;
 
-      // Reference to the token
-      redeemableERC20Token = new ethers.Contract(
-        await sale.token(),
-        redeemableERC20Json.abi,
-        deployer
-      ) as RedeemableERC20;
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
     });
 
     it("should query the sale child after creation", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const saleFactoryQuery = `
+      const query = `
         {
           saleFactory (id: "${saleFactory.address.toLowerCase()}") {
             children {
+              id
               address
               deployer
             }
@@ -297,22 +312,20 @@ describe("Sales queries test", function () {
       `;
 
       const response = (await subgraph({
-        query: saleFactoryQuery,
+        query: query,
       })) as FetchResult;
 
-      const saleFactoryData = response.data.saleFactory;
-      const saleData = saleFactoryData.children[0];
+      const factoryData = response.data.saleFactory;
+      const saleData = factoryData.children[0];
 
-      expect(saleFactoryData.children).to.have.lengthOf(1);
+      expect(factoryData.children).to.have.lengthOf(1);
+      expect(saleData.id).to.equals(sale.address.toLowerCase());
       expect(saleData.address).to.equals(sale.address.toLowerCase());
       expect(saleData.deployer).to.equals(deployer.address.toLowerCase());
     });
 
     it("should query the init properties of the sale correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const initUnitsAvailable = await redeemableERC20Token.balanceOf(
+      const initUnitsAvailable = await redeemableERC20Contract.balanceOf(
         sale.address
       );
 
@@ -351,9 +364,6 @@ describe("Sales queries test", function () {
     });
 
     it("should query correctly the null values", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
       const saleQuery = `
       {
         sale (id: "${sale.address.toLowerCase()}") {
@@ -385,9 +395,6 @@ describe("Sales queries test", function () {
     });
 
     it("should query the state configs after creation correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
       const statesQuery = `
         {
           sale (id: "${sale.address.toLowerCase()}") {
@@ -450,9 +457,6 @@ describe("Sales queries test", function () {
     });
 
     it("should query the correct ERC20 tokens", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
       const tokensQuery = `
         {
           sale (id: "${sale.address.toLowerCase()}") {
@@ -473,18 +477,15 @@ describe("Sales queries test", function () {
       const erc20Tokens = response.data.sale;
 
       expect(erc20Tokens.token.id).to.equals(
-        redeemableERC20Token.address.toLowerCase()
+        redeemableERC20Contract.address.toLowerCase()
       );
       expect(erc20Tokens.reserve.id).to.equals(reserve.address.toLowerCase());
     });
 
     it("should query the redeemableERC20 entity", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
       const query = `
         {
-          redeemableERC20 (id: "${redeemableERC20Token.address.toLowerCase()}") {
+          redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
             redeems{
               id
             }
@@ -517,10 +518,7 @@ describe("Sales queries test", function () {
     });
 
     it("should query the SaleRedeemableERC20 entity correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const saleRedeemableERC20 = redeemableERC20Token.address.toLowerCase();
+      const saleRedeemableERC20 = redeemableERC20Contract.address.toLowerCase();
       const query = `
         {
           redeemableERC20 (id: "${saleRedeemableERC20}") {
@@ -542,14 +540,14 @@ describe("Sales queries test", function () {
 
       // const queryData = response.data.saleRedeemableERC20;
 
-      // expect(queryData.symbol).to.equals(await redeemableERC20Token.symbol());
-      // expect(queryData.name).to.equals(await redeemableERC20Token.name());
+      // expect(queryData.symbol).to.equals(await redeemableERC20Contract.symbol());
+      // expect(queryData.name).to.equals(await redeemableERC20Contract.name());
       // expect(queryData.minimumTier).to.equals(Tier.ZERO);
       // expect(queryData.decimals).to.equals(
-      //   await redeemableERC20Token.decimals()
+      //   await redeemableERC20Contract.decimals()
       // );
       // expect(queryData.totalSupply).to.equals(
-      //   await redeemableERC20Token.totalSupply()
+      //   await redeemableERC20Contract.totalSupply()
       // );
       // expect(queryData.tier.address).to.equals(
       //   readWriteTier.address.toLowerCase()
@@ -562,10 +560,11 @@ describe("Sales queries test", function () {
         startBlock - (await ethers.provider.getBlockNumber())
       );
 
+      // Starting with signer1
       const tx = await sale.connect(signer1).start();
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced(1200);
 
       const query = `
         {
@@ -604,8 +603,13 @@ describe("Sales queries test", function () {
 
     it("should recognize the saleBuy after a buy correctly", async function () {
       // Values to Buy
+      const signer1Balance0 = await redeemableERC20Contract.balanceOf(
+        signer1.address
+      );
+
       const desiredUnits0 = totalTokenSupply.div(10);
-      const expectedPrice0 = basePrice.add(desiredUnits0.div(supplyDivisor));
+      const expectedPrice0 = basePrice;
+
       const expectedCost0 = expectedPrice0.mul(desiredUnits0).div(Util.ONE);
 
       buyConfig = {
@@ -623,10 +627,17 @@ describe("Sales queries test", function () {
         .connect(signer1)
         .approve(sale.address, expectedCost0.add(fee));
 
+      // give signer1 reserve to cover cost + fee
+      await reserve.transfer(signer1.address, expectedCost0.add(fee));
+
+      await reserve
+        .connect(signer1)
+        .approve(sale.address, expectedCost0.add(fee));
+
+      // buy 10% of total supply
       transaction = await sale.connect(signer1).buy(buyConfig);
 
-      const receipt = (await Util.getEventArgs(transaction, "Buy", sale))
-        .receipt;
+      const { receipt } = await Util.getEventArgs(transaction, "Buy", sale);
 
       const totalInCalculated = ethers.BigNumber.from(receipt.units)
         .mul(receipt.price)
@@ -637,7 +648,7 @@ describe("Sales queries test", function () {
       totalFees = totalFees.add(fee);
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced(1500);
 
       const query = `
         {
@@ -676,7 +687,7 @@ describe("Sales queries test", function () {
       await waitForSubgraphToBeSynced(1000);
 
       const percentRaised = totalRaised.div(minimumRaise);
-      const initUnitsAvailable = await redeemableERC20Token.balanceOf(
+      const initUnitsAvailable = await redeemableERC20Contract.balanceOf(
         sale.address
       );
 
@@ -706,6 +717,8 @@ describe("Sales queries test", function () {
     it("should query the Buy config values correctly", async function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
+
+      const txHash = transaction.hash.toLowerCase();
 
       const query = `
         {
@@ -832,7 +845,9 @@ describe("Sales queries test", function () {
 
     it("should query after minimum raise met correctly", async function () {
       // Buy all the remain supply to end
-      const desiredUnits0 = await redeemableERC20Token.balanceOf(sale.address);
+      const desiredUnits0 = await redeemableERC20Contract.balanceOf(
+        sale.address
+      );
       const expectedPrice0 = basePrice.add(desiredUnits0.div(supplyDivisor));
       const expectedCost0 = expectedPrice0.mul(desiredUnits0).div(Util.ONE);
 
@@ -860,7 +875,7 @@ describe("Sales queries test", function () {
         .mul(receipt.price)
         .div(ethers.BigNumber.from("1" + eighteenZeros));
 
-      const newUnitsAvailable = await redeemableERC20Token.balanceOf(
+      const newUnitsAvailable = await redeemableERC20Contract.balanceOf(
         sale.address
       );
 

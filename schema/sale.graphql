@@ -84,6 +84,7 @@ type SaleBuy @entity{
     maximumPrice: BigInt! #from Buy.maximumPrice
     receipt: SaleReceipt! #from Buy.receipt
     totalIn: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18)
+    refunded: Boolean!
 }
 
 # from the Refund event on Sale
@@ -109,6 +110,7 @@ type SaleReceipt @entity{
     fee: BigInt! #receipt.fee
     units: BigInt! #receipt.units
     price: BigInt! #receipt.price
+    saleTransaction: String!
 }
 
 # An entity to represent one feeRecipient for one Sale. 
