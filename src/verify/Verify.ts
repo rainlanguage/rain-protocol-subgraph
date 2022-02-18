@@ -9,11 +9,11 @@ export function handleApprove(event: Approve): void {
     verifyApprove.timestamp = event.block.timestamp
     verifyApprove.verifyContract = event.address
     verifyApprove.sender = event.params.sender
-    verifyApprove.account = event.params.sender
+    verifyApprove.account = event.params.account
     verifyApprove.data = event.params.data
     verifyApprove.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.sender.toHex())
+    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.NONE
     verifyAddress.status = Status.APPROVED
     let events  = verifyAddress.events
@@ -30,11 +30,11 @@ export function handleBan(event: Ban): void {
     ban.timestamp = event.block.timestamp
     ban.verifyContract = event.address
     ban.sender = event.params.sender
-    ban.account = event.params.sender
+    ban.account = event.params.account
     ban.data = event.params.data
     ban.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.sender.toHex())
+    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.NONE
     verifyAddress.status = Status.BANNED
     let events  = verifyAddress.events
@@ -50,11 +50,11 @@ export function handleRemove(event: Remove): void {
     verifyRemove.timestamp = event.block.timestamp
     verifyRemove.verifyContract = event.address
     verifyRemove.sender = event.params.sender
-    verifyRemove.account = event.params.sender
+    verifyRemove.account = event.params.account
     verifyRemove.data = event.params.data
     verifyRemove.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.sender.toHex())
+    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.NONE
     verifyAddress.status = Status.REMOVED
     let events  = verifyAddress.events
@@ -97,11 +97,11 @@ export function handleRequestBan(event: RequestBan): void {
     verifyRequestBan.transactionHash = event.transaction.hash
     verifyRequestBan.verifyContract = event.address
     verifyRequestBan.sender = event.params.sender
-    verifyRequestBan.account = event.params.sender
+    verifyRequestBan.account = event.params.account
     verifyRequestBan.data = event.params.data
     verifyRequestBan.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.sender.toHex())
+    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.REQUEST_BAN
     verifyAddress.status = Status.NONE
     let events  = verifyAddress.events
@@ -117,11 +117,11 @@ export function handleRequestRemove(event: RequestRemove): void {
     verifyRequestRemove.transactionHash = event.transaction.hash
     verifyRequestRemove.verifyContract = event.address
     verifyRequestRemove.sender = event.params.sender
-    verifyRequestRemove.account = event.params.sender
+    verifyRequestRemove.account = event.params.account
     verifyRequestRemove.data = event.params.data
     verifyRequestRemove.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.sender.toHex())
+    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.REQUEST_REMOVE
     verifyAddress.status = Status.NONE
     let events  = verifyAddress.events

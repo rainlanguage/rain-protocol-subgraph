@@ -140,7 +140,7 @@ const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
 const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
-describe("Subgraph Tier Test", function () {
+xdescribe("Subgraph Tier Test", function () {
   before("connecting and deploy fresh contracts", async function () {
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
     reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;

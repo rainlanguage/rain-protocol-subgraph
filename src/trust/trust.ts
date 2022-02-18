@@ -13,9 +13,9 @@ import {
 import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ERC20 as ERC20Schema, SeedERC20, Trust, TrustFactory } from "../../generated/schema"
 import { Address, dataSource, DataSourceContext, log, BigInt } from '@graphprotocol/graph-ts'
 import { ERC20 } from "../../generated/TrustFactory/ERC20"
-import { Trust as TrustContract } from "../../generated/TrustFactory/Trust"
+import { Trust as TrustContract } from "../../generated/templates/TrustTemplate/Trust"
 import { PoolTemplate, RedeemableERC20Template, SeedERC20Template } from '../../generated/templates'
-import { HUNDRED_BD, ZERO_BI, BONE, MIN_WEIGHT, MAX_WEIGHT } from "../utils"
+import { HUNDRED_BD, ZERO_BI, BONE, ZERO_BD, ONE_BI } from "../utils"
 
 export function handleConstruction(event: Construction): void {
     let context = dataSource.context()
@@ -61,7 +61,6 @@ export function handleInitialize(event: Initialize): void {
     contracts.save()
  
     // DistributionProgess creation
-
     let distributionProgress = new DistributionProgress(trustAddress.toHex())
     distributionProgress.distributionStatus = trustContract.getDistributionStatus()
     distributionProgress.successPoolBalance = event.params.successBalance
@@ -213,6 +212,9 @@ function createSeedERC20(event: Initialize): string {
     seedERC20.factory = trustFactory.seedERC20Factory
     seedERC20.sender = event.transaction.from
     seedERC20.seederFee = event.params.config.seederFee
+    seedERC20.seederUnits = ONE_BI
+    seedERC20.seedFeePerUnit = ONE_BI
+
 
     let name = seedERC20Contract.try_name()
     let symbol = seedERC20Contract.try_symbol()
@@ -234,7 +236,7 @@ function createSeedERC20(event: Initialize): string {
     seedERC20.redeemSeed = []
     
     seedERC20.seededAmount = ZERO_BI
-    seedERC20.percentSeeded = ZERO_BI
+    seedERC20.percentSeeded = ZERO_BD
     seedERC20.save()
 
     let context = new DataSourceContext()

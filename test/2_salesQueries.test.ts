@@ -145,7 +145,7 @@ let subgraph: ApolloFetch,
   buyConfig: BuyConfig,
   transaction: ContractTransaction; // Use to save the tx between statements
 
-describe("Sales queries test", function () {
+xdescribe("Sales queries test", function () {
   before("getting the factory", async function () {
     reserve = (await deploy(
       reserveTokenJson,

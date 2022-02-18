@@ -1037,7 +1037,7 @@ describe("Subgraph Trusts Test", function () {
       });
       const data = queryResponse.data.seedERC20;
 
-      expect(data.sender).to.equals(deployer.address.toLowerCase());
+      expect(data.sender).to.equals(creator.address.toLowerCase());
       expect(data.reserve).to.equals(reserve.address.toLowerCase());
       expect(data.factory).to.equals(seedERC20Factory.address.toLowerCase());
       expect(data.recipient).to.equals(trust.address.toLowerCase());
@@ -1382,6 +1382,7 @@ describe("Subgraph Trusts Test", function () {
         query: query,
       });
       const data = queryResponse.data.seedERC20;
+      console.log("SeedERC20 : ", JSON.stringify(data))
 
       expect(data.seeds).to.have.lengthOf(1);
       expect(data.seeds).to.deep.include({ id: seedId });
@@ -3209,7 +3210,7 @@ describe("Subgraph Trusts Test", function () {
       const data = queryResponse.data.trust.distributionProgress;
 
       expect(data.minimumRaise).to.equals("0");
-      expect(data.percentRaised).to.equals("100.0");
+      expect(data.percentRaised).to.equals("100");
     });
   });
 });

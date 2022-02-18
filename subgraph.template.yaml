@@ -295,6 +295,10 @@ templates:
           file: ./abis/SeedERC20.json
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: CooldownInitialize(address,uint256)
           handler: handleCooldownInitialize

@@ -17,7 +17,6 @@ export function handleNewChild(event: NewChild): void {
     trust.deployTimestamp = event.block.timestamp
     trust.trustParticipants = []
     trust.notices = []
-    
     trust.save()
 
     let trusts = trustFactory.trusts

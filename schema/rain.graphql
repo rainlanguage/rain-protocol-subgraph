@@ -77,7 +77,7 @@ type DistributionProgress @entity {
     successPoolBalance: BigInt #Trust.successBalance()
     finalBalance: BigInt #Trust.finalBalance()
     reserveInit: BigInt! #Trust.getDistributionProgress() => uint256 reserveInit
-    redeemInit: BigInt #Trust.getDistributionProgress() => uint256 redeemInit
+    redeemInit: BigInt! #Trust.getDistributionProgress() => uint256 redeemInit
     minimumRaise: BigInt #minimumCreatorRaise + redeemInit + Trust.SeedERC20.seederFee
     amountRaised: BigInt # = poolReserveBalance - reserveInit
     percentRaised: BigDecimal # = amountRaised / minimumRaise
@@ -180,17 +180,17 @@ type SeedERC20 @entity{
     # Update after Trust construction
     sender: Bytes
     recipient: Bytes
-    reserve: Bytes
+    reserve: Bytes!
     seedPrice: BigInt
     factory: Bytes #Trust.seedERC20Factory()
     seederFee: BigInt #Trust.seederFee()
     seederUnits: BigInt #Trust.seederUnits()
-    seedFeePerUnit: BigInt # = seederFee / seederUnits
+    seedFeePerUnit: BigInt! # = seederFee / seederUnits
     seederCooldownDuration: BigInt #Trust.seederCooldownDuration()
     # Update after Seed event
     seederUnitsAvail: BigInt #SeedERC20.balanceOf(this)
     seededAmount: BigInt #ReserveERC20.balanceOf(this)
-    percentSeeded: BigInt #SeedERC20.seededAmount / Trust.redeemInit()
+    percentSeeded: BigDecimal #SeedERC20.seededAmount / Trust.redeemInit()
     seeds: [Seed!] #Seed events
     unseeds: [Unseed!] #Unseed events
     #...Token interface fields. Update after Trust construction
@@ -228,7 +228,7 @@ type Unseed @entity {
     id: ID!
     caller: Bytes! #the address that was transferred to/from
     seedERC20: SeedERC20! #the seedERC20 that emitted the event
-    reserveReceived: BigInt! #the reserve amount that was transferred
+    reserveReturned: BigInt! #the reserve amount that was transferred
     tokensSeeded: BigInt! #the amount of SeedERC20 that was transferred
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed

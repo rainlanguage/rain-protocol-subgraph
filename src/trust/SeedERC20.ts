@@ -1,9 +1,11 @@
 
-import { dataSource, log } from "@graphprotocol/graph-ts";
-import { Seed, Unseed, SeedERC20, Holder } from "../../generated/schema";
+import { Address, dataSource, log } from "@graphprotocol/graph-ts";
+import { Seed, Unseed, SeedERC20, Holder, DistributionProgress, Contract } from "../../generated/schema";
 import { CooldownInitialize, Initialize, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../../generated/templates/SeedERC20Template/SeedERC20";
-import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "../utils";
-import { SeedERC20 as SeedERC20Contract } from "../../generated/TrustFactory/SeedERC20"
+import { getTrustParticipent, HUNDRED_BD, ZERO_ADDRESS, ZERO_BI } from "../utils";
+import { SeedERC20 as SeedERC20Contract } from "../../generated/templates/SeedERC20Template/SeedERC20"
+import { ERC20 } from "../../generated/TrustFactory/ERC20";
+import { Trust } from "../../generated/TrustFactory/Trust"
 
 export function  handleCooldownInitialize(event: CooldownInitialize): void {
     let seedERC20 = SeedERC20.load(event.address.toHex())
@@ -13,6 +15,8 @@ export function  handleCooldownInitialize(event: CooldownInitialize): void {
 
 export function handleSeed(event: SeedEvent): void {
     let seedERC20 = SeedERC20.load(event.address.toHex())
+    let context = dataSource.context()
+    let distributionProgess = DistributionProgress.load(context.getString("trust"))
 
     let seed = new Seed(event.transaction.hash.toHex())
     seed.deployBlock = event.block.number
@@ -27,19 +31,34 @@ export function handleSeed(event: SeedEvent): void {
     let seeds = seedERC20.seeds
     seeds.push(seed.id)
     seedERC20.seeds = seeds
-    seedERC20.seederUnitsAvail = seedERC20.seederUnitsAvail.minus(event.params.tokensSeeded) // Here
+    
+    seedERC20.seededAmount = seedERC20.seededAmount.plus(event.params.reserveReceived)
+  
+    seedERC20.seederUnitsAvail = seedERC20.seederUnitsAvail.minus(event.params.tokensSeeded)
+
+    if(distributionProgess.redeemInit != ZERO_BI)
+        seedERC20.percentSeeded = seedERC20.seededAmount.toBigDecimal().div(distributionProgess.redeemInit.toBigDecimal()).times(HUNDRED_BD)
     seedERC20.save()
 
-    let context = dataSource.context()
     let trustParticipant = getTrustParticipent(event.params.sender, context.getString("trust"))
+
+    let tbalance = SeedERC20Contract.bind(event.address).balanceOf(event.params.sender)
+    trustParticipant.seedFeeClaimable = tbalance.times(seedERC20.seedFeePerUnit)
     let tseeds = trustParticipant.seeds
     tseeds.push(seed.id)
     trustParticipant.seeds = tseeds
     trustParticipant.save()
+
+    let trust = Trust.bind(Address.fromString(context.getString("trust")))
+    distributionProgess.distributionStatus = trust.getDistributionStatus()
+    distributionProgess.save()
 }
 
 export function handleUnseed(event: UnseedEvent): void {
     let seedERC20 = SeedERC20.load(event.address.toHex())
+
+    let context = dataSource.context()
+    let distributionProgess = DistributionProgress.load(context.getString("trust"))
 
     let unseed = new Unseed(event.transaction.hash.toHex())
     unseed.deployBlock = event.block.number
@@ -47,18 +66,27 @@ export function handleUnseed(event: UnseedEvent): void {
     unseed.seedERC20 = seedERC20.id
     unseed.caller = event.params.sender
     unseed.tokensSeeded = event.params.tokensUnseeded
-    unseed.reserveReceived = event.params.reserveReturned
+    unseed.reserveReturned = event.params.reserveReturned
 
     unseed.save()
 
     let unseeds = seedERC20.unseeds
     unseeds.push(unseed.id)
     seedERC20.unseeds = unseeds
-    seedERC20.seederUnitsAvail = seedERC20.seederUnitsAvail.plus(event.params.tokensUnseeded) // Here
+
+    seedERC20.seededAmount = seedERC20.seededAmount.minus(event.params.reserveReturned)
+  
+    if(distributionProgess.redeemInit != ZERO_BI)
+        seedERC20.percentSeeded = seedERC20.seededAmount.toBigDecimal().div(distributionProgess.redeemInit.toBigDecimal()).times(HUNDRED_BD)
     seedERC20.save()
 
-    let context = dataSource.context()
+    seedERC20.seederUnitsAvail = seedERC20.seederUnitsAvail.plus(event.params.tokensUnseeded)
+    seedERC20.save()
+
     let trustParticipant = getTrustParticipent(event.params.sender, context.getString("trust"))
+
+    let tbalance = SeedERC20Contract.bind(event.address).balanceOf(event.params.sender)
+    trustParticipant.seedFeeClaimable = tbalance.times(seedERC20.seedFeePerUnit)
     let tunseeds = trustParticipant.unSeeds
     tunseeds.push(unseed.id)
     trustParticipant.unSeeds = tunseeds
@@ -87,7 +115,9 @@ export function handleTransfer(event: Transfer): void {
                 sender.balance = seedERC20Contract.balanceOf(event.params.from)
             }
             sender.balance = sender.balance.minus(event.params.value)
+            sender.save()
         }
+
         if(event.params.to.toHex() != ZERO_ADDRESS){
             let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
             if(receiver == null){
