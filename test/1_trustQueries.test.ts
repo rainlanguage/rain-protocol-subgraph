@@ -1172,7 +1172,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Because any tx with the DutchAuction has not started yet
       expect(data.poolReserveBalance).to.be.null;
-      expect(data.poolTokenBalance).to.be.null;
+      expect(data.poolRedeemableBalance).to.be.null;
       expect(data.amountRaised).to.be.null;
       expect(data.percentRaised).to.be.null;
       expect(data.percentAvailable).to.be.null;
@@ -1998,7 +1998,7 @@ describe("Subgraph Trusts Test", function () {
         minimumCreatorRaise.add(redeemInit).add(seederFee)
       );
 
-      // poolTokenBalance / RedeemableERC20.totalSupply
+      // poolRedeemableBalance / RedeemableERC20.totalSupply
       const percentAvailableExpected = poolTokenBalanceExpected.div(
         redeemableERC20Config.initialSupply
       );
@@ -2007,7 +2007,7 @@ describe("Subgraph Trusts Test", function () {
         {
           distributionProgress (id: "${trust.address.toLowerCase()}") {
             poolReserveBalance
-            poolTokenBalance
+            poolRedeemableBalance
             amountRaised
             percentRaised
             percentAvailable
@@ -2021,7 +2021,7 @@ describe("Subgraph Trusts Test", function () {
       const data = queryResponse.data.distributionProgress;
 
       expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
-      expect(data.poolTokenBalance).to.equals(poolTokenBalanceExpected);
+      expect(data.poolRedeemableBalance).to.equals(poolTokenBalanceExpected);
       expect(data.amountRaised).to.equals(amountRaisedExpected);
       expect(data.percentRaised).to.equals(percentRaisedExpected);
       expect(data.percentAvailable).to.equals(percentAvailableExpected);
@@ -2331,7 +2331,7 @@ describe("Subgraph Trusts Test", function () {
         minimumCreatorRaise.add(redeemInit).add(seederFee)
       );
 
-      // poolTokenBalance / RedeemableERC20.totalSupply
+      // poolRedeemableBalance / RedeemableERC20.totalSupply
       const percentAvailableExpected = poolTokenBalanceExpected.div(
         redeemableERC20Config.initialSupply
       );
@@ -2340,7 +2340,7 @@ describe("Subgraph Trusts Test", function () {
         {
           distributionProgress (id: "${trust.address.toLowerCase()}") {
             poolReserveBalance
-            poolTokenBalance
+            poolRedeemableBalance
             amountRaised
             percentRaised
             percentAvailable
@@ -2354,7 +2354,7 @@ describe("Subgraph Trusts Test", function () {
       const data = queryResponse.data.distributionProgress;
 
       expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
-      expect(data.poolTokenBalance).to.equals(poolTokenBalanceExpected);
+      expect(data.poolRedeemableBalance).to.equals(poolTokenBalanceExpected);
       expect(data.amountRaised).to.equals(amountRaisedExpected);
       expect(data.percentRaised).to.equals(percentRaisedExpected);
       expect(data.percentAvailable).to.equals(percentAvailableExpected);
@@ -2999,7 +2999,7 @@ describe("Subgraph Trusts Test", function () {
       crpContract = (await Util.poolContracts(creator, trust)).crp;
 
       // Wait for Sync
-      await Util.delay(Util.wait * 2);
+      await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(2000);
     });
 

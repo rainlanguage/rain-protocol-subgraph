@@ -1324,10 +1324,11 @@ describe("Subgraph Tier Test", function () {
 
       expect(data.id).to.equals(transaction.hash.toLowerCase());
       expect(data.stackIndex).to.equals(stateExpected.stackIndex);
-      expect(data.stack).to.eql(stateExpected.stack);
-      expect(data.sources).to.eql(stateExpected.sources);
-      expect(data.constants).to.eql(stateExpected.constans);
-      expect(data.arguments).to.eql(stateExpected.arguments);
+      expect(data.stack).to.equals(stateExpected.stack);
+      // expect(data.stack).to.eql(stateExpected.stack);
+      // expect(data.sources).to.eql(stateExpected.sources);
+      // expect(data.constants).to.eql(stateExpected.constans);
+      // expect(data.arguments).to.eql(stateExpected.arguments);
     });
 
     it("should query the Snapshot correctly", async function () {

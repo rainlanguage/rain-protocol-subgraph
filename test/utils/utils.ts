@@ -289,22 +289,23 @@ export const saleDeploy = async (
  * @param factory - the factory that contain the `createChildTyped()` function to create a child.
  * @param childtArtifact - the child artifact that will be created.
  * @param args - the arguments necessaries to create the child. Should be passed inside an array.
- * @param creator - (optional) the signer that will be connected the child contract. Same as contractFactory if not provided
+ * @param creator - (optional) the signer that will create the child and will be connected to. Same as contractFactory if not provided
  * @returns The child contract connected to the signer
  */
 export const createChildTyped = async (
   factory: Contract,
   childtArtifact: Artifact,
   args: any[],
-  creator?: SignerWithAddress
+  creator: SignerWithAddress = null
 ): Promise<Contract> => {
+  factory = creator === null ? factory : factory.connect(creator);
   const txDeploy = await factory.createChildTyped(...args);
 
   const child = (await getContractChild(
     txDeploy,
     factory,
     childtArtifact,
-    creator || null
+    creator
   )) as Contract;
 
   return child;
