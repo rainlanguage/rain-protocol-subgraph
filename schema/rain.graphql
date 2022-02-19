@@ -161,6 +161,7 @@ type RedeemableERC20 @entity {
     deployBlock: BigInt #the block the contract was deployed
     deployTimestamp: BigInt #the timestamp the contract was deployed
     erc20Pull: ERC20Pull
+    tier: TierContract
 }
 
 type Redeem @entity {

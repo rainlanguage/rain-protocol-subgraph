@@ -2,7 +2,7 @@
 import { Address, dataSource, log } from "@graphprotocol/graph-ts";
 import { Seed, Unseed, SeedERC20, Holder, DistributionProgress, Contract } from "../../generated/schema";
 import { CooldownInitialize, Initialize, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../../generated/templates/SeedERC20Template/SeedERC20";
-import { getTrustParticipent, HUNDRED_BD, ZERO_ADDRESS, ZERO_BI } from "../utils";
+import { getTrustParticipent, HUNDRED_BD, notAContract, ZERO_ADDRESS, ZERO_BI } from "../utils";
 import { SeedERC20 as SeedERC20Contract } from "../../generated/templates/SeedERC20Template/SeedERC20"
 import { ERC20 } from "../../generated/TrustFactory/ERC20";
 import { Trust } from "../../generated/TrustFactory/Trust"
@@ -106,9 +106,10 @@ export function handleTransfer(event: Transfer): void {
     if (event.params.value != ZERO_BI) {
         let seedERC20 = SeedERC20.load(event.address.toHex())
         let seedERC20Contract = SeedERC20Contract.bind(event.address)
+        let context = dataSource.context()
         
         let holders = seedERC20.holders
-        if(event.params.from.toHex() != ZERO_ADDRESS){
+        if(notAContract(event.params.from.toHex(), context.getString("trust"))){
             let sender = Holder.load(event.address.toHex() + " - " + event.params.from.toHex())
             if(sender == null){
                 sender = new Holder(event.address.toHex() + " - " + event.params.from.toHex())
@@ -118,7 +119,7 @@ export function handleTransfer(event: Transfer): void {
             sender.save()
         }
 
-        if(event.params.to.toHex() != ZERO_ADDRESS){
+        if(notAContract(event.params.to.toHex(), context.getString("trust"))){
             let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
             if(receiver == null){
                 receiver = new Holder(event.address.toHex() + " - " + event.params.to.toHex())
