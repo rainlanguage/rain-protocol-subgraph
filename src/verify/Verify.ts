@@ -1,6 +1,7 @@
+import { Address } from "@graphprotocol/graph-ts"
 import { Verify, VerifyAddress, VerifyApprove, VerifyBan, VerifyRemove, VerifyRequestApprove, VerifyRequestBan, VerifyRequestRemove } from "../../generated/schema"
 import { Approve, Ban, Remove, RequestApprove, RequestBan, RequestRemove, RoleAdminChanged, RoleGranted, RoleRevoked} from "../../generated/templates/VerifyTemplate/Verify"
-import { RequestStatus, Status } from "../utils"
+import { RequestStatus, Role, Status } from "../utils"
 
 export function handleApprove(event: Approve): void {
     let verifyApprove = new VerifyApprove(event.address.toHex() + " - " + event.transaction.hash.toHex())
@@ -13,13 +14,37 @@ export function handleApprove(event: Approve): void {
     verifyApprove.data = event.params.data
     verifyApprove.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
+    let verifyAddress = getverifyAddress(event.address.toHex(),event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.NONE
     verifyAddress.status = Status.APPROVED
     let events  = verifyAddress.events
     events.push(verifyApprove.id)
     verifyAddress.events = events
     verifyAddress.save()
+
+    let role = getverifyAddress(event.address.toHex(),event.params.sender.toHex())
+    
+    let roles = role.roles
+    if(!roles.includes(Role.APPROVER))
+        roles.push(Role.APPROVER)
+    role.roles = roles
+
+    let roleEvents  = role.events
+    roleEvents.push(verifyApprove.id)
+    role.events = roleEvents
+    role.save()
+
+    let verify = Verify.load(event.address.toHex())
+    let approvers = verify.approvers
+    if(!approvers.includes(role.id))
+        approvers.push(role.id)
+    verify.approvers = approvers
+    
+    let verifyAddresses = verify.verifyAddresses
+    if(!verifyAddresses.includes(role.id))
+        verifyAddresses.push(role.id)
+    verify.verifyAddresses = verifyAddresses
+    verify.save()
 
 }
 
@@ -34,13 +59,37 @@ export function handleBan(event: Ban): void {
     ban.data = event.params.data
     ban.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
+    let verifyAddress = getverifyAddress(event.address.toHex(),event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.NONE
     verifyAddress.status = Status.BANNED
     let events  = verifyAddress.events
     events.push(ban.id)
     verifyAddress.events = events
     verifyAddress.save()
+
+    let role = getverifyAddress(event.address.toHex(),event.params.sender.toHex())
+    
+    let roles = role.roles
+    if(!roles.includes(Role.BANNER))
+        roles.push(Role.BANNER)
+    role.roles = roles    
+
+    let roleEvents  = role.events
+    roleEvents.push(ban.id)
+    role.events = roleEvents
+    role.save()
+
+    let verify = Verify.load(event.address.toHex())
+    let banners = verify.banners
+    if(!banners.includes(role.id))
+        banners.push(role.id)
+    verify.banners = banners
+
+    let verifyAddresses = verify.verifyAddresses
+    if(!verifyAddresses.includes(role.id))
+        verifyAddresses.push(role.id)
+    verify.verifyAddresses = verifyAddresses
+    verify.save()
 }
 
 export function handleRemove(event: Remove): void {
@@ -54,13 +103,37 @@ export function handleRemove(event: Remove): void {
     verifyRemove.data = event.params.data
     verifyRemove.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
+    let verifyAddress = getverifyAddress(event.address.toHex(),event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.NONE
     verifyAddress.status = Status.REMOVED
     let events  = verifyAddress.events
     events.push(verifyRemove.id)
     verifyAddress.events = events
     verifyAddress.save()
+
+    let role = getverifyAddress(event.address.toHex(),event.params.sender.toHex())
+    
+    let roles = role.roles
+    if(!roles.includes(Role.REMOVER))
+    roles.push(Role.REMOVER)
+    role.roles = roles
+
+    let roleEvents  = role.events
+    roleEvents.push(verifyRemove.id)
+    role.events = roleEvents
+    role.save()
+
+    let verify = Verify.load(event.address.toHex())
+    let removers = verify.removers
+    if(!removers.includes(role.id))
+        removers.push(role.id)
+    verify.removers = removers
+
+    let verifyAddresses = verify.verifyAddresses
+    if(!verifyAddresses.includes(role.id))
+        verifyAddresses.push(role.id)
+    verify.verifyAddresses = verifyAddresses
+    verify.save()
 }
 
 export function handleRequestApprove(event: RequestApprove): void {
@@ -75,23 +148,16 @@ export function handleRequestApprove(event: RequestApprove): void {
     verifyRequestApprove.save()
 
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.sender.toHex()) 
-    if(verifyAddress == null){
-        verifyAddress = new VerifyAddress(event.address.toHex() + " - " + event.params.sender.toHex()) 
-        verifyAddress.verifyContract = event.address.toHex()
-        verifyAddress.address = event.params.sender
-        verifyAddress.status = Status.NONE
-        verifyAddress.events = []
-        
-        let verify = Verify.load(event.address.toHex())
-        let verifyAddresses = verify.verifyAddresses
-        verifyAddresses.push(verifyAddress.id)
-        verify.verifyAddresses = verifyAddresses
-        verify.save()
-    }
-
+    let verifyAddress = getverifyAddress(event.address.toHex(),event.params.sender.toHex())
     verifyAddress.requestStatus = RequestStatus.REQUEST_APPROVE
     
+    let verify = Verify.load(event.address.toHex())
+    let verifyAddresses = verify.verifyAddresses
+    if(!verifyAddresses.includes(verifyAddress.id))
+        verifyAddresses.push(verifyAddress.id)
+    verify.verifyAddresses = verifyAddresses
+    verify.save()
+ 
     let events  = verifyAddress.events
     events.push(verifyRequestApprove.id)
     verifyAddress.events = events
@@ -129,7 +195,7 @@ export function handleRequestRemove(event: RequestRemove): void {
     verifyRequestRemove.data = event.params.data
     verifyRequestRemove.save()
 
-    let verifyAddress = VerifyAddress.load(event.address.toHex() + " - " + event.params.account.toHex())
+    let verifyAddress = getverifyAddress(event.address.toHex(),event.params.account.toHex())
     verifyAddress.requestStatus = RequestStatus.REQUEST_REMOVE
     let events  = verifyAddress.events
     events.push(verifyRequestRemove.id)
@@ -147,4 +213,18 @@ export function handleRoleGranted(event: RoleGranted): void {
 
 export function handleRoleRevoked(event: RoleRevoked): void {
 
+}
+
+function getverifyAddress(verifyContract: string, account: string): VerifyAddress {
+    let verifyAddress = VerifyAddress.load(verifyContract + " - " + account)
+    if(verifyAddress == null){
+        verifyAddress = new VerifyAddress(verifyContract + " - " + account)
+        verifyAddress.verifyContract = verifyContract
+        verifyAddress.address = Address.fromString(account)
+        verifyAddress.status = Status.NONE
+        verifyAddress.requestStatus = RequestStatus.NONE
+        verifyAddress.roles = []
+        verifyAddress.events = []
+    }
+    return verifyAddress as VerifyAddress 
 }

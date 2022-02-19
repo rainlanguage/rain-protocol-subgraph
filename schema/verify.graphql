@@ -13,7 +13,10 @@ type Verify @entity{
     deployer: Bytes! #address of the deployer - get from event Initialize.sender
     factory: VerifyFactory! #the factory that deployed this contract
     #contruct and update by listening to the RequestApprove, Approve, RequestBan, Ban, RequestRemove, Remove events
-    verifyAddresses: [VerifyAddress!] 
+    verifyAddresses: [VerifyAddress!]
+    approvers: [Role!]
+    removers: [Role!]
+    banners: [Role!]
 }
 
 interface VerifyEvent {
@@ -99,8 +102,13 @@ type VerifyRemove implements VerifyEvent @entity{
     data: Bytes! #event Remove.data
 }
 
+interface Role {
+    address: Bytes!
+    roles: [Int!]
+}
+
 # Created after the first RequestApprove event for an address
-type VerifyAddress @entity{
+type VerifyAddress implements Role @entity{
     id: ID! #concat {Verify.address}+{VerifyAddress.address}
     verifyContract: Verify!
     address: Bytes! #the account address
@@ -111,4 +119,5 @@ type VerifyAddress @entity{
     # After the RequestApprove event and before Approve, status should be 'NONE'.
     status: Int!
     events: [VerifyEvent!] #all the event entities associated with this address for this Verify
+    roles: [Int!]
 }
