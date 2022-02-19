@@ -189,9 +189,10 @@ describe("Subgraph Tier Test", function () {
       // Increase the counter by 1
       eventCounter++;
       eventsSigner1++;
-
+      
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
+      console.log(eventCounter);
 
       const requestId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -345,6 +346,7 @@ describe("Subgraph Tier Test", function () {
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1200);
+      console.log(eventCounter);
 
       const approveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLocaleLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -494,6 +496,7 @@ describe("Subgraph Tier Test", function () {
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
+      console.log(eventCounter);
 
       const requestRemoveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -649,6 +652,7 @@ describe("Subgraph Tier Test", function () {
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1200);
+      console.log(eventCounter);
 
       const removeId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -789,6 +793,7 @@ describe("Subgraph Tier Test", function () {
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1300);
+      console.log(eventCounter);
 
       const requestBanId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -928,6 +933,7 @@ describe("Subgraph Tier Test", function () {
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1200);
+      console.log(eventCounter);
 
       const banId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
