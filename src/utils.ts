@@ -41,6 +41,13 @@ export enum Transferrable {
     TierGatedTransferrable
 }
 
+export enum Role {
+    NONE,
+    APPROVER,
+    REMOVER,
+    BANNER
+}
+
 
 
 export {

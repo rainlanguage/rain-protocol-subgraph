@@ -13,6 +13,9 @@ export function handleNewChild(event: NewChild): void {
     verify.deployer = event.transaction.from
     verify.factory = verifyFactory.id
     verify.verifyAddresses = []
+    verify.approvers = []
+    verify.removers = []
+    verify.banners = []
     verify.save()
 
     let children = verifyFactory.children
@@ -28,6 +31,7 @@ export function handleImplementation(event: Implementation): void {
     verifyFactory.address = event.address
     verifyFactory.implementation = event.params.implementation
     verifyFactory.children = []
+    
     verifyFactory.save()
 }
 
