@@ -68,6 +68,7 @@ describe("Subgraph Tier Test", function () {
     let eventCounter = 0;
     let eventsSigner1 = 0;
     let eventsSigner2 = 0;
+    let eventsAdmin = 0;
     it("should query VerifyFactory correctly after construction", async function () {
       // Get the verify implementation
       const implementation = (
@@ -192,7 +193,6 @@ describe("Subgraph Tier Test", function () {
       
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
-      console.log(eventCounter);
 
       const requestId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -343,10 +343,10 @@ describe("Subgraph Tier Test", function () {
       // Increase the counter by 1
       eventCounter++;
       eventsSigner1++;
+      eventsAdmin++;
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1200);
-      console.log(eventCounter);
 
       const approveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLocaleLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -429,7 +429,7 @@ describe("Subgraph Tier Test", function () {
       expect(data.data).to.equals(evidenceApprove);
     });
 
-    it("should update the verifyAddress after Approve", async function () {
+    it("should update the verifyAddress that has been Approve", async function () {
       const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
 
@@ -473,6 +473,35 @@ describe("Subgraph Tier Test", function () {
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
 
+    it("should update the verifyAddress  that has Approved the user", async function () {
+      const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+
+      const query = `
+        {
+          verifyAddress (id: "${adminId}") {
+            requestStatus
+            status
+            events {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.verifyAddress;
+
+      // Expected VerifyAddress values
+      expect(data.requestStatus).to.equals(RequestStatus.NONE);
+      expect(data.status).to.equals(Status.NONE);
+
+      expect(data.events).to.have.lengthOf(eventsAdmin);
+      expect(data.events).to.deep.include({ id: verifyEventId });
+    });
+
     it("should query the VerifyRequestRemove after a RequestRemove", async function () {
       // signer2 requestAdd and admin approve
       await verify.connect(signer2).add(evidenceEmpty);
@@ -496,7 +525,6 @@ describe("Subgraph Tier Test", function () {
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
-      console.log(eventCounter);
 
       const requestRemoveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -637,7 +665,6 @@ describe("Subgraph Tier Test", function () {
       const data = response.data.verifyAddress;
 
       // Expected VerifyAddress values
-      console.log("events : ", JSON.stringify(data))
       expect(data.events).to.have.lengthOf(eventsSigner1); // requestApprove, Approve and requestRemove
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
@@ -651,10 +678,10 @@ describe("Subgraph Tier Test", function () {
       // Increase the counter by 1
       eventCounter++;
       eventsSigner2++;
+      eventsAdmin++;
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1200);
-      console.log(eventCounter);
 
       const removeId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -773,13 +800,42 @@ describe("Subgraph Tier Test", function () {
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
 
+    it("should update the verifyAddress  that has Removed the user", async function () {
+      const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+
+      const query = `
+        {
+          verifyAddress (id: "${adminId}") {
+            requestStatus
+            status
+            events {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.verifyAddress;
+
+      // Expected VerifyAddress values
+      expect(data.requestStatus).to.equals(RequestStatus.NONE);
+      expect(data.status).to.equals(Status.NONE);
+
+      expect(data.events).to.have.lengthOf(eventsAdmin);
+      expect(data.events).to.deep.include({ id: verifyEventId });
+    });
+
     it("should query the VerifyRequestBan after a RequestBan", async function () {
       // signer2 request to be added again and admin approve
       await verify.connect(signer2).add(evidenceEmpty);
       await verify.connect(admin).approve(signer2.address, evidenceEmpty);
       // Then, increase the counter by 2
       eventCounter += 2;
-      eventsSigner2++;
+      eventsSigner2 += 2;
 
       // signer1 request signer2 to be banned
       transaction = await verify
@@ -795,7 +851,6 @@ describe("Subgraph Tier Test", function () {
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1300);
-      console.log(eventCounter);
 
       const requestBanId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -932,10 +987,10 @@ describe("Subgraph Tier Test", function () {
       // Increase the counter by 1
       eventCounter++;
       eventsSigner2++;
+      eventsAdmin++;
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1200);
-      console.log(eventCounter);
 
       const banId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -1051,6 +1106,35 @@ describe("Subgraph Tier Test", function () {
       expect(data.status).to.equals(Status.BANNED);
 
       expect(data.events).to.have.lengthOf(eventsSigner2);
+      expect(data.events).to.deep.include({ id: verifyEventId });
+    });
+
+    it("should update the verifyAddress that has Banned the user", async function () {
+      const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+
+      const query = `
+        {
+          verifyAddress (id: "${adminId}") {
+            requestStatus
+            status
+            events {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.verifyAddress;
+
+      // Expected VerifyAddress values
+      expect(data.requestStatus).to.equals(RequestStatus.NONE);
+      expect(data.status).to.equals(Status.NONE);
+
+      expect(data.events).to.have.lengthOf(eventsAdmin);
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
   });
