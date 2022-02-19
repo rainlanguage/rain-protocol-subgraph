@@ -2852,7 +2852,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  describe("Trust with a non-SeedERC20 contract as Seeder", function () {
+  xdescribe("Trust with a non-SeedERC20 contract as Seeder", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -2989,7 +2989,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  describe("Trust with a zero as minimunRaise", function () {
+  xdescribe("Trust with a zero as minimunRaise", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
