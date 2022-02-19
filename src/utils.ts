@@ -80,3 +80,21 @@ export function getTrustParticipent(participant: Address, trust: string) : Trust
     trustParticipant.tokenBalance = redeemableERC20Contract.balanceOf(participant)
     return trustParticipant as TrustParticipant
 }
+
+
+export function notAContract(address: string, trust: string): boolean {
+    let contracts = Contract.load(trust)
+    if(address == ZERO_ADDRESS)
+        return false
+    if(contracts.seeder == address)
+        return false
+    if(contracts.redeemableERC20 == address)
+        return false
+    if(contracts.reserveERC20 == address)
+        return false
+    if(contracts.crp == address)
+        return false
+    if(contracts.pool == address)
+        return false
+    return true
+}

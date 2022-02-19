@@ -1,6 +1,6 @@
 import { ERC20Pull, Holder, RedeemableERC20, TreasuryAsset, TreasuryAssetCaller, Redeem, Contract, ERC20BalanceTier, ERC20TransferTier, ERC721BalanceTier, VerifyTier, CombineTier, UnknownTier} from "../../generated/schema"
 import { Initialize, Receiver, Sender, Transfer, ERC20PullInitialize, Redeem as RedeemEvent , TreasuryAsset as TreasuryAssetEvent} from "../../generated/templates/RedeemableERC20Template/RedeemableERC20"
-import { getTrustParticipent, ZERO_ADDRESS, ZERO_BI } from "../utils"
+import { getTrustParticipent, notAContract, ZERO_ADDRESS, ZERO_BI } from "../utils"
 import { RedeemableERC20 as RedeemabaleERC20Contract, TierByConstructionInitialize } from "../../generated/TrustFactory/RedeemableERC20"
 import { ERC20 } from "../../generated/TrustFactory/ERC20"
 import { Address, dataSource ,log } from "@graphprotocol/graph-ts"
@@ -31,13 +31,16 @@ export function handleReceiver(event: Receiver): void {
     redeemabaleERC20.save()
 }
 
+
 export function handleTransfer(event: Transfer): void {
     if (event.params.value != ZERO_BI) {
         let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
         let redeemabaleERC20Contract = RedeemabaleERC20Contract.bind(event.address)
 
+        let context = dataSource.context()
+        
         let holders = redeemabaleERC20.holders
-        if(event.params.from.toHex() != ZERO_ADDRESS){
+        if(notAContract(event.params.from.toHex(), context.getString("trust"))){
             let sender = Holder.load(event.address.toHex() + " - " + event.params.from.toHex())
             if(sender == null){
                 sender = new Holder(event.address.toHex() + " - " + event.params.from.toHex())
@@ -46,7 +49,7 @@ export function handleTransfer(event: Transfer): void {
             sender.balance = sender.balance.minus(event.params.value)
         }
     
-        if(event.params.to.toHex() != ZERO_ADDRESS){
+        if(notAContract(event.params.from.toHex(), context.getString("trust"))){
             let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
             if(receiver == null){
                 receiver = new Holder(event.address.toHex() + " - " + event.params.to.toHex())
@@ -180,6 +183,10 @@ export function handleTierByConstructionInitialize(event: TierByConstructionInit
     log.info("Contracts : {}", [contracts.id])
     contracts.tier = getTier(event.params.tierContract.toHex())
     contracts.save()
+
+    let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
+    redeemabaleERC20.tier = getTier(event.params.tierContract.toHex())
+    redeemabaleERC20.save()
 }
 
 function getTier(tierAddress: string): string {
