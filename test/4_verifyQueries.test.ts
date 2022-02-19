@@ -573,7 +573,7 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should update the verifyAddress that has a RequestRemove", async function () {
-      const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
+      const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
 
       const query = `
@@ -619,7 +619,8 @@ describe("Subgraph Tier Test", function () {
     it("should update the verifyAddress that call RequestRemove", async function () {
       const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
-
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
       const query = `
         {
           verifyAddress (id: "${signer1Id}") {
@@ -636,6 +637,7 @@ describe("Subgraph Tier Test", function () {
       const data = response.data.verifyAddress;
 
       // Expected VerifyAddress values
+      console.log("events : ", JSON.stringify(data))
       expect(data.events).to.have.lengthOf(eventsSigner1); // requestApprove, Approve and requestRemove
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
