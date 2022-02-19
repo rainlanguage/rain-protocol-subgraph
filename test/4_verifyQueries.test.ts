@@ -1,9 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { ApolloFetch, FetchResult } from "apollo-fetch";
+import { FetchResult } from "apollo-fetch";
 import { ContractTransaction } from "ethers";
 import { hexlify } from "ethers/lib/utils";
-import * as path from "path";
 
 import * as Util from "./utils/utils";
 import {
@@ -19,6 +18,8 @@ import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/ver
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
 
 import {
+  // Subgraph
+  subgraph,
   // Signers
   deployer,
   signer1,
@@ -42,8 +43,7 @@ const enum Status {
   REMOVED,
 }
 
-let subgraph: ApolloFetch,
-  verify: Verify,
+let verify: Verify,
   transaction: ContractTransaction; // use to save/facilite a tx
 
 const evidenceEmpty = hexlify([...Buffer.from("")]);
@@ -53,17 +53,6 @@ const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
 describe("Subgraph Tier Test", function () {
-  before("connecting and deploy fresh contracts", async function () {
-    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
-    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
-    // Connecting to the subgraph
-    subgraph = Util.fetchSubgraph(
-      localInfoJson.subgraphUser,
-      localInfoJson.subgraphName
-    );
-  });
-
   describe("Verify Factory - Queries", function async() {
     let eventCounter = 0;
     let eventsSigner1 = 0;

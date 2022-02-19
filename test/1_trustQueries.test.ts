@@ -85,8 +85,7 @@ enum DistributionStatus {
 
 const subgraphUser = "vishalkale151071";
 const subgraphName = "rain-protocol";
-let subgraph: ApolloFetch,
-  minimumTier: Tier,
+let minimumTier: Tier,
   currentBlock: number,
   seedContract: SeedERC20,
   redeemableERC20Contract: RedeemableERC20,
@@ -98,7 +97,8 @@ let subgraph: ApolloFetch,
   transaction: ContractTransaction; // use to save/facilite a tx
 
 // Export Factories
-export let seedERC20Factory: SeedERC20Factory,
+export let subgraph: ApolloFetch,
+  seedERC20Factory: SeedERC20Factory,
   redeemableERC20Factory: RedeemableERC20Factory,
   trustFactory: TrustFactory,
   bPoolFeeEscrow: BPoolFeeEscrow,
@@ -247,9 +247,6 @@ describe("Subgraph Trusts Test", function () {
     const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
     const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
 
-    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
-    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
     // Saving addresses and individuals blocks to index
     configLocal.factory = trustFactory.address;
     configLocal.startBlock = currentBlock;
@@ -282,22 +279,7 @@ describe("Subgraph Trusts Test", function () {
     configLocal.blockRedeemableERC20ClaimEscrow =
       redeemableERC20ClaimEscrowBlock;
 
-    // localInfo.json - Tests (This will be deprecated in our tests)
-    localInfoJson.subgraphUser = subgraphUser;
-    localInfoJson.subgraphName = subgraphName;
-    localInfoJson.trustFactory = trustFactory.address;
-    localInfoJson.redeemableERC20Factory = redeemableERC20Factory.address;
-    localInfoJson.seedERC20Factory = seedERC20Factory.address;
-    localInfoJson.verifyFactory = verifyFactory.address;
-    localInfoJson.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
-    localInfoJson.erc20TransferTierFactory = erc20TransferTierFactory.address;
-    localInfoJson.combineTierFactory = combineTierFactory.address;
-    localInfoJson.verifyTierFactory = verifyTierFactory.address;
-    localInfoJson.erc721BalanceTierFactory = erc721BalanceTierFactory.address;
-    localInfoJson.saleFactory = saleFactory.address;
-
     Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
-    Util.writeFile(localInfoPath, JSON.stringify(localInfoJson, null, 4));
 
     Util.exec(`yarn deploy-build:localhost`);
 
@@ -307,7 +289,7 @@ describe("Subgraph Trusts Test", function () {
     await waitForSubgraphToBeSynced(1000);
   });
 
-  xit("should query the trust factories", async function () {
+  it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
     })) as FetchResult;
@@ -342,7 +324,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  xdescribe("Trust happy path queries", function () {
+  describe("Trust happy path queries", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -630,9 +612,6 @@ describe("Subgraph Trusts Test", function () {
             decimals
             minimumTier
             totalSupply
-            holders {
-              id
-            }
           }
         }
       `;
@@ -649,8 +628,6 @@ describe("Subgraph Trusts Test", function () {
       expect(data.totalSupply).to.equals(
         redeemableERC20Config.initialSupply.toString()
       );
-
-      expect(data.holders).to.have.lengthOf(1);
     });
 
     it("should query the initial RedeemableERC20 Holder after creation", async function () {
@@ -1228,7 +1205,7 @@ describe("Subgraph Trusts Test", function () {
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced(1600);
 
       const query = `
         {
@@ -2852,7 +2829,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  xdescribe("Trust with a non-SeedERC20 contract as Seeder", function () {
+  describe("Trust with a non-SeedERC20 contract as Seeder", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -2989,7 +2966,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  xdescribe("Trust with a zero as minimunRaise", function () {
+  describe("Trust with a zero as minimunRaise", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);

@@ -3,8 +3,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { ContractTransaction, Signer } from "ethers";
-import { ApolloFetch, FetchResult } from "apollo-fetch";
-import * as path from "path";
+import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
 import { deploy, waitForSubgraphToBeSynced } from "./utils/utils";
 
@@ -19,31 +18,25 @@ import { RedeemableERC20ClaimEscrow } from "@beehiveinnovation/rain-protocol/typ
 import { BPoolFeeEscrow } from "@beehiveinnovation/rain-protocol/typechain/BPoolFeeEscrow";
 
 import {
+  // Subgraph
+  subgraph,
+  // Signers
   deployer,
   signer1,
   signer2,
+  // Factories
   trustFactory,
   redeemableERC20ClaimEscrow,
 } from "./1_trustQueries.test";
 
-let subgraph: ApolloFetch,
-  reserve: ReserveTokenTest,
+let reserve: ReserveTokenTest,
   tier: ReadWriteTier,
   transaction: ContractTransaction; // use to save/facilite a tx;
 
-xdescribe("Subgraph RedeemableERC20ClaimEscrow test", function () {
-  before("creating and connecting", async function () {
-    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
-    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
+describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
+  before("Deploy fresh test contracts", async function () {
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
     tier = (await deploy(readWriteTierJson, deployer, [])) as ReadWriteTier;
-
-    // Connecting to the subgraph
-    subgraph = Util.fetchSubgraph(
-      localInfoJson.subgraphUser,
-      localInfoJson.subgraphName
-    );
   });
 
   it("should query RedeemableERC20ClaimEscrow correctly after construction", async function () {

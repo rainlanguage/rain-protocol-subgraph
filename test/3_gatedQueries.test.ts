@@ -1,8 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { ContractTransaction } from "ethers";
-import { ApolloFetch, FetchResult } from "apollo-fetch";
-import * as path from "path";
+import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
 import { deploy, waitForSubgraphToBeSynced, LEVELS } from "./utils/utils";
 
@@ -15,15 +14,18 @@ import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/Res
 import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
 
 import {
+  // Subgraph
+  subgraph,
+  // Signers
   deployer,
   signer1,
   signer2,
+  // Factories
   gatedNFTFactory,
   erc20BalanceTierFactory,
 } from "./1_trustQueries.test";
 
-let subgraph: ApolloFetch,
-  reserve: ReserveTokenTest,
+let reserve: ReserveTokenTest,
   erc20BalanceTier: ERC20BalanceTier,
   gatedNFT: GatedNFT,
   transaction: ContractTransaction; // use to save/facilite a tx;
@@ -49,11 +51,8 @@ const maxMintable = 100;
 let royaltyRecipient: string;
 const royaltyBPS = 1;
 
-xdescribe("Subgraph GatedNFT test", function () {
+describe("Subgraph GatedNFT test", function () {
   before("creating and connecting", async function () {
-    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
-    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
     royaltyRecipient = signer1.address;
 
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
@@ -72,12 +71,6 @@ xdescribe("Subgraph GatedNFT test", function () {
     // Giving the necessary amount to signer1 for a level 2
     const level2 = LEVELS[1];
     await reserve.transfer(signer1.address, level2);
-
-    // Connecting to the subgraph
-    subgraph = Util.fetchSubgraph(
-      localInfoJson.subgraphUser,
-      localInfoJson.subgraphName
-    );
   });
 
   it("should query GatedNFTFactory correctly after construction", async function () {

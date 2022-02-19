@@ -3,10 +3,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber, ContractTransaction } from "ethers";
-import { ApolloFetch, FetchResult } from "apollo-fetch";
-// eslint-disable-next-line 
+import { FetchResult } from "apollo-fetch";
 import { concat } from "ethers/lib/utils";
-import * as path from "path";
 
 import * as Util from "./utils/utils";
 import {
@@ -38,11 +36,15 @@ import type {
 import { isContext } from "vm";
 
 import {
+  // Subgraph fetch
+  subgraph,
+  //Signers
   deployer,
   creator,
   signer1,
   signer2,
   recipient,
+  // Factories
   saleFactory,
   feeRecipient,
   erc20BalanceTierFactory,
@@ -129,15 +131,14 @@ interface BuyConfig {
   maximumPrice: BigNumber;
 }
 
-let subgraph: ApolloFetch,
-  reserve: ReserveTokenTest,
+let reserve: ReserveTokenTest,
   erc20BalanceTier: ERC20BalanceTier,
   sale: Sale,
   redeemableERC20Contract: RedeemableERC20,
   buyConfig: BuyConfig,
   transaction: ContractTransaction; // Use to save the tx between statements
 
-xdescribe("Sales queries test", function () {
+describe("Sales queries test", function () {
   before("getting the factory", async function () {
     reserve = (await deploy(
       reserveTokenJson,
@@ -157,15 +158,6 @@ xdescribe("Sales queries test", function () {
       ],
       deployer
     )) as ERC20BalanceTier;
-
-    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
-    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
-    // Connecting to the subgraph
-    subgraph = Util.fetchSubgraph(
-      localInfoJson.subgraphUser,
-      localInfoJson.subgraphName
-    );
   });
 
   it("should query the saleFactory after construction correctly", async function () {

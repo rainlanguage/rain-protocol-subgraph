@@ -1,4 +1,4 @@
-/* eslint-disable no-use-before-define */
+
 import type { BigNumber } from "ethers";
 
 export interface Trust {

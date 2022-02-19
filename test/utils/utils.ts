@@ -1,15 +1,15 @@
-/* eslint-disable node/no-missing-import */
-/* eslint-disable no-unused-vars */
 import {
   Contract,
   Signer,
   BigNumber,
   ContractTransaction,
   BytesLike,
+  Overrides
 } from "ethers";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Result, concat, hexlify, Hexable, zeroPad } from "ethers/lib/utils";
-import { createApolloFetch } from "apollo-fetch";
+import { createApolloFetch, ApolloFetch } from "apollo-fetch";
+
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -25,13 +25,15 @@ import ConfigurableRightsPoolJson from "@beehiveinnovation/configurable-rights-p
 import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
 
 // Rain protocol contracts
-import RedeemableERC20Factory from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
-import SeedERC20Factory from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
+import RedeemableERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
+import SeedERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
 import TrustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 import SaleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
 
 // Types
+import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
+import { SeedERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
 import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
 import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
@@ -94,13 +96,26 @@ interface State {
   arguments: BigNumber[];
 }
 
+interface CRPLibraries {
+  [key: string]: string;
+  SmartPoolManager: string;
+  BalancerSafeMath: string;
+  RightsManager: string;
+}
+
+interface BasicArtifact {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  abi: any[];
+  bytecode: string;
+}
+
 export const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros).toString()
 ); // [1,2,3,4,5,6,7,8]
 
 // Execute Child Processes
 const srcDir = path.join(__dirname, "..");
-export const exec = (cmd: string) => {
+export const exec = (cmd: string): string | Buffer => {
   try {
     return execSync(cmd, { cwd: srcDir, stdio: "inherit" });
   } catch (e) {
@@ -113,20 +128,13 @@ export const fetchSubgraphs = createApolloFetch({
   uri: "http://localhost:8030/graphql",
 });
 
-export const fetchSubgraph = (subgraphUser: string, subgraphName: string) => {
+export const fetchSubgraph = (subgraphUser: string, subgraphName: string): ApolloFetch => {
   return createApolloFetch({
     uri: `http://localhost:8000/subgraphs/name/${subgraphUser}/${subgraphName}`,
   });
 };
 
-const checkIfAllSynced = (subgraphs: SyncedSubgraphType[]) => {
-  const result = subgraphs.find(
-    (el: SyncedSubgraphType) => el.synced === false
-  );
-  return Boolean(!result);
-};
-
-export const waitForSubgraphToBeSynced = async (delay: number) =>
+export const waitForSubgraphToBeSynced = async (delay: number): Promise<SyncedSubgraphType> =>
   new Promise<{ synced: boolean }>((resolve, reject) => {
     // Wait for 5s
     const deadline = Date.now() + 15 * 1000;
@@ -166,8 +174,9 @@ export const waitForSubgraphToBeSynced = async (delay: number) =>
 
 // Contracts Management
 export const deploy = async (
-  artifact: any,
-  signer: any,
+  artifact: Artifact | BasicArtifact,
+  signer: SignerWithAddress,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   argmts: any[] | any
 ): Promise<Contract> => {
   const iface = new ethers.utils.Interface(artifact.abi);
@@ -178,7 +187,7 @@ export const deploy = async (
 };
 
 export const balancerDeploy = async (
-  signer: Signer
+  signer: SignerWithAddress
 ): Promise<[Contract, Contract]> => {
   const bFactory: Contract = await deploy(BFactory, signer, []);
 
@@ -186,7 +195,7 @@ export const balancerDeploy = async (
   const balancerSafeMath: Contract = await deploy(BalancerSafeMath, signer, []);
   const rightsManager: Contract = await deploy(RightsManager, signer, []);
 
-  const libs = {
+  const libs: CRPLibraries = {
     SmartPoolManager: smartPoolManager.address,
     BalancerSafeMath: balancerSafeMath.address,
     RightsManager: rightsManager.address,
@@ -199,7 +208,7 @@ export const balancerDeploy = async (
   return [crpFactory, bFactory];
 };
 
-const linkBytecode = (artifact: any, links: any) => {
+const linkBytecode = (artifact: Artifact | BasicArtifact, links: CRPLibraries) => {
   Object.keys(links).forEach((libraryName) => {
     const libraryAddress = links[libraryName];
     const regex = new RegExp(`__${libraryName}_+`, "g");
@@ -214,15 +223,19 @@ const linkBytecode = (artifact: any, links: any) => {
 export const factoriesDeploy = async (
   crpFactory: Contract,
   balancerFactory: Contract,
-  signer: Signer
-): Promise<any> => {
+  signer: SignerWithAddress
+): Promise<{
+  redeemableERC20Factory: RedeemableERC20Factory;
+  seedERC20Factory: SeedERC20Factory;
+  trustFactory: TrustFactory;
+ }> => {
   const redeemableERC20Factory = await deploy(
-    RedeemableERC20Factory,
+    RedeemableERC20FactoryJson,
     signer,
     []
-  );
+  ) as RedeemableERC20Factory;
 
-  const seedERC20Factory = await deploy(SeedERC20Factory, signer, []);
+  const seedERC20Factory = await deploy(SeedERC20FactoryJson, signer, []) as SeedERC20Factory;
 
   const TrustFactoryArgs = {
     redeemableERC20Factory: redeemableERC20Factory.address,
@@ -239,7 +252,7 @@ export const factoriesDeploy = async (
     TrustFactoryJson.bytecode,
     signer
   );
-  const trustFactory = await trustFactoryFactory.deploy(TrustFactoryArgs);
+  const trustFactory = await trustFactoryFactory.deploy(TrustFactoryArgs) as TrustFactory;
   await trustFactory.deployed();
   return {
     redeemableERC20Factory,
@@ -248,37 +261,54 @@ export const factoriesDeploy = async (
   };
 };
 
+/**
+ * @param trustFactory - the TrustFactory that will create the child.
+ * @param creator - The signer that will create the child and will be connected to
+ * @param trustConfig - the trust configuration
+ * @param trustRedeemableERC20Config - the Redeemable configuration of this Trust
+ * @param trustSeedERC20Config -the Seed configuration of this Trust
+ * @param override - (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The trust child
+ */
 export const trustDeploy = async (
   trustFactory: TrustFactory,
   creator: SignerWithAddress,
   trustConfig: TrustConfigStruct,
   trustRedeemableERC20Config: TrustRedeemableERC20ConfigStruct,
   trustSeedERC20Config: TrustSeedERC20ConfigStruct,
-  ...args: any
+  override: Overrides = {}
 ): Promise<Trust> => {
   // Creating the trust contract child
   const trust = (await createChildTyped(
     trustFactory,
     TrustJson,
-    [trustConfig, trustRedeemableERC20Config, trustSeedERC20Config, ...args],
+    [trustConfig, trustRedeemableERC20Config, trustSeedERC20Config, override],
     creator
   )) as Trust & Contract;
 
   return trust;
 };
 
+/**
+ * @param saleFactory - the SaleFactory that will create the child.
+ * @param creator - The signer that will create the child and will be connected to
+ * @param saleConfig - the sale configuration
+ * @param saleRedeemableERC20Config - the Redeemable configuration of this Sale
+ * @param override - (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The sale child
+ */
 export const saleDeploy = async (
   saleFactory: SaleFactory,
   creator: SignerWithAddress,
   saleConfig: SaleConfigStruct,
   saleRedeemableERC20Config: SaleRedeemableERC20ConfigStruct,
-  ...args: any
+  override: Overrides = {}
 ): Promise<Sale> => {
   // Creating the sale contract child
   const sale = (await createChildTyped(
     saleFactory,
     SaleJson,
-    [saleConfig, saleRedeemableERC20Config, ...args],
+    [saleConfig, saleRedeemableERC20Config, override],
     creator
   )) as Sale & Contract;
 
@@ -295,6 +325,7 @@ export const saleDeploy = async (
 export const createChildTyped = async (
   factory: Contract,
   childtArtifact: Artifact,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any[],
   creator: SignerWithAddress = null
 ): Promise<Contract> => {
@@ -329,15 +360,17 @@ export const poolContracts = async (
     signer
   ) as BPool & Contract;
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   crp.deployTransaction = trust.deployTransaction;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   bPool.deployTransaction = trust.deployTransaction;
 
   return { crp, bPool };
 };
 
-export const waitForBlock = async (blockNumber: any): Promise<any> => {
+export const waitForBlock = async (blockNumber: number): Promise<void> => {
   const currentBlock = await ethers.provider.getBlockNumber();
 
   if (currentBlock >= blockNumber) {
@@ -354,32 +387,12 @@ export const waitForBlock = async (blockNumber: any): Promise<any> => {
   return await waitForBlock(blockNumber);
 };
 
-function timeout(ms: any) {
+function timeout(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const containObject = (arr: any[], obj: any): Boolean => {
-  const keys = Object.keys(obj);
-  let result = false;
 
-  for (let i = 0; i < arr.length; i++) {
-    if (Object.keys(arr[i]).length === keys.length) {
-      for (let j = 0; j < keys.length; j++) {
-        if (arr[i][keys[j]] === obj[keys[j]]) {
-          result = true;
-        } else {
-          result = false;
-        }
-      }
-    }
-    if (result) {
-      return result;
-    }
-  }
-  return result;
-};
-
-export const fetchFile = (_path: string) => {
+export const fetchFile = (_path: string): string  => {
   try {
     return fs.readFileSync(_path).toString();
   } catch (error) {
@@ -388,7 +401,8 @@ export const fetchFile = (_path: string) => {
   }
 };
 
-export const writeFile = (_path: string, file: any) => {
+// eslint-disable-next-line
+export const writeFile = (_path: string, file: any): void => {
   try {
     fs.writeFileSync(_path, file);
   } catch (error) {
@@ -423,7 +437,7 @@ export const getEventArgs = async (
   return contract.interface.decodeEventLog(eventName, eventObj.data);
 };
 
-export function delay(ms: number) {
+export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -456,8 +470,8 @@ export const getContractChild = async (
   contractFactory: Contract,
   contractArtifact: Artifact,
   signer?: SignerWithAddress,
-  eventName: string = "NewChild",
-  eventArg: string = "child"
+  eventName = "NewChild",
+  eventArg = "child"
 ): Promise<Contract> => {
   const contractChild = new ethers.Contract(
     ethers.utils.hexZeroPad(
@@ -478,6 +492,7 @@ export const getContractChild = async (
 
   await contractChild.deployed();
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   contractChild.deployTransaction = tx;
 

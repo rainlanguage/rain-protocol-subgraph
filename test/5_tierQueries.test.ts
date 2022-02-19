@@ -2,11 +2,10 @@
 
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { ApolloFetch, FetchResult } from "apollo-fetch";
+import { FetchResult } from "apollo-fetch";
 import { BigNumber, ContractTransaction } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { hexlify, concat } from "ethers/lib/utils";
-import * as path from "path";
 
 import * as Util from "./utils/utils";
 import {
@@ -72,6 +71,8 @@ import {
 } from "./utils/queries";
 
 import {
+  // Subgraph
+  subgraph,
   // Signers
   deployer,
   creator,
@@ -113,8 +114,7 @@ const enum Opcode {
   ACCOUNT,
 }
 
-let subgraph: ApolloFetch,
-  trust: Trust,
+let trust: Trust,
   reserve: ReserveToken,
   reserveNFT: ReserveNFT,
   verifyTier: VerifyTier,
@@ -123,22 +123,13 @@ let subgraph: ApolloFetch,
   erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
-xdescribe("Subgraph Tier Test", function () {
+describe("Subgraph Tier Test", function () {
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 
-  before("connecting and deploy fresh contracts", async function () {
+  before("Deploy fresh test contracts", async function () {
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
     reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
-
-    const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
-    const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
-
-    // Connecting to the subgraph
-    subgraph = Util.fetchSubgraph(
-      localInfoJson.subgraphUser,
-      localInfoJson.subgraphName
-    );
   });
 
   describe("Verify Factory - Queries", function async() {
