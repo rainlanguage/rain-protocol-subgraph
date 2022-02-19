@@ -1,97 +1,31 @@
-/* eslint-disable node/no-missing-import */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-unused-expressions */
-
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
-import { BigNumber, ContractTransaction } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { hexlify, concat } from "ethers/lib/utils";
+import { ContractTransaction } from "ethers";
+import { hexlify } from "ethers/lib/utils";
 import * as path from "path";
 
 import * as Util from "./utils/utils";
 import {
-  op,
-  deploy,
-  getContractChild,
   waitForSubgraphToBeSynced,
-  eighteenZeros,
-  sixZeros,
-  zeroAddress,
-  Tier,
-  VMState,
-  LEVELS,
   getTxTimeblock,
   createChildTyped,
 } from "./utils/utils";
 
 // Artifacts
-import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
-import reserveNFTJson from "@vishalkale15107/rain-protocol/artifacts/contracts/test/ReserveNFT.sol/ReserveNFT.json";
-import trustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
-import erc20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
-import erc20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
-import combineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
-import verifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
-import verifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
-
-import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
-import erc20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
-import combineTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
-import verifyTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTier.sol/VerifyTier.json";
 import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 
 // Types
-import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
-import { ReserveNFT } from "@vishalkale15107/rain-protocol/typechain/ReserveNFT";
-import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
-import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
-import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
-import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
-import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTierFactory";
-import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
-import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
-import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
-
-import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
-import { ERC20TransferTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
-import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
-import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
-
-// Should update path after a new commit
-import erc721BalanceTierFactoryJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTierFactory.sol/ERC721BalanceTierFactory.json";
-import erc721BalanceTierJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTier.sol/ERC721BalanceTier.json";
-import { ERC721BalanceTierFactory } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTierFactory";
-import { ERC721BalanceTier } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
-
-import {
-  getContracts,
-  getFactories,
-  getTrust,
-  NOTICE_QUERY,
-  QUERY,
-} from "./utils/queries";
 
 import {
   // Signers
   deployer,
-  creator,
   signer1,
   signer2,
-  recipient,
-  feeRecipient,
   admin,
-  // Contracts factories
-  trustFactory,
+  // Contracts factory
   verifyFactory,
-  verifyTierFactory,
-  erc20BalanceTierFactory,
-  erc20TransferTierFactory,
-  combineTierFactory,
-  erc721BalanceTierFactory,
 } from "./1_trustQueries.test";
 
 const enum RequestStatus {
@@ -108,30 +42,8 @@ const enum Status {
   REMOVED,
 }
 
-const enum Opcode {
-  END,
-  VAL,
-  DUP,
-  ZIPMAP,
-  BLOCK_NUMBER,
-  BLOCK_TIMESTAMP,
-  REPORT,
-  NEVER,
-  ALWAYS,
-  DIFF,
-  UPDATE_BLOCKS_FOR_TIER_RANGE,
-  SELECT_LTE,
-  ACCOUNT,
-}
-
 let subgraph: ApolloFetch,
-  trust: Trust,
-  reserve: ReserveToken,
-  reserveNFT: ReserveNFT,
-  verifyTier: VerifyTier,
   verify: Verify,
-  combineTier: CombineTier,
-  erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
 const evidenceEmpty = hexlify([...Buffer.from("")]);
@@ -142,9 +54,6 @@ const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
 describe("Subgraph Tier Test", function () {
   before("connecting and deploy fresh contracts", async function () {
-    reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
-    reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
-
     const localInfoPath = path.resolve(__dirname, "./utils/local_Info.json");
     const localInfoJson = JSON.parse(Util.fetchFile(localInfoPath));
 
@@ -282,7 +191,7 @@ describe("Subgraph Tier Test", function () {
       eventsSigner1++;
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced(1500);
 
       const requestId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);

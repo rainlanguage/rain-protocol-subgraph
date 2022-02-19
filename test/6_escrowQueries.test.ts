@@ -1,6 +1,4 @@
-/* eslint-disable node/no-missing-import */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect } from "chai";
 import { ethers } from "hardhat";

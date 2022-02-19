@@ -1,7 +1,3 @@
-/* eslint-disable node/no-missing-import */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-unused-expressions */
-
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
@@ -40,9 +36,7 @@ import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/con
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import type {
   BigNumber,
-  Contract,
   ContractTransaction,
-  ContractReceipt,
 } from "ethers";
 
 import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
@@ -76,10 +70,7 @@ import erc721TokenTestJson from "@vishalkale15107/rain-protocol/artifacts/@openz
 import { ERC721 } from "@vishalkale15107/rain-protocol/typechain/ERC721";
 
 import {
-  getContracts,
   getFactories,
-  getTrust,
-  NOTICE_QUERY,
   QUERY,
 } from "./utils/queries";
 
@@ -329,7 +320,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  xit("should get all the contracts from the Trust Construction Event", async function () {
+  it("should get all the contracts from the Trust Construction Event", async function () {
     const queryResponse = await subgraph({
       query: getFactories(trustFactory.address.toLowerCase()),
     });
@@ -351,7 +342,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  xdescribe("Trust happy path queries", function () {
+  describe("Trust happy path queries", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -2858,7 +2849,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  xdescribe("Trust with a non-SeedERC20 contract as Seeder", function () {
+  describe("Trust with a non-SeedERC20 contract as Seeder", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -2995,7 +2986,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  xdescribe("Trust with a zero as minimunRaise", function () {
+  describe("Trust with a zero as minimunRaise", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);

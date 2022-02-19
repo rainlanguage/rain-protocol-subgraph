@@ -1,10 +1,6 @@
-/* eslint-disable node/no-missing-import */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-unused-expressions */
-
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { ContractTransaction, Signer } from "ethers";
+import { ContractTransaction } from "ethers";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
 import * as path from "path";
 import * as Util from "./utils/utils";
@@ -12,12 +8,10 @@ import { deploy, waitForSubgraphToBeSynced, LEVELS } from "./utils/utils";
 
 import gatedNFTJson from "@beehiveinnovation/rain-statusfi/artifacts/contracts/GatedNFT.sol/GatedNFT.json";
 import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import readWriteTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
 import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 
 import { GatedNFT } from "@beehiveinnovation/rain-statusfi/typechain/GatedNFT";
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
-import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
 import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
 
 import {
@@ -30,7 +24,6 @@ import {
 
 let subgraph: ApolloFetch,
   reserve: ReserveTokenTest,
-  tier: ReadWriteTier,
   erc20BalanceTier: ERC20BalanceTier,
   gatedNFT: GatedNFT,
   transaction: ContractTransaction; // use to save/facilite a tx;
@@ -64,7 +57,6 @@ describe("Subgraph GatedNFT test", function () {
     royaltyRecipient = signer1.address;
 
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
-    tier = (await deploy(readWriteTierJson, deployer, [])) as ReadWriteTier;
 
     transaction = await erc20BalanceTierFactory.createChildTyped({
       erc20: reserve.address,

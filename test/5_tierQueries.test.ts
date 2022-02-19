@@ -1,6 +1,4 @@
-/* eslint-disable node/no-missing-import */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect } from "chai";
 import { ethers } from "hardhat";
@@ -1669,6 +1667,8 @@ describe("Subgraph Tier Test", function () {
       const tokenData = tierData.token;
     });
 
-    it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Sale", async function () {});
+    it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Sale", async function () {
+      //
+    });
   });
 });

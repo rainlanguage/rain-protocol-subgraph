@@ -1,11 +1,10 @@
-/* eslint-disable node/no-missing-import */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { BigNumber, Contract, ContractTransaction } from "ethers";
+import { BigNumber, ContractTransaction } from "ethers";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+// eslint-disable-next-line 
 import { concat } from "ethers/lib/utils";
 import * as path from "path";
 
@@ -18,13 +17,7 @@ import {
   Tier,
   LEVELS,
 } from "./utils/utils";
-import {
-  getContracts,
-  getFactories,
-  getTrust,
-  NOTICE_QUERY,
-  QUERY,
-} from "./utils/queries";
+
 
 import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
@@ -54,7 +47,6 @@ import {
   feeRecipient,
   erc20BalanceTierFactory,
   redeemableERC20Factory,
-  trustFactory,
 } from "./1_trustQueries.test";
 
 enum Status {
