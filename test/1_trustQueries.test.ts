@@ -307,7 +307,7 @@ describe("Subgraph Trusts Test", function () {
     await waitForSubgraphToBeSynced(1000);
   });
 
-  it("should query the trust factories", async function () {
+  xit("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
     })) as FetchResult;
@@ -342,7 +342,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  describe("Trust happy path queries", function () {
+  xdescribe("Trust happy path queries", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -619,6 +619,9 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should query the RedeemableERC20 details correctly", async function () {
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(2000);
+
       const query = `
         {
           redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {

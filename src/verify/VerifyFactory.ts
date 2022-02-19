@@ -6,16 +6,17 @@ import { VerifyTemplate } from "../../generated/templates"
 export function handleNewChild(event: NewChild): void {
     let verifyFactory = VerifyFactory.load(event.address.toHex())
     
-    let verifyTier = new Verify(event.params.child.toHex())
-    verifyTier.address = event.params.child
-    verifyTier.deployBlock = event.block.number
-    verifyTier.deployTimestamp = event.block.timestamp
-    verifyTier.deployer = event.transaction.from
-    verifyTier.factory = verifyFactory.id
-    verifyTier.save()
+    let verify = new Verify(event.params.child.toHex())
+    verify.address = event.params.child
+    verify.deployBlock = event.block.number
+    verify.deployTimestamp = event.block.timestamp
+    verify.deployer = event.transaction.from
+    verify.factory = verifyFactory.id
+    verify.verifyAddresses = []
+    verify.save()
 
     let children = verifyFactory.children
-    children.push(verifyTier.id)
+    children.push(verify.id)
     verifyFactory.children = children
     verifyFactory.save()
 
