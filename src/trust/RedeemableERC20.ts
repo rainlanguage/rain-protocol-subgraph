@@ -8,7 +8,6 @@ import { Address, dataSource ,log } from "@graphprotocol/graph-ts"
 export function handleInitialize(event: Initialize): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
 
-    redeemabaleERC20.sender = event.params.sender
     redeemabaleERC20.factory = event.params.sender
     redeemabaleERC20.admin = event.params.admin
     redeemabaleERC20.minimumTier = event.params.minimumTier

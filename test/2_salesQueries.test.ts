@@ -145,7 +145,7 @@ let subgraph: ApolloFetch,
   buyConfig: BuyConfig,
   transaction: ContractTransaction; // Use to save the tx between statements
 
-xdescribe("Sales queries test", function () {
+describe("Sales queries test", function () {
   before("getting the factory", async function () {
     reserve = (await deploy(
       reserveTokenJson,
@@ -946,12 +946,8 @@ xdescribe("Sales queries test", function () {
 
       const saleEndData = response.data.saleEnd;
 
-      expect(parseInt(saleEndData.block)).to.equals(
-        transaction.blockNumber.toString()
-      );
-      expect(parseInt(saleEndData.timestamp)).to.equals(
-        transaction.timestamp.toString()
-      );
+      expect(parseInt(saleEndData.block)).to.equals(transaction.blockNumber);
+      expect(parseInt(saleEndData.timestamp)).to.equals(transaction.timestamp);
       expect(saleEndData.sender).to.equals(signer1.address.toLowerCase());
       expect(saleEndData.saleStatus).to.equals(Status.SUCCESS);
       expect(saleEndData.transactionHash).to.equals(

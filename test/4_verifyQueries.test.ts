@@ -140,7 +140,7 @@ const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
 const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
-xdescribe("Subgraph Tier Test", function () {
+describe("Subgraph Tier Test", function () {
   before("connecting and deploy fresh contracts", async function () {
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
     reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
@@ -334,7 +334,7 @@ xdescribe("Subgraph Tier Test", function () {
           verifyEvents {
             id
           }
-          verifyEvent (id: "${verifyEventId})" {
+          verifyEvent (id: "${verifyEventId}") {
             block
             transactionHash
             timestamp
@@ -379,7 +379,7 @@ xdescribe("Subgraph Tier Test", function () {
               status
             }
           }
-          verifyAddress (id: "${signer1Id}}") {
+          verifyAddress (id: "${signer1Id}") {
             verifyContract {
               id
             }
@@ -486,7 +486,7 @@ xdescribe("Subgraph Tier Test", function () {
           verifyEvents {
             id
           }
-          verifyEvent (id: "${eventId})" {
+          verifyEvent (id: "${eventId}") {
             block
             timestamp
             transactionHash
@@ -531,10 +531,10 @@ xdescribe("Subgraph Tier Test", function () {
               status
             }
           }
-          verifyAddress (id: "${signer1Id}}") {
+          verifyAddress (id: "${signer1Id}") {
             requestStatus
             status
-            events: {
+            events {
               id
             }
           }
@@ -584,7 +584,7 @@ xdescribe("Subgraph Tier Test", function () {
       eventsSigner2++;
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced(1500);
 
       const requestRemoveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -612,9 +612,9 @@ xdescribe("Subgraph Tier Test", function () {
       expect(data.timestamp).to.equals(eventTimestamp.toString());
       expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
 
-      expect(data.verifyContract).to.equals(verify.address.toString());
-      expect(data.sender).to.equals(signer1.address.toString());
-      expect(data.account).to.equals(signer2.address.toString());
+      expect(data.verifyContract).to.equals(verify.address.toLowerCase());
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.account).to.equals(signer2.address.toLowerCase());
       expect(data.data).to.equals(evidenceRemove);
     });
 
@@ -628,7 +628,7 @@ xdescribe("Subgraph Tier Test", function () {
           verifyEvents {
             id
           }
-          verifyEvent (id: "${eventId})" {
+          verifyEvent (id: "${eventId}") {
             block
             timestamp
             transactionHash
@@ -673,10 +673,10 @@ xdescribe("Subgraph Tier Test", function () {
               status
             }
           }
-          verifyAddress (id: "${signer2Id}}") {
+          verifyAddress (id: "${signer2Id}") {
             requestStatus
             status
-            events: {
+            events {
               id
             }
           }
@@ -710,8 +710,8 @@ xdescribe("Subgraph Tier Test", function () {
 
       const query = `
         {
-          verifyAddress (id: "${signer1Id}}") {
-            events: {
+          verifyAddress (id: "${signer1Id}") {
+            events {
               id
             }
           }
@@ -767,9 +767,9 @@ xdescribe("Subgraph Tier Test", function () {
       expect(data.timestamp).to.equals(eventTimestamp.toString());
       expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
 
-      expect(data.verifyContract).to.equals(verify.address.toString());
-      expect(data.sender).to.equals(admin.address.toString());
-      expect(data.account).to.equals(signer2.address.toString());
+      expect(data.verifyContract).to.equals(verify.address.toLowerCase());
+      expect(data.sender).to.equals(admin.address.toLowerCase());
+      expect(data.account).to.equals(signer2.address.toLowerCase());
       expect(data.data).to.equals(evidenceRemove);
     });
 
@@ -783,7 +783,7 @@ xdescribe("Subgraph Tier Test", function () {
           verifyEvents {
             id
           }
-          verifyEvent (id: "${eventId})" {
+          verifyEvent (id: "${eventId}") {
             block
             timestamp
             transactionHash
@@ -828,10 +828,10 @@ xdescribe("Subgraph Tier Test", function () {
               status
             }
           }
-          verifyAddress (id: "${signer2Id}}") {
+          verifyAddress (id: "${signer2Id}") {
             requestStatus
             status
-            events: {
+            events {
               id
             }
           }
@@ -879,7 +879,7 @@ xdescribe("Subgraph Tier Test", function () {
       eventsSigner2++;
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced(1300);
 
       const requestBanId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -907,9 +907,9 @@ xdescribe("Subgraph Tier Test", function () {
       expect(data.timestamp).to.equals(eventTimestamp.toString());
       expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
 
-      expect(data.verifyContract).to.equals(verify.address.toString());
-      expect(data.sender).to.equals(signer1.address.toString());
-      expect(data.account).to.equals(signer2.address.toString());
+      expect(data.verifyContract).to.equals(verify.address.toLowerCase());
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.account).to.equals(signer2.address.toLowerCase());
       expect(data.data).to.equals(evidenceBan);
     });
 
@@ -923,7 +923,7 @@ xdescribe("Subgraph Tier Test", function () {
           verifyEvents {
             id
           }
-          verifyEvent (id: "${eventId})" {
+          verifyEvent (id: "${eventId}") {
             block
             timestamp
             transactionHash
@@ -961,10 +961,10 @@ xdescribe("Subgraph Tier Test", function () {
 
       const query = `
         {
-          verifyAddress (id: "${signer2Id}}") {
+          verifyAddress (id: "${signer2Id}") {
             requestStatus
             status
-            events: {
+            events {
               id
             }
           }
@@ -989,8 +989,8 @@ xdescribe("Subgraph Tier Test", function () {
 
       const query = `
         {
-          verifyAddress (id: "${signer1Id}}") {
-            events: {
+          verifyAddress (id: "${signer1Id}") {
+            events {
               id
             }
           }
@@ -1040,15 +1040,15 @@ xdescribe("Subgraph Tier Test", function () {
       const response = (await subgraph({
         query: query,
       })) as FetchResult;
-      const data = response.data.verifyRemove;
+      const data = response.data.verifyBan;
 
       expect(data.block).to.equals(eventBlock.toString());
       expect(data.timestamp).to.equals(eventTimestamp.toString());
       expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
 
-      expect(data.verifyContract).to.equals(verify.address.toString());
-      expect(data.sender).to.equals(admin.address.toString());
-      expect(data.account).to.equals(signer2.address.toString());
+      expect(data.verifyContract).to.equals(verify.address.toLowerCase());
+      expect(data.sender).to.equals(admin.address.toLowerCase());
+      expect(data.account).to.equals(signer2.address.toLowerCase());
       expect(data.data).to.equals(evidenceBan);
     });
 
@@ -1062,7 +1062,7 @@ xdescribe("Subgraph Tier Test", function () {
           verifyEvents {
             id
           }
-          verifyEvent (id: "${eventId})" {
+          verifyEvent (id: "${eventId}") {
             block
             timestamp
             transactionHash
@@ -1107,10 +1107,10 @@ xdescribe("Subgraph Tier Test", function () {
               status
             }
           }
-          verifyAddress (id: "${signer2Id}}") {
+          verifyAddress (id: "${signer2Id}") {
             requestStatus
             status
-            events: {
+            events {
               id
             }
           }

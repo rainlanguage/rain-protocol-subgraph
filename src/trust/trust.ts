@@ -182,7 +182,7 @@ function createRedeemableERC20(event: Initialize): string {
         redeemableERC20.totalSupply = totalSupply.value
     }
 
-
+    redeemableERC20.deployer = event.transaction.from
     redeemableERC20.redeems = []
     redeemableERC20.treasuryAssets = []
     redeemableERC20.holders = []
@@ -210,7 +210,7 @@ function createSeedERC20(event: Initialize): string {
     seedERC20.deployTimestamp = event.block.timestamp
     seedERC20.reserve = event.params.config.reserve
     seedERC20.factory = trustFactory.seedERC20Factory
-    seedERC20.sender = event.transaction.from
+    seedERC20.deployer = event.transaction.from
     seedERC20.seederFee = event.params.config.seederFee
     seedERC20.seederUnits = ONE_BI
     seedERC20.seedFeePerUnit = ONE_BI

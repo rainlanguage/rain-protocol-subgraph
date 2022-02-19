@@ -145,7 +145,7 @@ type Swap @entity{
 
 type RedeemableERC20 @entity {
     id: ID!
-    sender: Bytes
+    deployer: Bytes
     admin: Bytes
     factory: Bytes #Trust.redeemableERC20Factory()
     grantedReceivers: [Bytes!]
@@ -178,7 +178,7 @@ type Redeem @entity {
 type SeedERC20 @entity{
     id: ID! #address of SeedERC20
     # Update after Trust construction
-    sender: Bytes
+    deployer: Bytes
     recipient: Bytes
     reserve: Bytes!
     seedPrice: BigInt
