@@ -125,170 +125,169 @@ export let deployer: SignerWithAddress,
   feeRecipient: SignerWithAddress,
   admin: SignerWithAddress;
 
-describe("Subgraph Trusts Test", function () {
-  before(async function () {
-    const signers = await ethers.getSigners();
+before(async function () {
+  const signers = await ethers.getSigners();
 
-    // Signers (to avoid fetch again)
-    deployer = signers[0]; // deployer is not creator
-    creator = signers[1];
-    seeder1 = signers[2];
-    seeder2 = signers[3];
-    signer1 = signers[4];
-    signer2 = signers[5];
-    recipient = signers[6];
-    feeRecipient = signers[7];
-    admin = signers[9];
+  // Signers (to avoid fetch again)
+  deployer = signers[0]; // deployer is not creator
+  creator = signers[1];
+  seeder1 = signers[2];
+  seeder2 = signers[3];
+  signer1 = signers[4];
+  signer2 = signers[5];
+  recipient = signers[6];
+  feeRecipient = signers[7];
+  admin = signers[9];
 
-    [crpFactory, bFactory] = (await Util.balancerDeploy(deployer)) as [
-      CRPFactory,
-      BFactory
-    ];
+  [crpFactory, bFactory] = (await Util.balancerDeploy(deployer)) as [
+    CRPFactory,
+    BFactory
+  ];
 
-    ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
-      await Util.factoriesDeploy(crpFactory, bFactory, deployer));
-    currentBlock = trustFactory.deployTransaction.blockNumber;
+  ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
+    await Util.factoriesDeploy(crpFactory, bFactory, deployer));
+  currentBlock = trustFactory.deployTransaction.blockNumber;
 
-    // Getting the bPoolScrow from Trust Implementation
-    const trustImplementation = (
-      await Util.getEventArgs(
-        trustFactory.deployTransaction,
-        "Implementation",
-        trustFactory
-      )
-    ).implementation;
-
-    bPoolFeeEscrow = (await Util.getContractChild(
+  // Getting the bPoolScrow from Trust Implementation
+  const trustImplementation = (
+    await Util.getEventArgs(
       trustFactory.deployTransaction,
-      new ethers.Contract(trustImplementation, TrustJson.abi, deployer),
-      bPoolFeeEscrowJson,
-      deployer,
-      "Construction", // It is a different event that emit the address
-      "bPoolFeeEscrow" // It is a different event arg that contain the address
-    )) as BPoolFeeEscrow;
+      "Implementation",
+      trustFactory
+    )
+  ).implementation;
 
-    // Verify factory
-    verifyFactory = (await deploy(
-      verifyFactoryJson,
-      deployer,
-      []
-    )) as VerifyFactory;
-    const verifyFactoryBlock = verifyFactory.deployTransaction.blockNumber;
+  bPoolFeeEscrow = (await Util.getContractChild(
+    trustFactory.deployTransaction,
+    new ethers.Contract(trustImplementation, TrustJson.abi, deployer),
+    bPoolFeeEscrowJson,
+    deployer,
+    "Construction", // It is a different event that emit the address
+    "bPoolFeeEscrow" // It is a different event arg that contain the address
+  )) as BPoolFeeEscrow;
 
-    // Tiers factories
-    erc20BalanceTierFactory = (await deploy(
-      erc20BalanceTierFactoryJson,
-      deployer,
-      []
-    )) as ERC20BalanceTierFactory;
-    const erc20BalanceTierFactoryBlock =
-      erc20BalanceTierFactory.deployTransaction.blockNumber;
+  // Verify factory
+  verifyFactory = (await deploy(
+    verifyFactoryJson,
+    deployer,
+    []
+  )) as VerifyFactory;
+  const verifyFactoryBlock = verifyFactory.deployTransaction.blockNumber;
 
-    erc20TransferTierFactory = (await deploy(
-      erc20TransferTierFactoryJson,
-      deployer,
-      []
-    )) as ERC20TransferTierFactory;
-    const erc20TransferTierFactoryBlock =
-      erc20TransferTierFactory.deployTransaction.blockNumber;
+  // Tiers factories
+  erc20BalanceTierFactory = (await deploy(
+    erc20BalanceTierFactoryJson,
+    deployer,
+    []
+  )) as ERC20BalanceTierFactory;
+  const erc20BalanceTierFactoryBlock =
+    erc20BalanceTierFactory.deployTransaction.blockNumber;
 
-    combineTierFactory = (await deploy(
-      combineTierFactoryJson,
-      deployer,
-      []
-    )) as CombineTierFactory;
-    const combineTierFactoryBlock =
-      combineTierFactory.deployTransaction.blockNumber;
+  erc20TransferTierFactory = (await deploy(
+    erc20TransferTierFactoryJson,
+    deployer,
+    []
+  )) as ERC20TransferTierFactory;
+  const erc20TransferTierFactoryBlock =
+    erc20TransferTierFactory.deployTransaction.blockNumber;
 
-    verifyTierFactory = (await deploy(
-      verifyTierFactoryJson,
-      deployer,
-      []
-    )) as VerifyTierFactory;
-    const verifyTierFactoryBlock =
-      verifyTierFactory.deployTransaction.blockNumber;
+  combineTierFactory = (await deploy(
+    combineTierFactoryJson,
+    deployer,
+    []
+  )) as CombineTierFactory;
+  const combineTierFactoryBlock =
+    combineTierFactory.deployTransaction.blockNumber;
 
-    // ERC721BalanceTierFactory
-    erc721BalanceTierFactory = (await deploy(
-      erc721BalanceTierFactoryJson,
-      deployer,
-      []
-    )) as ERC721BalanceTierFactory;
-    const erc721BalanceTierFactoryBlock =
-      erc721BalanceTierFactory.deployTransaction.blockNumber;
+  verifyTierFactory = (await deploy(
+    verifyTierFactoryJson,
+    deployer,
+    []
+  )) as VerifyTierFactory;
+  const verifyTierFactoryBlock =
+    verifyTierFactory.deployTransaction.blockNumber;
 
-    // SaleFactory
-    const saleConstructorConfig = {
-      redeemableERC20Factory: redeemableERC20Factory.address,
-    };
-    saleFactory = (await deploy(saleFactoryJson, deployer, [
-      saleConstructorConfig,
-    ])) as SaleFactory;
-    const saleFactoryBlock = saleFactory.deployTransaction.blockNumber;
+  // ERC721BalanceTierFactory
+  erc721BalanceTierFactory = (await deploy(
+    erc721BalanceTierFactoryJson,
+    deployer,
+    []
+  )) as ERC721BalanceTierFactory;
+  const erc721BalanceTierFactoryBlock =
+    erc721BalanceTierFactory.deployTransaction.blockNumber;
 
-    // GatedNFTFactory
-    gatedNFTFactory = (await deploy(
-      gatedNFTFactoryJson,
-      deployer,
-      []
-    )) as GatedNFTFactory;
-    const gatedNFTFactoryBlock = gatedNFTFactory.deployTransaction.blockNumber;
+  // SaleFactory
+  const saleConstructorConfig = {
+    redeemableERC20Factory: redeemableERC20Factory.address,
+  };
+  saleFactory = (await deploy(saleFactoryJson, deployer, [
+    saleConstructorConfig,
+  ])) as SaleFactory;
+  const saleFactoryBlock = saleFactory.deployTransaction.blockNumber;
 
-    // RedeemableERC20ClaimEscrow
-    redeemableERC20ClaimEscrow = (await deploy(
-      redeemableERC20ClaimEscrowJson,
-      deployer,
-      []
-    )) as RedeemableERC20ClaimEscrow;
-    const redeemableERC20ClaimEscrowBlock =
-      redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
+  // GatedNFTFactory
+  gatedNFTFactory = (await deploy(
+    gatedNFTFactoryJson,
+    deployer,
+    []
+  )) as GatedNFTFactory;
+  const gatedNFTFactoryBlock = gatedNFTFactory.deployTransaction.blockNumber;
 
-    // Saving data in JSON
-    const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
-    const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
+  // RedeemableERC20ClaimEscrow
+  redeemableERC20ClaimEscrow = (await deploy(
+    redeemableERC20ClaimEscrowJson,
+    deployer,
+    []
+  )) as RedeemableERC20ClaimEscrow;
+  const redeemableERC20ClaimEscrowBlock =
+    redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
 
-    // Saving addresses and individuals blocks to index
-    configLocal.factory = trustFactory.address;
-    configLocal.startBlock = currentBlock;
+  // Saving data in JSON
+  const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
+  const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
 
-    configLocal.verifyFactory = verifyFactory.address;
-    configLocal.blockVerifyFactory = verifyFactoryBlock;
+  // Saving addresses and individuals blocks to index
+  configLocal.factory = trustFactory.address;
+  configLocal.startBlock = currentBlock;
 
-    configLocal.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
-    configLocal.blockErc20BalanceTierFactory = erc20BalanceTierFactoryBlock;
+  configLocal.verifyFactory = verifyFactory.address;
+  configLocal.blockVerifyFactory = verifyFactoryBlock;
 
-    configLocal.erc20TransferTierFactory = erc20TransferTierFactory.address;
-    configLocal.blockErc20TransferTierFactory = erc20TransferTierFactoryBlock;
+  configLocal.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
+  configLocal.blockErc20BalanceTierFactory = erc20BalanceTierFactoryBlock;
 
-    configLocal.combineTierFactory = combineTierFactory.address;
-    configLocal.blockCombineTierFactory = combineTierFactoryBlock;
+  configLocal.erc20TransferTierFactory = erc20TransferTierFactory.address;
+  configLocal.blockErc20TransferTierFactory = erc20TransferTierFactoryBlock;
 
-    configLocal.verifyTierFactory = verifyTierFactory.address;
-    configLocal.blockVerifyTierFactory = verifyTierFactoryBlock;
+  configLocal.combineTierFactory = combineTierFactory.address;
+  configLocal.blockCombineTierFactory = combineTierFactoryBlock;
 
-    configLocal.erc721BalanceTierFactory = erc721BalanceTierFactory.address;
-    configLocal.blockErc721BalanceTierFactory = erc721BalanceTierFactoryBlock;
+  configLocal.verifyTierFactory = verifyTierFactory.address;
+  configLocal.blockVerifyTierFactory = verifyTierFactoryBlock;
 
-    configLocal.saleFactory = saleFactory.address;
-    configLocal.blockSaleFactory = saleFactoryBlock;
+  configLocal.erc721BalanceTierFactory = erc721BalanceTierFactory.address;
+  configLocal.blockErc721BalanceTierFactory = erc721BalanceTierFactoryBlock;
 
-    configLocal.gatedNFTFactory = gatedNFTFactory.address;
-    configLocal.blockGatedNFTFactory = gatedNFTFactoryBlock;
+  configLocal.saleFactory = saleFactory.address;
+  configLocal.blockSaleFactory = saleFactoryBlock;
 
-    configLocal.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
-    configLocal.blockRedeemableERC20ClaimEscrow =
-      redeemableERC20ClaimEscrowBlock;
+  configLocal.gatedNFTFactory = gatedNFTFactory.address;
+  configLocal.blockGatedNFTFactory = gatedNFTFactoryBlock;
 
-    Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
+  configLocal.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
+  configLocal.blockRedeemableERC20ClaimEscrow =
+    redeemableERC20ClaimEscrowBlock;
 
-    Util.exec(`yarn deploy-build:localhost`);
+  Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
 
-    subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
+  Util.exec(`yarn deploy-build:localhost`);
 
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
-  });
+  subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
 
+  await Util.delay(Util.wait);
+  await waitForSubgraphToBeSynced(1000);
+});
+describe("Subgraph Trusts Test", function () {
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
@@ -2828,7 +2827,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  xdescribe("Trust with a non-SeedERC20 contract as Seeder", function () {
+  describe("Trust with a non-SeedERC20 contract as Seeder", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -2965,7 +2964,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  xdescribe("Trust with a zero as minimunRaise", function () {
+  describe("Trust with a zero as minimunRaise", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
