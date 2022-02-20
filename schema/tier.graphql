@@ -29,7 +29,7 @@ type VerifyTier implements TierContract @entity {
     deployer: Bytes #address of the deployer - get from event Initialize.verify
     factory: TierFactory #the factory that deployed this contract
 
-    # verifyContract: Verify! #the Verify contract checked for reports - from event Initialize.verify
+    verifyContract: Verify! #the Verify contract checked for reports - from event Initialize.verify
 }
 
 type ERC20BalanceTierFactory implements TierFactory @entity{
@@ -69,7 +69,7 @@ type ERC20TransferTierFactory implements TierFactory @entity{
     children: [TierContract!] #all the children that were deployed by this factory
 }
 
-# ERC20BalanceTier - created by listening to NewChild events on the factory
+# ERC20TransferTier - created by listening to NewChild events on the factory
 type ERC20TransferTier implements TierContract @entity{
     id: ID! #tier contract address
     address: Bytes! #tier contract address

@@ -11,6 +11,7 @@ import * as Util from "./utils/utils";
 import {
   op,
   deploy,
+  getTxTimeblock,
   getContractChild,
   waitForSubgraphToBeSynced,
   eighteenZeros,
@@ -90,6 +91,7 @@ import {
   combineTierFactory,
   erc721BalanceTierFactory,
 } from "./1_trustQueries.test";
+import { version } from "process";
 
 const enum Status {
   Nil,
@@ -132,555 +134,535 @@ describe("Subgraph Tier Test", function () {
     reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
   });
 
-  describe("Verify Factory - Queries", function async() {
-    const evidenceEmpty = hexlify([...Buffer.from("")]);
-    const evidenceAdd = hexlify([...Buffer.from("Evidence for add")]);
-    const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
-    const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
+  describe("VerifyTier Factory - Queries", function () {
+    const APPROVER = ethers.utils.keccak256(
+      ethers.utils.toUtf8Bytes("APPROVER")
+    );
+    const REMOVER = ethers.utils.keccak256(
+      ethers.utils.toUtf8Bytes("REMOVER")
+    );
+    const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
 
-    it("should query VerifyFactory correctly after construction", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+    const evidenceData = hexlify([...Buffer.from("Evidence")]);
 
+    let verifyTier2: VerifyTier,
+      signer1Id: string,
+      signer2Id: string,
+      adminId: string;
+
+    before("deploy fresh test contracts", async function () {
+      // Creating a new Verify Child
+      verify = await Util.verifyDeploy(verifyFactory, creator, admin.address);
+
+      // Admin grants all roles to himself. This is for testing purposes only, it SHOULD be avoided.
+      await verify.connect(admin).grantRole(APPROVER, admin.address);
+      await verify.connect(admin).grantRole(REMOVER, admin.address);
+      await verify.connect(admin).grantRole(BANNER, admin.address);
+
+      // Verify Address IDs
+      signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
+      signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
+      adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
+    });
+
+    it("should query VerifyTierFactory correctly after construction", async function () {
+      // Get the VerifyTier implementation
       const implementation = (
         await Util.getEventArgs(
-          verifyFactory.deployTransaction,
+          verifyTierFactory.deployTransaction,
           "Implementation",
-          verifyFactory
+          verifyTierFactory
         )
       ).implementation;
 
       const query = `
         {
-          verifyFactories {
+          verifyTierFactories  {
             id
             address
             implementation
           }
         }
       `;
-
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const factoriesData = queryResponse.data.verifyFactories;
-      const data = factoriesData[0];
-
-      expect(factoriesData).to.have.lengthOf(1);
-
-      expect(data.id).to.equals(verifyFactory.address.toLocaleLowerCase());
-      expect(data.address).to.equals(verifyFactory.address.toLocaleLowerCase());
-      expect(data.implementation).to.equals(implementation.toLocaleLowerCase());
+      const data = response.data.verifyTierFactories[0];
+      
+      expect(data.id).to.equals(verifyTierFactory.address.toLowerCase());
+      expect(data.address).to.equals(verifyTierFactory.address.toLowerCase());
+      expect(data.implementation).to.equals(implementation.toLowerCase());
     });
 
-    it("should query the Verify child from factory after creation", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(500);
-      transaction = await verifyFactory.createChildTyped(admin.address);
-
-      verify = (await getContractChild(
-        transaction,
-        verifyFactory,
-        verifyJson
-      )) as Verify;
-
-      await Util.delay(Util.wait * 2);
-      await waitForSubgraphToBeSynced(1200);
-
-      const query = `
-        {
-          verifyFactory (id: "${verifyFactory.address.toLowerCase()}") {
-            children {
-              id
-            }
-          }
-        }
-      `;
-
-      const queryVerifyFactoryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const data = queryVerifyFactoryResponse.data.verifyFactory;
-
-      expect(data.children).to.deep.include({
-        id: verify.address.toLowerCase(),
-      });
-    });
-
-    it("should query the Verify contract correclty", async function () {
-      const verifyCreator = await verifyFactory.signer.getAddress();
-      const deployBlock = transaction.blockNumber;
-      const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
-        .timestamp;
-
-      const query = `
-        {
-          verify (id: "${verify.address.toLowerCase()}") {
-            address
-            deployBlock
-            deployTimestamp
-            deployer
-            factory {
-              id
-            }
-            verifyAddresses {
-              id
-            }
-          }
-        }
-      `;
-
-      const queryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const data = queryResponse.data.verify;
-
-      expect(data.verifyAddresses).to.be.empty;
-      expect(data.address).to.equals(verify.address.toLowerCase());
-      expect(data.factory.id).to.equals(verifyFactory.address.toLowerCase());
-
-      expect(data.deployer).to.equals(verifyCreator.toLowerCase());
-      expect(data.deployBlock).to.equals(deployBlock.toString());
-      expect(data.deployTimestamp).to.equals(deloyTimestamp.toString());
-    });
-
-    it("should query the VerifyRequestApprove after a RequestApprove ", async function () {
-      transaction = await verify.connect(signer1).add(evidenceAdd);
-
-      await Util.delay(Util.wait * 2);
-      await waitForSubgraphToBeSynced(1200);
-
-      const requestId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
-      const deployBlock = transaction.blockNumber;
-      const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
-        .timestamp;
-
-      const query = `
-        {
-          verifyRequestApproves {
-            id
-            block
-            transactionHash
-            timestamp
-            verifyContract
-            sender
-            account
-            data
-          }
-        }
-      `;
-
-      const queryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const dataArray = queryResponse.data.verifyRequestApproves;
-      const data = dataArray[0];
-
-      expect(dataArray).to.have.lengthOf(1);
-
-      expect(data.id).to.equals(requestId);
-      expect(data.block).to.equals(deployBlock.toString());
-      expect(data.timestamp).to.equals(deloyTimestamp.toString());
-      expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
-
-      expect(data.verifyContract).to.equals(verify.address.toLowerCase());
-      expect(data.sender).to.equals(signer1.address.toLowerCase());
-      expect(data.account).to.equals(signer1.address.toLowerCase());
-      expect(data.data).to.equals(evidenceAdd);
-    });
-
-    it("should query the VerifyEvent after a RequestApprove ", async function () {
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
-      const deployBlock = transaction.blockNumber;
-      const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
-        .timestamp;
-
-      const query = `
-        {
-          verifyEvents {
-            id
-            block
-            transactionHash
-            timestamp
-            verifyContract
-            sender
-            account
-            data
-          }
-        }
-      `;
-
-      const queryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const dataArray = queryResponse.data.verifyEvents;
-      const data = dataArray[0];
-
-      expect(dataArray).to.have.lengthOf(1);
-
-      expect(data.id).to.equals(verifyEventId);
-      expect(data.block).to.equals(deployBlock.toString());
-      expect(data.timestamp).to.equals(deloyTimestamp.toString());
-      expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
-
-      expect(data.verifyContract).to.equals(verify.address.toLowerCase());
-      expect(data.sender).to.equals(signer1.address.toLowerCase());
-      expect(data.account).to.equals(signer1.address.toLowerCase());
-      expect(data.data).to.equals(evidenceAdd);
-    });
-
-    it("should query without change in the verifyAddresses after RequestApprove from Verify contract", async function () {
-      const verifyAddressId = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
-
-      const query = `
-        {
-          verify (id: "${verify.address.toLowerCase()}") {
-            verifyAddresses {
-              id
-            }
-          }
-          verifyAddress (id: "${verifyAddressId}}") {
-            verifyContract {
-              id
-            }
-            address
-            requestStatus
-            status
-            events {
-              id
-            }
-          }
-        }
-      `;
-
-      const queryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const dataVerify = queryResponse.data.verify;
-      const dataVerifyAddress = queryResponse.data.verifyAddress;
-
-      expect(dataVerify.verifyAddresses).to.deep.include({
-        id: verifyAddressId,
-      });
-
-      expect(dataVerifyAddress.verifyContract.id).to.equals(
-        verify.address.toLowerCase()
-      );
-      expect(dataVerifyAddress.address).to.equals(
-        signer1.address.toLocaleLowerCase()
-      );
-
-      expect(dataVerifyAddress.requestStatus).to.equals(1); // A
-      expect(dataVerifyAddress.status).to.equals(0);
-      expect(dataVerifyAddress.events).to.deep.include({ id: verifyEventId });
-      expect(dataVerifyAddress.events).to.have.lengthOf(1);
-
-      // # Get from the last RequestApprove, RequestBan, RequestRemove events for this address.
-      // # After a Approve, Ban or Remove event, RequestStatus should move back to 'NONE'.
-      // requestStatus: Int!
-      // # Get from the last Approve, Ban, Remove events.
-      // # After the RequestApprove event and before Approve, status should be 'NONE'.
-      // status: Int!
-      // events: [VerifyEvent!] #all the event entities associated with this address for this Verify
-    });
-
-    it("should query the correct Verify event after two Approves", async function () {
-      const tx = await verify
-        .connect(admin)
-        .approve(signer1.address, evidenceApprove);
-
-      // Second account to approve
-      await verify.connect(signer2).add(evidenceAdd);
-      await verify.connect(admin).approve(signer2.address, evidenceApprove);
+    it("should query the VerifyTier child from Factory after creation", async function () {
+      // Creating the VerifyTier Contract with the Verify
+      verifyTier =  await Util.verifyTierDeploy(verifyTierFactory, creator, verify.address);
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const verifyApproveQuery = `
-        {
-          verifyApproves {
-            id
-          }
-          verifyApprove (id: "${verify.address.toLowerCase()}-${tx.hash.toLowerCase()}") {
-            transactionHash
-            verifyContract
-            sender
-            account
-            data
-          }
-        }
-      `;
-
-      const verifyApproveQueryResponse = (await subgraph({
-        query: verifyApproveQuery,
-      })) as FetchResult;
-
-      const verifyApproveData = verifyApproveQueryResponse.data.verifyApprove;
-      const verifyApprovesData = verifyApproveQueryResponse.data.verifyApproves;
-
-      expect(verifyApprovesData).to.have.lengthOf(2);
-      expect(verifyApproveData.transactionHash).to.equals(
-        tx.hash.toLowerCase()
-      );
-      expect(verifyApproveData.sender).to.equals(admin.address.toLowerCase());
-      expect(verifyApproveData.account).to.equals(
-        signer1.address.toLowerCase()
-      );
-      expect(verifyApproveData.data).to.equals(evidenceApprove);
-    });
-
-    it("should update the verifyAddresses after Approves", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const addresses = [signer1.address, signer2.address];
-
-      const verifyQuery = `
-        {
-          verify (id: "${verify.address.toLowerCase()}") {
-            verifyAddresses
-          }
-        }
-      `;
-
-      const verifyQueryResponse = (await subgraph({
-        query: verifyQuery,
-      })) as FetchResult;
-
-      const verifyData = verifyQueryResponse.data.verify;
-
-      expect(verifyData.verifyAddresses).to.have.lengthOf(2);
-      expect(verifyData.verifyAddresses).to.have.members(addresses);
-    });
-
-    it("should query the Verify events after ban", async function () {
-      const txRequestBan = await verify
-        .connect(signer1)
-        .requestBan(signer2.address, evidenceBan);
-      const txBan = await verify
-        .connect(signer1)
-        .ban(signer2.address, evidenceBan);
-
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const verifyEventsQuery = `
-        {
-          verifyRequestBan (id: "${verify.address.toLowerCase()}-${txRequestBan.hash.toLowerCase()}") {
-            sender
-            account
-            data
-          }
-          verifyBan (id: "${verify.address.toLowerCase()}-${txBan.hash.toLowerCase()}") {
-            sender
-            account
-            data
-          }
-        }
-      `;
-
-      const verifyEventsQueryResponse = (await subgraph({
-        query: verifyEventsQuery,
-      })) as FetchResult;
-
-      const requestBanData = verifyEventsQueryResponse.data.VerifyRequestBan;
-      const banData = verifyEventsQueryResponse.data.VerifyBan;
-
-      // verifyRequestBan
-      expect(requestBanData.sender).to.equals(signer1.address.toLowerCase());
-      expect(requestBanData.account).to.equals(signer2.address.toLowerCase());
-      expect(requestBanData.data).to.equals(evidenceBan);
-
-      // verifyBan
-      expect(banData.sender).to.equals(signer1.address.toLowerCase());
-      expect(banData.account).to.equals(signer2.address.toLowerCase());
-      expect(banData.data).to.equals(evidenceBan);
-    });
-
-    it("should query the Verify events after remove", async function () {
-      const txRequestRemove = await verify
-        .connect(signer1)
-        .requestRemove(signer1.address, evidenceEmpty);
-      const txRemove = await verify
-        .connect(signer1)
-        .remove(signer1.address, evidenceEmpty);
-
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const verifyEventsQuery = `
-        {
-          VerifyRequestRemove (id: "${verify.address.toLowerCase()}-${txRequestRemove.hash.toLowerCase()}") {
-            sender
-            account
-            data
-          }
-          VerifyRemove (id: "${verify.address.toLowerCase()}-${txRemove.hash.toLowerCase()}") {
-            sender
-            account
-            data
-          }
-        }
-      `;
-
-      const verifyEventsQueryResponse = (await subgraph({
-        query: verifyEventsQuery,
-      })) as FetchResult;
-
-      const requestRemoveData =
-        verifyEventsQueryResponse.data.VerifyRequestRemove;
-      const RemoveData = verifyEventsQueryResponse.data.VerifyRemove;
-
-      // verifyRequestBan
-      expect(requestRemoveData.sender).to.equals(signer1.address.toLowerCase());
-      expect(requestRemoveData.account).to.equals(
-        signer1.address.toLowerCase()
-      );
-      expect(requestRemoveData.data).to.equals(evidenceEmpty);
-
-      // verifyBan
-      expect(RemoveData.sender).to.equals(signer1.address.toLowerCase());
-      expect(RemoveData.account).to.equals(signer1.address.toLowerCase());
-      expect(RemoveData.data).to.equals(evidenceEmpty);
-    });
-
-    it("should update the verifyAddresses after remove/ban", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const verifyQuery = `
-        {
-          verify (id: "${verify.address.toLowerCase()}") {
-            verifyAddresses
-          }
-        }
-      `;
-
-      const verifyQueryResponse = (await subgraph({
-        query: verifyQuery,
-      })) as FetchResult;
-
-      const verifyData = verifyQueryResponse.data.verify;
-
-      expect(verifyData.verifyAddresses).to.have.lengthOf(0);
-    });
-  });
-
-  describe("VerifyTier Factory - Queries", function () {
-    it("should query VerifyTierFactory correctly after construction", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
-
-      const query = `
-        {
-          verifyTierFactory (id: "${verifyTierFactory.address.toLowerCase()}") {
-            address
-            children {
-              id
-            }
-          }
-        }
-      `;
-
-      const queryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const factoryData = queryResponse.data.verifyTierFactory;
-
-      expect(factoryData.address).to.equals(
-        verifyTierFactory.address.toLowerCase()
-      );
-      expect(factoryData.children).to.be.empty;
-    });
-
-    it("should query the VerifyTier child from factory after creation", async function () {
-      const verifyTierCreator = await verifyTierFactory.signer.getAddress();
-
-      // Creating new Verify
-      const txVerify = await verifyFactory.createChildTyped(admin.address);
-
-      verify = (await getContractChild(
-        txVerify,
-        verifyFactory,
-        verifyJson
-      )) as Verify;
-
-      // Creating the VerifyTier Contract with a Verify Contract
-      const txVerifyTier = await verifyTierFactory.createChildTyped(
-        verify.address
-      );
-
-      verifyTier = (await getContractChild(
-        txVerifyTier,
-        verifyTierFactory,
-        verifyTierJson
-      )) as VerifyTier;
-
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced(1500);
 
       const query = `
         {
           verifyTierFactory  (id: "${verifyTierFactory.address.toLowerCase()}") {
-            address
             children {
               id
-              deployer
             }
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const factoryData = queryResponse.data.verifyFactory;
-      const verifyTierData = factoryData.children[0];
+      const data = response.data.verifyTierFactory;
 
-      expect(factoryData.children).to.have.lengthOf(1);
-      expect(verifyTierData.id).to.equals(verifyTier.address.toLowerCase());
-      expect(verifyTierData.deployer).to.equals(
-        await verifyTierCreator.toLowerCase()
-      );
+      expect(data.children).to.deep.include({ id: verifyTier.address.toLowerCase() });
     });
 
-    it("should query the VerifyContract from VerifyTier correclty", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+    it("should query the VerityTier contract correclty", async function () {
+      const [deployBlock, deployTimestamp] = await getTxTimeblock(
+        verifyTier.deployTransaction
+      );
+
+      const query = `
+        {
+          verifyTier (id: "${verifyTier.address.toLowerCase()}") {
+            id
+            address
+            deployer
+            deployBlock
+            deployTimestamp
+            factory {
+              address
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const data = response.data.verifyTier;
+
+      expect(data.id).to.equals(verifyTier.address.toLowerCase());
+      expect(data.address).to.equals(verifyTier.address.toLowerCase());
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
+
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
+      expect(data.factory.address).to.equals(verifyTierFactory.address.toLowerCase());
+    });
+
+    it("should query the Verify contract from VerifyTier correclty", async function () {
+      const [deployBlock, deployTimestamp] = await getTxTimeblock(
+        verify.deployTransaction
+      );
 
       const query = `
         {
           verifyTier (id: "${verifyTier.address.toLowerCase()}") {
             verifyContract {
               id
-              factory
-              verifyAddresses
+              address
+              deployer
+              deployBlock
+              deployTimestamp
+              factory {
+                id
+              }
+              verifyAddresses {
+                id
+              }
             }
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const verifyData = queryResponse.data.verifyTier.verifyContract;
+      const data = response.data.verifyTier.verifyContract;
+      
+      expect(data.id).to.equals(verify.address.toLowerCase());
+      expect(data.address).to.equals(verify.address.toLowerCase());
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
 
-      expect(verifyData.id).to.equals(verify.address.toLowerCase());
-      expect(verifyData.factory).to.equals(verifyFactory.address.toLowerCase());
-      expect(verifyData.verifyAddresses).to.be.empty;
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
+      expect(data.factory.id).to.equals(verifyFactory.address.toLowerCase());
+
+      expect(data.verifyAddresses).to.be.empty;
     });
 
-    it("should query a Verify that was deployed without the factory and present in VerifyTier", async function () {
+    it("should update the Verify contract in different VerifyTiers after a RequestApprove", async function () {
+      // Creating the a new VerifyTier Contract with the same Verify
+      verifyTier2 =  await Util.verifyTierDeploy(verifyTierFactory, creator, verify.address);
+
+      // signer1 and signer2 want to be added
+      await verify.connect(signer1).add(evidenceData);
+      await verify.connect(signer2).add(evidenceData);
+
+      const signer1Expected = {
+        id: signer1Id,
+        requestStatus: 1,
+        status: 0
+      };
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
+
+      const query = `
+        {
+          verifyTier1: verifyTier (id: "${verifyTier.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+          verifyTier2: verifyTier (id: "${verifyTier2.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTier1 = response.data.verifyTier1.verifyContract;
+      const dataTier2 = response.data.verifyTier2.verifyContract;
+
+      // VerifyTier1
+      expect(dataTier1.verifyAddresses).to.deep.include(signer1Expected);
+
+      // VerifyTier2
+      expect(dataTier2.verifyAddresses).to.deep.include(signer1Expected);
+    });
+
+    it("should update the Verify contract in different VerifyTiers after a Approve", async function () {
+      // Admin approve the users
+      await verify.connect(admin).approve(signer1.address, evidenceData);
+      await verify.connect(admin).approve(signer2.address, evidenceData);
+
+      const signer1Expected = {
+        id: signer1Id,
+        requestStatus: 0,
+        status: 1
+      };
+
+      const adminExpected = {
+        id: adminId,
+        requestStatus: 0,
+        status: 0
+      };
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
+
+      const query = `
+        {
+          verifyTier1: verifyTier (id: "${verifyTier.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+          verifyTier2: verifyTier (id: "${verifyTier2.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTier1 = response.data.verifyTier1.verifyContract;
+      const dataTier2 = response.data.verifyTier2.verifyContract;
+
+      // VerifyTier1
+      expect(dataTier1.verifyAddresses).to.deep.include(signer1Expected);
+      expect(dataTier1.verifyAddresses).to.deep.include(adminExpected);
+
+      // VerifyTier2
+      expect(dataTier2.verifyAddresses).to.deep.include(signer1Expected);
+      expect(dataTier2.verifyAddresses).to.deep.include(adminExpected);
+    });
+
+    it("should update the Verify contract in different VerifyTiers after a RequestRemove", async function () {
+      // signer1 requests that signer2 be removed
+      await verify.connect(signer1).requestRemove(signer2.address, evidenceData);
+
+      const signer1Expected = {
+        id: signer1Id,
+        requestStatus: 0,
+        status: 1
+      };
+
+      const signer2Expected = {
+        id: signer1Id,
+        requestStatus: 3,
+        status: 1
+      };
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
+
+      const query = `
+        {
+          verifyTier1: verifyTier (id: "${verifyTier.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+          verifyTier2: verifyTier (id: "${verifyTier2.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTier1 = response.data.verifyTier1.verifyContract;
+      const dataTier2 = response.data.verifyTier2.verifyContract;
+
+      // VerifyTier1
+      expect(dataTier1.verifyAddresses).to.deep.include(signer1Expected);
+      expect(dataTier1.verifyAddresses).to.deep.include(signer2Expected);
+
+      // VerifyTier2
+      expect(dataTier2.verifyAddresses).to.deep.include(signer1Expected);
+      expect(dataTier2.verifyAddresses).to.deep.include(signer2Expected);
+    });
+
+    it("should update the Verify contract in different VerifyTiers after a Remove", async function () {
+      // Admin remove the signer2
+      await verify.connect(admin).remove(signer2.address, evidenceData);
+
+      const signer2Expected = {
+        id: signer1Id,
+        requestStatus: 0,
+        status: 3
+      };
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
+
+      const query = `
+        {
+          verifyTier1: verifyTier (id: "${verifyTier.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+          verifyTier2: verifyTier (id: "${verifyTier2.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTier1 = response.data.verifyTier1.verifyContract;
+      const dataTier2 = response.data.verifyTier2.verifyContract;
+
+      // VerifyTier1
+      expect(dataTier1.verifyAddresses).to.deep.include(signer2Expected);
+
+      // VerifyTier2
+      expect(dataTier2.verifyAddresses).to.deep.include(signer2Expected);
+    });
+
+    it("should update the Verify contract in different VerifyTiers after a RequestBan", async function () {
+      // Add again signer2 to request ban
+      await verify.connect(signer2).add(evidenceData);
+      await verify.connect(admin).approve(signer2.address, evidenceData);
+
+      // signer1 request signer2 to be banned
+      await verify.connect(signer1).requestBan(signer2.address, evidenceData);
+
+      const signer2Expected = {
+        id: signer1Id,
+        requestStatus: 2,
+        status: 1
+      };
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
+
+      const query = `
+        {
+          verifyTier1: verifyTier (id: "${verifyTier.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+          verifyTier2: verifyTier (id: "${verifyTier2.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTier1 = response.data.verifyTier1.verifyContract;
+      const dataTier2 = response.data.verifyTier2.verifyContract;
+
+      // VerifyTier1
+      expect(dataTier1.verifyAddresses).to.deep.include(signer2Expected);
+
+      // VerifyTier2
+      expect(dataTier2.verifyAddresses).to.deep.include(signer2Expected);
+    });
+
+    it("should update the Verify contract in different VerifyTiers after a Ban", async function () {
+      // Admin ban the signer2
+      await verify.connect(admin).ban(signer2.address, evidenceData);
+
+      const signer2Expected = {
+        id: signer1Id,
+        requestStatus: 0,
+        status: 2
+      };
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
+
+      const query = `
+        {
+          verifyTier1: verifyTier (id: "${verifyTier.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+          verifyTier2: verifyTier (id: "${verifyTier2.address.toLowerCase()}") {
+            verifyContract {
+              verifyAddresses {
+                id
+                requestStatus
+                status
+              }
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTier1 = response.data.verifyTier1.verifyContract;
+      const dataTier2 = response.data.verifyTier2.verifyContract;
+
+      // VerifyTier1
+      expect(dataTier1.verifyAddresses).to.deep.include(signer2Expected);
+
+      // VerifyTier2
+      expect(dataTier2.verifyAddresses).to.deep.include(signer2Expected);
+    });
+
+    it("should continue query if the Verify Address in VerifyTier is a non-Verify contract address", async function() {
+      const nonVerifyAddress = Util.zeroAddress;
+
+      // Creating the VerifyTier Contract with the non-Verify contract address
+      verifyTier =  await Util.verifyTierDeploy(verifyTierFactory, creator, nonVerifyAddress);
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(1500);
+
+
+      const query = `
+        {
+          verifyTier (id: "${verifyTier.address.toLowerCase()}") {
+            address
+            verifyContract {
+              id
+              address
+              deployBlock
+              deployTimestamp
+              deployer
+              factory {
+                id
+              }
+              verifyAddresses {
+                id
+              }
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTier = response.data.verifyTier;
+      const data = response.data.verifyTier.verifyContract;
+
+      expect(dataTier.address).to.equals(verifyTier.address.toLowerCase());
+
+      expect(data.id).to.equals(nonVerifyAddress.toLowerCase());
+      expect(data.address).to.equals(nonVerifyAddress.toLowerCase());
+      
+      expect(data.deployBlock).to.equals("0");
+      expect(data.deployTimestamp).to.equals("0");
+
+      expect(data.deployer).to.equals(Util.zeroAddress.toLowerCase());
+      expect(data.factory).to.equals(Util.zeroAddress.toLowerCase());
+      expect(data.verifyAddresses).to.be.empty;
+    
+    });
+
+    it("should query a Verify that was deployed without the factory and it is in VerifyTier", async function () {
       // Verify deployed without factory
       const verifyIndependent = (await deploy(
         verifyJson,
@@ -690,51 +672,51 @@ describe("Subgraph Tier Test", function () {
 
       await verifyIndependent.initialize(admin.address);
 
-      const tx = await verifyTierFactory.createChildTyped(
-        verifyIndependent.address
-      );
-
-      const verifyTier2 = (await getContractChild(
-        tx,
-        verifyTierFactory,
-        verifyTierJson
-      )) as VerifyTier;
+      // Creating the VerifyTier Contract with the Verify
+      verifyTier =  await Util.verifyTierDeploy(verifyTierFactory, creator, verifyIndependent.address);
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced(1500);
 
-      const verifyTiersQuery = `
+      const query = `
         {
-          verifyTierFactory  (id: "${verifyTierFactory.address.toLowerCase()}") {
-            children {
-              id
-            }
-          }
-          verifyTier (id: "${verifyTier2.address.toLowerCase()}") {
+          verifyTier (id: "${verifyTier.address.toLowerCase()}") {
             address
             verifyContract {
+              id
               address
+              deployer
+              deployBlock
+              deployTimestamp
+              factory {
+                id
+              }
+              verifyAddresses {
+                id
+              }
             }
           }
         }
       `;
 
-      const verifyTiersQueryResponse = (await subgraph({
-        query: verifyTiersQuery,
+      const response = (await subgraph({
+        query: query,
       })) as FetchResult;
+      const dataTier = response.data.verifyTier;
+      const data = response.data.verifyTier.verifyContract;
 
-      const verifyTierFactoryData =
-        verifyTiersQueryResponse.data.verifyTierFactory;
-      const verifyTierData = verifyTiersQueryResponse.data.verifyTier;
+      expect(dataTier.address).to.equals(verifyTier.address.toLowerCase());
 
-      expect(verifyTierFactoryData.children).to.have.lengthOf(2);
-      expect(verifyTierData.address).to.equals(
-        verifyTier2.address.toLowerCase()
-      );
-      // confirm this
-      expect(verifyTierData.verifyContract).to.equals(
-        verifyIndependent.address.toLowerCase()
-      );
+      expect(data.id).to.equals(verifyIndependent.address.toLowerCase());
+      expect(data.address).to.equals(verifyIndependent.address.toLowerCase());
+
+      // Is there any way to get this values if was deployed without the factory?
+      expect(data.deployBlock).to.equals("0");
+      expect(data.deployTimestamp).to.equals("0");
+
+      expect(data.deployer).to.equals(Util.zeroAddress.toLowerCase());
+      expect(data.factory).to.equals(Util.zeroAddress.toLowerCase());
+      expect(data.verifyAddresses).to.be.empty;
     });
   });
 

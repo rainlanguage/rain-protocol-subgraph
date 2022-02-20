@@ -8,7 +8,7 @@ import * as Util from "./utils/utils";
 import {
   waitForSubgraphToBeSynced,
   getTxTimeblock,
-  createChildTyped,
+  verifyDeploy,
 } from "./utils/utils";
 
 // Artifacts
@@ -93,9 +93,7 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should query the Verify child from factory after creation", async function () {
-      verify = (await createChildTyped(verifyFactory, verifyJson, [
-        admin.address,
-      ])) as Verify;
+      verify = await verifyDeploy(verifyFactory, deployer, admin.address);
 
       const APPROVER = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes("APPROVER")
@@ -111,7 +109,7 @@ describe("Subgraph Tier Test", function () {
       await verify.connect(admin).grantRole(BANNER, admin.address);
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced(2000);
 
       const query = `
         {
@@ -335,7 +333,7 @@ describe("Subgraph Tier Test", function () {
       eventsAdmin++;
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced(2000);
 
       const approveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLocaleLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -462,7 +460,7 @@ describe("Subgraph Tier Test", function () {
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
 
-    it("should update the verifyAddress  that has Approved the user", async function () {
+    it("should update the verifyAddress that has Approved the user", async function () {
       const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
 
@@ -514,7 +512,7 @@ describe("Subgraph Tier Test", function () {
       eventsSigner2++;
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced(2000);
 
       const requestRemoveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -839,7 +837,7 @@ describe("Subgraph Tier Test", function () {
       eventsSigner2++;
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1300);
+      await waitForSubgraphToBeSynced(2000);
 
       const requestBanId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
