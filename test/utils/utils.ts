@@ -24,18 +24,32 @@ import CRPFactory from "@beehiveinnovation/configurable-rights-pool/artifacts/CR
 import ConfigurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
 import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
 
-// Rain protocol contracts
+// Rain protocol contracts Artifacts
 import RedeemableERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
 import SeedERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
 import TrustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 import SaleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
+import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 
 // Types
+import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
+import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTierFactory";
+import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
+import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
+import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
+
 import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
 import { SeedERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
 import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
+
+import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
+import { ERC20TransferTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
+import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
+import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
+import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
+
 import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
 import type { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
 import type {
@@ -313,6 +327,47 @@ export const saleDeploy = async (
   )) as Sale & Contract;
 
   return sale;
+};
+
+/**
+ * @param verifyFactory - The Verify Factory
+ * @param creator - the signer that will create the Verify
+ * @param adminAddress - the verify admin address
+ * @param override - (optional) override transaction values as gasLimit
+ * @returns 
+ */
+export const verifyDeploy = async (
+  verifyFactory: VerifyFactory,
+  creator: SignerWithAddress,
+  adminAddress: string,
+  override: Overrides = {}
+): Promise<Verify> => {
+  // Creating child
+  const verify = (await createChildTyped(
+    verifyFactory,
+    verifyJson,
+    [adminAddress, override],
+    creator
+  )) as Verify & Contract;
+
+  return verify;
+};
+
+export const verifyTierDeploy = async (
+  verifyTierFactory: VerifyTierFactory,
+  creator: SignerWithAddress,
+  verifyAddress: string,
+  override: Overrides = {}
+): Promise<VerifyTier> => {
+  // Creating child
+  const verifyTier = (await createChildTyped(
+    verifyTierFactory,
+    verifyJson,
+    [verifyAddress, override],
+    creator
+  )) as VerifyTier & Contract;
+
+  return verifyTier;
 };
 
 /**
