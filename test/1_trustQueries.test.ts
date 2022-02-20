@@ -1769,9 +1769,8 @@ describe("Subgraph Trusts Test", function () {
         seedContract.address
       );
 
-      const seededAmountExpected = await reserve.balanceOf(
-        seedContract.address
-      );
+      // It is the reserve expected when is full seeded
+      const seededAmountExpected = reserveInit;
 
       const percentSeededExpected = seededAmountExpected
         .mul(100)
@@ -2521,11 +2520,12 @@ describe("Subgraph Trusts Test", function () {
       });
       const data = queryResponse.data.distributionProgress;
 
+      expect(data.distributionStatus).to.equals(DistributionStatus.Success);
+
       expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
       expect(data.poolRedeemableBalance).to.equals(
         poolRedeemableBalanceExpected
       );
-      expect(data.distributionStatus).to.equals(DistributionStatus.Success);
 
       expect(data.amountRaised).to.equals(amountRaisedExpected);
       expect(data.percentRaised).to.equals(percentRaisedExpected);
@@ -2680,16 +2680,15 @@ describe("Subgraph Trusts Test", function () {
         );
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced(2000);
 
-      const seeder1holderId = `${redeemableERC20Contract.address.toLowerCase()} - ${signer2.address.toLowerCase()}`;
+      const seeder2holderId = `${redeemableERC20Contract.address.toLowerCase()} - ${signer2.address.toLowerCase()}`;
       const balanceExpected = await redeemableERC20Contract.balanceOf(
         signer2.address
       );
-
       const query = `
           {
-            holder (id: "${seeder1holderId}") {
+            holder (id: "${seeder2holderId}") {
               address
               balance
             }
@@ -2829,7 +2828,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  describe("Trust with a non-SeedERC20 contract as Seeder", function () {
+  xdescribe("Trust with a non-SeedERC20 contract as Seeder", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -2966,7 +2965,7 @@ describe("Subgraph Trusts Test", function () {
     });
   });
 
-  describe("Trust with a zero as minimunRaise", function () {
+  xdescribe("Trust with a zero as minimunRaise", function () {
     // Properties of this trust
     const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
     const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);

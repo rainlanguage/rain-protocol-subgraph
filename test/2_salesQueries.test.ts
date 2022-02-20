@@ -305,7 +305,7 @@ describe("Sales queries test", function () {
       expect(factoryData.children).to.have.lengthOf(1);
       expect(saleData.id).to.equals(sale.address.toLowerCase());
       expect(saleData.address).to.equals(sale.address.toLowerCase());
-      expect(saleData.deployer).to.equals(deployer.address.toLowerCase());
+      expect(saleData.deployer).to.equals(creator.address.toLowerCase());
     });
 
     it("should query the init properties of the sale correctly", async function () {

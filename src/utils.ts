@@ -48,6 +48,14 @@ export enum Role {
     BANNER
 }
 
+export enum DistributionStatus {
+    Pending,
+    Seeded,
+    Trading,
+    TradingCanEnd,
+    Success,
+    Fail,
+  }
 
 
 export {

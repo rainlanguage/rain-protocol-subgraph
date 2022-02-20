@@ -7,7 +7,7 @@ import {
     Initialize,
     Notice,
     PhaseScheduled,
-    StartDutchAuction
+    StartDutchAuction,
 } from '../../generated/TrustFactory/Trust'
 
 import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ERC20 as ERC20Schema, SeedERC20, Trust, TrustFactory } from "../../generated/schema"
@@ -15,7 +15,7 @@ import { Address, dataSource, DataSourceContext, log, BigInt } from '@graphproto
 import { ERC20 } from "../../generated/TrustFactory/ERC20"
 import { Trust as TrustContract } from "../../generated/templates/TrustTemplate/Trust"
 import { PoolTemplate, RedeemableERC20Template, SeedERC20Template } from '../../generated/templates'
-import { HUNDRED_BD, ZERO_BI, BONE, ZERO_BD, ONE_BI } from "../utils"
+import { HUNDRED_BD, ZERO_BI, BONE, ZERO_BD, ONE_BI, DistributionStatus } from "../utils"
 
 export function handleConstruction(event: Construction): void {
     let context = dataSource.context()
@@ -45,6 +45,16 @@ export function handleEndDutchAuction(event: EndDutchAuction): void {
     dutchAuction.poolDust = event.params.poolDust
 
     dutchAuction.save()
+
+    let distributionProgress = DistributionProgress.load(event.address.toHex())
+    if(event.params.finalBalance.toString() >= distributionProgress.finalBalance.toString()) {
+        distributionProgress.distributionStatus = DistributionStatus.Success
+    } else {
+        distributionProgress.distributionStatus = DistributionStatus.Fail
+        
+    }
+    
+    distributionProgress.save()
 }
 
 export function handleInitialize(event: Initialize): void {
@@ -62,7 +72,7 @@ export function handleInitialize(event: Initialize): void {
  
     // DistributionProgess creation
     let distributionProgress = new DistributionProgress(trustAddress.toHex())
-    distributionProgress.distributionStatus = trustContract.getDistributionStatus()
+    distributionProgress.distributionStatus = DistributionStatus.Pending
     distributionProgress.successPoolBalance = event.params.successBalance
     distributionProgress.reserveInit = event.params.config.reserveInit
     distributionProgress.initialValuation = event.params.config.initialValuation
@@ -114,6 +124,12 @@ export function handleStartDutchAuction(event: StartDutchAuction): void {
 
     trust.dutchAuction = dutchAuction.id
     trust.save()
+
+    let distributionProgress = DistributionProgress.load(trustAddress.toHex())
+    distributionProgress.distributionStatus = DistributionStatus.Trading
+    distributionProgress.distributionStartBlock = event.block.number
+    distributionProgress.distributionEndBlock = event.params.finalAuctionBlock
+    distributionProgress.save()
 
     let contracts = Contract.load(trustAddress.toHex())
     contracts.pool = createPool(event)

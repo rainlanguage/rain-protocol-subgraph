@@ -182,6 +182,12 @@ export function handleRequestBan(event: RequestBan): void {
     events.push(verifyRequestBan.id)
     verifyAddress.events = events
     verifyAddress.save()
+
+    let verifyAddressRequester = getverifyAddress(event.address.toHex(),event.params.sender.toHex())
+    let eventsRequester  = verifyAddressRequester.events
+    eventsRequester.push(verifyRequestBan.id)
+    verifyAddressRequester.events = eventsRequester
+    verifyAddressRequester.save()
 }
 
 export function handleRequestRemove(event: RequestRemove): void {
@@ -201,6 +207,12 @@ export function handleRequestRemove(event: RequestRemove): void {
     events.push(verifyRequestRemove.id)
     verifyAddress.events = events
     verifyAddress.save()
+
+    let verifyAddressRequester = getverifyAddress(event.address.toHex(),event.params.sender.toHex())
+    let eventsRequester  = verifyAddressRequester.events
+    eventsRequester.push(verifyRequestRemove.id)
+    verifyAddressRequester.events = eventsRequester
+    verifyAddressRequester.save()
 }
 
 export function handleRoleAdminChanged(event: RoleAdminChanged): void {
