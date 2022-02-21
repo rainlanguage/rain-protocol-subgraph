@@ -670,7 +670,8 @@ describe("Sales queries test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const percentRaised = totalRaised.div(minimumRaise);
+      const percentRaised = totalRaised.mul(100).div(minimumRaise);
+
       const initUnitsAvailable = await redeemableERC20Contract.balanceOf(
         sale.address
       );
@@ -695,7 +696,7 @@ describe("Sales queries test", function () {
       expect(saleData.unitsAvailable).to.equals(initUnitsAvailable);
       expect(saleData.totalRaised).to.equals(totalRaised);
       expect(saleData.percentRaised).to.equals(percentRaised);
-      expect(saleData.totalFees).to.equals(totalFees);
+      expect(saleData.totalFees).to.equals(totalFees); 
     });
 
     it("should query the Buy config values correctly", async function () {
@@ -706,7 +707,7 @@ describe("Sales queries test", function () {
 
       const query = `
         {
-          saleBuy (id: "${transaction.blockHash.toLowerCase()}") {
+          saleBuy (id: "${txHash}") {
             feeRecipientAddress
             fee
             minimumUnits
@@ -735,11 +736,12 @@ describe("Sales queries test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
-      const saleFeeRecipientId = `${sale.address.toLowerCase()}-${recipient.address.toLocaleLowerCase()}`;
+      const txHash = transaction.hash.toLowerCase();
+      const saleFeeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLocaleLowerCase()}`;
 
       const query = `
         {
-          saleBuy (id: "${transaction.blockHash.toLowerCase()}") {
+          saleBuy (id: "${txHash}") {
             feeRecipient {
               address
             }
@@ -765,11 +767,11 @@ describe("Sales queries test", function () {
       const saleFeeRecipientData = response.data.saleFeeRecipient;
 
       expect(saleBuyData.feeRecipient.address).to.equals(
-        recipient.address.toLocaleLowerCase()
+        feeRecipient.address.toLocaleLowerCase()
       );
 
       expect(saleFeeRecipientData.address).to.equals(
-        recipient.address.toLocaleLowerCase()
+        feeRecipient.address.toLocaleLowerCase()
       );
       expect(saleFeeRecipientData.totalFees).to.equals(buyConfig.fee);
       expect(saleFeeRecipientData.buys).to.have.lengthOf(1);
@@ -780,11 +782,12 @@ describe("Sales queries test", function () {
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1000);
 
+      const txHash = transaction.hash.toLowerCase();
+
       const receipt = (await Util.getEventArgs(transaction, "Buy", sale))
         .receipt;
-
       // This is the #{Sale.address}+{receipt.id}. We use the events args obtained
-      const saleReceiptID = `${sale.address.toLowerCase()}-${receipt.id}`;
+      const saleReceiptID = `${sale.address.toLowerCase()} - ${receipt.id}`;
 
       const totalInCalculated = ethers.BigNumber.from(receipt.units)
         .mul(receipt.price)
@@ -792,7 +795,7 @@ describe("Sales queries test", function () {
 
       const query = `
         {
-          saleBuy (id: "${transaction.hash.toLowerCase()}") {
+          saleBuy (id: "${txHash}") {
             receipt {
               receiptId
             }
@@ -821,7 +824,7 @@ describe("Sales queries test", function () {
 
       expect(saleReceipttData.id).to.equals(saleReceiptID);
       expect(saleReceipttData.receiptId).to.equals(receipt.id);
-      expect(saleReceipttData.feeRecipient).to.equals(receipt.feeRecipient);
+      expect(saleReceipttData.feeRecipient).to.equals(receipt.feeRecipient.toLowerCase());
       expect(saleReceipttData.fee).to.equals(receipt.fee);
       expect(saleReceipttData.units).to.equals(receipt.units);
       expect(saleReceipttData.price).to.equals(receipt.price);
@@ -894,13 +897,14 @@ describe("Sales queries test", function () {
 
       const saleData = response.data.sale;
 
+
       expect(saleData.buys).to.have.length(2);
       expect(saleData.endEvent.id).to.equals(transaction.hash.toLowerCase());
       expect(saleData.unitsAvailable).to.equals(newUnitsAvailable);
       expect(saleData.totalRaised).to.equals(totalRaised);
       // Im not sure if it `percentRaised` should be 1 (100%) even when the `totalRaised` is
       // greater than `minimumRaise`. Or could be for ex: 1.5 (150%)
-      expect(saleData.percentRaised).to.equals(totalRaised.div(minimumRaise));
+      expect(saleData.percentRaised).to.equals(totalRaised.mul(100).div(minimumRaise));
       expect(saleData.totalFees).to.equals(totalFees);
       expect(saleData.saleStatus).to.equals(Status.SUCCESS);
     });
@@ -931,7 +935,7 @@ describe("Sales queries test", function () {
       const saleEndData = response.data.saleEnd;
 
       expect(parseInt(saleEndData.block)).to.equals(transaction.blockNumber);
-      expect(parseInt(saleEndData.timestamp)).to.equals(transaction.timestamp);
+      // expect(parseInt(saleEndData.timestamp)).to.equals(transaction.timestamp); //no timestamp field in transaction
       expect(saleEndData.sender).to.equals(signer1.address.toLowerCase());
       expect(saleEndData.saleStatus).to.equals(Status.SUCCESS);
       expect(saleEndData.transactionHash).to.equals(

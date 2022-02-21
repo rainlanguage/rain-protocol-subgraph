@@ -325,7 +325,7 @@ function updateSale(sale: Sale): void {
         totalOut = totalOut.plus(saleRefund.totalOut)
         refundFee = refundFee.plus(saleRefund.fee)
     }
-    if(sale.saleStatus == SaleStatus.Active)
+    if(sale.saleStatus >= SaleStatus.Active)
         sale.totalRaised = totalIn.minus(totalOut)
     sale.totalFees = buyFee.minus(refundFee)
 

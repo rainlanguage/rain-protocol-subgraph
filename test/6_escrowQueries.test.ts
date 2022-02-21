@@ -33,7 +33,7 @@ let reserve: ReserveTokenTest,
   tier: ReadWriteTier,
   transaction: ContractTransaction; // use to save/facilite a tx;
 
-describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
+xdescribe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before("Deploy fresh test contracts", async function () {
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
     tier = (await deploy(readWriteTierJson, deployer, [])) as ReadWriteTier;

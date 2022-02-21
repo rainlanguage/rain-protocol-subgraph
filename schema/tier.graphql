@@ -29,7 +29,7 @@ type VerifyTier implements TierContract @entity {
     deployer: Bytes #address of the deployer - get from event Initialize.verify
     factory: TierFactory #the factory that deployed this contract
 
-    verifyContract: Verify! #the Verify contract checked for reports - from event Initialize.verify
+    verifyContract: Verify #the Verify contract checked for reports - from event Initialize.verify
 }
 
 type ERC20BalanceTierFactory implements TierFactory @entity{
