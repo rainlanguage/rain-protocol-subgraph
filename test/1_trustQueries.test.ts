@@ -1996,6 +1996,7 @@ describe("Subgraph Trusts Test", function () {
       const queryResponse = await subgraph({
         query: query,
       });
+
       const dataContract = queryResponse.data.contract;
       const dataArray = queryResponse.data.pools;
       const data = dataArray[0];
@@ -2009,9 +2010,7 @@ describe("Subgraph Trusts Test", function () {
       expect(data.id).to.equals(bPoolContract.address.toLowerCase());
       expect(data.trust.id).to.equals(trust.address.toLowerCase());
       expect(data.reserve.id).to.equals(reserve.address.toLowerCase());
-      expect(data.redeemable.id).to.equals(
-        redeemableERC20Contract.address.toLowerCase()
-      );
+      expect(data.redeemable.id).to.equals(redeemableERC20Contract.address.toLowerCase());
 
       expect(data.deployBlock).to.equals(deployBlock.toString());
       expect(data.deployTimestamp).to.equals(deployTime.toString());

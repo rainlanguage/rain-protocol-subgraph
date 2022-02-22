@@ -273,6 +273,7 @@ function createPool(event: StartDutchAuction): string {
         pool.trust = event.address.toHex()
         pool.numberOfSwaps = ZERO_BI
         pool.reserve = contracts.reserveERC20
+        pool.redeemable = contracts.redeemableERC20
         pool.swaps = []
     }else{
         return pool.id
@@ -298,9 +299,6 @@ function updatePoolBalance(contracts: Contract): void {
         distributionProgress.poolRedeemableBalance = poolRedeemableBalance.value
         distributionProgress.percentAvailable = poolRedeemableBalance.value.toBigDecimal().div(redeemableTokenContract.totalSupply().toBigDecimal())
     }
-    if(distributionProgress.poolReserveBalance != null && distributionProgress.reserveInit != null){
-        distributionProgress.amountRaised = distributionProgress.poolReserveBalance.minus(distributionProgress.reserveInit)
-    }
 
     if(!(poolReserveBalance.reverted)){
         distributionProgress.poolReserveBalance = poolReserveBalance.value
@@ -308,6 +306,9 @@ function updatePoolBalance(contracts: Contract): void {
             distributionProgress.percentRaised = HUNDRED_BD
         } else {
             distributionProgress.percentRaised = distributionProgress.amountRaised.toBigDecimal().div(distributionProgress.minimumRaise.toBigDecimal())
+        }
+        if(distributionProgress.poolReserveBalance != null && distributionProgress.reserveInit != null){
+            distributionProgress.amountRaised = distributionProgress.poolReserveBalance.minus(distributionProgress.reserveInit)
         }
     }else{
         log.info("Poola balance Failed. reserve {}, redeemable {}", [])
