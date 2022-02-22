@@ -13,6 +13,7 @@ import { createApolloFetch, ApolloFetch } from "apollo-fetch";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import { ethers } from "hardhat";
 import { Artifact } from "hardhat/types";
 
 // Balancer contracts
@@ -28,9 +29,12 @@ import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPo
 import RedeemableERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
 import SeedERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
 import TrustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
+
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 import SaleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
 import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
+import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
+import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
 
 // Types
 import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
@@ -49,6 +53,9 @@ import { ERC20TransferTier } from "@beehiveinnovation/rain-protocol/typechain/ER
 import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
 import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
+import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
+import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
+import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 
 import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
 import type { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
@@ -69,8 +76,6 @@ interface SyncedSubgraphType {
   synced: boolean;
 }
 
-const { ethers } = require("hardhat");
-
 export const sixZeros = "000000";
 export const sixteenZeros = "0000000000000000";
 export const eighteenZeros = "000000000000000000";
@@ -84,15 +89,15 @@ export const CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING = 100;
 export const MAX_RAISE_DURATION_TESTING = 100;
 
 export enum Tier {
-  ZERO,
-  ONE,
-  TWO,
-  THREE,
-  FOUR,
-  FIVE,
-  SIX,
-  SEVEN,
-  EIGHT,
+  ZERO, // NIL
+  ONE, // COPPER
+  TWO, // BRONZE
+  THREE, // SILVER
+  FOUR, // GOLD
+  FIVE, // PLATINUM
+  SIX, // DIAMOND
+  SEVEN, // CHAD
+  EIGHT, // JAWAD
 }
 
 export interface VMState {
@@ -604,4 +609,159 @@ export const getTxTimeblock = async (
   const block = tx.blockNumber;
   const timestamp = (await ethers.provider.getBlock(block)).timestamp;
   return [block, timestamp];
+};
+
+
+/**
+ * Basic setup to RedeemableERC20ClainEscrow queries test
+ * @param deployer - signer that will deploy the contracts in the basic Setup
+ * @param creator - creator of the trust in the basic Setup
+ * @param seeder - seeder of the trust in the basic setup
+ * @param trustFactory - The trust factory that will be use
+ * @param tier - A valid tier contract
+ * @returns 
+ */
+export const basicSetup = async (
+  deployer: SignerWithAddress,
+  creator: SignerWithAddress,
+  seeder: SignerWithAddress,
+  trustFactory: TrustFactory & Contract,
+  tier: ReadWriteTier & Contract
+):Promise<{
+  reserve: ReserveTokenTest;
+  trust: Trust;
+  crp: ConfigurableRightsPool & Contract;
+  bPool: BPool & Contract;
+  redeemableERC20: RedeemableERC20;
+  minimumTradingDuration: number;
+  minimumCreatorRaise: BigNumber;
+  successLevel: BigNumber;
+ }> => {
+  const reserve = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
+
+  const minimumTier = Tier.FOUR;
+
+  const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
+  const redeemableERC20Config = {
+    name: "Token",
+    symbol: "TKN",
+    distributor: zeroAddress,
+    initialSupply: totalTokenSupply,
+  };
+  const seederUnits = 0;
+  const seedERC20Config = {
+    name: "SeedToken",
+    symbol: "SDT",
+    distributor: zeroAddress,
+    initialSupply: seederUnits,
+  };
+
+  const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
+  const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
+  const initialValuation = ethers.BigNumber.from("20000" + sixZeros);
+  const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
+
+  const seederFee = ethers.BigNumber.from("100" + sixZeros);
+  const seederCooldownDuration = 0;
+
+  const successLevel = reserveInit
+    .add(seederFee)
+    .add(redeemInit)
+    .add(minimumCreatorRaise);
+
+  const minimumTradingDuration = 100;
+
+  const trustFactory1 = trustFactory.connect(deployer);
+
+  const trust = await trustDeploy(
+    trustFactory1,
+    creator,
+    {
+      creator: creator.address,
+      minimumCreatorRaise,
+      seederFee,
+      redeemInit,
+      reserve: reserve.address,
+      reserveInit,
+      initialValuation,
+      finalValuation: successLevel,
+      minimumTradingDuration,
+    },
+    {
+      erc20Config: redeemableERC20Config,
+      tier: tier.address,
+      minimumTier,
+    },
+    {
+      seeder: seeder.address,
+      cooldownDuration: seederCooldownDuration,
+      erc20Config: seedERC20Config,
+    },
+    { gasLimit: 15000000 }
+  );
+
+  await trust.deployed();
+
+  // seeder needs some cash, give enough to seeder
+  await reserve.transfer(seeder.address, reserveInit);
+
+  const reserveSeeder = new ethers.Contract(
+    reserve.address,
+    reserve.interface,
+    seeder
+  ) as ReserveTokenTest & Contract;
+
+  const redeemableERC20Address = await trust.token();
+
+  const redeemableERC20 = new ethers.Contract(
+    redeemableERC20Address,
+    redeemableTokenJson.abi,
+    creator
+  ) as RedeemableERC20 & Contract;
+
+  // seeder must transfer funds to pool
+  await reserveSeeder.transfer(trust.address, reserveInit);
+
+  await trust.startDutchAuction({ gasLimit: 15000000 });
+
+  // crp and bPool are now defined
+  const { crp, bPool } = await poolContracts(deployer, trust);
+
+  return {
+    reserve,
+    trust,
+    crp,
+    bPool,
+    redeemableERC20,
+    minimumTradingDuration,
+    minimumCreatorRaise,
+    successLevel,
+  };
+};
+
+// WIP
+export const swapReserveForTokens = async (
+  crp: ConfigurableRightsPool,
+  bPool: BPool,
+  tokenIn: Contract,
+  tokenOut: RedeemableERC20, // Token Address to out
+  signer: SignerWithAddress,
+  spend: BigNumber,
+  ): Promise<void> => {
+
+  // give to signer some reserve
+  await tokenIn.transfer(signer.address, spend);
+  await tokenIn.connect(signer).approve(bPool.address, spend);
+
+  const crpSigner = crp.connect(signer);
+  const bPoolSigner = bPool.connect(signer);
+
+  await crpSigner.pokeWeights();
+  await bPoolSigner.swapExactAmountIn(
+    tokenIn.address,
+    spend,
+    tokenOut.address,
+    ethers.BigNumber.from("1"),
+    ethers.BigNumber.from("1000000" + sixZeros)
+  );
 };

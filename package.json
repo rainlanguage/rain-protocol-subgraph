@@ -24,7 +24,8 @@
     "test-sales": "hardhat test test/2_salesQueries.test.ts",
     "test-gated": "hardhat test test/3_gatedQueries.test.ts",
     "test-verify": "hardhat test test/4_verifyQueries.test.ts",
-    "test-tier": "hardhat test test/5_tierQueries.test.ts"
+    "test-tier": "hardhat test test/5_tierQueries.test.ts",
+    "test-escrow": "hardhat test test/6_escrowQueries.test.ts"
   },
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",
