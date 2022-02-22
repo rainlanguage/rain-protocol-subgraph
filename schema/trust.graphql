@@ -20,7 +20,7 @@ type TrustFactory @entity{
 # Trust entity
 # created when NewChild event is emited by TrustFactory
 # src/trustFactory.ts/handleNewChild
-type Trust @entity{
+type Trust implements Isale @entity{
     id: ID! #address of trust contract - from TrustFactory NewContract events
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
@@ -31,6 +31,7 @@ type Trust @entity{
     dutchAuction: DutchAuction
     trustParticipants: [TrustParticipant!]
     notices: [Notice!]
+    saleStatus: Int
 }
 
 # Notice entity
@@ -302,3 +303,6 @@ type ERC20Pull @entity {
     token: Bytes
 }
 
+interface Isale {
+    saleStatus: Int
+}

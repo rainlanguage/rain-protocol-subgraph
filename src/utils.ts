@@ -91,8 +91,13 @@ export function getTrustParticipent(participant: Address, trust: string) : Trust
         trustEntity.trustParticipants = tp
         trustEntity.save()
     }
-    trustParticipant.seedBalance = seedERC20Contract.balanceOf(participant)
-    trustParticipant.tokenBalance = redeemableERC20Contract.balanceOf(participant)
+    let seedBalance = seedERC20Contract.try_balanceOf(participant)
+    let tokenBalance = redeemableERC20Contract.try_balanceOf(participant)
+
+    if(!seedBalance.reverted)
+        trustParticipant.seedBalance = seedBalance.value
+    if(!tokenBalance.reverted)
+        trustParticipant.tokenBalance = tokenBalance.value
     return trustParticipant as TrustParticipant
 }
 

@@ -224,6 +224,8 @@ dataSources:
       entities:
         - GatedNFTFactory
       abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
         - name: RedeemableERC20ClaimEscrow
           file: ./abis/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.json
       eventHandlers:

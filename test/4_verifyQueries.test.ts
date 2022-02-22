@@ -52,7 +52,7 @@ const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
 const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
-describe("Subgraph Tier Test", function () {
+xdescribe("Subgraph Tier Test", function () {
   describe("Verify Factory - Queries", function async() {
     let eventCounter = 0;
     let eventsSigner1 = 0;

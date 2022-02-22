@@ -6,7 +6,7 @@ type SaleFactory @entity{
     redeemableERC20Factory: Bytes #from Contract.config.redeemableERC20Factory on first child's Construct event
 }
 
-type Sale @entity{
+type Sale implements Isale @entity{
     id: ID! #Sale contract address
     address: Bytes! #Sale contract address
     deployBlock: BigInt! #the block the contract was deployed

@@ -288,7 +288,7 @@ before(async function () {
   await waitForSubgraphToBeSynced(1000);
 });
 
-xdescribe("Subgraph Trusts Test", function () {
+describe("Subgraph Trusts Test", function () {
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
