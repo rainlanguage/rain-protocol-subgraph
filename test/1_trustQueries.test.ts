@@ -288,7 +288,7 @@ before(async function () {
   await waitForSubgraphToBeSynced(1000);
 });
 
-xdescribe("Subgraph Trusts Test", function () {
+describe("Subgraph Trusts Test", function () {
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
@@ -2024,6 +2024,7 @@ xdescribe("Subgraph Trusts Test", function () {
       const poolRedeemableBalanceExpected =
         await redeemableERC20Contract.balanceOf(bPoolContract.address);
 
+      console.log(bPoolContract.address.toLowerCase());
       const query = `
         {
           pool (id: "${bPoolContract.address.toLowerCase()}") {
@@ -2032,7 +2033,7 @@ xdescribe("Subgraph Trusts Test", function () {
             }
             numberOfSwaps
             poolBalanceReserve
-            poolRedeemableBalance
+            poolTokenBalance
           }
         }
       `;
@@ -2045,7 +2046,7 @@ xdescribe("Subgraph Trusts Test", function () {
       expect(data.swaps).to.have.lengthOf(0);
       expect(data.numberOfSwaps).to.equals("0");
       expect(data.poolBalanceReserve).to.equals(poolReserveBalanceExpected);
-      expect(data.poolRedeemableBalance).to.equals(
+      expect(data.poolTokenBalance).to.equals(
         poolRedeemableBalanceExpected
       );
     });
@@ -2187,7 +2188,7 @@ xdescribe("Subgraph Trusts Test", function () {
             }
             numberOfSwaps
             poolBalanceReserve
-            poolRedeemableBalance
+            poolTokenBalance
           }
         }
       `;
@@ -2202,7 +2203,7 @@ xdescribe("Subgraph Trusts Test", function () {
 
       expect(data.numberOfSwaps).to.equals("1");
       expect(data.poolBalanceReserve).to.equals(poolReserveBalanceExpected);
-      expect(data.poolRedeemableBalance).to.equals(
+      expect(data.poolTokenBalance).to.equals(
         poolRedeemableBalanceExpected
       );
     });
@@ -2384,7 +2385,7 @@ xdescribe("Subgraph Trusts Test", function () {
         {
           pool (id: "${bPoolContract.address.toLowerCase()}") {
             poolBalanceReserve
-            poolRedeemableBalance
+            poolTokenBalance
             numberOfSwaps
             swaps {
               id
@@ -2403,7 +2404,7 @@ xdescribe("Subgraph Trusts Test", function () {
       expect(data.swaps).to.have.lengthOf(swapCounter.toNumber());
       expect(data.numberOfSwaps).to.equals(swapCounter);
       expect(data.poolBalanceReserve).to.equals(poolReserveBalanceExpected);
-      expect(data.poolRedeemableBalance).to.equals(
+      expect(data.poolTokenBalance).to.equals(
         poolRedeemableBalanceExpected
       );
     });
