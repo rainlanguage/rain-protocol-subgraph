@@ -1,6 +1,6 @@
 
 import { Address, dataSource, log } from "@graphprotocol/graph-ts";
-import { Seed, Unseed, SeedERC20, Holder, DistributionProgress, Contract } from "../../generated/schema";
+import { Seed, Unseed, SeedERC20, Holder, DistributionProgress, Contract, TrustParticipant } from "../../generated/schema";
 import { CooldownInitialize, Initialize, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../../generated/templates/SeedERC20Template/SeedERC20";
 import { getTrustParticipent, HUNDRED_BD, notAContract, ZERO_ADDRESS, ZERO_BI } from "../utils";
 import { SeedERC20 as SeedERC20Contract } from "../../generated/templates/SeedERC20Template/SeedERC20"
@@ -117,6 +117,13 @@ export function handleTransfer(event: Transfer): void {
             }
             sender.balance = sender.balance.minus(event.params.value)
             sender.save()
+
+            let trustParticipant = TrustParticipant.load(event.params.from.toHex() + " - " +context.getString("trust"))
+            if(trustParticipant != null){
+                trustParticipant.seedBalance = seedERC20Contract.balanceOf(event.params.from)
+                trustParticipant.seedFeeClaimable = trustParticipant.seedBalance.times(seedERC20.seedFeePerUnit)
+                trustParticipant.save()
+            }
         }
 
         if(notAContract(event.params.to.toHex(), context.getString("trust"))){
@@ -133,6 +140,12 @@ export function handleTransfer(event: Transfer): void {
                 holders.push(receiver.id)
                 seedERC20.holders = holders
                 seedERC20.save()
+            }
+            let trustParticipant = TrustParticipant.load(event.params.to.toHex() + " - " +context.getString("trust"))
+            if(trustParticipant != null){
+                trustParticipant.seedBalance = seedERC20Contract.balanceOf(event.params.from)
+                trustParticipant.seedFeeClaimable = trustParticipant.seedBalance.times(seedERC20.seedFeePerUnit)
+                trustParticipant.save()
             }
         }
     }
