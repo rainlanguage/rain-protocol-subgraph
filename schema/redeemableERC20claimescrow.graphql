@@ -36,8 +36,7 @@ type RedeemableEscrowWithdrawer @entity {
 # swept updated with every Deposit event that matches the id 
 type RedeemableEscrowPendingDepositorToken @entity {
     id: ID! #{sale}-{escrow}-{depositor}-{token}
-    sale: Sale #linked to Sale if an entity with matching sale from id exists
-    trust: Trust #linked to a Trust if an enity with matching trust from id exists
+    iSale: Isale
     saleAddress: Bytes! #sale from the id
     escrow: RedeemableERC20ClaimEscrow!
     escrowAddress: Bytes!
@@ -55,8 +54,7 @@ type RedeemableEscrowPendingDepositorToken @entity {
 # captures all of the deposits for the same escrow, same sale, same token at the same redeemable supply
 type RedeemableEscrowSupplyTokenDeposit @entity {
     id: ID! #{sale}-{escrow}-{supply}-{token}
-    sale: Sale #linked to Sale if an entity with matching id exists
-    trust: Trust #linked to a Trust if an enitty with matching id exists
+    iSale: Isale
     saleAddress: Bytes! #sale from the id
     escrow: RedeemableERC20ClaimEscrow!
     escrowAddress: Bytes!
@@ -79,11 +77,10 @@ type RedeemableEscrowPendingDeposit @entity {
     depositorAddress: Bytes!
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
-    sale: Sale #from PendingDeposit.trust - linked to Sale if an entity with matching id exists
-    trust: Trust #from PendingDeposit.trust - linked to a Trust if an enitty with matching id exists
+    iSale: Isale
     saleAddress: Bytes! #from PendingDeposit.trust
     redeemable: RedeemableERC20
-    token: ERC20!
+    token: ERC20
     tokenAddress: Bytes!
     amount: BigInt!
 }
@@ -95,8 +92,7 @@ type RedeemableEscrowDeposit @entity {
     depositorAddress: Bytes!
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
-    sale: Sale #from Deposit.trust - linked to Sale if an entity with matching id exists
-    trust: Trust #from Deposit.trust - linked to a Trust if an enitty with matching id exists
+    iSale: Isale
     saleAddress: Bytes! #from Deposit.trust
     redeemable: RedeemableERC20
     token: ERC20!
@@ -111,8 +107,7 @@ type RedeemableEscrowUndeposit @entity {
     sender: Bytes! #from Undeposit.sender
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
-    sale: Sale #from Deposit.trust - linked to Sale if an entity with matching id exists
-    trust: Trust #from Deposit.trust - linked to a Trust if an enitty with matching id exists
+    iSale: Isale
     saleAddress: Bytes! #from Deposit.trust
     token: ERC20! #linked by Undeposit.token
     tokenAddress: Bytes! #from Undeposit.token
@@ -126,9 +121,7 @@ type RedeemableEscrowWithdraw @entity {
     withdrawer: Bytes! #from Withdraw.withdrawer
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
-    sale: Sale #from Withdraw.trust - linked to Sale if an entity with matching id exists
-    trust: Trust #from Withdraw.trust - linked to a Trust if an enitty with matching id exists
-    saleAddress: Bytes! #from Withdraw.trust
+    iSale: Isale
     redeemable: RedeemableERC20! #linked by Withdraw.redeemable
     token: ERC20! #Linked by Withdraw.token
     tokenAddress: Bytes! #from Withdraw.token

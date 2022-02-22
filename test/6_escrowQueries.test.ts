@@ -103,7 +103,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   it("should query RedeemableERC20ClaimEscrow correctly after construction", async function () {
     const query = `
       {
-        claimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
+        redeemableERC20ClaimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
           address
           pendingDeposits {
             id
@@ -132,11 +132,13 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       }
     `;
+    const response = (await subgraph({
+      query: query,
+    })) as FetchResult;
 
-    // const response = (await subgraph({
-    //   query: query,
-    // })) as FetchResult;
-    // const data = response.data.claimEscrow;
+    const data = response.data.redeemableERC20ClaimEscrow;
+    console.log("data : ", JSON.stringify(data))
+    console.log("redeemableERC20ClaimEscrow : ", claimEscrow.address.toLowerCase())
 
     // expect(data.address).to.equals(claimEscrow.address.toLowerCase());
 
@@ -197,14 +199,14 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       }
     `;
-    // const response = (await subgraph({
-    //   query: query,
-    // })) as FetchResult;
-    // const data = response.data.claimEscrow;
+    const response = (await subgraph({
+      query: query,
+    })) as FetchResult;
+    const data = response.data.redeemableERC20ClaimEscrow;
 
-    // expect(data.pendingDeposits).to.deep.include({ id: pendingDepositId });
+    expect(data.pendingDeposits).to.deep.include({ id: pendingDepositId });
     // expect(data.pendingDepositorTokens).to.deep.include({ id: pendingDepositorTokenId });
-    // expect(data.depositors).to.deep.include({ id: escrowDepositorId });
+    expect(data.depositors).to.deep.include({ id: escrowDepositorId });
   });
 
   it("should query the RedeemableEscrowPendingDeposit after a PendingDeposit");

@@ -263,6 +263,8 @@ function createSeedERC20(event: Initialize): string {
 }
 
 function createPool(event: StartDutchAuction): string {
+    let contracts = Contract.load(event.address.toHex())
+
     let pool = Pool.load(event.params.pool.toHex())
     if(pool == null){
         pool = new Pool(event.params.pool.toHex())
@@ -270,6 +272,7 @@ function createPool(event: StartDutchAuction): string {
         pool.deployTimestamp = event.block.timestamp
         pool.trust = event.address.toHex()
         pool.numberOfSwaps = ZERO_BI
+        pool.reserve = contracts.reserveERC20
         pool.swaps = []
     }else{
         return pool.id

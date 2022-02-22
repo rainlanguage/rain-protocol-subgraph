@@ -51,7 +51,7 @@ const maxMintable = 100;
 let royaltyRecipient: string;
 const royaltyBPS = 1;
 
-describe("Subgraph GatedNFT test", function () {
+xdescribe("Subgraph GatedNFT test", function () {
   before("creating and connecting", async function () {
     royaltyRecipient = signer1.address;
 
