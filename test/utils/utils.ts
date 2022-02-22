@@ -739,7 +739,17 @@ export const basicSetup = async (
   };
 };
 
-// WIP
+/**
+ * Make a swap of `tokenIn` to `tokenOut` in their valid `bPool`. This function handle that the `signer` have 
+ * the `spend` amount in the `reserve` before swap, so it is not necessary tranfer outside this function -  just 
+ * make sure that the connected user to the `tokenIn` have balance
+ * @param crp 
+ * @param bPool 
+ * @param tokenIn 
+ * @param tokenOut 
+ * @param signer 
+ * @param spend 
+ */
 export const swapReserveForTokens = async (
   crp: ConfigurableRightsPool,
   bPool: BPool,
@@ -764,4 +774,14 @@ export const swapReserveForTokens = async (
     ethers.BigNumber.from("1"),
     ethers.BigNumber.from("1000000" + sixZeros)
   );
+};
+
+
+export const determineReserveDust = (bPoolReserveBalance: BigNumber): BigNumber => {
+  const RESERVE_MIN_BALANCE = ethers.BigNumber.from("1" + sixZeros);
+  let dust = bPoolReserveBalance.mul(ONE).div(1e7).div(ONE);
+  if (dust.lt(RESERVE_MIN_BALANCE)) {
+    dust = RESERVE_MIN_BALANCE;
+  }
+  return dust;
 };
