@@ -1720,7 +1720,7 @@ describe("Subgraph Trusts Test", function () {
         .seed(minSeedUnits, seeder2Units);
 
       await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced(2000);
 
       const seedId = transaction.hash.toLowerCase();
 

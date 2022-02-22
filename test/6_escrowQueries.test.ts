@@ -235,20 +235,20 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     await trust.endDutchAuction();
 
-    const depositTx = await claimEscrow.sweepPending(
+    transaction = await claimEscrow.sweepPending(
       trust.address,
       claimableReserveToken.address,
       signer1.address
     );
-    const { supply } = await Util.getEventArgs(depositTx, "Deposit", claimEscrow);
 
-    const txWithdraw0 = await claimEscrow
-      .connect(signer1)
-      .withdraw(trust.address, claimableReserveToken.address, supply);
-
-    const { amount: registeredWithdrawnAmountSigner1 } =
-      await Util.getEventArgs(txWithdraw0, "Withdraw", claimEscrow);
   });
-  it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw");
+  it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
+    const { supply } = await Util.getEventArgs(transaction, "Deposit", claimEscrow);
+    const txWithdraw0 = await claimEscrow
+    .connect(signer1)
+    .withdraw(trust.address, claimableReserveToken.address, supply);
+  const { amount: registeredWithdrawnAmountSigner1 } =
+    await Util.getEventArgs(txWithdraw0, "Withdraw", claimEscrow);
+  });
   it("should update the RedeemableERC20ClaimEscrow entity after a Undeposit"); // This need a new trust that fail to Undeposit
 });
