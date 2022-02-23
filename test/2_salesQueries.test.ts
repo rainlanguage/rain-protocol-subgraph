@@ -267,6 +267,7 @@ describe("Sales queries test", function () {
           erc20Config: redeemableERC20Config,
           tier: erc20BalanceTier.address,
           minimumTier: Tier.ZERO,
+          distributionEndForwardingAddress: ethers.constants.AddressZero,
         }
       );
 
