@@ -107,8 +107,7 @@ describe("Subgraph Tier Test", function () {
       await verify.connect(admin).grantRole(REMOVER, admin.address);
       await verify.connect(admin).grantRole(BANNER, admin.address);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -177,8 +176,7 @@ describe("Subgraph Tier Test", function () {
       eventCounter++;
       eventsSigner1++;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const requestId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -331,8 +329,7 @@ describe("Subgraph Tier Test", function () {
       eventsSigner1++;
       eventsAdmin++;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const approveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLocaleLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -510,8 +507,7 @@ describe("Subgraph Tier Test", function () {
       eventsSigner1++;
       eventsSigner2++;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const requestRemoveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -666,8 +662,7 @@ describe("Subgraph Tier Test", function () {
       eventsSigner2++;
       eventsAdmin++;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced();
 
       const removeId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -835,8 +830,7 @@ describe("Subgraph Tier Test", function () {
       eventsSigner1++;
       eventsSigner2++;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const requestBanId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -975,8 +969,7 @@ describe("Subgraph Tier Test", function () {
       eventsSigner2++;
       eventsAdmin++;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const banId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);

@@ -277,11 +277,10 @@ before(async function () {
 
   subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
 
-  await Util.delay(Util.wait);
-  await waitForSubgraphToBeSynced(1000);
+  await waitForSubgraphToBeSynced();
 });
 
-describe("Subgraph Trusts Test", function () {
+describe.only("Subgraph Trusts Test", function () {
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
@@ -426,8 +425,8 @@ describe("Subgraph Trusts Test", function () {
       crpContract = (await Util.poolContracts(creator, trust)).crp;
 
       // Wait for Sync
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+
+      await waitForSubgraphToBeSynced();
     });
 
     it("should query the trust correctly", async function () {
@@ -594,8 +593,7 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should query the RedeemableERC20 details correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -793,8 +791,8 @@ describe("Subgraph Trusts Test", function () {
       const treasuryAssetsId = `${redeemableERC20Contract.address.toLowerCase()} - ${nonErc20Address.toLowerCase()}`;
 
       // Waiting sync after tx
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1800);
+
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -1197,8 +1195,7 @@ describe("Subgraph Trusts Test", function () {
       const noticeId = transaction.hash.toLowerCase();
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1600);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -1259,8 +1256,7 @@ describe("Subgraph Trusts Test", function () {
         seedContract
       );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1800);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -1437,8 +1433,7 @@ describe("Subgraph Trusts Test", function () {
       const receiverHolderId = `${seedContract.address.toLowerCase()} - ${signer1.address.toLowerCase()}`;
       const receiverBalance = await seedContract.balanceOf(signer1.address);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -1559,8 +1554,7 @@ describe("Subgraph Trusts Test", function () {
 
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -1712,8 +1706,7 @@ describe("Subgraph Trusts Test", function () {
         .connect(seeder2)
         .seed(minSeedUnits, seeder2Units);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const seedId = transaction.hash.toLowerCase();
 
@@ -1834,8 +1827,7 @@ describe("Subgraph Trusts Test", function () {
 
       bPoolContract = (await Util.poolContracts(creator, trust)).bPool;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -2075,7 +2067,7 @@ describe("Subgraph Trusts Test", function () {
       const poolHolderData = queryResponse.data.poolHolder;
       const crpHolderData = queryResponse.data.crpHolder;
 
-      // expect(dataHolders).to.be.empty; // Any indexed contract could be considered as Holder
+      expect(dataHolders).to.be.empty;
 
       expect(poolHolderData).to.be.null;
       expect(crpHolderData).to.be.null;
@@ -2111,9 +2103,11 @@ describe("Subgraph Trusts Test", function () {
         bPoolContract
       );
 
+      const [deployBlock, deployTime] = await getTxTimeblock(transaction);
+
       // Wait for sync
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -2161,8 +2155,8 @@ describe("Subgraph Trusts Test", function () {
       expect(data.tokenAmountOut).to.equals(tokenAmountOut.toString());
 
       expect(data.pool.id).to.equals(bPoolContract.address.toLowerCase());
-      // expect(data.deployBlock).to.equals("");
-      // expect(data.deployTimestamp).to.equals("transaction.timestamp.toString()");
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTime.toString());
     });
 
     it("should update the Pool after a Swap", async function () {
@@ -2231,7 +2225,7 @@ describe("Subgraph Trusts Test", function () {
       const dataHolders = queryResponse.data.redeemableERC20.holders;
       const data = queryResponse.data.holder;
 
-      // expect(dataHolders).to.have.lengthOf(1);
+      expect(dataHolders).to.have.lengthOf(1);
       expect(dataHolders).to.deep.include({ id: holderId });
 
       expect(data.address).to.equals(signer2.address.toLowerCase());
@@ -2372,8 +2366,8 @@ describe("Subgraph Trusts Test", function () {
       }
 
       // Wait for sync
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+
+      await waitForSubgraphToBeSynced();
 
       const poolReserveBalanceExpected = await reserve.balanceOf(
         bPoolContract.address
@@ -2418,8 +2412,7 @@ describe("Subgraph Trusts Test", function () {
           (await ethers.provider.getBlockNumber())
       );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -2446,8 +2439,7 @@ describe("Subgraph Trusts Test", function () {
       // Arbitrary user: Use `signer1` to ends rase
       transaction = await trust.connect(signer1).endDutchAuction();
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced();
 
       // Get values from event
       const { finalBalance, seederPay, creatorPay, tokenPay, poolDust } =
@@ -2550,8 +2542,7 @@ describe("Subgraph Trusts Test", function () {
           await reserve.allowance(trust.address, seedContract.address)
         );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced();
 
       const seeder1holderId = `${seedContract.address.toLowerCase()} - ${seeder1.address.toLowerCase()}`;
       const balanceExpected = await seedContract.balanceOf(seeder1.address);
@@ -2578,8 +2569,7 @@ describe("Subgraph Trusts Test", function () {
       // Call redeem with seeder1
       transaction = await seedContract.connect(seeder1).redeem(seeder1Units, 0);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced();
 
       // Using the tx saved
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
@@ -2680,8 +2670,7 @@ describe("Subgraph Trusts Test", function () {
           )
         );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const seeder2holderId = `${redeemableERC20Contract.address.toLowerCase()} - ${signer2.address.toLowerCase()}`;
       const balanceExpected = await redeemableERC20Contract.balanceOf(
@@ -2713,8 +2702,7 @@ describe("Subgraph Trusts Test", function () {
           await redeemableERC20Contract.balanceOf(signer2.address)
         );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const redeemId = `${transaction.hash.toLowerCase()}-0`;
 
@@ -2931,8 +2919,8 @@ describe("Subgraph Trusts Test", function () {
       crpContract = (await Util.poolContracts(creator, trust)).crp;
 
       // Wait for Sync
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+
+      await waitForSubgraphToBeSynced();
     });
 
     it("should continue query if the seeder is a non-SeedERC20 contract", async function () {
@@ -3122,8 +3110,8 @@ describe("Subgraph Trusts Test", function () {
         );
 
       // Wait for the Sync
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {

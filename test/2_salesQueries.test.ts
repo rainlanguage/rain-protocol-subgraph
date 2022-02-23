@@ -278,8 +278,7 @@ describe("Sales queries test", function () {
         redeemableTokenJson
       )) as RedeemableERC20;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
     });
 
     it("should query the sale child after creation", async function () {
@@ -547,8 +546,7 @@ describe("Sales queries test", function () {
       // Starting with signer1
       const tx = await sale.connect(signer1).start();
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1200);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -631,8 +629,7 @@ describe("Sales queries test", function () {
       totalRaised = totalRaised.add(totalInCalculated);
       totalFees = totalFees.add(fee);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -667,8 +664,7 @@ describe("Sales queries test", function () {
     });
 
     it("should query sale properties after buy correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const percentRaised = totalRaised.mul(100).div(minimumRaise);
 
@@ -700,8 +696,7 @@ describe("Sales queries test", function () {
     });
 
     it("should query the Buy config values correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const txHash = transaction.hash.toLowerCase();
 
@@ -733,8 +728,7 @@ describe("Sales queries test", function () {
     });
 
     it("should query the SaleFeeRecipient after a buy", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const txHash = transaction.hash.toLowerCase();
       const saleFeeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLocaleLowerCase()}`;
@@ -779,8 +773,7 @@ describe("Sales queries test", function () {
     });
 
     it("should query the Receipt after a buy", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const txHash = transaction.hash.toLowerCase();
 
@@ -872,8 +865,7 @@ describe("Sales queries test", function () {
       totalRaised = totalRaised.add(totalInCalculated);
       totalFees = totalFees.add(fee);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -913,8 +905,10 @@ describe("Sales queries test", function () {
     });
 
     it("should query SaleEnd after a sale end correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
+
+      // Using the tx saved
+      const [deployBlock, deployTime] = await Util.getTxTimeblock(transaction);
 
       const query = `
         {
@@ -937,8 +931,8 @@ describe("Sales queries test", function () {
 
       const saleEndData = response.data.saleEnd;
 
-      expect(parseInt(saleEndData.block)).to.equals(transaction.blockNumber);
-      // expect(parseInt(saleEndData.timestamp)).to.equals(transaction.timestamp); //no timestamp field in transaction
+      expect(parseInt(saleEndData.block)).to.equals(deployBlock.toString());
+      expect(parseInt(saleEndData.timestamp)).to.equals(deployTime.toString());
       expect(saleEndData.sender).to.equals(signer1.address.toLowerCase());
       expect(saleEndData.saleStatus).to.equals(Status.SUCCESS);
       expect(saleEndData.transactionHash).to.equals(

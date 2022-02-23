@@ -66,7 +66,7 @@ let trustAddress: string,
   depositor2: string,
   zeroDecimals: string;
 
-xdescribe("Subgraph RedeemableERC20ClaimEscrow test", function () {
+describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before(async function () {
     // Same tier for all
     tier = (await deploy(readWriteTierJson, deployer, [])) as ReadWriteTier;
@@ -166,8 +166,7 @@ xdescribe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           depositAmount
         );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const pendingDepositId = transaction.hash.toLowerCase();
       const pendingDepositorTokenId = `${trustAddress} - ${claimEscrowAddress} - ${depositor1} - ${claimableTokenAddress}`;
@@ -490,8 +489,7 @@ xdescribe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         signer1.address
       );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
 
       const redeemableSupply = await redeemableERC20.totalSupply();
 
@@ -538,8 +536,7 @@ xdescribe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const { amount: registeredWithdrawnAmountSigner1 } =
         await Util.getEventArgs(txWithdraw0, "Withdraw", claimEscrow);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
     });
   });
 
@@ -611,8 +608,7 @@ xdescribe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           depositAmount1
         );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(2000);
+      await waitForSubgraphToBeSynced();
     });
   });
 });

@@ -74,8 +74,7 @@ describe("Subgraph GatedNFT test", function () {
   });
 
   it("should query GatedNFTFactory correctly after construction", async function () {
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
+    await waitForSubgraphToBeSynced();
 
     const implementation = (
       await Util.getEventArgs(
@@ -132,8 +131,7 @@ describe("Subgraph GatedNFT test", function () {
       gatedNFTJson
     )) as GatedNFT;
 
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
+    await waitForSubgraphToBeSynced();
 
     const query = `
       {
@@ -192,7 +190,7 @@ describe("Subgraph GatedNFT test", function () {
   });
 
   it("should query the tier contract in GatedNFT correctly", async function () {
-    // await waitForSubgraphToBeSynced(500);
+    // await waitForSubgraphToBeSynced();
 
     const deployerExpected = await erc20BalanceTierFactory.signer.getAddress();
 
@@ -347,8 +345,7 @@ describe("Subgraph GatedNFT test", function () {
     const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
       .timestamp;
 
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
+    await waitForSubgraphToBeSynced();
 
     const query = `
       {
@@ -401,8 +398,7 @@ describe("Subgraph GatedNFT test", function () {
     const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
       .timestamp;
 
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1000);
+    await waitForSubgraphToBeSynced();
 
     const query = `
       {
@@ -465,8 +461,7 @@ describe("Subgraph GatedNFT test", function () {
       gatedNFTJson
     )) as GatedNFT;
 
-    await Util.delay(Util.wait);
-    await waitForSubgraphToBeSynced(1200);
+    await waitForSubgraphToBeSynced();
 
     const query = `
       {

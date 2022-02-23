@@ -157,7 +157,7 @@ export const fetchSubgraph = (
 };
 
 export const waitForSubgraphToBeSynced = async (
-  delay: number
+  delay = 1000
 ): Promise<SyncedSubgraphType> =>
   new Promise<{ synced: boolean }>((resolve, reject) => {
     // Wait for 5s
@@ -167,37 +167,42 @@ export const waitForSubgraphToBeSynced = async (
     const checkSubgraphSynced = async () => {
       try {
         const result = await fetchSubgraphs({
-          query: `{
-            indexingStatusForCurrentVersion(subgraphName: "vishalkale151071/rain-protocol") {
-              synced
-              health
-              fatalError{
-                message
-                handler
-              }
-              chains {
-                chainHeadBlock {
-                  number
+          query: `
+            {
+              indexingStatusForCurrentVersion(subgraphName: "vishalkale151071/rain-protocol") {
+                synced
+                health
+                fatalError{
+                  message
+                  handler
                 }
-                latestBlock {
-                  number
+                chains {
+                  chainHeadBlock {
+                    number
+                  }
+                  latestBlock {
+                    number
+                  }
                 }
-              }
+              } 
             } 
-          }
-          }`,
+          `,
         });
-        console.log(
-          "latestBlock SG: \n",
-          JSON.stringify(result.data.indexingStatusForCurrentVersion.chains)
-        );
-        console.log("HH Actual block:", await ethers.provider.getBlockNumber());
-        if (result.data.indexingStatusForCurrentVersion.synced === true) {
+        const blocksSG = result.data.indexingStatusForCurrentVersion.chains[0];
+        if (
+          result.data.indexingStatusForCurrentVersion.synced === true &&
+          blocksSG.latestBlock.number == blocksSG.chainHeadBlock.number
+        ) {
           resolve({ synced: true });
         } else {
-          throw new Error("reject or retry");
+          throw new Error(`subgraph is not sync`);
         }
       } catch (e) {
+        const message = e instanceof Error ? e.message : "Unknown Error";
+        if (message.includes("connect ECONNREFUSED")) {
+          reject(new Error(`Unable to connect to Subgraph node: ${message}`));
+        }
+
         if (Date.now() > deadline) {
           reject(new Error(`Timed out waiting for the subgraph to sync`));
         } else {

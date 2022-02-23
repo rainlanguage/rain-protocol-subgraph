@@ -125,7 +125,7 @@ let trust: Trust,
   erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
-describe.only("Subgraph Tier Test", function () {
+describe("Subgraph Tier Test", function () {
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 
@@ -201,8 +201,7 @@ describe.only("Subgraph Tier Test", function () {
         verify.address
       );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -322,8 +321,7 @@ describe.only("Subgraph Tier Test", function () {
         status: 0,
       };
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -377,8 +375,7 @@ describe.only("Subgraph Tier Test", function () {
         status: 0,
       };
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -435,8 +432,7 @@ describe.only("Subgraph Tier Test", function () {
         status: 1,
       };
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -485,8 +481,7 @@ describe.only("Subgraph Tier Test", function () {
         status: 3,
       };
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -537,8 +532,7 @@ describe.only("Subgraph Tier Test", function () {
         status: 1,
       };
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -585,8 +579,7 @@ describe.only("Subgraph Tier Test", function () {
         status: 2,
       };
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -633,8 +626,7 @@ describe.only("Subgraph Tier Test", function () {
         nonVerifyAddress
       );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -693,8 +685,7 @@ describe.only("Subgraph Tier Test", function () {
         verifyIndependent.address
       );
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -742,8 +733,7 @@ describe.only("Subgraph Tier Test", function () {
     let erc20BalanceTier: ERC20BalanceTier;
 
     it("should query ERC20BalanceTierFactory correctly after construction", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -780,8 +770,7 @@ describe.only("Subgraph Tier Test", function () {
         erc20BalanceTierJson
       )) as ERC20BalanceTier;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -808,8 +797,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query the ERC20BalanceTier correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       // The address that made the tx where BalanceTier contract was created
       const balanceTierCreator = transaction.from.toLocaleLowerCase();
@@ -850,8 +838,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query the ERC20 token from tier contract correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const tierQuery = `
         {
@@ -896,8 +883,7 @@ describe.only("Subgraph Tier Test", function () {
     let erc20TransferTier: ERC20TransferTier;
 
     it("should query ERC20TransferTierFactory correctly after construction", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const tierFactoriesQuery = `
         {
@@ -936,8 +922,7 @@ describe.only("Subgraph Tier Test", function () {
         erc20TransferTierJson
       )) as ERC20TransferTier;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const tierFactoryQuery = `
         {
@@ -968,8 +953,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query the ERC20TransferTier correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const tierQuery = `
         {
@@ -1020,8 +1004,7 @@ describe.only("Subgraph Tier Test", function () {
         .connect(beneficiator)
         .setTier(beneficiary.address, Tier.FIVE, []);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const TierContractQuery = `
         {
@@ -1059,8 +1042,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query a level with members correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const Level = Tier.FIVE;
 
@@ -1088,8 +1070,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query a level without members correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const Level = Tier.ONE;
 
@@ -1137,8 +1118,7 @@ describe.only("Subgraph Tier Test", function () {
         .connect(tierOwner)
         .setTier(tierOwner.address, Tier.FOUR, []);
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const tierChangeQuery = `
         {
@@ -1177,8 +1157,7 @@ describe.only("Subgraph Tier Test", function () {
     };
 
     it("should query CombineTierFactory correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const implementation = (
         await Util.getEventArgs(
@@ -1226,8 +1205,7 @@ describe.only("Subgraph Tier Test", function () {
         combineTierJson
       )) as CombineTier;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -1250,8 +1228,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query the CombineTier correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(500);
+      await waitForSubgraphToBeSynced();
 
       // The signer assigned to the instance
       const deployerExpected = await combineTierFactory.signer.getAddress();
@@ -1286,8 +1263,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query the correct state in CombineTier", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(500);
+      await waitForSubgraphToBeSynced();
 
       const stateExpected = (
         await Util.getEventArgs(transaction, "Snapshot", combineTier)
@@ -1324,8 +1300,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query the Snapshot correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(500);
+      await waitForSubgraphToBeSynced();
 
       const eventArgs = await Util.getEventArgs(
         transaction,
@@ -1373,8 +1348,7 @@ describe.only("Subgraph Tier Test", function () {
 
   describe("ERC721BalanceTier Factory - Queries", function () {
     it("should query ERC721BalanceTierFactory correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const implementation = (
         await Util.getEventArgs(
@@ -1425,8 +1399,7 @@ describe.only("Subgraph Tier Test", function () {
         erc721BalanceTierJson
       )) as ERC721BalanceTier;
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -1451,8 +1424,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query the ERC721BalanceTier correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(500);
+      await waitForSubgraphToBeSynced();
 
       // The address that made the tx where BalanceTier contract was created
       const balanceTier721Creator = transaction.from.toLocaleLowerCase();
@@ -1494,8 +1466,7 @@ describe.only("Subgraph Tier Test", function () {
     });
 
     it("should query the ERC721-NFT of the ERC721BalanceTier correctly", async function () {
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(500);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
@@ -1633,8 +1604,7 @@ describe.only("Subgraph Tier Test", function () {
 
       await trust.deployed();
 
-      await Util.delay(Util.wait);
-      await waitForSubgraphToBeSynced(1000);
+      await waitForSubgraphToBeSynced();
 
       const query = `
         {
