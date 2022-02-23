@@ -733,7 +733,7 @@ describe.only("Subgraph Tier Test", function () {
       expect(data.deployTimestamp).to.equals("0");
 
       expect(data.deployer).to.equals(Util.zeroAddress.toLowerCase());
-      expect(data.factory).to.equals(Util.zeroAddress.toLowerCase());
+      expect(data.factory).to.null;
       expect(data.verifyAddresses).to.be.empty;
     });
   });
@@ -827,6 +827,7 @@ describe.only("Subgraph Tier Test", function () {
             }
             token {
               id
+              name
             }
           }
         }
@@ -844,8 +845,8 @@ describe.only("Subgraph Tier Test", function () {
       expect(tierData.address).to.equals(
         erc20BalanceTier.address.toLowerCase()
       );
-      expect(tierData.tierValues).to.eql(LEVELS);
-      expect(tokenData.name).to.equals(reserve.address.toLowerCase());
+      expect(tierData.tierValues).deep.equal(LEVELS);
+      expect(tokenData.id).to.equals(reserve.address.toLowerCase());
     });
 
     it("should query the ERC20 token from tier contract correctly", async function () {
@@ -916,7 +917,7 @@ describe.only("Subgraph Tier Test", function () {
       const TierFactoryData = queryTierFactoriesresponse.data.tierFactory;
 
       expect(TierFactoryData.address).to.equals(
-        erc20BalanceTierFactory.address.toLowerCase()
+        erc20TransferTierFactory.address.toLowerCase()
       );
 
       expect(TierFactoryData.children).to.be.empty;
@@ -991,13 +992,13 @@ describe.only("Subgraph Tier Test", function () {
       const tierData = queryTierResponse.data.erc20TransferTier;
 
       expect(tierData.factory.address).to.equals(
-        erc20BalanceTierFactory.address.toLowerCase()
+        erc20TransferTierFactory.address.toLowerCase()
       );
       expect(tierData.address).to.equals(
         erc20TransferTier.address.toLowerCase()
       );
       expect(tierData.tierValues).to.eql(LEVELS);
-      expect(tierData.token.name).to.equals(reserve.address.toLowerCase());
+      expect(tierData.token.id).to.equals(reserve.address.toLowerCase());
     });
 
     it("should query the Tier Change after upgrade with setTier correctly", async function () {
@@ -1065,7 +1066,7 @@ describe.only("Subgraph Tier Test", function () {
 
       const tierLevelQuery = `
         {
-          tierLevel (id: "${erc20TransferTier.address.toLowerCase()}-${Level}") {
+          tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${Level}") {
             tierLevel
             tierContractAddress
             memberCount
@@ -1080,9 +1081,9 @@ describe.only("Subgraph Tier Test", function () {
       const TierLevelData = tierLevelQueryResponse.data.tierLevel;
 
       expect(TierLevelData.tierContractAddress).to.equals(
-        erc20TransferTier.address.toLocaleLowerCase
+        erc20TransferTier.address.toLocaleLowerCase()
       );
-      expect(TierLevelData.tierLevel).to.equals(Level);
+      expect(TierLevelData.tierLevel).to.equals(Level.toString());
       expect(TierLevelData.memberCount).to.equals(1);
     });
 
@@ -1094,7 +1095,7 @@ describe.only("Subgraph Tier Test", function () {
 
       const tierLevelQuery = `
         {
-          tierLevel (id: "${erc20TransferTier.address.toLowerCase()}-${Level}") {
+          tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${Level}") {
             tierLevel
             tierContractAddress
             memberCount
@@ -1108,9 +1109,9 @@ describe.only("Subgraph Tier Test", function () {
 
       const TierLevelData = tierLevelQueryResponse.data.tierLevel;
 
-      expect(TierLevelData.tierContractAddress).to.be.null;
-      expect(TierLevelData.tierLevel).to.be.null;
-      expect(TierLevelData.memberCount).to.be.null;
+      expect(TierLevelData.tierContractAddress).to.equals(erc20TransferTier.address.toLowerCase());
+      expect(TierLevelData.tierLevel).to.equals(Level.toString());
+      expect(TierLevelData.memberCount).to.equals("0");
       /**
        * Im not sure if this entity will be null until it is created with TierChange event.
        * If that it is the case, will be null
@@ -1139,7 +1140,7 @@ describe.only("Subgraph Tier Test", function () {
 
       const tierChangeQuery = `
         {
-          tierChange  (id: "${tx.hash.toLowerCase()}-${tierContractAddress}") {
+          tierChange  (id: "${tx.hash.toLowerCase()} - ${tierContractAddress}") {
             transactionHash
             sender
             account
@@ -1637,14 +1638,19 @@ describe.only("Subgraph Tier Test", function () {
         {
           trust (id: "${trust.address.toLowerCase()}") {
             contracts {
-              tier
+              tier {
+                __typename
+                ... on UnknownTier {
+                  id
+                  address
+                  deployer
+                  factory {
+                    id
+                  }
+                }
+              }
+              
             }
-          }
-          ERC721BalanceTier 
-          unknownTier (id: "${erc20BalanceTierIndepent.address.toLowerCase()}") {
-            address
-            deployer
-            factory
           }
         }
       `;
@@ -1654,8 +1660,13 @@ describe.only("Subgraph Tier Test", function () {
         query: query,
       })) as FetchResult;
 
-      const tierData = queryResponse.data.erc20BalanceTier;
-      const tokenData = tierData.token;
+      const tierData = queryResponse.data.trust.contracts.tier;
+
+      console.log("tierData : ", JSON.stringify(tierData))
+      expect(tierData.deployer).to.equals(zeroAddress)
+      expect(tierData.address).to.equals(erc20BalanceTierIndepent.address.toLowerCase())
+      expect(tierData.__typename).to.equals("UnknownTier")
+      expect(tierData.factory).to.be.null
     });
 
     it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Sale", async function () {
