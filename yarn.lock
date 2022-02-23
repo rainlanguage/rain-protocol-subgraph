@@ -1382,9 +1382,9 @@
     "@typescript-eslint/types" "4.33.0"
     eslint-visitor-keys "^2.0.0"
 
-"@vishalkale15107/rain-protocol@git+https://github.com/vishalkale151071/rain-protocol.git#8c536bc531908a67fb4f4f88a6066552bd4ad492":
+"@vishalkale15107/rain-protocol@git+https://github.com/vishalkale151071/rain-protocol.git#51a70d07a59c7fb1e486890354d3531ca518caa2":
   version "0.0.16"
-  resolved "git+https://github.com/vishalkale151071/rain-protocol.git#8c536bc531908a67fb4f4f88a6066552bd4ad492"
+  resolved "git+https://github.com/vishalkale151071/rain-protocol.git#51a70d07a59c7fb1e486890354d3531ca518caa2"
   dependencies:
     "@0xsequence/sstore2" "git+https://github.com/0xsequence/sstore2.git#b9233bcf1bbbbed37f9029e0355ac3026cd3563b"
     "@beehiveinnovation/balancer-core" "0.0.7"
