@@ -429,7 +429,7 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
       expect(data.pendingDeposits).to.deep.include(
         { id: pendingDepositId },
-        `redeemableEscrowPendingDepositorToken response does NOT include the pendingDepositId "${pendingDepositId}"`
+        `pendingDeposits response does NOT include the pendingDepositId "${pendingDepositId}"`
       );
 
       // Token relate expected response
