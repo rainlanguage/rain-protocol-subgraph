@@ -20,13 +20,7 @@
     "lint-test": "eslint './test/**/*.ts'",
     "hardhat-node": "hardhat node",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
-    "test": "hardhat test",
-    "test-trust": "hardhat test test/1_trustQueries.test.ts",
-    "test-sales": "hardhat test test/2_salesQueries.test.ts",
-    "test-gated": "hardhat test test/3_gatedQueries.test.ts",
-    "test-verify": "hardhat test test/4_verifyQueries.test.ts",
-    "test-tier": "hardhat test test/5_tierQueries.test.ts",
-    "test-escrow": "hardhat test test/6_escrowQueries.test.ts"
+    "test": "hardhat test"
   },
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",

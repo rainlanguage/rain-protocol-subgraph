@@ -125,7 +125,7 @@ let trust: Trust,
   erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
-describe.only("Subgraph Tier Test", function () {
+describe("Subgraph Tier Test", function () {
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 
