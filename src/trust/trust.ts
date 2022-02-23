@@ -10,12 +10,12 @@ import {
     StartDutchAuction,
 } from '../../generated/TrustFactory/Trust'
 
-import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ERC20 as ERC20Schema, SeedERC20, Trust, TrustFactory } from "../../generated/schema"
-import { Address, dataSource, DataSourceContext, log, BigInt } from '@graphprotocol/graph-ts'
+import { Contract, CRP, DistributionProgress, DutchAuction, Notice as NoticeScheme, Pool, RedeemableERC20, ERC20 as ERC20Schema, SeedERC20, Trust, TrustFactory, Holder } from "../../generated/schema"
+import { Address, dataSource, DataSourceContext, log, BigInt, store } from '@graphprotocol/graph-ts'
 import { ERC20 } from "../../generated/TrustFactory/ERC20"
 import { Trust as TrustContract } from "../../generated/templates/TrustTemplate/Trust"
 import { PoolTemplate, RedeemableERC20Template, SeedERC20Template } from '../../generated/templates'
-import { HUNDRED_BD, ZERO_BI, BONE, ZERO_BD, ONE_BI, DistributionStatus } from "../utils"
+import { HUNDRED_BD, ZERO_BI, BONE, ZERO_BD, ONE_BI, DistributionStatus, ZERO_ADDRESS } from "../utils"
 
 export function handleConstruction(event: Construction): void {
     let context = dataSource.context()
@@ -47,20 +47,19 @@ export function handleEndDutchAuction(event: EndDutchAuction): void {
     dutchAuction.save()
 
     let distributionProgress = DistributionProgress.load(event.address.toHex())
-    if(event.params.finalBalance.toString() >= distributionProgress.finalBalance.toString()) {
+    if(event.params.finalBalance >= distributionProgress.finalBalance) {
         distributionProgress.distributionStatus = DistributionStatus.Success
     } else {
         distributionProgress.distributionStatus = DistributionStatus.Fail
         
     }
-    
+    distributionProgress.finalBalance = event.params.finalBalance
     distributionProgress.save()
 }
 
 export function handleInitialize(event: Initialize): void {
     let trustAddress = event.address
     let trust = Trust.load(trustAddress.toHex())
-    let trustContract = TrustContract.bind(trustAddress)
 
     // contracts creation
     let contracts = new Contract(trustAddress.toHex())
@@ -68,10 +67,13 @@ export function handleInitialize(event: Initialize): void {
     contracts.reserveERC20 = createReserveERC20(event)
     contracts.seeder = createSeedERC20(event)
     contracts.redeemableERC20 = createRedeemableERC20(event)
+    contracts.pool = ZERO_ADDRESS
+    contracts.tier = ZERO_ADDRESS
     contracts.save()
  
     // DistributionProgess creation
     let distributionProgress = new DistributionProgress(trustAddress.toHex())
+    distributionProgress.finalBalance = ZERO_BI
     distributionProgress.distributionStatus = DistributionStatus.Pending
     distributionProgress.successPoolBalance = event.params.successBalance
     distributionProgress.reserveInit = event.params.config.reserveInit
@@ -280,6 +282,11 @@ function createPool(event: StartDutchAuction): string {
     }
     pool.save()
 
+    let id = contracts.redeemableERC20 + " - " +  pool.id
+    let holder = Holder.load(id)
+    if(holder != null)
+        store.remove("Holder", id)
+
     let context = new DataSourceContext()
     context.setString("trust", event.address.toHex())
     PoolTemplate.createWithContext(event.params.pool, context)
@@ -295,13 +302,17 @@ function updatePoolBalance(contracts: Contract): void {
     let poolReserveBalance = reserveTokenContract.try_balanceOf(Address.fromString(contracts.pool))
     let poolRedeemableBalance = redeemableTokenContract.try_balanceOf(Address.fromString(contracts.pool))
 
+    let pool = Pool.load(contracts.pool)
+
     if(!(poolRedeemableBalance.reverted)){
         distributionProgress.poolRedeemableBalance = poolRedeemableBalance.value
+        pool.poolRedeemableBalance = poolRedeemableBalance.value
         distributionProgress.percentAvailable = poolRedeemableBalance.value.toBigDecimal().div(redeemableTokenContract.totalSupply().toBigDecimal())
     }
 
     if(!(poolReserveBalance.reverted)){
         distributionProgress.poolReserveBalance = poolReserveBalance.value
+        pool.poolReserveBalance = poolReserveBalance.value
         if (distributionProgress.minimumRaise == ZERO_BI) {
             distributionProgress.percentRaised = HUNDRED_BD
         } else {
@@ -316,7 +327,7 @@ function updatePoolBalance(contracts: Contract): void {
     distributionProgress.finalWeight = valuationWeight(distributionProgress.reserveInit, distributionProgress.finalValuation)
 
     distributionProgress.save()
-
+    pool.save()
 }
 
 function valuationWeight(reserveBalance_: BigInt, valuation_: BigInt): BigInt{

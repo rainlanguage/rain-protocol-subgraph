@@ -1,7 +1,29 @@
-import { VerifyTier } from "../../generated/schema";
+import { Address } from "@graphprotocol/graph-ts";
+import { VerifyTier, Verify } from "../../generated/schema";
 import { Initialize, TierChange } from "../../generated/templates/VerifyTierTemplate/VerifyTier";
+import { ZERO_ADDRESS, ZERO_BI } from "../utils";
 
 export function handleInitialize(event: Initialize): void {
+    let verifyTier = VerifyTier.load(event.address.toHex())
+
+    let verify = Verify.load(event.params.verify.toHex())
+    if(verify == null){
+        verify = new Verify(event.params.verify.toHex())
+        verify.address =  event.params.verify
+        verify.deployBlock = ZERO_BI
+        verify.deployTimestamp = ZERO_BI
+        verify.deployer = Address.fromString(ZERO_ADDRESS)
+        verify.factory = ZERO_ADDRESS
+        verify.verifyAddresses = []
+        verify.approvers = []
+        verify.removers = []
+        verify.banners = []
+        verify.save()
+    }
+    
+    verifyTier.verifyContract = verify.id
+    
+    verifyTier.save()
 }
 
 export function handleTierChange(event: TierChange): void {

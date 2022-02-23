@@ -6,10 +6,10 @@ import "@typechain/hardhat";
 
 dotenv.config();
 
-
 function createLocalHostConfig() {
   const url = "http://localhost:8545";
-  const mnemonic = "test test test test test test test test test test test junk";
+  const mnemonic =
+    "test test test test test test test test test test test junk";
   return {
     accounts: {
       count: 10,
@@ -17,7 +17,7 @@ function createLocalHostConfig() {
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
-    url
+    url,
   };
 }
 

@@ -11,15 +11,41 @@ export function handleDeposit(event: Deposit): void {
     redeemableEscrowDeposit.escrow = redeemableERC20ClaimEscrow.id
     redeemableEscrowDeposit.escrowAddress = event.address
     redeemableEscrowDeposit.saleAddress = event.params.trust
+    redeemableEscrowDeposit.redeemableSupply = event.params.supply
+    redeemableEscrowDeposit.tokenAmount = event.params.amount
     
     let redeemableERC20 = RedeemableERC20.load(event.params.redeemable.toHex())
     redeemableEscrowDeposit.redeemable = redeemableERC20.id
 
-    let token = ERC20.load(event.params.token.toHex())
+    let token = getERC20(event.params.token, event.block)
     redeemableEscrowDeposit.token = token.id
     redeemableEscrowDeposit.tokenAddress = event.params.token
 
-    redeemableEscrowDeposit.tokenAmount = event.params.amount
+    let iSale = getIsale(event.params.trust.toHex())
+    redeemableEscrowDeposit.iSale = iSale
+
+
+    let depositor = getRedeemableEscrowDepositor(event.address.toHex(), event.params.depositor)
+    let dDeposits = depositor.deposits
+    dDeposits.push(redeemableEscrowDeposit.id)
+    depositor.deposits = dDeposits
+    depositor.save()
+
+    redeemableEscrowDeposit.depositor = depositor.id
+
+    redeemableEscrowDeposit.save()
+
+    let rDeposits = redeemableERC20ClaimEscrow.deposits
+    rDeposits.push(redeemableEscrowDeposit.id)
+    redeemableERC20ClaimEscrow.deposits = rDeposits
+
+    let depositors = redeemableERC20ClaimEscrow.depositors
+    if(!depositors.includes(depositor.id)){
+        depositors.push(depositor.id)
+    }
+    redeemableERC20ClaimEscrow.depositors = depositors
+
+    redeemableERC20ClaimEscrow.save()
 
     redeemableEscrowDeposit.save()
 
@@ -37,6 +63,7 @@ export function handlePendingDeposit(event: PendingDeposit): void {
     redeemableEscrowPendingDeposit.escrow = redeemableERC20ClaimEscrow.id
     redeemableEscrowPendingDeposit.escrowAddress = event.address
     redeemableEscrowPendingDeposit.saleAddress = event.params.trust
+    redeemableEscrowPendingDeposit.amount = event.params.amount
 
     let redeemableERC20 = RedeemableERC20.load(event.params.redeemable.toHex())
     if(redeemableERC20 != null)
@@ -48,8 +75,6 @@ export function handlePendingDeposit(event: PendingDeposit): void {
 
     let iSale = getIsale(event.params.trust.toHex())
     redeemableEscrowPendingDeposit.iSale = iSale
-
-    redeemableEscrowPendingDeposit.amount = event.params.amount
 
     let depositor = getRedeemableEscrowDepositor(event.address.toHex(), event.params.sender)
     let DpendingDeposits = depositor.pendingDeposits
@@ -76,30 +101,28 @@ export function handlePendingDeposit(event: PendingDeposit): void {
 
 
 export function handleUndeposit(event: Undeposit): void {
-    let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
+    // let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
 }
 
 export function handleWithdraw(event: Withdraw): void {
-    let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
+    // let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
 }
 
 function getRedeemableERC20ClaimEscrow(address: string): RedeemableERC20ClaimEscrow {
     let redeemableERC20ClaimEscrow = RedeemableERC20ClaimEscrow.load(address)
-    if(redeemableERC20ClaimEscrow == null)
+    if(redeemableERC20ClaimEscrow == null){
         redeemableERC20ClaimEscrow = new RedeemableERC20ClaimEscrow(address)
-    else
-        return redeemableERC20ClaimEscrow as RedeemableERC20ClaimEscrow
-    
-    redeemableERC20ClaimEscrow.address = Address.fromString(address)
-    redeemableERC20ClaimEscrow.pendingDeposits = []
-    redeemableERC20ClaimEscrow.deposits = []
-    redeemableERC20ClaimEscrow.undeposits = []
-    redeemableERC20ClaimEscrow.withdraws = []
-    redeemableERC20ClaimEscrow.pendingDepositorTokens = []
-    redeemableERC20ClaimEscrow.supplyTokenDeposits = []
-    redeemableERC20ClaimEscrow.depositors = []
-    redeemableERC20ClaimEscrow.withdraws = []
-    redeemableERC20ClaimEscrow.save()
+        redeemableERC20ClaimEscrow.address = Address.fromString(address)
+        redeemableERC20ClaimEscrow.pendingDeposits = []
+        redeemableERC20ClaimEscrow.deposits = []
+        redeemableERC20ClaimEscrow.undeposits = []
+        redeemableERC20ClaimEscrow.withdraws = []
+        redeemableERC20ClaimEscrow.pendingDepositorTokens = []
+        redeemableERC20ClaimEscrow.supplyTokenDeposits = []
+        redeemableERC20ClaimEscrow.depositors = []
+        redeemableERC20ClaimEscrow.withdraws = []
+        redeemableERC20ClaimEscrow.save()
+    }
     return redeemableERC20ClaimEscrow as RedeemableERC20ClaimEscrow
 }
 

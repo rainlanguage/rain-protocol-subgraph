@@ -76,7 +76,7 @@ type DistributionProgress @entity {
     initialValuation: BigInt
     finalValuation: BigInt! #RedeemableERC20Pool.finalValuation()
     successPoolBalance: BigInt #Trust.successBalance()
-    finalBalance: BigInt #Trust.finalBalance()
+    finalBalance: BigInt! #Trust.finalBalance()
     reserveInit: BigInt! #Trust.getDistributionProgress() => uint256 reserveInit
     redeemInit: BigInt! #Trust.getDistributionProgress() => uint256 redeemInit
     minimumRaise: BigInt #minimumCreatorRaise + redeemInit + Trust.SeedERC20.seederFee
@@ -121,8 +121,8 @@ type Pool @entity{
     trust: Trust! #the trust that is the owner of this pool
     reserve: ERC20 #the reserve token for this trust
     redeemable: RedeemableERC20 #the redeemable token for this trust
-    poolBalanceReserve: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
-    poolTokenBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
+    poolReserveBalance: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
+    poolRedeemableBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
     numberOfSwaps: BigInt
     swaps: [Swap!]
     deployBlock: BigInt! #the block the contract was deployed

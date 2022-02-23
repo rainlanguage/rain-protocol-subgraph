@@ -116,5 +116,7 @@ export function notAContract(address: string, trust: string): boolean {
         return false
     if(contracts.pool == address)
         return false
+    if(contracts.tier == address)
+        return false
     return true
 }

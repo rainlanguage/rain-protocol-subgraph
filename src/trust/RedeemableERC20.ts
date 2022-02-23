@@ -49,7 +49,7 @@ export function handleTransfer(event: Transfer): void {
             sender.balance = sender.balance.minus(event.params.value)
         }
     
-        if(notAContract(event.params.from.toHex(), context.getString("trust"))){
+        if(notAContract(event.params.to.toHex(), context.getString("trust"))){
             let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
             if(receiver == null){
                 receiver = new Holder(event.address.toHex() + " - " + event.params.to.toHex())

@@ -6,9 +6,10 @@ module.exports = {
     node: true,
   },
   plugins: ["@typescript-eslint"],
-  "extends": [
+  extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended"
-  ]
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+  ],
 };

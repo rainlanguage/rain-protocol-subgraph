@@ -37,8 +37,8 @@ export const NOTICE_QUERY = `
     }
   }`;
 
-export function getTrust(trust: string) :string {
-  return (`
+export function getTrust(trust: string): string {
+  return `
     {
       trust(id:"${trust}"){
         notices{
@@ -46,11 +46,11 @@ export function getTrust(trust: string) :string {
         }
       }
     }
-  `);
+  `;
 }
 
-export function getFactories(factory: string) :string {
-  return (`
+export function getFactories(factory: string): string {
+  return `
     {
       trustFactory(id:"${factory}"){
         balancerFactory
@@ -60,11 +60,11 @@ export function getFactories(factory: string) :string {
         bPoolFeeEscrow
       }
     }
-  `);
+  `;
 }
 
-export function getContracts(contract: string) :string {
-  return (`
+export function getContracts(contract: string): string {
+  return `
     {
       contract(id:"${contract}"){
         crp {
@@ -97,5 +97,5 @@ export function getContracts(contract: string) :string {
         }
       }
     }
-  `);
+  `;
 }
