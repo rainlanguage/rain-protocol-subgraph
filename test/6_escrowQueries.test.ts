@@ -13,7 +13,6 @@ import redeemableERC20ClaimEscrowJson from "@beehiveinnovation/rain-protocol/art
 import bPoolFeeEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/BPoolFeeEscrow.sol/BPoolFeeEscrow.json";
 import claimEscroWrapperJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/wrappers/RedeemableERC20ClaimEscrowWrapper.sol/RedeemableERC20ClaimEscrowWrapper.json";
 
-
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
 import { RedeemableERC20ClaimEscrow } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20ClaimEscrow";
@@ -40,8 +39,6 @@ import {
 let claimableReserveToken: ReserveTokenTest,
   tier: ReadWriteTier,
   claimEscrowWrapper: RedeemableERC20ClaimEscrowWrapper,
-  reserveDecimals: number,
-  zeroDecimals: string,
   transaction: ContractTransaction; // use to save/facilite a tx;
 
 let reserve: ReserveTokenTest,
@@ -59,76 +56,27 @@ let trustAddress: string,
   claimEscrowAddress: string,
   claimableTokenAddress: string,
   depositor1: string,
-  depositor2: string;
-
-
+  depositor2: string,
+  zeroDecimals: string;
 
 describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
-  before("Deploy fresh test contracts", async function () {
-    // A readwrite Tier
+  before(async function () {
+    // Same tier for all
     tier = (await deploy(readWriteTierJson, deployer, [])) as ReadWriteTier;
     await tier.setTier(signer1.address, Tier.FOUR, []);
     await tier.setTier(signer2.address, Tier.FOUR, []);
 
-    // Reserve token
-    claimableReserveToken = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
-    reserveDecimals = await claimableReserveToken.decimals();
-    zeroDecimals = "0".repeat(reserveDecimals);
-
-    // ClaimEscrowWrapper
-    claimEscrowWrapper = (await deploy(claimEscroWrapperJson, deployer, [])) as RedeemableERC20ClaimEscrowWrapper;
-
-    // Basic Setup
-    ({ 
-      reserve,
-      trust,
-      crp,
-      bPool,
-      redeemableERC20,
-      minimumTradingDuration,
-      minimumCreatorRaise,
-      successLevel
-    } = await Util.basicSetup(deployer, creator, seeder1, trustFactory, tier));
-
-    startBlock = await ethers.provider.getBlockNumber();
-
-    // Fill auxiliars with lowerCase to make IDs
-    trustAddress = trust.address.toLowerCase();
+    // Fill to avoid long queries
     claimEscrowAddress = claimEscrow.address.toLowerCase();
-    claimableTokenAddress = claimableReserveToken.address.toLowerCase();
     depositor1 = signer1.address.toLowerCase();
     depositor2 = signer2.address.toLowerCase();
   });
 
-  it("should query RedeemableERC20ClaimEscrow correctly after construction", async function () {
+  it("should query RedeemableERC20ClaimEscrow correctly", async function () {
     const query = `
       {
         redeemableERC20ClaimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
           address
-          pendingDeposits {
-            id
-          }
-          deposits {
-            id
-          }
-          undeposits {
-            id
-          }
-          withdraws {
-            id
-          }
-          pendingDepositorTokens {
-            id
-          }
-          supplyTokenDeposits {
-            id
-          }
-          depositors {
-            id
-          }
-          withdrawers {
-            id
-          }
         }
       }
     `;
@@ -137,118 +85,290 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     })) as FetchResult;
 
     const data = response.data.redeemableERC20ClaimEscrow;
-    console.log("data : ", JSON.stringify(data))
-    console.log("redeemableERC20ClaimEscrow : ", claimEscrow.address.toLowerCase())
+    console.log("data : ", JSON.stringify(data));
+    console.log(
+      "redeemableERC20ClaimEscrow : ",
+      claimEscrow.address.toLowerCase()
+    );
 
-    // expect(data.address).to.equals(claimEscrow.address.toLowerCase());
-
-    // // Ofc, it is a initi state
-    // expect(data.pendingDeposits).to.be.empty;
-    // expect(data.deposits).to.be.empty;
-    // expect(data.undeposits).to.be.empty;
-    // expect(data.withdraws).to.be.empty;
-    // expect(data.pendingDepositorTokens).to.be.empty;
-    // expect(data.supplyTokenDeposits).to.be.empty;
-    // expect(data.depositors).to.be.empty;
-    // expect(data.withdrawers).to.be.empty;
+    expect(data.address).to.equals(claimEscrow.address.toLowerCase());
   });
 
-  it("should update the RedeemableERC20ClaimEscrow entity after a PendingDeposit", async function () {
-    // Make a swap with the Util function
-    const spend = ethers.BigNumber.from("200" + Util.sixZeros);
-    await Util.swapReserveForTokens(crp, bPool, reserve, redeemableERC20, signer1, spend);
+  describe("Escrow with succesfull Sale", function () {
+    before("deploy fresh test contracts", async function () {
+      // New reserve token
+      claimableReserveToken = (await deploy(
+        reserveToken,
+        deployer,
+        []
+      )) as ReserveTokenTest;
 
-    // Deposit some claimable tokens
-    const depositAmount = ethers.BigNumber.from("100" + zeroDecimals);
-    await claimableReserveToken.transfer(signer1.address, depositAmount);
-    await claimableReserveToken.connect(signer1).approve(claimEscrow.address, depositAmount);
+      // Make a new ISale with a basic Setup
+      ({
+        reserve,
+        trust,
+        crp,
+        bPool,
+        redeemableERC20,
+        minimumTradingDuration,
+        minimumCreatorRaise,
+        successLevel,
+      } = await Util.basicSetup(
+        deployer,
+        creator,
+        seeder1,
+        trustFactory,
+        tier
+      ));
 
-    // Depositing
-    transaction = await claimEscrow.connect(signer1).depositPending(
-      trust.address,
-      claimableReserveToken.address,
-      depositAmount
-    );
+      startBlock = await ethers.provider.getBlockNumber();
 
-    const { amount: deposited0 } = await Util.getEventArgs(
-      transaction,
-      "PendingDeposit",
-      claimEscrow
-    );
+      // Fill to avoid long queries
+      trustAddress = trust.address.toLowerCase();
+      claimableTokenAddress = claimableReserveToken.address.toLowerCase();
+      zeroDecimals = "0".repeat(await claimableReserveToken.decimals());
+    });
 
-    // await Util.delay(Util.wait);
-    // await waitForSubgraphToBeSynced(2000);
+    it("should update the RedeemableERC20ClaimEscrow entity after a PendingDeposit", async function () {
+      // Make a swap with the Util function
+      const spend = ethers.BigNumber.from("200" + Util.sixZeros);
+      await Util.swapReserveForTokens(
+        crp,
+        bPool,
+        reserve,
+        redeemableERC20,
+        signer1,
+        spend
+      );
 
+      // Deposit some claimable tokens
+      const depositAmount = ethers.BigNumber.from("100" + zeroDecimals);
+      await claimableReserveToken.transfer(signer1.address, depositAmount);
 
-    const pendingDepositId = transaction.hash.toLowerCase();
-    const pendingDepositorTokenId = `${trustAddress} - ${claimEscrowAddress} - ${depositor1} - ${claimableTokenAddress}`;
-    const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
+      await claimableReserveToken
+        .connect(signer1)
+        .approve(claimEscrow.address, depositAmount);
 
-    const query = `
-      {
-        claimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
-          pendingDeposits {
-            id
-          }
-          pendingDepositorTokens {
-            id
-          }
-          depositors {
-            id
+      // Depositing with signer1
+      transaction = await claimEscrow
+        .connect(signer1)
+        .depositPending(
+          trust.address,
+          claimableReserveToken.address,
+          depositAmount
+        );
+
+      await Util.delay(Util.wait);
+      await waitForSubgraphToBeSynced(2000);
+
+      const pendingDepositId = transaction.hash.toLowerCase();
+      const pendingDepositorTokenId = `${trustAddress} - ${claimEscrowAddress} - ${depositor1} - ${claimableTokenAddress}`;
+      const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
+
+      const query = `
+        {
+          claimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
+            pendingDeposits {
+              id
+            }
+            pendingDepositorTokens {
+              id
+            }
+            depositors {
+              id
+            }
           }
         }
-      }
-    `;
-    const response = (await subgraph({
-      query: query,
-    })) as FetchResult;
-    const data = response.data.redeemableERC20ClaimEscrow;
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.redeemableERC20ClaimEscrow;
 
-    expect(data.pendingDeposits).to.deep.include({ id: pendingDepositId });
-    // expect(data.pendingDepositorTokens).to.deep.include({ id: pendingDepositorTokenId });
-    expect(data.depositors).to.deep.include({ id: escrowDepositorId });
-  });
+      expect(data.pendingDeposits).to.deep.include({ id: pendingDepositId });
+      expect(data.pendingDepositorTokens).to.deep.include({
+        id: pendingDepositorTokenId,
+      });
+      expect(data.depositors).to.deep.include({ id: escrowDepositorId });
+    });
 
-  it("should query the RedeemableEscrowPendingDeposit after a PendingDeposit");
+    it("should query the RedeemableEscrowPendingDeposit after a PendingDeposit", async function () {
+      const { amount: deposited } = await Util.getEventArgs(
+        transaction,
+        "PendingDeposit",
+        claimEscrow
+      );
 
-  it("should query the RedeemableEscrowDepositor after a PendingDeposit");
+      const pendingDepositId = transaction.hash.toLowerCase();
 
-  it("should query the RedeemableEscrowPendingDepositorToken after a PendingDeposit");
+      // PendingDeposit(msg.sender, sale_, redeemable_, token_, amount_);
+      // PendingDeposit(signer1, trust, redeemableERC20, claimableReserveToken, deposited);
+      const query = `
+        {
+          redeemableEscrowPendingDeposit (id: "${pendingDepositId}") {
+            pendingDeposits {
+              id
+            }
+            pendingDepositorTokens {
+              id
+            }
+            depositors {
+              id
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.redeemableERC20ClaimEscrow;
+      //PendingDeposit(msg.sender, sale_, redeemable_, token_, amount_);
+      //   event PendingDeposit(
+      //     /// Anon `msg.sender` depositing the token.
+      //     address sender,
+      //     /// `Sale` contract deposit is under.
+      //     address trust,
+      //     /// Redeemable token that can claim this deposit.
+      //     /// Implicitly snapshots the redeemable so malicious `Trust` cannot
+      //     /// redirect funds later.
+      //     address redeemable,
+      //     /// `IERC20` token being deposited.
+      //     address token,
+      //     /// Amount of token deposited.
+      //     uint256 amount
+      // );
 
-  it("should update the RedeemableERC20ClaimEscrow entity after a Deposit", async function () {
-    // Make a swaps to raise all necessary funds
-    const spend = ethers.BigNumber.from("200" + Util.sixZeros);
-    while ((await reserve.balanceOf(bPool.address)).lt(successLevel)) {
-      await Util.swapReserveForTokens(crp, bPool, reserve, redeemableERC20, signer1, spend);
-    }
+      // Prepare all to start to deposit claimable tokens
+    });
 
-    // cover the dust amount
-    const dustAtSuccessLevel = Util.determineReserveDust(successLevel).add(2); // rounding error
-    await Util.swapReserveForTokens(crp, bPool, reserve, redeemableERC20, signer1, dustAtSuccessLevel);
+    it("should query the RedeemableEscrowDepositor after a PendingDeposit");
 
-    // create empty blocks to end of raise duration
-    const beginEmptyBlocksBlock = await ethers.provider.getBlockNumber();
-    const emptyBlocks =
-      startBlock + minimumTradingDuration - beginEmptyBlocksBlock + 1;
-
-    await Util.createEmptyBlock(emptyBlocks);
-
-    await trust.endDutchAuction();
-
-    transaction = await claimEscrow.sweepPending(
-      trust.address,
-      claimableReserveToken.address,
-      signer1.address
+    it(
+      "should query the RedeemableEscrowPendingDepositorToken after a PendingDeposit"
     );
 
+    it("should update the RedeemableERC20ClaimEscrow entity after a Deposit", async function () {
+      // Make a swaps to raise all necessary funds
+      const spend = ethers.BigNumber.from("200" + Util.sixZeros);
+      while ((await reserve.balanceOf(bPool.address)).lt(successLevel)) {
+        await Util.swapReserveForTokens(
+          crp,
+          bPool,
+          reserve,
+          redeemableERC20,
+          signer1,
+          spend
+        );
+      }
+
+      // cover the dust amount
+      const dustAtSuccessLevel = Util.determineReserveDust(successLevel).add(2); // rounding error
+      await Util.swapReserveForTokens(
+        crp,
+        bPool,
+        reserve,
+        redeemableERC20,
+        signer1,
+        dustAtSuccessLevel
+      );
+
+      // create empty blocks to end of raise duration
+      const beginEmptyBlocksBlock = await ethers.provider.getBlockNumber();
+      const emptyBlocks =
+        startBlock + minimumTradingDuration - beginEmptyBlocksBlock + 1;
+
+      await Util.createEmptyBlock(emptyBlocks);
+
+      await trust.endDutchAuction();
+
+      transaction = await claimEscrow.sweepPending(
+        trust.address,
+        claimableReserveToken.address,
+        signer1.address
+      );
+    });
+
+    it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
+      const { supply } = await Util.getEventArgs(
+        transaction,
+        "Deposit",
+        claimEscrow
+      );
+      const txWithdraw0 = await claimEscrow
+        .connect(signer1)
+        .withdraw(trust.address, claimableReserveToken.address, supply);
+      const { amount: registeredWithdrawnAmountSigner1 } =
+        await Util.getEventArgs(txWithdraw0, "Withdraw", claimEscrow);
+    });
   });
-  it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
-    const { supply } = await Util.getEventArgs(transaction, "Deposit", claimEscrow);
-    const txWithdraw0 = await claimEscrow
-    .connect(signer1)
-    .withdraw(trust.address, claimableReserveToken.address, supply);
-  const { amount: registeredWithdrawnAmountSigner1 } =
-    await Util.getEventArgs(txWithdraw0, "Withdraw", claimEscrow);
+
+  describe("Escrow with failed Sale", function () {
+    before("deploy fresh test contracts", async function () {
+      // New reserve token
+      claimableReserveToken = (await deploy(
+        reserveToken,
+        deployer,
+        []
+      )) as ReserveTokenTest;
+
+      // new basic Setup
+      ({
+        reserve,
+        trust,
+        crp,
+        bPool,
+        redeemableERC20,
+        minimumTradingDuration,
+        minimumCreatorRaise,
+        successLevel,
+      } = await Util.basicSetup(
+        deployer,
+        creator,
+        seeder1,
+        trustFactory,
+        tier
+      ));
+
+      startBlock = await ethers.provider.getBlockNumber();
+
+      // Fill to avoid long queries
+      trustAddress = trust.address.toLowerCase();
+      claimableTokenAddress = claimableReserveToken.address.toLowerCase();
+      zeroDecimals = "0".repeat(await claimableReserveToken.decimals());
+    });
+
+    it("should update the RedeemableERC20ClaimEscrow entity after a Undeposit", async function () {
+      // create empty blocks to end of raise duration
+      const beginEmptyBlocksBlock = await ethers.provider.getBlockNumber();
+      const emptyBlocks =
+        startBlock + minimumTradingDuration - beginEmptyBlocksBlock + 1;
+
+      // create empty blocks to end of raise duration
+      await Util.createEmptyBlock(emptyBlocks);
+
+      // end now to make a status failed
+      await trust.endDutchAuction();
+
+      const supply = await redeemableERC20.totalSupply();
+      const depositAmount1 = ethers.BigNumber.from("100" + zeroDecimals);
+      await claimableReserveToken.transfer(signer1.address, depositAmount1);
+      await claimableReserveToken
+        .connect(signer1)
+        .approve(claimEscrow.address, depositAmount1);
+
+      // can deposit and undeposit when fail
+      await claimEscrow
+        .connect(signer1)
+        .deposit(trust.address, claimableReserveToken.address, depositAmount1);
+
+      await claimEscrow
+        .connect(signer1)
+        .undeposit(
+          trust.address,
+          claimableReserveToken.address,
+          supply,
+          depositAmount1
+        );
+    });
   });
-  it("should update the RedeemableERC20ClaimEscrow entity after a Undeposit"); // This need a new trust that fail to Undeposit
 });

@@ -43,8 +43,7 @@ const enum Status {
   REMOVED,
 }
 
-let verify: Verify,
-  transaction: ContractTransaction; // use to save/facilite a tx
+let verify: Verify, transaction: ContractTransaction; // use to save/facilite a tx
 
 const evidenceEmpty = hexlify([...Buffer.from("")]);
 const evidenceAdd = hexlify([...Buffer.from("Evidence for add")]);
@@ -52,7 +51,7 @@ const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
 const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
-xdescribe("Subgraph Tier Test", function () {
+describe("Subgraph Tier Test", function () {
   describe("Verify Factory - Queries", function async() {
     let eventCounter = 0;
     let eventsSigner1 = 0;
@@ -177,7 +176,7 @@ xdescribe("Subgraph Tier Test", function () {
       // Increase the counter by 1
       eventCounter++;
       eventsSigner1++;
-      
+
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
 

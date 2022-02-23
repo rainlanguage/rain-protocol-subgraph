@@ -17,6 +17,7 @@
     "deploy-build:matic": "yarn prepare:matic && yarn generate-schema && yarn codegen && yarn build && yarn deploy",
     "prepare:localhost": "yarn mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:localhost": "yarn prepare:localhost && yarn generate-schema && yarn codegen && yarn build && yarn create-local && yarn deploy-local",
+    "lint-test": "eslint './test/**/*.ts'",
     "hardhat-node": "hardhat node",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
     "test": "hardhat test",

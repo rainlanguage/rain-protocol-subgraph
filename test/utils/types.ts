@@ -1,4 +1,3 @@
-
 import type { BigNumber } from "ethers";
 
 export interface Trust {

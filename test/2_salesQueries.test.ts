@@ -16,7 +16,6 @@ import {
   LEVELS,
 } from "./utils/utils";
 
-
 import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
 import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
@@ -138,7 +137,7 @@ let reserve: ReserveTokenTest,
   buyConfig: BuyConfig,
   transaction: ContractTransaction; // Use to save the tx between statements
 
-xdescribe("Sales queries test", function () {
+describe("Sales queries test", function () {
   before("getting the factory", async function () {
     reserve = (await deploy(
       reserveTokenJson,
@@ -696,7 +695,7 @@ xdescribe("Sales queries test", function () {
       expect(saleData.unitsAvailable).to.equals(initUnitsAvailable);
       expect(saleData.totalRaised).to.equals(totalRaised);
       expect(saleData.percentRaised).to.equals(percentRaised);
-      expect(saleData.totalFees).to.equals(totalFees); 
+      expect(saleData.totalFees).to.equals(totalFees);
     });
 
     it("should query the Buy config values correctly", async function () {
@@ -824,7 +823,9 @@ xdescribe("Sales queries test", function () {
 
       expect(saleReceipttData.id).to.equals(saleReceiptID);
       expect(saleReceipttData.receiptId).to.equals(receipt.id);
-      expect(saleReceipttData.feeRecipient).to.equals(receipt.feeRecipient.toLowerCase());
+      expect(saleReceipttData.feeRecipient).to.equals(
+        receipt.feeRecipient.toLowerCase()
+      );
       expect(saleReceipttData.fee).to.equals(receipt.fee);
       expect(saleReceipttData.units).to.equals(receipt.units);
       expect(saleReceipttData.price).to.equals(receipt.price);
@@ -897,14 +898,15 @@ xdescribe("Sales queries test", function () {
 
       const saleData = response.data.sale;
 
-
       expect(saleData.buys).to.have.length(2);
       expect(saleData.endEvent.id).to.equals(transaction.hash.toLowerCase());
       expect(saleData.unitsAvailable).to.equals(newUnitsAvailable);
       expect(saleData.totalRaised).to.equals(totalRaised);
       // Im not sure if it `percentRaised` should be 1 (100%) even when the `totalRaised` is
       // greater than `minimumRaise`. Or could be for ex: 1.5 (150%)
-      expect(saleData.percentRaised).to.equals(totalRaised.mul(100).div(minimumRaise));
+      expect(saleData.percentRaised).to.equals(
+        totalRaised.mul(100).div(minimumRaise)
+      );
       expect(saleData.totalFees).to.equals(totalFees);
       expect(saleData.saleStatus).to.equals(Status.SUCCESS);
     });

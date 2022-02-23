@@ -125,7 +125,7 @@ let trust: Trust,
   erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
-xdescribe("Subgraph Tier Test", function () {
+describe.only("Subgraph Tier Test", function () {
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 
@@ -138,9 +138,7 @@ xdescribe("Subgraph Tier Test", function () {
     const APPROVER = ethers.utils.keccak256(
       ethers.utils.toUtf8Bytes("APPROVER")
     );
-    const REMOVER = ethers.utils.keccak256(
-      ethers.utils.toUtf8Bytes("REMOVER")
-    );
+    const REMOVER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("REMOVER"));
     const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
 
     const evidenceData = hexlify([...Buffer.from("Evidence")]);
@@ -189,7 +187,7 @@ xdescribe("Subgraph Tier Test", function () {
       })) as FetchResult;
 
       const data = response.data.verifyTierFactories[0];
-      
+
       expect(data.id).to.equals(verifyTierFactory.address.toLowerCase());
       expect(data.address).to.equals(verifyTierFactory.address.toLowerCase());
       expect(data.implementation).to.equals(implementation.toLowerCase());
@@ -197,7 +195,11 @@ xdescribe("Subgraph Tier Test", function () {
 
     it("should query the VerifyTier child from Factory after creation", async function () {
       // Creating the VerifyTier Contract with the Verify
-      verifyTier =  await Util.verifyTierDeploy(verifyTierFactory, creator, verify.address);
+      verifyTier = await Util.verifyTierDeploy(
+        verifyTierFactory,
+        creator,
+        verify.address
+      );
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
@@ -218,7 +220,9 @@ xdescribe("Subgraph Tier Test", function () {
 
       const data = response.data.verifyTierFactory;
 
-      expect(data.children).to.deep.include({ id: verifyTier.address.toLowerCase() });
+      expect(data.children).to.deep.include({
+        id: verifyTier.address.toLowerCase(),
+      });
     });
 
     it("should query the VerityTier contract correclty", async function () {
@@ -253,7 +257,9 @@ xdescribe("Subgraph Tier Test", function () {
 
       expect(data.deployBlock).to.equals(deployBlock.toString());
       expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
-      expect(data.factory.address).to.equals(verifyTierFactory.address.toLowerCase());
+      expect(data.factory.address).to.equals(
+        verifyTierFactory.address.toLowerCase()
+      );
     });
 
     it("should query the Verify contract from VerifyTier correclty", async function () {
@@ -286,7 +292,7 @@ xdescribe("Subgraph Tier Test", function () {
       })) as FetchResult;
 
       const data = response.data.verifyTier.verifyContract;
-      
+
       expect(data.id).to.equals(verify.address.toLowerCase());
       expect(data.address).to.equals(verify.address.toLowerCase());
       expect(data.deployer).to.equals(creator.address.toLowerCase());
@@ -300,7 +306,11 @@ xdescribe("Subgraph Tier Test", function () {
 
     it("should update the Verify contract in different VerifyTiers after a RequestApprove", async function () {
       // Creating the a new VerifyTier Contract with the same Verify
-      verifyTier2 =  await Util.verifyTierDeploy(verifyTierFactory, creator, verify.address);
+      verifyTier2 = await Util.verifyTierDeploy(
+        verifyTierFactory,
+        creator,
+        verify.address
+      );
 
       // signer1 and signer2 want to be added
       await verify.connect(signer1).add(evidenceData);
@@ -309,7 +319,7 @@ xdescribe("Subgraph Tier Test", function () {
       const signer1Expected = {
         id: signer1Id,
         requestStatus: 1,
-        status: 0
+        status: 0,
       };
 
       await Util.delay(Util.wait);
@@ -358,13 +368,13 @@ xdescribe("Subgraph Tier Test", function () {
       const signer1Expected = {
         id: signer1Id,
         requestStatus: 0,
-        status: 1
+        status: 1,
       };
 
       const adminExpected = {
         id: adminId,
         requestStatus: 0,
-        status: 0
+        status: 0,
       };
 
       await Util.delay(Util.wait);
@@ -409,18 +419,20 @@ xdescribe("Subgraph Tier Test", function () {
 
     it("should update the Verify contract in different VerifyTiers after a RequestRemove", async function () {
       // signer1 requests that signer2 be removed
-      await verify.connect(signer1).requestRemove(signer2.address, evidenceData);
+      await verify
+        .connect(signer1)
+        .requestRemove(signer2.address, evidenceData);
 
       const signer1Expected = {
         id: signer1Id,
         requestStatus: 0,
-        status: 1
+        status: 1,
       };
 
       const signer2Expected = {
         id: signer1Id,
         requestStatus: 3,
-        status: 1
+        status: 1,
       };
 
       await Util.delay(Util.wait);
@@ -470,7 +482,7 @@ xdescribe("Subgraph Tier Test", function () {
       const signer2Expected = {
         id: signer1Id,
         requestStatus: 0,
-        status: 3
+        status: 3,
       };
 
       await Util.delay(Util.wait);
@@ -522,7 +534,7 @@ xdescribe("Subgraph Tier Test", function () {
       const signer2Expected = {
         id: signer1Id,
         requestStatus: 2,
-        status: 1
+        status: 1,
       };
 
       await Util.delay(Util.wait);
@@ -570,7 +582,7 @@ xdescribe("Subgraph Tier Test", function () {
       const signer2Expected = {
         id: signer1Id,
         requestStatus: 0,
-        status: 2
+        status: 2,
       };
 
       await Util.delay(Util.wait);
@@ -611,15 +623,18 @@ xdescribe("Subgraph Tier Test", function () {
       expect(dataTier2.verifyAddresses).to.deep.include(signer2Expected);
     });
 
-    it("should continue query if the Verify Address in VerifyTier is a non-Verify contract address", async function() {
+    it("should continue query if the Verify Address in VerifyTier is a non-Verify contract address", async function () {
       const nonVerifyAddress = Util.zeroAddress;
 
       // Creating the VerifyTier Contract with the non-Verify contract address
-      verifyTier =  await Util.verifyTierDeploy(verifyTierFactory, creator, nonVerifyAddress);
+      verifyTier = await Util.verifyTierDeploy(
+        verifyTierFactory,
+        creator,
+        nonVerifyAddress
+      );
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);
-
 
       const query = `
         {
@@ -652,14 +667,13 @@ xdescribe("Subgraph Tier Test", function () {
 
       expect(data.id).to.equals(nonVerifyAddress.toLowerCase());
       expect(data.address).to.equals(nonVerifyAddress.toLowerCase());
-      
+
       expect(data.deployBlock).to.equals("0");
       expect(data.deployTimestamp).to.equals("0");
 
       expect(data.deployer).to.equals(Util.zeroAddress.toLowerCase());
       expect(data.factory).to.equals(Util.zeroAddress.toLowerCase());
       expect(data.verifyAddresses).to.be.empty;
-    
     });
 
     it("should query a Verify that was deployed without the factory and it is in VerifyTier", async function () {
@@ -673,7 +687,11 @@ xdescribe("Subgraph Tier Test", function () {
       await verifyIndependent.initialize(admin.address);
 
       // Creating the VerifyTier Contract with the Verify
-      verifyTier =  await Util.verifyTierDeploy(verifyTierFactory, creator, verifyIndependent.address);
+      verifyTier = await Util.verifyTierDeploy(
+        verifyTierFactory,
+        creator,
+        verifyIndependent.address
+      );
 
       await Util.delay(Util.wait);
       await waitForSubgraphToBeSynced(1500);

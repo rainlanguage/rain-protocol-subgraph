@@ -34,10 +34,7 @@ import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/con
 
 // Types
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import type {
-  BigNumber,
-  ContractTransaction,
-} from "ethers";
+import type { BigNumber, ContractTransaction } from "ethers";
 
 import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
 import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
@@ -69,10 +66,7 @@ import { ERC721BalanceTierFactory } from "@vishalkale15107/rain-protocol/typecha
 import erc721TokenTestJson from "@vishalkale15107/rain-protocol/artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json";
 import { ERC721 } from "@vishalkale15107/rain-protocol/typechain/ERC721";
 
-import {
-  getFactories,
-  QUERY,
-} from "./utils/queries";
+import { getFactories, QUERY } from "./utils/queries";
 
 enum DistributionStatus {
   Pending,
@@ -275,8 +269,7 @@ before(async function () {
   configLocal.blockGatedNFTFactory = gatedNFTFactoryBlock;
 
   configLocal.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
-  configLocal.blockRedeemableERC20ClaimEscrow =
-    redeemableERC20ClaimEscrowBlock;
+  configLocal.blockRedeemableERC20ClaimEscrow = redeemableERC20ClaimEscrowBlock;
 
   Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
 
@@ -2046,9 +2039,7 @@ describe("Subgraph Trusts Test", function () {
       expect(data.swaps).to.have.lengthOf(0);
       expect(data.numberOfSwaps).to.equals("0");
       expect(data.poolBalanceReserve).to.equals(poolReserveBalanceExpected);
-      expect(data.poolTokenBalance).to.equals(
-        poolRedeemableBalanceExpected
-      );
+      expect(data.poolTokenBalance).to.equals(poolRedeemableBalanceExpected);
     });
 
     it("should query correctly the RedeemableERC20 Holders after StartDutchAuction", async function () {
@@ -2203,9 +2194,7 @@ describe("Subgraph Trusts Test", function () {
 
       expect(data.numberOfSwaps).to.equals("1");
       expect(data.poolBalanceReserve).to.equals(poolReserveBalanceExpected);
-      expect(data.poolTokenBalance).to.equals(
-        poolRedeemableBalanceExpected
-      );
+      expect(data.poolTokenBalance).to.equals(poolRedeemableBalanceExpected);
     });
 
     it("should update the RedeemableERC20 holders after a Swap", async function () {
@@ -2404,9 +2393,7 @@ describe("Subgraph Trusts Test", function () {
       expect(data.swaps).to.have.lengthOf(swapCounter.toNumber());
       expect(data.numberOfSwaps).to.equals(swapCounter);
       expect(data.poolBalanceReserve).to.equals(poolReserveBalanceExpected);
-      expect(data.poolTokenBalance).to.equals(
-        poolRedeemableBalanceExpected
-      );
+      expect(data.poolTokenBalance).to.equals(poolRedeemableBalanceExpected);
     });
 
     it("should query distributionStatus as TradingCanEnd", async function () {

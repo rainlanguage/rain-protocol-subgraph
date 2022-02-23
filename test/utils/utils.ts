@@ -4,7 +4,7 @@ import {
   BigNumber,
   ContractTransaction,
   BytesLike,
-  Overrides
+  Overrides,
 } from "ethers";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Result, concat, hexlify, Hexable, zeroPad } from "ethers/lib/utils";
@@ -147,13 +147,18 @@ export const fetchSubgraphs = createApolloFetch({
   uri: "http://localhost:8030/graphql",
 });
 
-export const fetchSubgraph = (subgraphUser: string, subgraphName: string): ApolloFetch => {
+export const fetchSubgraph = (
+  subgraphUser: string,
+  subgraphName: string
+): ApolloFetch => {
   return createApolloFetch({
     uri: `http://localhost:8000/subgraphs/name/${subgraphUser}/${subgraphName}`,
   });
 };
 
-export const waitForSubgraphToBeSynced = async (delay: number): Promise<SyncedSubgraphType> =>
+export const waitForSubgraphToBeSynced = async (
+  delay: number
+): Promise<SyncedSubgraphType> =>
   new Promise<{ synced: boolean }>((resolve, reject) => {
     // Wait for 5s
     const deadline = Date.now() + 15 * 1000;
@@ -227,7 +232,10 @@ export const balancerDeploy = async (
   return [crpFactory, bFactory];
 };
 
-const linkBytecode = (artifact: Artifact | BasicArtifact, links: CRPLibraries) => {
+const linkBytecode = (
+  artifact: Artifact | BasicArtifact,
+  links: CRPLibraries
+) => {
   Object.keys(links).forEach((libraryName) => {
     const libraryAddress = links[libraryName];
     const regex = new RegExp(`__${libraryName}_+`, "g");
@@ -247,14 +255,18 @@ export const factoriesDeploy = async (
   redeemableERC20Factory: RedeemableERC20Factory;
   seedERC20Factory: SeedERC20Factory;
   trustFactory: TrustFactory;
- }> => {
-  const redeemableERC20Factory = await deploy(
+}> => {
+  const redeemableERC20Factory = (await deploy(
     RedeemableERC20FactoryJson,
     signer,
     []
-  ) as RedeemableERC20Factory;
+  )) as RedeemableERC20Factory;
 
-  const seedERC20Factory = await deploy(SeedERC20FactoryJson, signer, []) as SeedERC20Factory;
+  const seedERC20Factory = (await deploy(
+    SeedERC20FactoryJson,
+    signer,
+    []
+  )) as SeedERC20Factory;
 
   const TrustFactoryArgs = {
     redeemableERC20Factory: redeemableERC20Factory.address,
@@ -271,7 +283,9 @@ export const factoriesDeploy = async (
     TrustFactoryJson.bytecode,
     signer
   );
-  const trustFactory = await trustFactoryFactory.deploy(TrustFactoryArgs) as TrustFactory;
+  const trustFactory = (await trustFactoryFactory.deploy(
+    TrustFactoryArgs
+  )) as TrustFactory;
   await trustFactory.deployed();
   return {
     redeemableERC20Factory,
@@ -339,7 +353,7 @@ export const saleDeploy = async (
  * @param creator - the signer that will create the Verify
  * @param adminAddress - the verify admin address
  * @param override - (optional) override transaction values as gasLimit
- * @returns 
+ * @returns
  */
 export const verifyDeploy = async (
   verifyFactory: VerifyFactory,
@@ -451,8 +465,7 @@ function timeout(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-
-export const fetchFile = (_path: string): string  => {
+export const fetchFile = (_path: string): string => {
   try {
     return fs.readFileSync(_path).toString();
   } catch (error) {
@@ -611,7 +624,6 @@ export const getTxTimeblock = async (
   return [block, timestamp];
 };
 
-
 /**
  * Basic setup to RedeemableERC20ClainEscrow queries test
  * @param deployer - signer that will deploy the contracts in the basic Setup
@@ -619,7 +631,7 @@ export const getTxTimeblock = async (
  * @param seeder - seeder of the trust in the basic setup
  * @param trustFactory - The trust factory that will be use
  * @param tier - A valid tier contract
- * @returns 
+ * @returns
  */
 export const basicSetup = async (
   deployer: SignerWithAddress,
@@ -627,7 +639,7 @@ export const basicSetup = async (
   seeder: SignerWithAddress,
   trustFactory: TrustFactory & Contract,
   tier: ReadWriteTier & Contract
-):Promise<{
+): Promise<{
   reserve: ReserveTokenTest;
   trust: Trust;
   crp: ConfigurableRightsPool & Contract;
@@ -636,8 +648,12 @@ export const basicSetup = async (
   minimumTradingDuration: number;
   minimumCreatorRaise: BigNumber;
   successLevel: BigNumber;
- }> => {
-  const reserve = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
+}> => {
+  const reserve = (await deploy(
+    reserveToken,
+    deployer,
+    []
+  )) as ReserveTokenTest;
 
   const minimumTier = Tier.FOUR;
 
@@ -740,15 +756,15 @@ export const basicSetup = async (
 };
 
 /**
- * Make a swap of `tokenIn` to `tokenOut` in their valid `bPool`. This function handle that the `signer` have 
- * the `spend` amount in the `reserve` before swap, so it is not necessary tranfer outside this function -  just 
+ * Make a swap of `tokenIn` to `tokenOut` in their valid `bPool`. This function handle that the `signer` have
+ * the `spend` amount in the `reserve` before swap, so it is not necessary tranfer outside this function -  just
  * make sure that the connected user to the `tokenIn` have balance
- * @param crp 
- * @param bPool 
- * @param tokenIn 
- * @param tokenOut 
- * @param signer 
- * @param spend 
+ * @param crp
+ * @param bPool
+ * @param tokenIn
+ * @param tokenOut
+ * @param signer
+ * @param spend
  */
 export const swapReserveForTokens = async (
   crp: ConfigurableRightsPool,
@@ -756,9 +772,8 @@ export const swapReserveForTokens = async (
   tokenIn: Contract,
   tokenOut: RedeemableERC20, // Token Address to out
   signer: SignerWithAddress,
-  spend: BigNumber,
-  ): Promise<void> => {
-
+  spend: BigNumber
+): Promise<void> => {
   // give to signer some reserve
   await tokenIn.transfer(signer.address, spend);
   await tokenIn.connect(signer).approve(bPool.address, spend);
@@ -776,8 +791,9 @@ export const swapReserveForTokens = async (
   );
 };
 
-
-export const determineReserveDust = (bPoolReserveBalance: BigNumber): BigNumber => {
+export const determineReserveDust = (
+  bPoolReserveBalance: BigNumber
+): BigNumber => {
   const RESERVE_MIN_BALANCE = ethers.BigNumber.from("1" + sixZeros);
   let dust = bPoolReserveBalance.mul(ONE).div(1e7).div(ONE);
   if (dust.lt(RESERVE_MIN_BALANCE)) {
