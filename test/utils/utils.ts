@@ -175,9 +175,23 @@ export const waitForSubgraphToBeSynced = async (
                 message
                 handler
               }
+              chains {
+                chainHeadBlock {
+                  number
+                }
+                latestBlock {
+                  number
+                }
+              }
             } 
+          }
           }`,
         });
+        console.log(
+          "latestBlock SG: \n",
+          JSON.stringify(result.data.indexingStatusForCurrentVersion.chains)
+        );
+        console.log("HH Actual block:", await ethers.provider.getBlockNumber());
         if (result.data.indexingStatusForCurrentVersion.synced === true) {
           resolve({ synced: true });
         } else {
