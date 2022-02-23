@@ -2003,7 +2003,9 @@ describe("Subgraph Trusts Test", function () {
       expect(data.id).to.equals(bPoolContract.address.toLowerCase());
       expect(data.trust.id).to.equals(trust.address.toLowerCase());
       expect(data.reserve.id).to.equals(reserve.address.toLowerCase());
-      expect(data.redeemable.id).to.equals(redeemableERC20Contract.address.toLowerCase());
+      expect(data.redeemable.id).to.equals(
+        redeemableERC20Contract.address.toLowerCase()
+      );
 
       expect(data.deployBlock).to.equals(deployBlock.toString());
       expect(data.deployTimestamp).to.equals(deployTime.toString());
@@ -2037,7 +2039,9 @@ describe("Subgraph Trusts Test", function () {
       expect(data.swaps).to.have.lengthOf(0);
       expect(data.numberOfSwaps).to.equals("0");
       expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
-      expect(data.poolRedeemableBalance).to.equals(poolRedeemableBalanceExpected);
+      expect(data.poolRedeemableBalance).to.equals(
+        poolRedeemableBalanceExpected
+      );
     });
 
     it("should query correctly the RedeemableERC20 Holders after StartDutchAuction", async function () {
@@ -2193,7 +2197,9 @@ describe("Subgraph Trusts Test", function () {
 
       expect(data.numberOfSwaps).to.equals("1");
       expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
-      expect(data.poolRedeemableBalance).to.equals(poolRedeemableBalanceExpected);
+      expect(data.poolRedeemableBalance).to.equals(
+        poolRedeemableBalanceExpected
+      );
     });
 
     it("should update the RedeemableERC20 holders after a Swap", async function () {
@@ -2225,7 +2231,6 @@ describe("Subgraph Trusts Test", function () {
       const dataHolders = queryResponse.data.redeemableERC20.holders;
       const data = queryResponse.data.holder;
 
-
       // expect(dataHolders).to.have.lengthOf(1);
       expect(dataHolders).to.deep.include({ id: holderId });
 
@@ -2244,14 +2249,14 @@ describe("Subgraph Trusts Test", function () {
       const amountRaisedExpected = poolReserveBalanceExpected.sub(reserveInit);
 
       // amountRaised / minimumRaise
-      const percentRaisedExpected = amountRaisedExpected.mul(100).div(
-        minimumCreatorRaise.add(redeemInit).add(seederFee)
-      );
+      const percentRaisedExpected = amountRaisedExpected
+        .mul(100)
+        .div(minimumCreatorRaise.add(redeemInit).add(seederFee));
 
       // poolRedeemableBalance / RedeemableERC20.totalSupply
-      const percentAvailableExpected = poolRedeemableBalanceExpected.mul(100).div(
-        redeemableERC20Config.initialSupply
-      );
+      const percentAvailableExpected = poolRedeemableBalanceExpected
+        .mul(100)
+        .div(redeemableERC20Config.initialSupply);
 
       const query = `
         {
@@ -2270,8 +2275,8 @@ describe("Subgraph Trusts Test", function () {
       });
       const data = queryResponse.data.distributionProgress;
 
-      console.log("address : ", trust.address.toLowerCase())
-      console.log("data : ", JSON.stringify(data))
+      console.log("address : ", trust.address.toLowerCase());
+      console.log("data : ", JSON.stringify(data));
 
       expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
       expect(data.poolRedeemableBalance).to.equals(
@@ -2279,7 +2284,9 @@ describe("Subgraph Trusts Test", function () {
       );
       expect(data.amountRaised).to.equals(amountRaisedExpected.toString());
       expect(data.percentRaised).to.equals(percentRaisedExpected.toString());
-      expect(data.percentAvailable).to.equals(percentAvailableExpected.toString());
+      expect(data.percentAvailable).to.equals(
+        percentAvailableExpected.toString()
+      );
     });
 
     it("should get the TrustParticipant after a Swap", async function () {
@@ -2397,7 +2404,9 @@ describe("Subgraph Trusts Test", function () {
       expect(data.swaps).to.have.lengthOf(swapCounter.toNumber());
       expect(data.numberOfSwaps).to.equals(swapCounter);
       expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
-      expect(data.poolRedeemableBalance).to.equals(poolRedeemableBalanceExpected);
+      expect(data.poolRedeemableBalance).to.equals(
+        poolRedeemableBalanceExpected
+      );
     });
 
     it("should query distributionStatus as TradingCanEnd", async function () {

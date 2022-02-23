@@ -1109,7 +1109,9 @@ describe.only("Subgraph Tier Test", function () {
 
       const TierLevelData = tierLevelQueryResponse.data.tierLevel;
 
-      expect(TierLevelData.tierContractAddress).to.equals(erc20TransferTier.address.toLowerCase());
+      expect(TierLevelData.tierContractAddress).to.equals(
+        erc20TransferTier.address.toLowerCase()
+      );
       expect(TierLevelData.tierLevel).to.equals(Level.toString());
       expect(TierLevelData.memberCount).to.equals("0");
       /**
@@ -1662,11 +1664,13 @@ describe.only("Subgraph Tier Test", function () {
 
       const tierData = queryResponse.data.trust.contracts.tier;
 
-      console.log("tierData : ", JSON.stringify(tierData))
-      expect(tierData.deployer).to.equals(zeroAddress)
-      expect(tierData.address).to.equals(erc20BalanceTierIndepent.address.toLowerCase())
-      expect(tierData.__typename).to.equals("UnknownTier")
-      expect(tierData.factory).to.be.null
+      console.log("tierData : ", JSON.stringify(tierData));
+      expect(tierData.deployer).to.equals(zeroAddress);
+      expect(tierData.address).to.equals(
+        erc20BalanceTierIndepent.address.toLowerCase()
+      );
+      expect(tierData.__typename).to.equals("UnknownTier");
+      expect(tierData.factory).to.be.null;
     });
 
     it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Sale", async function () {
