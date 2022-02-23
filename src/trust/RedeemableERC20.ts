@@ -9,8 +9,18 @@ export function handleInitialize(event: Initialize): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
 
     redeemabaleERC20.factory = event.params.sender
-    redeemabaleERC20.admin = event.params.admin
-    redeemabaleERC20.minimumTier = event.params.minimumTier
+    redeemabaleERC20.admin = event.params.sender
+    redeemabaleERC20.minimumTier = event.params.config.minimumTier
+
+    let context = dataSource.context()
+    
+    let contracts = Contract.load(context.getString("trust"))
+
+    contracts.tier = getTier(event.params.config.tier.toHex())
+    contracts.save()
+
+    redeemabaleERC20.tier = getTier(event.params.config.tier.toHex())
+    redeemabaleERC20.save()
 
     redeemabaleERC20.save()
 }
@@ -49,7 +59,7 @@ export function handleTransfer(event: Transfer): void {
             sender.balance = sender.balance.minus(event.params.value)
         }
     
-        if(notAContract(event.params.from.toHex(), context.getString("trust"))){
+        if(notAContract(event.params.to.toHex(), context.getString("trust"))){
             let receiver = Holder.load(event.address.toHex() + " - " + event.params.to.toHex())
             if(receiver == null){
                 receiver = new Holder(event.address.toHex() + " - " + event.params.to.toHex())
@@ -177,17 +187,17 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
     treasuryAsset.save()
 }
 
-export function handleTierByConstructionInitialize(event: TierByConstructionInitialize): void {
-    let context = dataSource.context()
-    let contracts = Contract.load(context.getString("trust"))
-    log.info("Contracts : {}", [contracts.id])
-    contracts.tier = getTier(event.params.tierContract.toHex())
-    contracts.save()
+// export function handleTierByConstructionInitialize(event: TierByConstructionInitialize): void {
+    // let context = dataSource.context()
+    // let contracts = Contract.load(context.getString("trust"))
+    // log.info("Contracts : {}", [contracts.id])
+    // contracts.tier = getTier(event.params.tierContract.toHex())
+    // contracts.save()
 
-    let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
-    redeemabaleERC20.tier = getTier(event.params.tierContract.toHex())
-    redeemabaleERC20.save()
-}
+    // let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
+    // redeemabaleERC20.tier = getTier(event.params.tierContract.toHex())
+    // redeemabaleERC20.save()
+// }
 
 function getTier(tierAddress: string): string {
     let eRC20BalanceTier = ERC20BalanceTier.load(tierAddress)

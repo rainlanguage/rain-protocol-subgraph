@@ -337,7 +337,7 @@ templates:
         - name: SeedERC20
           file: ./abis/SeedERC20.json
       eventHandlers:
-        - event: Initialize(address,address,uint256)
+        - event: Initialize(address,(address,(string,string,address,uint256),address,uint256,address))
           handler: handleInitialize
         - event: Receiver(address,address)
           handler: handleReceiver
@@ -351,8 +351,6 @@ templates:
           handler: handleRedeem
         - event: TreasuryAsset(address,address)
           handler: handleTreasuryAsset
-        - event: TierByConstructionInitialize(address,address,uint256)
-          handler: handleTierByConstructionInitialize
       file: ./src/trust/RedeemableERC20.ts
   - kind: ethereum/contract
     name: PoolTemplate

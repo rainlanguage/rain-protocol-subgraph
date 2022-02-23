@@ -98,7 +98,7 @@ type TierChange @entity{
 
 type TierLevel @entity{
     id: ID! #concat {tierContractAddress}+{tierLevel}
-    tierLevel: Int # number from 0-8
+    tierLevel: BigInt! # number from 0-8
     tierContract: TierContract!
     tierContractAddress: Bytes!
     ## As a user changes tier, we memberCount++ for all tiers between startTier and endTier (if going up),

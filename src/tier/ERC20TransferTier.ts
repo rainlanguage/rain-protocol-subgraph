@@ -1,7 +1,8 @@
 import { ERC20, ERC20TransferTier, TierChange, TierLevel } from "../../generated/schema"
 import { Initialize, InitializeValueTier, TierChange as TierChangeEvent} from "../../generated/templates/ERC20BalanceTierTemplate/ERC20BalanceTier"
 import { ERC20 as ERC20Contract} from "../../generated/ERC20BalanceTierFactory/ERC20"
-import { BigInt} from "@graphprotocol/graph-ts"
+import { Address, BigInt} from "@graphprotocol/graph-ts"
+import { ZERO_BI } from "../utils"
 
 export function handleInitialize( event: Initialize): void {
     let erc20TransferTier = ERC20TransferTier.load(event.address.toHex())
@@ -9,10 +10,23 @@ export function handleInitialize( event: Initialize): void {
     let erc20 = getERC20(event)
     erc20.save()
     erc20TransferTier.token = erc20.id
-    erc20TransferTier.save()   
+
+    erc20TransferTier.tierLevels = [
+        getTierLevel(event.address.toHex(), BigInt.fromI32(1)),
+        getTierLevel(event.address.toHex(), BigInt.fromI32(2)),
+        getTierLevel(event.address.toHex(), BigInt.fromI32(3)),
+        getTierLevel(event.address.toHex(), BigInt.fromI32(4)),
+        getTierLevel(event.address.toHex(), BigInt.fromI32(5)),
+        getTierLevel(event.address.toHex(), BigInt.fromI32(6)),
+        getTierLevel(event.address.toHex(), BigInt.fromI32(7)),
+        getTierLevel(event.address.toHex(), BigInt.fromI32(8)),
+    ]
+
+    erc20TransferTier.save()
 }
 
 export function handleInitializeValueTier( event: InitializeValueTier): void {
+
 }
 
 export function handleTierChange( event: TierChangeEvent): void {
@@ -35,9 +49,7 @@ export function handleTierChange( event: TierChangeEvent): void {
     tierChanges.push(tierChange.id)
     erc20TransferTier.tierChanges = tierChanges
 
-    let tierLevel = new TierLevel(event.transaction.hash.toHex() + " - " + event.address.toHex())
-    tierLevel.tierContract = erc20TransferTier.id
-    tierLevel.tierContractAddress = event.address
+    let tierLevel = TierLevel.load(event.address.toHex() + " - " + event.params.startTier.toString())
     tierLevel.memberCount = BigInt.fromI32(tierChanges.length)
     
     tierLevel.save()
@@ -47,7 +59,6 @@ export function handleTierChange( event: TierChangeEvent): void {
     erc20TransferTier.tierLevels = tierLevels
 
     erc20TransferTier.save()
-
 }
 
 function getERC20(event: Initialize): ERC20 {
@@ -70,4 +81,15 @@ function getERC20(event: Initialize): ERC20 {
         }
     }
     return erc20 as ERC20
+}
+
+function getTierLevel(tier: string, level: BigInt): string {
+    let tierLevel = new TierLevel(tier + " - " + level.toString())
+    tierLevel.tierLevel = level
+    tierLevel.tierContract = tier
+    tierLevel.tierContractAddress = Address.fromString(tier)
+    tierLevel.memberCount = ZERO_BI
+    tierLevel.save()
+
+    return(tierLevel.id)
 }
