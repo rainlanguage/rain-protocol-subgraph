@@ -25,7 +25,7 @@
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",
     "@beehiveinnovation/configurable-rights-pool": "^0.0.1",
-    "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#a0507a8562fffa406ed5e3855587888fce9aebb0",
+    "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#6d9a3e2225a5fbfab8558dc94b6115a314a0e4f9",
     "@beehiveinnovation/rain-statusfi": "git+https://github.com/beehive-innovation/rain-statusfi.git#288e082ae81ca796b0732619a9631db24beb7a7a",
     "@graphprotocol/graph-cli": "0.21.0",
     "@graphprotocol/graph-ts": "0.20.0",
