@@ -23,7 +23,7 @@ import {
 } from "./utils/utils";
 
 // Artifacts
-import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveToken.sol/ReserveToken.json";
+import reserveJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 import reserveNFTJson from "@vishalkale15107/rain-protocol/artifacts/contracts/test/ReserveNFT.sol/ReserveNFT.json";
 import trustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
 import erc20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
@@ -39,7 +39,7 @@ import verifyTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts
 import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 
 // Types
-import { ReserveToken } from "@beehiveinnovation/rain-protocol/typechain/ReserveToken";
+import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { ReserveNFT } from "@vishalkale15107/rain-protocol/typechain/ReserveNFT";
 import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
 import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
@@ -117,7 +117,7 @@ const enum Opcode {
 }
 
 let trust: Trust,
-  reserve: ReserveToken,
+  reserve: ReserveTokenTest,
   reserveNFT: ReserveNFT,
   verifyTier: VerifyTier,
   verify: Verify,
@@ -130,11 +130,11 @@ describe("Subgraph Tier Test", function () {
   // in other contracts like trusts or sales
 
   before("Deploy fresh test contracts", async function () {
-    reserve = (await deploy(reserveToken, deployer, [])) as ReserveToken;
+    reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
     reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
   });
 
-  describe("VerifyTier Factory - Queries", function () {
+  xdescribe("VerifyTier Factory - Queries", function () {
     const APPROVER = ethers.utils.keccak256(
       ethers.utils.toUtf8Bytes("APPROVER")
     );
@@ -729,7 +729,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  describe("ERC20BalanceTier Factory - Queries", function () {
+  xdescribe("ERC20BalanceTier Factory - Queries", function () {
     let erc20BalanceTier: ERC20BalanceTier;
 
     it("should query ERC20BalanceTierFactory correctly after construction", async function () {
@@ -879,7 +879,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  describe("ERC20TransferTier Factory - Queries", function () {
+  describe.only("ERC20TransferTier Factory - Queries", function () {
     let erc20TransferTier: ERC20TransferTier;
 
     it("should query ERC20TransferTierFactory correctly after construction", async function () {
@@ -1146,7 +1146,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  describe("CombineTier Factory - Queries", function () {
+  xdescribe("CombineTier Factory - Queries", function () {
     const sourceAlways = concat([op(Opcode.ALWAYS)]);
 
     const stateConfigAlways: VMState = {
@@ -1346,7 +1346,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  describe("ERC721BalanceTier Factory - Queries", function () {
+  xdescribe("ERC721BalanceTier Factory - Queries", function () {
     it("should query ERC721BalanceTierFactory correctly", async function () {
       await waitForSubgraphToBeSynced();
 
