@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect } from "chai";
@@ -125,7 +126,7 @@ let trust: Trust,
   erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
-describe.only("Subgraph Tier Test", function () {
+describe("Subgraph Tier Test", function () {
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 
@@ -134,7 +135,7 @@ describe.only("Subgraph Tier Test", function () {
     reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
   });
 
-  xdescribe("VerifyTier Factory - Queries", function () {
+  describe("VerifyTier Factory - Queries", function () {
     const APPROVER = ethers.utils.keccak256(
       ethers.utils.toUtf8Bytes("APPROVER")
     );
@@ -729,7 +730,7 @@ describe.only("Subgraph Tier Test", function () {
     });
   });
 
-  xdescribe("ERC20BalanceTier Factory - Queries", function () {
+  describe("ERC20BalanceTier Factory - Queries", function () {
     let erc20BalanceTier: ERC20BalanceTier;
 
     it("should query ERC20BalanceTierFactory correctly after construction", async function () {
@@ -1036,8 +1037,8 @@ describe.only("Subgraph Tier Test", function () {
       expect(TierContractData.tierChanges).to.have.lengthOf(1);
       expect(tierChange.sender).to.equals(beneficiator.address.toLowerCase());
       expect(tierChange.account).to.equals(beneficiary.address.toLowerCase());
-      expect(tierChange.startTier).to.equals(Tier.ZERO);
-      expect(tierChange.endTier).to.equals(Tier.FIVE);
+      expect(tierChange.startTier).to.equals(Tier.ZERO.toString());
+      expect(tierChange.endTier).to.equals(Tier.FIVE.toString());
       expect(tierChange.transactionHash).to.equals(tx.hash.toLowerCase());
     });
 
@@ -1066,7 +1067,7 @@ describe.only("Subgraph Tier Test", function () {
         erc20TransferTier.address.toLocaleLowerCase()
       );
       expect(TierLevelData.tierLevel).to.equals(Level.toString());
-      expect(TierLevelData.memberCount).to.equals(1);
+      expect(TierLevelData.memberCount).to.equals("1");
     });
 
     it("should query a level without members correctly", async function () {
@@ -1141,12 +1142,12 @@ describe.only("Subgraph Tier Test", function () {
       expect(tierChangeData.transactionHash).to.equals(tx.hash.toLowerCase());
       expect(tierChangeData.sender).to.equals(tierOwner.address.toLowerCase());
       expect(tierChangeData.account).to.equals(tierOwner.address.toLowerCase());
-      expect(tierChangeData.startTier).to.equals(Tier.FIVE);
-      expect(tierChangeData.endTier).to.equals(Tier.FOUR);
+      expect(tierChangeData.startTier).to.equals(Tier.FIVE.toString());
+      expect(tierChangeData.endTier).to.equals(Tier.FOUR.toString());
     });
   });
 
-  xdescribe("CombineTier Factory - Queries", function () {
+  describe("CombineTier Factory - Queries", function () {
     const sourceAlways = concat([op(Opcode.ALWAYS)]);
 
     const stateConfigAlways: VMState = {
@@ -1346,7 +1347,7 @@ describe.only("Subgraph Tier Test", function () {
     });
   });
 
-  xdescribe("ERC721BalanceTier Factory - Queries", function () {
+  describe("ERC721BalanceTier Factory - Queries", function () {
     it("should query ERC721BalanceTierFactory correctly", async function () {
       await waitForSubgraphToBeSynced();
 
