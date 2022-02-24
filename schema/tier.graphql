@@ -128,8 +128,8 @@ type ERC721BalanceTier implements TierContract @entity{
 
 type ERC721 @entity{
     id: ID! #address of token
-    deployBlock: Int! #the block the contract was deployed
-    deployTimestamp: Int! #the timestamp the contract was deployed
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
     symbol: String
     totalSupply: BigInt!
     name: String
