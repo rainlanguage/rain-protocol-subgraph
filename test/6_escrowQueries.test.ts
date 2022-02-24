@@ -208,6 +208,30 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
+    it("should query the ERC20 token that was used in PendingDeposit", async function () {
+      const query = `
+        {
+          erc20 (id: "${claimableTokenAddress}") {
+            name
+            symbol
+            decimals
+            totalSupply
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.erc20;
+
+      expect(data.name).to.equals(await claimableReserveToken.name());
+      expect(data.symbol).to.equals(await claimableReserveToken.symbol());
+      expect(data.decimals).to.equals(await claimableReserveToken.decimals());
+      expect(data.totalSupply).to.equals(
+        await claimableReserveToken.totalSupply()
+      );
+    });
+
     it("should query the RedeemableEscrowPendingDeposit after a PendingDeposit", async function () {
       const { amount: deposited } = await Util.getEventArgs(
         transaction,
@@ -449,7 +473,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.swept, `depositor has not made SweepPending`).to.be.false;
     });
 
-    it("should update the RedeemableERC20ClaimEscrow entity after a SweepPending", async function () {
+    it("should update the RedeemableERC20ClaimEscrow entity after a SweepPending/Deposit", async function () {
       // Make a swaps to raise all necessary funds and get a ISale finished
       const spend = ethers.BigNumber.from("200" + Util.sixZeros);
       while ((await reserve.balanceOf(bPool.address)).lt(successLevel)) {
@@ -483,11 +507,14 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       await trust.endDutchAuction();
 
-      transaction = await claimEscrow.sweepPending(
-        trust.address,
-        claimableReserveToken.address,
-        signer1.address
-      );
+      // Different signer that who made the depositPending
+      transaction = await claimEscrow
+        .connect(signer2)
+        .sweepPending(
+          trust.address,
+          claimableReserveToken.address,
+          signer1.address
+        );
 
       await waitForSubgraphToBeSynced();
 
@@ -495,7 +522,6 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       const depositId = transaction.hash.toLowerCase();
       const escrowSupplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
-      const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
 
       const query = `
         {
@@ -524,6 +550,234 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
+    it("should update the swept in RedeemableEscrowPendingDepositorToken after a SweepPending/Deposit", async function () {
+      const pendingDepositorTokenId = `${trustAddress} - ${claimEscrowAddress} - ${depositor1} - ${claimableTokenAddress}`;
+
+      const query = `
+        {
+          redeemableEscrowPendingDepositorToken (id: "${pendingDepositorTokenId}") {
+            swept
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.redeemableEscrowPendingDepositorToken;
+
+      expect(data.swept, `swept has not been updated after sweep`).to.be.true;
+    });
+
+    it("should update the RedeemableEscrowDepositor after a SweepPending/Deposit", async function () {
+      const { supply: redeemableSupply } = await Util.getEventArgs(
+        transaction,
+        "Deposit",
+        claimEscrow
+      );
+
+      const depositId = transaction.hash.toLowerCase();
+      const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
+
+      const escrowSupplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
+
+      const query = `
+        {
+          redeemableEscrowDepositor (id: "${escrowDepositorId}") {
+            supplyTokenDeposits {
+              id
+            }
+            deposits {
+              id
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.redeemableEscrowDepositor;
+
+      expect(data.supplyTokenDeposits).deep.include(
+        { id: escrowSupplyTokenDepositId },
+        `redeemableEscrowDepositor does not include the supplyTokenDeposit ID "${escrowSupplyTokenDepositId}"`
+      );
+      expect(data.deposits).deep.include(
+        { id: depositId },
+        `redeemableEscrowDepositor does not include the deposit ID "${depositId}"`
+      );
+    });
+
+    it("should query the RedeemableEscrowDeposit after a SweepPending/Deposit", async function () {
+      const { amount: deposited, supply: redeemableSupply } =
+        await Util.getEventArgs(transaction, "Deposit", claimEscrow);
+
+      const depositId = transaction.hash.toLowerCase();
+      const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
+
+      const query = `
+        {
+          redeemableEscrowDeposit (id: "${depositId}") {
+            depositor {
+              id
+            }
+            depositorAddress
+            escrow {
+              id
+            }
+            escrowAddress
+            iSale {
+              saleStatus
+            }
+            saleAddress
+            redeemable {
+              id
+            }
+            token {
+              id
+            }
+            tokenAddress
+            redeemableSupply
+            tokenAmount
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.redeemableEscrowDeposit;
+
+      expect(data.depositor.id).to.equals(
+        escrowDepositorId,
+        `wrong depositor entity.  Should be user that made deposit pending
+        expected  ${escrowDepositorId}
+        got       ${data.depositor.id}`
+      );
+      expect(data.depositorAddress).to.equals(
+        depositor1,
+        `wrong depositor address. Should be user that made deposit pending
+        expected  ${depositor1}
+        got       ${data.depositorAddress}`
+      );
+
+      expect(data.escrow.id).to.equals(
+        claimEscrowAddress,
+        `wrong redeemableERC20ClaimEscrow entity`
+      );
+      expect(data.escrowAddress).to.equals(
+        claimEscrowAddress,
+        `wrong redeemableERC20ClaimEscrow address`
+      );
+
+      expect(data.iSale.saleStatus).to.equals(
+        SaleStatus.Success,
+        `wrong sale status -  the Sale is succesful
+        expected  ${SaleStatus.Success}
+        got       ${data.iSale.saleStatus}`
+      );
+      expect(data.saleAddress).to.equals(trustAddress, `wrong Sale address`);
+
+      expect(data.redeemable.id).to.equals(
+        redeemableAddress,
+        `wrong redeemable entity`
+      );
+      expect(data.token.id).to.equals(
+        claimableTokenAddress,
+        `wrong erc20 token entity`
+      );
+      expect(data.tokenAddress).to.equals(
+        claimableTokenAddress,
+        `wrong erc20 token address`
+      );
+
+      expect(data.redeemableSupply).to.equals(
+        redeemableSupply.toString(),
+        `wrong redeemable supply - should be the same as when the deposit was made
+        expected  ${data.redeemableSupply}
+        got       ${redeemableSupply}`
+      );
+      expect(data.tokenAmount).to.equals(
+        deposited,
+        `wrong token amount deposited
+        expected  ${deposited}
+        got       ${data.tokenAmount}`
+      );
+    });
+
+    it("should query the RedeemableEscrowSupplyTokenDeposit after a SweepPending/Deposit", async function () {
+      const depositId = transaction.hash.toLowerCase();
+      const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
+
+      const redeemableSupply = await redeemableERC20.totalSupply();
+      const escrowSupplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
+
+      const query = `
+        {
+          redeemableEscrowSupplyTokenDeposit (id: "${escrowSupplyTokenDepositId}") {
+            iSale {
+              saleStatus
+            }
+            saleAddress
+            escrow {
+              id
+            }
+            escrowAddress
+            deposits {
+              id
+            }
+            despositor {
+              id
+            }
+            depositorAddress
+            token {
+              id
+            }
+            tokenAddress
+            redeemableSupply
+            totalDeposited
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.redeemableEscrowSupplyTokenDeposit;
+
+      expect(data.iSale.saleStatus).to.equals(
+        SaleStatus.Success,
+        `wrong sale status -  the Sale is succesful
+        expected  ${SaleStatus.Success}
+        got       ${data.iSale.saleStatus}`
+      );
+      expect(data.saleAddress).to.equals(trustAddress, `wrong Sale address`);
+
+      expect(data.escrow.id).to.equals(
+        claimEscrowAddress,
+        `wrong redeemableERC20ClaimEscrow entity`
+      );
+      expect(data.escrowAddress).to.equals(
+        claimEscrowAddress,
+        `wrong redeemableERC20ClaimEscrow address`
+      );
+
+      expect(data.deposits).deep.include({ id: depositId });
+
+      // id: ID! #{sale}-{escrow}-{supply}-{token}
+      // iSale: Isale
+      // saleAddress: Bytes! #sale from the id
+      // escrow: RedeemableERC20ClaimEscrow!
+      // escrowAddress: Bytes!
+      // deposits: [RedeemableEscrowDeposit!]
+      // despositor: RedeemableEscrowDepositor!
+      // depositorAddress: Bytes! #Deposit.depositor
+      // token: ERC20!
+      // tokenAddress: Bytes!
+      // redeemableSupply: BigInt! #Deposit.supply
+      // # INCREASED by Deposit.amount every time there is a Deposit that matches the id - {sale}-{escrow}-{supply}-{token}
+      // # DESCREASED by Undeposit.amount every time there is an Undeposit that matches the id. - {sale}-{escrow}-{supply}-{token}
+      // # DECREASED by Withdraw.amount every time there is a Withraw that matches the id. - {sale}-{escrow}-{supply}-{token}
+      // totalDeposited: BigInt!
+    });
+
     it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
       const { supply } = await Util.getEventArgs(
         transaction,
@@ -538,6 +792,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       await waitForSubgraphToBeSynced();
     });
+    // redeemableEscrowSupplyTokenDeposit
+    // totalDeposited
+    // # DECREASED by Withdraw.amount every time there is a Withraw that matches the id. - {sale}-{escrow}-{supply}-{token}
   });
 
   describe("Escrow with failed Sale", function () {
@@ -611,4 +868,8 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       await waitForSubgraphToBeSynced();
     });
   });
+  // redeemableEscrowSupplyTokenDeposit
+  // totalDeposited
+  // # INCREASED by Deposit.amount every time there is a Deposit that matches the id - {sale}-{escrow}-{supply}-{token}
+  // # DESCREASED by Undeposit.amount every time there is an Undeposit that matches the id. - {sale}-{escrow}-{supply}-{token}
 });
