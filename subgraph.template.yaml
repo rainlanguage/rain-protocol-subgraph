@@ -86,6 +86,33 @@ dataSources:
           handler: handleImplementation
       file: ./src/tier/ERC20BalanceTierFactory.ts
   - kind: ethereum/contract
+    name: ERC721BalanceTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ erc721BalanceTierFactory }}"
+      abi: ERC721BalanceTierFactory
+      startBlock: {{ blockErc721BalanceTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - ERC721BalanceTierFactory
+        - ERC20BalanceTier
+      abis:
+        - name: ERC721BalanceTierFactory
+          file: ./abis/tier/ERC721BalanceTierFactory.json
+        - name: ERC721BalanceTier
+          file: ./abis/tier/ERC721BalanceTier.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/ERC721BalanceTierFactory.ts
+  - kind: ethereum/contract
     name: ERC20TransferTierFactory
     network: {{ network }}
     source:
@@ -403,6 +430,31 @@ templates:
         - event: TierChange(address,address,uint256,uint256)
           handler: handleTierChange
       file: ./src/tier/ERC20BalanceTier.ts
+  - kind: ethereum/contract
+    name: ERC721BalanceTierTemplate
+    network: {{ network }}
+    source:
+      abi: ERC721BalanceTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - ERC721
+        - ERC721BalanceTier
+      abis:
+        - name: ERC721BalanceTier
+          file: ./abis/tier/ERC721BalanceTier.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        - event: Initialize(address,address)
+          handler: handleInitialize
+        - event: InitializeValueTier(address,address)
+          handler: handleInitializeValueTier
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/ERC721BalanceTier.ts
   - kind: ethereum/contract
     name: ERC20TransferTierTemplate
     network: {{ network }}
