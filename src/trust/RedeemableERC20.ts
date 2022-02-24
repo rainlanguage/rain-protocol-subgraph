@@ -9,7 +9,7 @@ export function handleInitialize(event: Initialize): void {
     let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex())
 
     redeemabaleERC20.factory = event.params.sender
-    redeemabaleERC20.admin = event.params.sender
+    redeemabaleERC20.admin = event.params.config.erc20Config.distributor
     redeemabaleERC20.minimumTier = event.params.config.minimumTier
 
     let context = dataSource.context()

@@ -280,7 +280,7 @@ before(async function () {
   await waitForSubgraphToBeSynced();
 });
 
-describe.only("Subgraph Trusts Test", function () {
+describe("Subgraph Trusts Test", function () {
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
@@ -425,7 +425,6 @@ describe.only("Subgraph Trusts Test", function () {
       crpContract = (await Util.poolContracts(creator, trust)).crp;
 
       // Wait for Sync
-
       await waitForSubgraphToBeSynced();
     });
 
@@ -629,6 +628,7 @@ describe.only("Subgraph Trusts Test", function () {
           redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
             holders {
               id
+              balance
             }
           }
           holder (id: "${holderId}") {
@@ -643,7 +643,6 @@ describe.only("Subgraph Trusts Test", function () {
       });
       const dataRedemableHolders = queryResponse.data.redeemableERC20.holders;
       const data = queryResponse.data.holder;
-
       // The same contract is not considered as Holder of their own tokens
       expect(dataRedemableHolders).to.be.empty; // Should be empty in this point
       expect(data).to.be.null; // This holder cant be exist.
@@ -791,7 +790,6 @@ describe.only("Subgraph Trusts Test", function () {
       const treasuryAssetsId = `${redeemableERC20Contract.address.toLowerCase()} - ${nonErc20Address.toLowerCase()}`;
 
       // Waiting sync after tx
-
       await waitForSubgraphToBeSynced();
 
       const query = `

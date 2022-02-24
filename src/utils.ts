@@ -106,6 +106,8 @@ export function notAContract(address: string, trust: string): boolean {
     let contracts = Contract.load(trust)
     if(address == ZERO_ADDRESS)
         return false
+    if(trust == address ) 
+        return false
     if(contracts.seeder == address)
         return false
     if(contracts.redeemableERC20 == address)

@@ -156,12 +156,19 @@ export const fetchSubgraph = (
   });
 };
 
+/**
+ * Function that wait until the Subgraph index the current block in the network
+ * @param delay - (optional: 1000ms by default) Time between queries to Subgraph about sync
+ */
 export const waitForSubgraphToBeSynced = async (
   delay = 1000
 ): Promise<SyncedSubgraphType> =>
   new Promise<{ synced: boolean }>((resolve, reject) => {
     // Wait for 5s
-    const deadline = Date.now() + 15 * 1000;
+    const deadline = Date.now() + 30 * 1000;
+
+    let currentBlock: number;
+    ethers.provider.getBlockNumber().then((x) => (currentBlock = x));
 
     // Function to check if the subgraph is synced
     const checkSubgraphSynced = async () => {
@@ -191,7 +198,7 @@ export const waitForSubgraphToBeSynced = async (
         const blocksSG = result.data.indexingStatusForCurrentVersion.chains[0];
         if (
           result.data.indexingStatusForCurrentVersion.synced === true &&
-          blocksSG.latestBlock.number == blocksSG.chainHeadBlock.number
+          blocksSG.latestBlock.number == currentBlock
         ) {
           resolve({ synced: true });
         } else {
