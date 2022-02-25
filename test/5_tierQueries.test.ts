@@ -880,7 +880,7 @@ describe("Subgraph Tier Test", function () {
     });
   });
 
-  describe.only("ERC20TransferTier Factory - Queries", function () {
+  describe("ERC20TransferTier Factory - Queries", function () {
     let erc20TransferTier: ERC20TransferTier;
 
     it("should query ERC20TransferTierFactory correctly after construction", async function () {
