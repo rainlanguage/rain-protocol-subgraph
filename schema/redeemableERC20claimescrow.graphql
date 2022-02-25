@@ -26,7 +26,8 @@ type RedeemableEscrowDepositor @entity {
 type RedeemableEscrowWithdrawer @entity {
     id: ID! # {escrow address}-{wallet address}
     address: Bytes!
-    escrow: [RedeemableERC20ClaimEscrow!]
+    escrow: RedeemableERC20ClaimEscrow!
+    escrowAddress: Bytes!
     withdraws: [RedeemableEscrowWithdraw!]
 }
 
@@ -59,8 +60,8 @@ type RedeemableEscrowSupplyTokenDeposit @entity {
     escrow: RedeemableERC20ClaimEscrow!
     escrowAddress: Bytes!
     deposits: [RedeemableEscrowDeposit!]
-    despositor: RedeemableEscrowDepositor!
-    depositorAddress: Bytes! #Deposit.depositor
+    depositors: RedeemableEscrowDepositor! #change to Array of depositors
+    depositorAddresses: Bytes! #Deposit.depositor #change to Array of depositorAddresses
     token: ERC20!
     tokenAddress: Bytes!
     redeemableSupply: BigInt! #Deposit.supply
@@ -122,6 +123,7 @@ type RedeemableEscrowWithdraw @entity {
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
     iSale: Isale
+    saleAddress: Bytes! #from Deposit.trust
     redeemable: RedeemableERC20! #linked by Withdraw.redeemable
     token: ERC20! #Linked by Withdraw.token
     tokenAddress: Bytes! #from Withdraw.token
