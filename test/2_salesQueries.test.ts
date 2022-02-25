@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect } from "chai";
@@ -140,7 +141,7 @@ let reserve: ReserveTokenTest,
   buyConfig: BuyConfig,
   transaction: ContractTransaction; // Use to save the tx between statements
 
-describe.only("Sales queries test", function () {
+describe("Sales queries test", function () {
   before("getting the factory", async function () {
     reserve = (await deploy(
       reserveTokenJson,
@@ -233,10 +234,8 @@ describe.only("Sales queries test", function () {
       // 5 blocks from now
       startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
-      const canStartStateConfig = afterBlockNumberConfig(startBlock);
-      const canEndStateConfig = afterBlockNumberConfig(
-        startBlock + saleTimeout
-      );
+      canStartStateConfig = afterBlockNumberConfig(startBlock);
+      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
 
       sale = await Util.saleDeploy(
         saleFactory,
@@ -399,8 +398,8 @@ describe.only("Sales queries test", function () {
       const endData = response.data.sale.canEndStateConfig;
       const calculatePriceData = response.data.sale.calculatePriceStateConfig;
 
-      // expect(startData.sources).to.equals(canStartStateConfig.sources);
-      // expect(startData.constants).to.equals(canStartStateConfig.constants.map(ele => ele.toString()));
+      expect(startData.sources).to.deep.equals([Util.uint8ArrayToHex(canStartStateConfig.sources.pop())]);
+      expect(startData.constants).to.deep.equals(canStartStateConfig.constants.map(ele => ele.toString()));
       expect(startData.stackLength).to.equals(
         canStartStateConfig.stackLength.toString()
       );
@@ -408,8 +407,8 @@ describe.only("Sales queries test", function () {
         canStartStateConfig.argumentsLength.toString()
       );
 
-      // expect(endData.sources).to.equals(canEndStateConfig.sources);
-      // expect(endData.constants).to.equals(canEndStateConfig.constants.map(ele => ele.toString()));
+      expect(endData.sources).to.deep.equals([Util.uint8ArrayToHex(canEndStateConfig.sources.pop())]);
+      expect(endData.constants).to.deep.equals(canEndStateConfig.constants.map(ele => ele.toString()));
       expect(endData.stackLength).to.equals(
         canEndStateConfig.stackLength.toString()
       );
@@ -417,8 +416,8 @@ describe.only("Sales queries test", function () {
         canEndStateConfig.argumentsLength.toString()
       );
 
-      // expect(calculatePriceData.sources).to.equals(calculatePriceStateConfig.sources);
-      // expect(calculatePriceData.constants).to.equals(calculatePriceStateConfig.constants.map(ele => ele.toString()));
+      expect(calculatePriceData.sources).to.deep.equals([Util.uint8ArrayToHex(calculatePriceStateConfig.sources.pop())]);
+      expect(calculatePriceData.constants).to.deep.equals(calculatePriceStateConfig.constants.map(ele => ele.toString()));
       expect(calculatePriceData.stackLength).to.equals(
         calculatePriceStateConfig.stackLength.toString()
       );
