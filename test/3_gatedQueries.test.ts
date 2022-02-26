@@ -190,8 +190,6 @@ describe("Subgraph GatedNFT test", function () {
   });
 
   it("should query the tier contract in GatedNFT correctly", async function () {
-    // await waitForSubgraphToBeSynced();
-
     const deployerExpected = await erc20BalanceTierFactory.signer.getAddress();
 
     const query = `

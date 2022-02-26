@@ -307,7 +307,8 @@ function updatePoolBalance(contracts: Contract): void {
     if(!(poolRedeemableBalance.reverted)){
         distributionProgress.poolRedeemableBalance = poolRedeemableBalance.value
         pool.poolRedeemableBalance = poolRedeemableBalance.value
-        distributionProgress.percentAvailable = poolRedeemableBalance.value.toBigDecimal().div(redeemableTokenContract.totalSupply().toBigDecimal())
+        distributionProgress.percentAvailable = poolRedeemableBalance.value.toBigDecimal().div(redeemableTokenContract.totalSupply().toBigDecimal()).times(HUNDRED_BD)
+        
     }
 
     if(!(poolReserveBalance.reverted)){
@@ -316,7 +317,7 @@ function updatePoolBalance(contracts: Contract): void {
         if (distributionProgress.minimumRaise == ZERO_BI) {
             distributionProgress.percentRaised = HUNDRED_BD
         } else {
-            distributionProgress.percentRaised = distributionProgress.amountRaised.toBigDecimal().div(distributionProgress.minimumRaise.toBigDecimal())
+            distributionProgress.percentRaised = distributionProgress.amountRaised.toBigDecimal().div(distributionProgress.minimumRaise.toBigDecimal()).times(HUNDRED_BD)
         }
         if(distributionProgress.poolReserveBalance != null && distributionProgress.reserveInit != null){
             distributionProgress.amountRaised = distributionProgress.poolReserveBalance.minus(distributionProgress.reserveInit)

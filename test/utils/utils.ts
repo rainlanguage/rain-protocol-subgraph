@@ -86,6 +86,8 @@ export const zeroAddress = ethers.constants.AddressZero;
 export const ONE = ethers.BigNumber.from("1" + eighteenZeros);
 export const RESERVE_ONE = ethers.BigNumber.from("1" + sixZeros);
 
+export const oneHundredFN = ethers.FixedNumber.from(100, "fixed128x32");
+
 export const CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING = 100;
 export const MAX_RAISE_DURATION_TESTING = 100;
 

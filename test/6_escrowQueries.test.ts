@@ -122,14 +122,14 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update the RedeemableERC20ClaimEscrow entity after a PendingDeposit", async function () {
-      // Make a swap with the Util function
+      // Make a swap with signer1 the Util function
       const spend = ethers.BigNumber.from("200" + Util.sixZeros);
       await Util.swapReserveForTokens(
         crp,
         bPool,
         reserve,
         redeemableERC20,
-        signer2,
+        signer1,
         spend
       );
 
@@ -459,7 +459,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update the RedeemableERC20ClaimEscrow entity after a Deposit", async function () {
-      // Make a swaps to raise all necessary funds and get a ISale finished
+      // Make swaps to raise all necessary funds and get a ISale finished with signer2
       const spend = ethers.BigNumber.from("200" + Util.sixZeros);
       while ((await reserve.balanceOf(bPool.address)).lt(successLevel)) {
         await Util.swapReserveForTokens(
@@ -1324,12 +1324,16 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       // ❗❗❗ NOW with different supply ❗❗❗❗
 
-      // burn/redeem some Redeemable tokens used in the Sale
+      // Singer 2 burn/redeem some Redeemable tokens used in the Sale
       const redeemAmount = (
         await redeemableERC20.balanceOf(signer2.address)
       ).div(2);
 
-      await redeemableERC20.redeem([reserve.address], redeemAmount);
+      // signer1 burns their RedeemableERC20 token balance for some reserve
+      await reserve.transfer(redeemableERC20.address, "1" + Util.sixZeros);
+      await redeemableERC20
+        .connect(signer2)
+        .redeem([reserve.address], redeemAmount);
 
       // Providing more claimableReserveToken2 to signer2
       const depositAmount2 = ethers.BigNumber.from("100" + zeroDecimals);

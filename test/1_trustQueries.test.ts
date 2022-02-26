@@ -2240,15 +2240,34 @@ describe("Subgraph Trusts Test", function () {
       // poolReserveBalance - reserveInit
       const amountRaisedExpected = poolReserveBalanceExpected.sub(reserveInit);
 
-      // amountRaised / minimumRaise
-      const percentRaisedExpected = amountRaisedExpected
-        .mul(100)
-        .div(minimumCreatorRaise.add(redeemInit).add(seederFee));
+      // Using fixed numbers
+      const amountRaisedFN = ethers.FixedNumber.from(
+        amountRaisedExpected,
+        "fixed128x32"
+      );
+      const minimumRaise = ethers.FixedNumber.from(
+        minimumCreatorRaise.add(redeemInit).add(seederFee),
+        "fixed128x32"
+      );
 
-      // poolRedeemableBalance / RedeemableERC20.totalSupply
-      const percentAvailableExpected = poolRedeemableBalanceExpected
-        .mul(100)
-        .div(redeemableERC20Config.initialSupply);
+      const poolRedeemableBalanceFN = ethers.FixedNumber.from(
+        poolRedeemableBalanceExpected,
+        "fixed128x32"
+      );
+      const redeemableInitSupplyFN = ethers.FixedNumber.from(
+        redeemableERC20Config.initialSupply,
+        "fixed128x32"
+      );
+
+      // percentRaised = amountRaised / minimumRaise
+      const percentRaisedExpected = amountRaisedFN
+        .mulUnsafe(Util.oneHundredFN)
+        .divUnsafe(minimumRaise);
+
+      // percentAvailable = poolRedeemableBalance / RedeemableERC20.totalSupply
+      const percentAvailableExpected = poolRedeemableBalanceFN
+        .mulUnsafe(Util.oneHundredFN)
+        .divUnsafe(redeemableInitSupplyFN);
 
       const query = `
         {
@@ -2266,9 +2285,6 @@ describe("Subgraph Trusts Test", function () {
         query: query,
       });
       const data = queryResponse.data.distributionProgress;
-
-      console.log("address : ", trust.address.toLowerCase());
-      console.log("data : ", JSON.stringify(data));
 
       expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
       expect(data.poolRedeemableBalance).to.equals(
@@ -2791,7 +2807,7 @@ describe("Subgraph Trusts Test", function () {
       expect(dataRedeemable.redeems).to.deep.include({ id: redeemId });
     });
 
-    it("it should update the TrustParticipant after a redeem in RedeemableERC20", async function () {
+    it("should update the TrustParticipant after a redeem in RedeemableERC20", async function () {
       const trustParticId = `${signer2.address.toLowerCase()} - ${trust.address.toLowerCase()}`;
       const redeemId = `${transaction.hash.toLowerCase()}-0`;
 

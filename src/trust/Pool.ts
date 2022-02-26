@@ -58,7 +58,7 @@ function updatePoolBalance(contracts: Contract, pool: Pool): void {
     if(!(poolRedeemableBalance.reverted)){
         distributionProgress.poolRedeemableBalance = poolRedeemableBalance.value
         pool.poolRedeemableBalance = poolRedeemableBalance.value
-        distributionProgress.percentAvailable = poolRedeemableBalance.value.toBigDecimal().div(redeemableTokenContract.totalSupply().toBigDecimal())
+        distributionProgress.percentAvailable = poolRedeemableBalance.value.toBigDecimal().div(redeemableTokenContract.totalSupply().toBigDecimal()).times(HUNDRED_BD)
     }
 
     if(!(poolReserveBalance.reverted)){
