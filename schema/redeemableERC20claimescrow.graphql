@@ -61,7 +61,7 @@ type RedeemableEscrowSupplyTokenDeposit @entity {
     escrowAddress: Bytes!
     deposits: [RedeemableEscrowDeposit!]
     depositors: RedeemableEscrowDepositor! #change to Array of depositors
-    depositorAddresses: Bytes! #Deposit.depositor #change to Array of depositorAddresses
+    depositorAddress: Bytes! #Deposit.depositor #change to Array of depositorAddresses
     token: ERC20!
     tokenAddress: Bytes!
     redeemableSupply: BigInt! #Deposit.supply

@@ -81,7 +81,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     await waitForSubgraphToBeSynced();
   });
 
-  describe("Escrow with succesfull Sale", function () {
+  describe.only("Escrow with succesfull Sale", function () {
     let totalDeposited = ethers.BigNumber.from("0");
 
     before("deploy fresh test contracts", async function () {
@@ -401,6 +401,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const response = (await subgraph({
         query: query,
       })) as FetchResult;
+
       const data = response.data.redeemableEscrowPendingDepositorToken;
 
       // Sale expected response
@@ -450,7 +451,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.totalDeposited).to.equals(
         deposited,
         `wrong amount in response
-        expected  ${deposited.toStrng()}
+        expected  ${deposited.toString()}
         got       ${data.totalDeposited}`
       );
 
@@ -566,6 +567,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const query = `
         {
           redeemableEscrowDepositor (id: "${escrowDepositorId}") {
+            address
             supplyTokenDeposits {
               id
             }
@@ -686,11 +688,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.redeemableSupply).to.equals(
         redeemableSupply.toString(),
         `wrong redeemable supply - should be the same as when the deposit was made
-        expected  ${data.redeemableSupply}
-        got       ${redeemableSupply}`
+        expected  ${redeemableSupply}
+        got       ${data.redeemableSupply}`
       );
       expect(data.tokenAmount).to.equals(
-        deposited.toStirng(),
+        deposited.toString(),
         `wrong token amount deposited
         expected  ${deposited}
         got       ${data.tokenAmount}`
@@ -731,7 +733,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             depositors {
               id
             }
-            depositorAddresses
+            depositorAddress
             token {
               id
             }
@@ -772,7 +774,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         { id: escrowDepositorId },
         `redeemableEscrowSupplyTokenDeposit does not include the depositor entity ID ${escrowDepositorId}`
       );
-      expect(data.depositorAddresses).deep.include(
+      expect(data.depositorAddress).deep.include(
         depositor1,
         `redeemableEscrowSupplyTokenDeposit does not include the depositor addres ${depositor1}`
       );

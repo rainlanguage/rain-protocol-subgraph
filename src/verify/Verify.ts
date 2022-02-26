@@ -150,13 +150,6 @@ export function handleRequestApprove(event: RequestApprove): void {
 
     let verifyAddress = getverifyAddress(event.address.toHex(),event.params.sender.toHex())
     verifyAddress.requestStatus = RequestStatus.REQUEST_APPROVE
-    
-    let verify = Verify.load(event.address.toHex())
-    let verifyAddresses = verify.verifyAddresses
-    if(!verifyAddresses.includes(verifyAddress.id))
-        verifyAddresses.push(verifyAddress.id)
-    verify.verifyAddresses = verifyAddresses
-    verify.save()
  
     let events  = verifyAddress.events
     events.push(verifyRequestApprove.id)
@@ -237,6 +230,12 @@ function getverifyAddress(verifyContract: string, account: string): VerifyAddres
         verifyAddress.requestStatus = RequestStatus.NONE
         verifyAddress.roles = []
         verifyAddress.events = []
+
+        let verify = Verify.load(verifyContract)
+        let verifyAddresses = verify.verifyAddresses
+        verifyAddresses.push(verifyAddress.id)  
+        verify.verifyAddresses = verifyAddresses
+        verify.save()
     }
     return verifyAddress as VerifyAddress 
 }
