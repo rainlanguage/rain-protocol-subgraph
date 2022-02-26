@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Contract,
   Signer,
@@ -826,4 +827,16 @@ export const determineReserveDust = (
     dust = RESERVE_MIN_BALANCE;
   }
   return dust;
+};
+
+export const uint8ArrayToHex = (array: Uint8Array): string => {
+  let str = "0x";
+  array.forEach((element) => {
+    const hex = parseInt(element.toString(), 10).toString(16);
+    if(hex.length < 2)
+      str = str + ("0" + hex);
+    else
+      str = str + hex;
+  });
+  return str;
 };
