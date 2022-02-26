@@ -43,6 +43,16 @@ const enum Status {
   REMOVED,
 }
 
+const enum Role {
+  NONE,
+  APPROVER_ADMIN,
+  REMOVER_ADMIN,
+  BANNER_ADMIN,
+  APPROVER,
+  REMOVER,
+  BANNER,
+}
+
 let verify: Verify, transaction: ContractTransaction; // use to save/facilite a tx
 
 const evidenceEmpty = hexlify([...Buffer.from("")]);
@@ -51,23 +61,36 @@ const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
 const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
-describe("Subgraph Tier Test", function () {
-  describe("Verify Factory - Queries", function async() {
-    let eventCounter = 0;
-    let eventsSigner1 = 0;
-    let eventsSigner2 = 0;
-    let eventsAdmin = 0;
-    it("should query VerifyFactory correctly after construction", async function () {
-      // Get the verify implementation
-      const implementation = (
-        await Util.getEventArgs(
-          verifyFactory.deployTransaction,
-          "Implementation",
-          verifyFactory
-        )
-      ).implementation;
+// Roles
+const DEFAULT_ADMIN_ROLE = ethers.utils.hexZeroPad("0x00", 32);
 
-      const query = `
+const APPROVER_ADMIN = ethers.utils.keccak256(
+  ethers.utils.toUtf8Bytes("APPROVER_ADMIN")
+);
+const APPROVER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("APPROVER"));
+
+const REMOVER_ADMIN = ethers.utils.keccak256(
+  ethers.utils.toUtf8Bytes("REMOVER_ADMIN")
+);
+const REMOVER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("REMOVER"));
+
+const BANNER_ADMIN = ethers.utils.keccak256(
+  ethers.utils.toUtf8Bytes("BANNER_ADMIN")
+);
+const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
+
+describe("Verify Factory - Queries", function () {
+  it("should query VerifyFactory correctly after construction", async function () {
+    // Get the verify implementation
+    const implementation = (
+      await Util.getEventArgs(
+        verifyFactory.deployTransaction,
+        "Implementation",
+        verifyFactory
+      )
+    ).implementation;
+
+    const query = `
         {
           verifyFactories {
             id
@@ -77,30 +100,27 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
+    const queryResponse = (await subgraph({
+      query: query,
+    })) as FetchResult;
 
-      const factoriesData = queryResponse.data.verifyFactories;
-      const data = factoriesData[0];
+    const factoriesData = queryResponse.data.verifyFactories;
+    const data = factoriesData[0];
 
-      expect(factoriesData).to.have.lengthOf(1);
+    expect(factoriesData).to.have.lengthOf(1);
 
-      expect(data.id).to.equals(verifyFactory.address.toLocaleLowerCase());
-      expect(data.address).to.equals(verifyFactory.address.toLocaleLowerCase());
-      expect(data.implementation).to.equals(implementation.toLocaleLowerCase());
-    });
+    expect(data.id).to.equals(verifyFactory.address.toLocaleLowerCase());
+    expect(data.address).to.equals(verifyFactory.address.toLocaleLowerCase());
+    expect(data.implementation).to.equals(implementation.toLocaleLowerCase());
+  });
 
+  describe("Verify contract -  Verification process", function () {
+    let eventCounter = 0;
+    let eventsSigner1 = 0;
+    let eventsSigner2 = 0;
+    let eventsAdmin = 0;
     it("should query the Verify child from factory after creation", async function () {
       verify = await verifyDeploy(verifyFactory, deployer, admin.address);
-
-      const APPROVER = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes("APPROVER")
-      );
-      const REMOVER = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes("REMOVER")
-      );
-      const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
 
       // Admin grants all roles to himself. This is for testing purposes only, it SHOULD be avoided.
       await verify.connect(admin).grantRole(APPROVER, admin.address);
@@ -470,7 +490,7 @@ describe("Subgraph Tier Test", function () {
             }
           }
         }
-      `;
+        `;
 
       const response = (await subgraph({
         query: query,
@@ -1115,6 +1135,341 @@ describe("Subgraph Tier Test", function () {
 
       expect(data.events).to.have.lengthOf(eventsAdmin);
       expect(data.events).to.deep.include({ id: verifyEventId });
+    });
+  });
+
+  describe("Verify contract - Roles", function () {
+    let adminVerifyAddress: string,
+      signer1VerifyAddress: string,
+      signer2VerifyAddress: string;
+
+    before("deplopy new verify", async function () {
+      verify = await verifyDeploy(verifyFactory, deployer, admin.address);
+
+      adminVerifyAddress = admin.address.toLowerCase();
+      signer1VerifyAddress = signer1.address.toLowerCase();
+      signer2VerifyAddress = signer2.address.toLowerCase();
+
+      // Wait for sync
+      await waitForSubgraphToBeSynced();
+    });
+
+    it("should query the Initial Roles in the Verify after creation", async function () {
+      const query = `
+        {
+          verify (id: "${verify.address.toLowerCase()}") {
+            approvers {
+              id
+            }
+            removers {
+              id
+            }
+            banners {
+              id
+            }
+            approverAdmins {
+              id
+            }
+            bannerAdmins {
+              id
+            }
+            removerAdmins {
+              id
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.verify;
+
+      expect(data.approvers, `ERROR: approvers NOT granted yet`).to.be.empty;
+      expect(data.removers, `ERROR: removers NOT granted yet`).to.be.empty;
+      expect(data.banners, `ERROR: banners NOT granted yet`).to.be.empty;
+
+      expect(data.approverAdmins).deep.include(
+        { id: adminVerifyAddress },
+        `wrong initial rol status: admin have the initial approveAdmin rol`
+      );
+      expect(data.bannerAdmins).deep.include(
+        { id: adminVerifyAddress },
+        `wrong initial rol status: admin have the initial bannerAdmin rol`
+      );
+      expect(data.removerAdmins).deep.include(
+        { id: adminVerifyAddress },
+        `wrong initial rol status: admin have the initial removerAdmin rol`
+      );
+    });
+
+    it("should query admin VerifyAddress with the correct roles after Verify creation", async function () {
+      const expectedRoles = [
+        Role.APPROVER_ADMIN,
+        Role.REMOVER_ADMIN,
+        Role.BANNER_ADMIN,
+      ];
+
+      const query = `
+        {
+          verifyAddress (id: "${adminVerifyAddress}") {
+            status
+            requestStatus
+            roles
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.verifyAddress;
+
+      expect(data.status).to.equals(
+        Status.NONE,
+        `wrong status - admin verify adress does not have a status`
+      );
+
+      expect(data.requestStatus).to.equals(
+        RequestStatus.NONE,
+        `wrong status - admin verify adress has not made a request`
+      );
+
+      expect(data.roles).to.eql(
+        expectedRoles,
+        `wrong roles in verify address
+        expected  ${expectedRoles}
+        got       ${data.roles}`
+      );
+    });
+
+    it("should update admin Roles in the Verify after grant new Admins", async function () {
+      // Admin grants admin roles
+      // Signer1 as Approver Admin
+      await verify
+        .connect(admin)
+        .grantRole(await verify.APPROVER_ADMIN(), signer1.address);
+
+      // Signer2 as Remover and Banner Admin
+      await verify
+        .connect(admin)
+        .grantRole(await verify.REMOVER_ADMIN(), signer2.address);
+      await verify
+        .connect(admin)
+        .grantRole(await verify.BANNER_ADMIN(), signer2.address);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          verify (id: "${verify.address.toLowerCase()}") {
+            approverAdmins {
+              id
+            }
+            bannerAdmins {
+              id
+            }
+            removerAdmins {
+              id
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.verify;
+
+      expect(data.approverAdmins).deep.include(
+        { id: signer1VerifyAddress },
+        `approvers admins does NOT include the new approver verify address "${signer1VerifyAddress}"`
+      );
+      expect(data.bannerAdmins).deep.include(
+        { id: signer2VerifyAddress },
+        `banner adminss does NOT include the new banner verify address "${signer2VerifyAddress}"`
+      );
+      expect(data.removerAdmins).deep.include(
+        { id: signer2VerifyAddress },
+        `remover admins does NOT include the new remover verify address "${signer2VerifyAddress}"`
+      );
+    });
+
+    it("should update Verify after renounce an admin Role", async function () {
+      // defaultAdmin leaves their roles. This removes a big risk
+      await verify.connect(admin).renounceRole(APPROVER_ADMIN, admin.address);
+      await verify.connect(admin).renounceRole(REMOVER_ADMIN, admin.address);
+      await verify.connect(admin).renounceRole(BANNER_ADMIN, admin.address);
+      await verify
+        .connect(admin)
+        .renounceRole(DEFAULT_ADMIN_ROLE, admin.address);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          verify (id: "${verify.address.toLowerCase()}") {
+            approverAdmins {
+              id
+            }
+            bannerAdmins {
+              id
+            }
+            removerAdmins {
+              id
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.verify;
+
+      expect(data.approverAdmins).to.not.deep.include(
+        { id: adminVerifyAddress },
+        `wrong query: admin has not been removed from approverAdmins after leaving role`
+      );
+      expect(data.bannerAdmins).to.not.deep.include(
+        { id: adminVerifyAddress },
+        `wrong query: admin has not been removed from bannerAdmins after leaving role`
+      );
+      expect(data.removerAdmins).to.not.deep.include(
+        { id: adminVerifyAddress },
+        `wrong query: admin has not been removed from removerAdmins after leaving role`
+      );
+    });
+
+    it("should query admin VerifyAddress with the correct roles after Verify creation", async function () {
+      const expectedRoles: Role[] = [];
+
+      // Maybe we can use this when some address lost all posible role (?)
+      // const expectedRoles = [Role.NONE];
+
+      const query = `
+        {
+          verifyAddress (id: "${adminVerifyAddress}") {
+            roles
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.verifyAddress;
+
+      expect(data.roles).to.eql(
+        expectedRoles,
+        `wrong roles in verify address
+        expected  ${expectedRoles}
+        got       ${data.roles}`
+      );
+    });
+
+    it("should add admin roles to VerifyAddress after grant role", async function () {
+      // Expected roles
+      const signer1RolesExpected = [Role.APPROVER_ADMIN];
+      const signer2RolesExpected = [Role.REMOVER_ADMIN, Role.BANNER_ADMIN];
+
+      const query = `
+        {
+          verifyAddress1: verifyAddress (id: "${signer1VerifyAddress}") {
+            roles
+          }
+          verifyAddress2: verifyAddress (id: "${signer2VerifyAddress}") {
+            roles
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data1 = response.data.verifyAddress1;
+      const data2 = response.data.verifyAddress2;
+
+      expect(data1.roles).to.eql(
+        signer1RolesExpected,
+        `signer1 verify address does not have the approverAdmin role`
+      );
+
+      expect(data2.roles).to.eql(
+        signer2RolesExpected,
+        `signer2RolesExpectedsigner2 verify address does not have the removerAdmin and bannerAdmin roles`
+      );
+    });
+
+    it("should update the Verify after grant roles", async function () {
+      // Signer1 grant as Approver to himself
+      await verify.connect(signer1).grantRole(APPROVER, signer1.address);
+
+      // Signer2 grant as Remover
+      await verify.connect(signer2).grantRole(REMOVER, signer2.address);
+
+      // Signer2 grant as Banner to Signer1
+      await verify.connect(signer2).grantRole(BANNER, signer1.address);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          verify (id: "${verify.address.toLowerCase()}") {
+            approvers {
+              id
+            }
+            banners {
+              id
+            }
+            removers {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const data = response.data.verify;
+
+      expect(data.approvers).deep.include(
+        { id: signer1VerifyAddress },
+        `approvers in verify doest NOT include the approver verifyAddress ${signer1VerifyAddress}`
+      );
+      expect(data.banners).deep.include(
+        { id: signer1VerifyAddress },
+        `banners in verify doest NOT include the banner verifyAddress ${signer1VerifyAddress}`
+      );
+
+      expect(data.removers).deep.include(
+        { id: signer2VerifyAddress },
+        `removers in verify doest NOT include the remover verifyAddress ${signer2VerifyAddress}`
+      );
+    });
+
+    it("should update  the Verify after revoke a role", async function () {
+      // Signer2 revoke as Banner to Signer1
+      await verify.connect(signer2).revokeRole(BANNER, signer1.address);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          verify (id: "${verify.address.toLowerCase()}") {
+            banners {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const data = response.data.verify;
+
+      expect(data.banners).to.not.deep.include(
+        { id: signer1VerifyAddress },
+        `wrong: verifyAddress has not been remove from banners after revoking their role`
+      );
     });
   });
 });

@@ -457,7 +457,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.swept, `depositor has not made SweepPending`).to.be.false;
     });
 
-    xit("should update the RedeemableERC20ClaimEscrow entity after a Deposit", async function () {
+    it("should update the RedeemableERC20ClaimEscrow entity after a Deposit", async function () {
       // Make a swaps to raise all necessary funds and get a ISale finished
       const spend = ethers.BigNumber.from("200" + Util.sixZeros);
       while ((await reserve.balanceOf(bPool.address)).lt(successLevel)) {
@@ -547,7 +547,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should update the RedeemableEscrowDepositor after a Deposit", async function () {
+    it("should update the RedeemableEscrowDepositor after a Deposit", async function () {
       const { supply: redeemableSupply } = await Util.getEventArgs(
         transaction,
         "Deposit",
@@ -596,7 +596,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should query the RedeemableEscrowDeposit after a Deposit", async function () {
+    it("should query the RedeemableEscrowDeposit after a Deposit", async function () {
       const { amount: deposited, supply: redeemableSupply } =
         await Util.getEventArgs(transaction, "Deposit", claimEscrow);
 
@@ -697,7 +697,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should query the RedeemableEscrowSupplyTokenDeposit after a Deposit", async function () {
+    it("should query the RedeemableEscrowSupplyTokenDeposit after a Deposit", async function () {
       const depositId = transaction.hash.toLowerCase();
 
       const { supply: redeemableSupply } = await Util.getEventArgs(
@@ -800,7 +800,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should not update the swept of a RedeemableEscrowPendingDepositorToken after Deposit from same user", async function () {
+    it("should not update the swept of a RedeemableEscrowPendingDepositorToken after Deposit from same user", async function () {
       const pendingDepositorTokenId = `${trustAddress} - ${claimEscrowAddress} - ${depositor1} - ${claimableTokenAddress}`;
 
       const query = `
@@ -818,7 +818,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.swept, `sweepPending has not been called`).to.be.false;
     });
 
-    xit("should update the RedeemableERC20ClaimEscrow entity after a SweepPending", async function () {
+    it("should update the RedeemableERC20ClaimEscrow entity after a SweepPending", async function () {
       // Different signer that who made the depositPending
       transaction = await claimEscrow
         .connect(signer2)
@@ -860,7 +860,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should update the swept in RedeemableEscrowPendingDepositorToken after a SweepPending", async function () {
+    it("should update the swept in RedeemableEscrowPendingDepositorToken after a SweepPending", async function () {
       const pendingDepositorTokenId = `${trustAddress} - ${claimEscrowAddress} - ${depositor1} - ${claimableTokenAddress}`;
 
       const query = `
@@ -878,7 +878,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.swept, `swept has not been updated after sweep`).to.be.true;
     });
 
-    xit("should update the RedeemableEscrowDepositor after a SweepPending", async function () {
+    it("should update the RedeemableEscrowDepositor after a SweepPending", async function () {
       const { supply: redeemableSupply } = await Util.getEventArgs(
         transaction,
         "Deposit",
@@ -922,7 +922,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should query the RedeemableEscrowDeposit after a SweepPending", async function () {
+    it("should query the RedeemableEscrowDeposit after a SweepPending", async function () {
       const { amount: deposited, supply: redeemableSupply } =
         await Util.getEventArgs(transaction, "Deposit", claimEscrow);
 
@@ -1023,7 +1023,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should update  the RedeemableEscrowSupplyTokenDeposit after a SweepPending", async function () {
+    it("should update  the RedeemableEscrowSupplyTokenDeposit after a SweepPending", async function () {
       const { supply: redeemableSupply } = await Util.getEventArgs(
         transaction,
         "Deposit",
@@ -1066,7 +1066,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
+    it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
       const { supply: redeemableSupply, amount: amountWithdrawn } =
         await Util.getEventArgs(transaction, "Deposit", claimEscrow);
 
@@ -1117,7 +1117,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should query the RedeemableEscrowWithdraw after a Withdraw", async function () {
+    it("should query the RedeemableEscrowWithdraw after a Withdraw", async function () {
       const { amount: amountWithdrawn, supply: redeemableSupply } =
         await Util.getEventArgs(transaction, "Withdraw", claimEscrow);
 
@@ -1221,7 +1221,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should update the RedeemableEscrowWithdrawer after Withdraw", async function () {
+    it("should update the RedeemableEscrowWithdrawer after Withdraw", async function () {
       const withdrawId = transaction.hash.toLowerCase();
       const escrowWithdrawerId = `${claimEscrowAddress} - ${depositor1}`;
 
@@ -1264,7 +1264,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should decreased the totalDeposited in RedeemableEscrowSupplyTokenDeposit after a Withdraw", async function () {
+    it("should decreased the totalDeposited in RedeemableEscrowSupplyTokenDeposit after a Withdraw", async function () {
       const { supply: redeemableSupply } = await Util.getEventArgs(
         transaction,
         "Withdraw",
@@ -1299,7 +1299,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
     });
 
-    xit("should query different RedeemableEscrowSupplyTokenDeposits with different tokens and supplies", async function () {
+    it("should query different RedeemableEscrowSupplyTokenDeposits with different tokens and supplies", async function () {
       // New claimable reserve token
       const claimableReserveToken2 = (await deploy(
         reserveToken,
@@ -1459,7 +1459,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
   });
 
-  xdescribe("Escrow with failed Sale", function () {
+  describe("Escrow with failed Sale", function () {
     let totalDeposited = ethers.BigNumber.from("0");
 
     before("deploy fresh test contracts", async function () {

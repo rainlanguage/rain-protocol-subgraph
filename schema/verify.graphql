@@ -107,7 +107,7 @@ interface Role {
     roles: [Int!]
 }
 
-# Created after the first RequestApprove event for an address
+# Created after the first RequestApprove event for an address or first role granted
 type VerifyAddress implements Role @entity{
     id: ID! #concat {Verify.address}+{VerifyAddress.address}
     verifyContract: Verify!
