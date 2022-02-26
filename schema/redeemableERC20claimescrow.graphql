@@ -123,7 +123,6 @@ type RedeemableEscrowWithdraw @entity {
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
     iSale: Isale
-    saleAddress: Bytes! #from Deposit.trust
     redeemable: RedeemableERC20! #linked by Withdraw.redeemable
     token: ERC20! #Linked by Withdraw.token
     tokenAddress: Bytes! #from Withdraw.token

@@ -1,6 +1,6 @@
 import { Address, ethereum, BigInt, log } from "@graphprotocol/graph-ts"
 import { Deposit, PendingDeposit, Undeposit, Withdraw} from "../../generated/RedeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow"
-import { ERC20, RedeemableERC20, RedeemableERC20ClaimEscrow, RedeemableEscrowDeposit, RedeemableEscrowDepositor, RedeemableEscrowPendingDeposit, RedeemableEscrowPendingDepositorToken, RedeemableEscrowSupplyTokenDeposit, Sale, Trust} from "../../generated/schema"
+import { ERC20, RedeemableERC20, RedeemableERC20ClaimEscrow, RedeemableEscrowDeposit, RedeemableEscrowDepositor, RedeemableEscrowPendingDeposit, RedeemableEscrowPendingDepositorToken, RedeemableEscrowSupplyTokenDeposit, RedeemableEscrowWithdraw, RedeemableEscrowWithdrawer, Sale, Trust} from "../../generated/schema"
 import { ERC20 as ERC20Contract} from "../../generated/RedeemableERC20ClaimEscrow/ERC20"
 import { SaleStatus, ZERO_ADDRESS, ZERO_BI } from "../utils"
 import { Trust as TrustContract } from "../../generated/RedeemableERC20ClaimEscrow/Trust"
@@ -30,10 +30,9 @@ export function handleDeposit(event: Deposit): void {
     let sale = Sale.load(iSale)
     if(trust != null){
         if(SaleStatus.Success == trust.saleStatus || SaleStatus.Fail == trust.saleStatus){
-            let repdt = getRedeemableEscrowPendingDepositorToken(Address.fromString(iSale), event.address, event.params.depositor, event.params.token)
-            repdt.swept = true
-            repdt.save()
-            log.info("sweeped : {}", [repdt.id])
+            // let repdt = getRedeemableEscrowPendingDepositorToken(Address.fromString(iSale), event.address, event.params.depositor, event.params.token)
+            // repdt.swept = true
+            // repdt.save()
         }
     }
     else if(sale != null){
@@ -120,7 +119,7 @@ export function handlePendingDeposit(event: PendingDeposit): void {
     
     let repdt = getRedeemableEscrowPendingDepositorToken(Address.fromString(iSale), event.address, event.params.sender, event.params.token)
     repdt.totalDeposited = repdt.totalDeposited.plus(event.params.amount)
-    log.info("sweeped created : {}", [repdt.id])
+
     let repdtPendingDeposits = repdt.pendingDeposits
     repdtPendingDeposits.push(redeemableEscrowPendingDeposit.id)
     repdt.pendingDeposits = repdtPendingDeposits
@@ -163,7 +162,44 @@ export function handleUndeposit(event: Undeposit): void {
 }
 
 export function handleWithdraw(event: Withdraw): void {
-    // let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
+    let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
+
+    let redeemableEscrowWithdraw = new RedeemableEscrowWithdraw(event.transaction.hash.toHex())
+    redeemableEscrowWithdraw.withdrawer = event.params.withdrawer
+    redeemableEscrowWithdraw.escrow = event.address.toHex()
+    redeemableEscrowWithdraw.escrowAddress = event.address
+    
+    let iSale = getIsale(event.params.trust.toHex())
+
+    redeemableEscrowWithdraw.iSale = iSale
+    redeemableEscrowWithdraw.redeemable = event.params.redeemable.toHex()
+    
+    let token = getERC20(event.params.token, event.block)
+    redeemableEscrowWithdraw.tokenAddress = event.params.token
+    redeemableEscrowWithdraw.token = token.id
+    redeemableEscrowWithdraw.redeemableSupply = event.params.supply
+    redeemableEscrowWithdraw.tokenAmount = event.params.amount
+
+    redeemableEscrowWithdraw.save()
+
+    let withdraws = redeemableERC20ClaimEscrow.withdraws
+    withdraws.push(redeemableEscrowWithdraw.id)
+    redeemableERC20ClaimEscrow.withdraws = withdraws
+    
+    let redeemableEscrowWithdrawer = getRedeemableEscrowWithdrawer(event.address, event.params.withdrawer)
+
+    let rWithdraws = redeemableEscrowWithdrawer.withdraws
+    rWithdraws.push(redeemableEscrowWithdraw.id)
+    redeemableEscrowWithdrawer.withdraws = rWithdraws
+
+    redeemableEscrowWithdrawer.save()
+
+    let withdrawers = redeemableERC20ClaimEscrow.withdrawers
+    if(!withdrawers.includes(redeemableEscrowWithdrawer.id))
+        withdrawers.push(redeemableEscrowWithdrawer.id)
+    redeemableERC20ClaimEscrow.withdrawers = withdrawers
+    
+    redeemableERC20ClaimEscrow.save()
 }
 
 function getRedeemableERC20ClaimEscrow(address: string): RedeemableERC20ClaimEscrow {
@@ -178,7 +214,7 @@ function getRedeemableERC20ClaimEscrow(address: string): RedeemableERC20ClaimEsc
         redeemableERC20ClaimEscrow.pendingDepositorTokens = []
         redeemableERC20ClaimEscrow.supplyTokenDeposits = []
         redeemableERC20ClaimEscrow.depositors = []
-        redeemableERC20ClaimEscrow.withdraws = []
+        redeemableERC20ClaimEscrow.withdrawers = []
         redeemableERC20ClaimEscrow.save()
     }
     return redeemableERC20ClaimEscrow as RedeemableERC20ClaimEscrow
@@ -275,4 +311,17 @@ function getRedeemableEscrowSupplyTokenDeposit(sale: Address, escrow: Address, s
         RESDT.totalDeposited = ZERO_BI
     }
     return RESDT as RedeemableEscrowSupplyTokenDeposit
+}
+    
+function getRedeemableEscrowWithdrawer(escrow: Address, account: Address): RedeemableEscrowWithdrawer {
+    let redeemableEscrowWithdrawer = RedeemableEscrowWithdrawer.load(escrow.toHex() + " - " + account.toHex())
+    if(redeemableEscrowWithdrawer == null){
+        redeemableEscrowWithdrawer = new RedeemableEscrowWithdrawer(escrow.toHex() + " - " + account.toHex())
+        redeemableEscrowWithdrawer.address = account
+        redeemableEscrowWithdrawer.escrow = escrow.toHex()
+        redeemableEscrowWithdrawer.escrowAddress = escrow
+        redeemableEscrowWithdrawer.withdraws = []
+    }
+    
+    return redeemableEscrowWithdrawer as RedeemableEscrowWithdrawer
 }

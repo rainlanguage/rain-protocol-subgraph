@@ -1109,7 +1109,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       })) as FetchResult;
       const data = response.data.redeemableERC20ClaimEscrow;
 
-      expect(data.wwithdraws).deep.include(
+      expect(data.withdraws).deep.include(
         { id: withdrawId },
         `redeemableERC20ClaimEscrow does include the withdraw with ID "${withdrawId}"`
       );
@@ -1157,7 +1157,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const response = (await subgraph({
         query: query,
       })) as FetchResult;
-      const data = response.data.RedeemableEscrowWithdraw;
+      const data = response.data.redeemableEscrowWithdraw;
 
       expect(data.withdrawer).to.equals(
         depositor1,
