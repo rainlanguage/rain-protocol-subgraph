@@ -1635,7 +1635,6 @@ describe("Subgraph Tier Test", function () {
 
       const tierData = queryResponse.data.trust.contracts.tier;
 
-      console.log("tierData : ", JSON.stringify(tierData));
       expect(tierData.deployer).to.equals(zeroAddress);
       expect(tierData.address).to.equals(
         erc20BalanceTierIndepent.address.toLowerCase()

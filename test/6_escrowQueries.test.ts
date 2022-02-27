@@ -82,7 +82,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     await waitForSubgraphToBeSynced();
   });
 
-  describe.only("Escrow with succesfull Sale", function () {
+  describe("Escrow with succesfull Sale", function () {
     let totalDeposited = ethers.BigNumber.from("0");
 
     before("deploy fresh test contracts", async function () {
@@ -241,7 +241,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             redeemable {
               id
             }
@@ -283,7 +283,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         SaleStatus.Pending,
         `wrong sale status in redeemableEscrowPendingDeposit`
       );
-      expect(data.saleAddress).to.equals(
+      expect(data.iSaleAddress).to.equals(
         trustAddress,
         `trust address in response is NOT "${trustAddress}"`
       );
@@ -378,7 +378,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             escrow {
               id
             }
@@ -410,7 +410,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         SaleStatus.Pending,
         `wrong sale status`
       );
-      expect(data.saleAddress).to.equals(
+      expect(data.iSaleAddress).to.equals(
         trustAddress,
         `wrong sale address. Expected ${trustAddress}`
       );
@@ -625,7 +625,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             redeemable {
               id
             }
@@ -671,7 +671,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.saleAddress).to.equals(trustAddress, `wrong Sale address`);
+      expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
 
       expect(data.redeemable.id).to.equals(
         redeemableAddress,
@@ -723,7 +723,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             escrow {
               id
             }
@@ -755,7 +755,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.saleAddress).to.equals(trustAddress, `wrong Sale address`);
+      expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
 
       expect(data.escrow.id).to.equals(
         claimEscrowAddress,
@@ -951,7 +951,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             redeemable {
               id
             }
@@ -997,7 +997,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.saleAddress).to.equals(trustAddress, `wrong Sale address`);
+      expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
 
       expect(data.redeemable.id).to.equals(
         redeemableAddress,
@@ -1141,14 +1141,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
               id
             }
             escrowAddress
+            iSaleAddress
             iSale {
               saleStatus
-              ... on Trust{
-                id
-              }
-              ... on Sale{
-                id
-              }
             }
             redeemable {
               id
@@ -1191,11 +1186,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.iSale.id).to.equals(
+      expect(data.iSaleAddress).to.equals(
         trustAddress,
         `wrong sale address
         expected  ${trustAddress}
-        got       ${data.saleAddress}`
+        got       ${data.iSaleAddress}`
       );
 
       expect(data.redeemable.id).to.equals(
@@ -1551,11 +1546,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       const depositId = transaction.hash.toLowerCase();
 
-      const supplyTokenDepositId = `${trustAddress}-${claimEscrowAddress}-${redeemableSupply}-${claimableTokenAddress}`;
+      const supplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
       const query = `
         {
-          redeemableEscrowSupplyTokenDeposit (id: ${supplyTokenDepositId}){
+          redeemableEscrowSupplyTokenDeposit (id: "${supplyTokenDepositId}"){
             deposits {
               id
             }
@@ -1587,7 +1582,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           undepositAmount
         );
 
-      totalDeposited = totalDeposited.add(undepositAmount);
+      totalDeposited = totalDeposited.sub(undepositAmount);
 
       await waitForSubgraphToBeSynced();
 
@@ -1619,7 +1614,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         claimEscrow
       );
 
-      const supplyTokenDepositId = `${trustAddress}-${claimEscrowAddress}-${redeemableSupply}-${claimableTokenAddress}`;
+      const supplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
       const query = `
         {
@@ -1683,7 +1678,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             token {
               id
             }
@@ -1710,10 +1705,10 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       // Sale expected values
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Pending,
+        SaleStatus.Fail,
         `wrong sale status in redeemableEscrowPendingDeposit`
       );
-      expect(data.saleAddress).to.equals(
+      expect(data.iSaleAddress).to.equals(
         trustAddress,
         `trust address in response is NOT "${trustAddress}"`
       );
@@ -1735,7 +1730,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         got       ${data.redeemableSupply}`
       );
 
-      expect(data.amount).to.equals(
+      expect(data.tokenAmount).to.equals(
         undepositAmount,
         `wrong undeposit amount in response
         expected  ${undepositAmount}

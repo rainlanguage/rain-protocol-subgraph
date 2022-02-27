@@ -38,7 +38,7 @@ type RedeemableEscrowWithdrawer @entity {
 type RedeemableEscrowPendingDepositorToken @entity {
     id: ID! #{sale}-{escrow}-{depositor}-{token}
     iSale: Isale
-    saleAddress: Bytes! #sale from the id
+    iSaleAddress: Bytes! #sale from the id
     escrow: RedeemableERC20ClaimEscrow!
     escrowAddress: Bytes!
     depositor: RedeemableEscrowDepositor!
@@ -56,7 +56,7 @@ type RedeemableEscrowPendingDepositorToken @entity {
 type RedeemableEscrowSupplyTokenDeposit @entity {
     id: ID! #{sale}-{escrow}-{supply}-{token}
     iSale: Isale
-    saleAddress: Bytes! #sale from the id
+    iSaleAddress: Bytes! #sale from the id
     escrow: RedeemableERC20ClaimEscrow!
     escrowAddress: Bytes!
     deposits: [RedeemableEscrowDeposit!]
@@ -79,7 +79,7 @@ type RedeemableEscrowPendingDeposit @entity {
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
     iSale: Isale
-    saleAddress: Bytes! #from PendingDeposit.trust
+    iSaleAddress: Bytes! #from PendingDeposit.trust
     redeemable: RedeemableERC20
     token: ERC20
     tokenAddress: Bytes!
@@ -94,7 +94,7 @@ type RedeemableEscrowDeposit @entity {
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
     iSale: Isale
-    saleAddress: Bytes! #from Deposit.trust
+    iSaleAddress: Bytes! #from Deposit.trust
     redeemable: RedeemableERC20
     token: ERC20!
     tokenAddress: Bytes!
@@ -109,7 +109,7 @@ type RedeemableEscrowUndeposit @entity {
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
     iSale: Isale
-    saleAddress: Bytes! #from Deposit.trust
+    iSaleAddress: Bytes!
     token: ERC20! #linked by Undeposit.token
     tokenAddress: Bytes! #from Undeposit.token
     redeemableSupply: BigInt! #from Undeposit.supply
@@ -123,9 +123,17 @@ type RedeemableEscrowWithdraw @entity {
     escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
     escrowAddress: Bytes! #escrow contract that emitted the event
     iSale: Isale
+    iSaleAddress: Bytes!
     redeemable: RedeemableERC20! #linked by Withdraw.redeemable
     token: ERC20! #Linked by Withdraw.token
     tokenAddress: Bytes! #from Withdraw.token
     redeemableSupply: BigInt! #from Withdraw.supply
     tokenAmount: BigInt! #from Withdraw.amount
 }
+
+type UnknownSale implements Isale @entity {
+    id: ID!
+    address: Bytes
+    saleStatus: Int
+}
+

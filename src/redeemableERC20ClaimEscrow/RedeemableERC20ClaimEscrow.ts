@@ -1,6 +1,6 @@
 import { Address, ethereum, BigInt, log } from "@graphprotocol/graph-ts"
 import { Deposit, PendingDeposit, Undeposit, Withdraw} from "../../generated/RedeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow"
-import { ERC20, RedeemableERC20, RedeemableERC20ClaimEscrow, RedeemableEscrowDeposit, RedeemableEscrowDepositor, RedeemableEscrowPendingDeposit, RedeemableEscrowPendingDepositorToken, RedeemableEscrowSupplyTokenDeposit, RedeemableEscrowWithdraw, RedeemableEscrowWithdrawer, Sale, Trust} from "../../generated/schema"
+import { ERC20, RedeemableERC20, RedeemableERC20ClaimEscrow, RedeemableEscrowDeposit, RedeemableEscrowDepositor, RedeemableEscrowPendingDeposit, RedeemableEscrowPendingDepositorToken, RedeemableEscrowSupplyTokenDeposit, RedeemableEscrowUndeposit, RedeemableEscrowWithdraw, RedeemableEscrowWithdrawer, Sale, Trust, UnknownSale} from "../../generated/schema"
 import { ERC20 as ERC20Contract} from "../../generated/RedeemableERC20ClaimEscrow/ERC20"
 import { SaleStatus, ZERO_ADDRESS, ZERO_BI } from "../utils"
 import { Trust as TrustContract } from "../../generated/RedeemableERC20ClaimEscrow/Trust"
@@ -11,7 +11,7 @@ export function handleDeposit(event: Deposit): void {
     redeemableEscrowDeposit.depositorAddress = event.params.depositor
     redeemableEscrowDeposit.escrow = redeemableERC20ClaimEscrow.id
     redeemableEscrowDeposit.escrowAddress = event.address
-    redeemableEscrowDeposit.saleAddress = event.params.trust
+    redeemableEscrowDeposit.iSaleAddress = event.params.trust
     redeemableEscrowDeposit.redeemableSupply = event.params.supply
     redeemableEscrowDeposit.tokenAmount = event.params.amount
 
@@ -97,7 +97,7 @@ export function handlePendingDeposit(event: PendingDeposit): void {
     redeemableEscrowPendingDeposit.depositorAddress = event.params.sender
     redeemableEscrowPendingDeposit.escrow = redeemableERC20ClaimEscrow.id
     redeemableEscrowPendingDeposit.escrowAddress = event.address
-    redeemableEscrowPendingDeposit.saleAddress = event.params.trust
+    redeemableEscrowPendingDeposit.iSaleAddress = event.params.trust
     redeemableEscrowPendingDeposit.amount = event.params.amount
 
     let redeemableERC20 = RedeemableERC20.load(event.params.redeemable.toHex())
@@ -158,7 +158,41 @@ export function handlePendingDeposit(event: PendingDeposit): void {
 
 
 export function handleUndeposit(event: Undeposit): void {
-    // let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
+    let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex())
+
+    let redeemableEscrowUndeposit = new RedeemableEscrowUndeposit(event.transaction.hash.toHex())
+    redeemableEscrowUndeposit.sender = event.params.sender
+    redeemableEscrowUndeposit.escrow = event.address.toHex() 
+    redeemableEscrowUndeposit.escrowAddress = event.address
+    redeemableEscrowUndeposit.iSaleAddress = event.params.trust
+
+    let iSale = getIsale(event.params.trust.toHex())
+    redeemableEscrowUndeposit.iSale = iSale
+
+    let token = getERC20(event.params.token, event.block)
+    redeemableEscrowUndeposit.token = token.id
+    redeemableEscrowUndeposit.tokenAddress = event.params.token
+    redeemableEscrowUndeposit.redeemableSupply = event.params.supply
+    redeemableEscrowUndeposit.tokenAmount = event.params.amount
+
+    redeemableEscrowUndeposit.save()
+
+    let undeposits = redeemableERC20ClaimEscrow.undeposits
+    undeposits.push(redeemableEscrowUndeposit.id)
+    redeemableERC20ClaimEscrow.undeposits = undeposits
+
+    redeemableERC20ClaimEscrow.save()
+
+    let depositor = getRedeemableEscrowDepositor(event.address.toHex(), event.params.sender)
+    let dUndeposits = depositor.undeposits
+    dUndeposits.push(redeemableEscrowUndeposit.id)
+    depositor.undeposits = dUndeposits
+
+    depositor.save()
+
+    let resdt = getRedeemableEscrowSupplyTokenDeposit(Address.fromString(iSale), event.address, event.params.supply, event.params.token)
+    resdt.totalDeposited = resdt.totalDeposited.minus(event.params.amount)
+    resdt.save()
 }
 
 export function handleWithdraw(event: Withdraw): void {
@@ -168,10 +202,11 @@ export function handleWithdraw(event: Withdraw): void {
     redeemableEscrowWithdraw.withdrawer = event.params.withdrawer
     redeemableEscrowWithdraw.escrow = event.address.toHex()
     redeemableEscrowWithdraw.escrowAddress = event.address
+    redeemableEscrowWithdraw.iSaleAddress = event.params.trust
 
     let iSale = getIsale(event.params.trust.toHex())
-
     redeemableEscrowWithdraw.iSale = iSale
+
     redeemableEscrowWithdraw.redeemable = event.params.redeemable.toHex()
     
     let token = getERC20(event.params.token, event.block)
@@ -277,7 +312,14 @@ function getIsale(iSale: string): string {
         sale.save()
         return sale.id
     }
-    return ZERO_ADDRESS
+    let unknownSale = UnknownSale.load(iSale)
+    if(unknownSale == null){
+        unknownSale = new UnknownSale(iSale)
+        unknownSale.address = Address.fromString(iSale)
+    }
+    unknownSale.saleStatus = contract.saleStatus()
+    unknownSale.save()
+    return unknownSale.id
 }
 
 
@@ -286,7 +328,7 @@ function getRedeemableEscrowPendingDepositorToken(sale: Address, escrow: Address
     if(REPDT == null){
         REPDT = new RedeemableEscrowPendingDepositorToken(sale.toHex() + " - " + escrow.toHex() + " - " + depositor.toHex() + " - " + token.toHex())
         REPDT.iSale = sale.toHex()
-        REPDT.saleAddress = sale
+        REPDT.iSaleAddress = sale
         REPDT.escrow = escrow.toHex()
         REPDT.escrowAddress = escrow
         REPDT.depositor = escrow.toHex() + " - " + depositor.toHex()
@@ -305,7 +347,7 @@ function getRedeemableEscrowSupplyTokenDeposit(sale: Address, escrow: Address, s
     if(RESDT == null){
         RESDT = new RedeemableEscrowSupplyTokenDeposit(sale.toHex() + " - " + escrow.toHex() + " - " + supply.toString() + " - " + token.toHex())
         RESDT.iSale = sale.toHex()
-        RESDT.saleAddress = sale
+        RESDT.iSaleAddress = sale
         RESDT.escrow = escrow.toHex()
         RESDT.escrowAddress = escrow
         RESDT.deposits = []
