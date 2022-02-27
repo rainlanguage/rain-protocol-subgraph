@@ -168,7 +168,7 @@ export function handleWithdraw(event: Withdraw): void {
     redeemableEscrowWithdraw.withdrawer = event.params.withdrawer
     redeemableEscrowWithdraw.escrow = event.address.toHex()
     redeemableEscrowWithdraw.escrowAddress = event.address
-    
+
     let iSale = getIsale(event.params.trust.toHex())
 
     redeemableEscrowWithdraw.iSale = iSale
@@ -200,6 +200,10 @@ export function handleWithdraw(event: Withdraw): void {
     redeemableERC20ClaimEscrow.withdrawers = withdrawers
     
     redeemableERC20ClaimEscrow.save()
+
+    let resdt = getRedeemableEscrowSupplyTokenDeposit(Address.fromString(iSale), event.address, event.params.supply, event.params.token)
+    resdt.totalDeposited = resdt.totalDeposited.minus(event.params.amount)
+    resdt.save()
 }
 
 function getRedeemableERC20ClaimEscrow(address: string): RedeemableERC20ClaimEscrow {

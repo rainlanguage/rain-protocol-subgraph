@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect, assert } from "chai";
@@ -1085,7 +1086,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           redeemableSupply
         );
 
-      totalDeposited = totalDeposited.sub(amountWithdrawn);
+      const { amount: Withdrawn } = await Util.getEventArgs(transaction, "Withdraw", claimEscrow);
+
+      totalDeposited = totalDeposited.sub(Withdrawn);
 
       await waitForSubgraphToBeSynced();
 
@@ -1140,8 +1143,13 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             escrowAddress
             iSale {
               saleStatus
+              ... on Trust{
+                id
+              }
+              ... on Sale{
+                id
+              }
             }
-            saleAddress
             redeemable {
               id
             }
@@ -1154,9 +1162,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           }
         }
       `;
+
       const response = (await subgraph({
         query: query,
       })) as FetchResult;
+
       const data = response.data.redeemableEscrowWithdraw;
 
       expect(data.withdrawer).to.equals(
@@ -1181,7 +1191,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.saleAddress).to.equals(
+      expect(data.iSale.id).to.equals(
         trustAddress,
         `wrong sale address
         expected  ${trustAddress}
