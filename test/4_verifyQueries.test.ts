@@ -29,6 +29,12 @@ import {
   verifyFactory,
 } from "./1_trustQueries.test";
 
+const enum RequestType {
+  APPROVE,
+  BAN,
+  REMOVE,
+}
+
 const enum RequestStatus {
   NONE,
   REQUEST_APPROVE,
@@ -339,10 +345,12 @@ describe("Verify Factory - Queries", function () {
     });
 
     it("should query the VerifyApprove after an Approve", async function () {
+      const infoApprove = {
+        account: signer1.address,
+        data: evidenceApprove,
+      };
       // Admin approve the signer1
-      transaction = await verify
-        .connect(admin)
-        .approve(signer1.address, evidenceApprove);
+      transaction = await verify.connect(admin).approve([infoApprove]);
 
       // Increase the counter by 1
       eventCounter++;
@@ -507,8 +515,12 @@ describe("Verify Factory - Queries", function () {
 
     it("should query the VerifyRequestRemove after a RequestRemove", async function () {
       // signer2 requestAdd and admin approve
+      const infoApprove = {
+        account: signer2.address,
+        data: evidenceApprove,
+      };
       await verify.connect(signer2).add(evidenceEmpty);
-      await verify.connect(admin).approve(signer2.address, evidenceApprove);
+      await verify.connect(admin).approve([infoApprove]);
 
       // This create 2 new verifyEvents that were already called
       // Then, increase the counter by 2
@@ -517,9 +529,13 @@ describe("Verify Factory - Queries", function () {
       eventsSigner2 += 2;
 
       // signer1 requests that signer2 be removed
+      const infoRemove = {
+        account: signer2.address,
+        data: evidenceRemove,
+      };
       transaction = await verify
         .connect(signer1)
-        .requestRemove(signer2.address, evidenceRemove);
+        .request(RequestType.REMOVE, [infoRemove]);
       // Increase the counter by 1
       eventCounter++;
 
@@ -673,9 +689,11 @@ describe("Verify Factory - Queries", function () {
 
     it("should query the VerifyRemove after a Remove", async function () {
       // Admin remove the signer2
-      transaction = await verify
-        .connect(admin)
-        .remove(signer2.address, evidenceRemove);
+      const infoRemove = {
+        account: signer2.address,
+        data: evidenceRemove,
+      };
+      transaction = await verify.connect(admin).remove([infoRemove]);
 
       // Increase the counter by 1
       eventCounter++;
@@ -832,16 +850,25 @@ describe("Verify Factory - Queries", function () {
 
     it("should query the VerifyRequestBan after a RequestBan", async function () {
       // signer2 request to be added again and admin approve
+      const infoAdd = {
+        account: signer2.address,
+        data: evidenceEmpty,
+      };
       await verify.connect(signer2).add(evidenceEmpty);
-      await verify.connect(admin).approve(signer2.address, evidenceEmpty);
+      await verify.connect(admin).approve([infoAdd]);
       // Then, increase the counter by 2
       eventCounter += 2;
       eventsAdmin++;
       eventsSigner2 += 2;
+
       // signer1 request signer2 to be banned
+      const infoBan = {
+        account: signer2.address,
+        data: evidenceBan,
+      };
       transaction = await verify
         .connect(signer1)
-        .requestBan(signer2.address, evidenceBan);
+        .request(RequestType.BAN, [infoBan]);
 
       // Increase the counter by 1
       eventCounter++;
@@ -980,9 +1007,11 @@ describe("Verify Factory - Queries", function () {
 
     it("should query the VerifyBan after a Ban", async function () {
       // Admin ban the signer2
-      transaction = await verify
-        .connect(admin)
-        .ban(signer2.address, evidenceBan);
+      const infoBan = {
+        account: signer2.address,
+        data: evidenceBan,
+      };
+      transaction = await verify.connect(admin).ban([infoBan]);
 
       // Increase the counter by 1
       eventCounter++;

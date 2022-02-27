@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect } from "chai";
@@ -115,6 +114,12 @@ const enum Opcode {
   UPDATE_BLOCKS_FOR_TIER_RANGE,
   SELECT_LTE,
   ACCOUNT,
+}
+
+const enum RequestType {
+  APPROVE,
+  BAN,
+  REMOVE,
 }
 
 let trust: Trust,
@@ -361,8 +366,17 @@ describe("Subgraph Tier Test", function () {
 
     it("should update the Verify contract in different VerifyTiers after a Approve", async function () {
       // Admin approve the users
-      await verify.connect(admin).approve(signer1.address, evidenceData);
-      await verify.connect(admin).approve(signer2.address, evidenceData);
+      const infoApproves = [
+        {
+          account: signer1.address,
+          data: evidenceData,
+        },
+        {
+          account: signer2.address,
+          data: evidenceData,
+        },
+      ];
+      await verify.connect(admin).approve(infoApproves);
 
       const signer1Expected = {
         id: signer1Id,
@@ -417,9 +431,11 @@ describe("Subgraph Tier Test", function () {
 
     it("should update the Verify contract in different VerifyTiers after a RequestRemove", async function () {
       // signer1 requests that signer2 be removed
-      await verify
-        .connect(signer1)
-        .requestRemove(signer2.address, evidenceData);
+      const infoRemove = {
+        account: signer2.address,
+        data: evidenceData,
+      };
+      await verify.connect(signer1).request(RequestType.REMOVE, [infoRemove]);
 
       const signer1Expected = {
         id: signer1Id,
@@ -474,7 +490,11 @@ describe("Subgraph Tier Test", function () {
 
     it("should update the Verify contract in different VerifyTiers after a Remove", async function () {
       // Admin remove the signer2
-      await verify.connect(admin).remove(signer2.address, evidenceData);
+      const infoRemove = {
+        account: signer2.address,
+        data: evidenceData,
+      };
+      await verify.connect(admin).remove([infoRemove]);
 
       const signer2Expected = {
         id: signer2Id,
@@ -521,11 +541,19 @@ describe("Subgraph Tier Test", function () {
 
     it("should update the Verify contract in different VerifyTiers after a RequestBan", async function () {
       // Add again signer2 to request ban
+      const infoApprove = {
+        account: signer2.address,
+        data: evidenceData,
+      };
       await verify.connect(signer2).add(evidenceData);
-      await verify.connect(admin).approve(signer2.address, evidenceData);
+      await verify.connect(admin).approve([infoApprove]);
 
       // signer1 request signer2 to be banned
-      await verify.connect(signer1).requestBan(signer2.address, evidenceData);
+      const infoBan = {
+        account: signer2.address,
+        data: evidenceData,
+      };
+      await verify.connect(signer1).request(RequestType.BAN, [infoBan]);
 
       const signer2Expected = {
         id: signer2Id,
@@ -572,7 +600,11 @@ describe("Subgraph Tier Test", function () {
 
     it("should update the Verify contract in different VerifyTiers after a Ban", async function () {
       // Admin ban the signer2
-      await verify.connect(admin).ban(signer2.address, evidenceData);
+      const infoBan = {
+        account: signer2.address,
+        data: evidenceData,
+      };
+      await verify.connect(admin).ban([infoBan]);
 
       const signer2Expected = {
         id: signer2Id,
@@ -1293,7 +1325,11 @@ describe("Subgraph Tier Test", function () {
 
       expect(data.id).to.equals(transaction.hash.toLowerCase());
       expect(data.stackIndex).to.equals(stateExpected.stackIndex);
-      expect(data.stack).to.deep.equals(stateExpected.stack.map((element: BigNumber) => parseInt(element._hex).toString() ));
+      expect(data.stack).to.deep.equals(
+        stateExpected.stack.map((element: BigNumber) =>
+          parseInt(element._hex).toString()
+        )
+      );
       // expect(data.stack).to.eql(stateExpected.stack);
       // expect(data.sources).to.eql(stateExpected.sources);
       // expect(data.constants).to.eql(stateExpected.constans);
