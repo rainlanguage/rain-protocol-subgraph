@@ -81,8 +81,8 @@ type DistributionProgress @entity {
     redeemInit: BigInt! #Trust.getDistributionProgress() => uint256 redeemInit
     minimumRaise: BigInt #minimumCreatorRaise + redeemInit + Trust.SeedERC20.seederFee
     amountRaised: BigInt # = poolReserveBalance - reserveInit
-    percentRaised: BigDecimal # = amountRaised / minimumRaise
-    percentAvailable: BigDecimal # = poolTokenBalance / RedeemableERC20.totalSupply
+    percentRaised: BigDecimal # = amountRaised * 100  / minimumRaise
+    percentAvailable: BigDecimal # = poolTokenBalance * 100 / RedeemableERC20.totalSupply
 }
 
 # DutchAuction entity

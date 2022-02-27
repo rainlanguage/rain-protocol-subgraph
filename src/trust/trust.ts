@@ -54,6 +54,15 @@ export function handleEndDutchAuction(event: EndDutchAuction): void {
         
     }
     distributionProgress.finalBalance = event.params.finalBalance
+    distributionProgress.poolReserveBalance = ZERO_BI
+    distributionProgress.poolRedeemableBalance = ZERO_BI
+
+    let contracts = Contract.load(event.address.toHex())
+    let pool = Pool.load(contracts.pool)
+    pool.poolReserveBalance = ZERO_BI
+    pool.poolRedeemableBalance = ZERO_BI
+    pool.save()
+
     distributionProgress.save()
 }
 
@@ -131,6 +140,8 @@ export function handleStartDutchAuction(event: StartDutchAuction): void {
     distributionProgress.distributionStatus = DistributionStatus.Trading
     distributionProgress.distributionStartBlock = event.block.number
     distributionProgress.distributionEndBlock = event.params.finalAuctionBlock
+    // distributionProgress.percentRaised = ZERO_BD
+    // distributionProgress.percentAvailable = ZERO_BD
     distributionProgress.save()
 
     let contracts = Contract.load(trustAddress.toHex())

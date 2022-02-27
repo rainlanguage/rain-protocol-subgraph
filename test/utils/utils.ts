@@ -1,8 +1,8 @@
-/* eslint-disable prettier/prettier */
 import {
   Contract,
   Signer,
   BigNumber,
+  FixedNumber,
   ContractTransaction,
   BytesLike,
   Overrides,
@@ -134,6 +134,20 @@ interface BasicArtifact {
 export const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros).toString()
 ); // [1,2,3,4,5,6,7,8]
+
+/**
+ * Create a fixed number with ethers. This intend to reduce the code and
+ * manage the same format different to default one used by ethers
+ * @param value - value to convert to fixed number
+ * @param format - (optional) fixed number format. By default is fixed128x32
+ * @returns a new fixedNumber object that represent the value
+ */
+export const fixedNumber = (
+  value: BigNumber | string | number,
+  format = "fixed128x32"
+): FixedNumber => {
+  return ethers.FixedNumber.from(value, format);
+};
 
 // Execute Child Processes
 const srcDir = path.join(__dirname, "..");
@@ -835,10 +849,11 @@ export const uint8ArrayToHex = (array: Uint8Array): string => {
   let str = "0x";
   array.forEach((element) => {
     const hex = parseInt(element.toString(), 10).toString(16);
-    if(hex.length < 2)
+    if (hex.length < 2) {
       str = str + ("0" + hex);
-    else
+    } else {
       str = str + hex;
+    }
   });
   return str;
 };

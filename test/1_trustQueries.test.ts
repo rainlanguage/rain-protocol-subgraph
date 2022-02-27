@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect, assert } from "chai";
 import { ethers } from "hardhat";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
 import * as path from "path";
@@ -1912,15 +1912,15 @@ describe("Subgraph Trusts Test", function () {
       // poolReserveBalance - reserveInit
       const amountRaisedExpected = poolReserveBalanceExpected.sub(reserveInit);
 
-      // amountRaised / minimumRaise
-      const percentRaisedExpected = amountRaisedExpected.div(
-        minimumCreatorRaise.add(redeemInit).add(seederFee)
-      );
+      // percentRaised = amountRaised / minimumRaise
+      const percentRaisedExpected = amountRaisedExpected
+        .mul(100)
+        .div(minimumCreatorRaise.add(redeemInit).add(seederFee));
 
-      // poolRedeemableBalance / RedeemableERC20.totalSupply
-      const percentAvailableExpected = poolRedeemableBalanceExpected.div(
-        redeemableERC20Config.initialSupply
-      );
+      // percentAvailable = poolRedeemableBalance / RedeemableERC20.totalSupply
+      const percentAvailableExpected = poolRedeemableBalanceExpected
+        .mul(100)
+        .div(redeemableERC20Config.initialSupply);
 
       const query = `
         {
@@ -1944,8 +1944,10 @@ describe("Subgraph Trusts Test", function () {
         poolRedeemableBalanceExpected
       );
       expect(data.amountRaised).to.equals(amountRaisedExpected);
-      expect(data.percentRaised).to.equals(percentRaisedExpected);
-      expect(data.percentAvailable).to.equals(percentAvailableExpected);
+      expect(data.percentRaised).to.equals(percentRaisedExpected.toString());
+      expect(data.percentAvailable).to.equals(
+        percentAvailableExpected.toString()
+      );
     });
 
     it("should query the Pool information correclty after StartDutchAuction", async function () {
@@ -2104,7 +2106,6 @@ describe("Subgraph Trusts Test", function () {
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
       // Wait for sync
-
       await waitForSubgraphToBeSynced();
 
       const query = `
@@ -2241,22 +2242,16 @@ describe("Subgraph Trusts Test", function () {
       const amountRaisedExpected = poolReserveBalanceExpected.sub(reserveInit);
 
       // Using fixed numbers
-      const amountRaisedFN = ethers.FixedNumber.from(
-        amountRaisedExpected,
-        "fixed128x32"
-      );
-      const minimumRaise = ethers.FixedNumber.from(
-        minimumCreatorRaise.add(redeemInit).add(seederFee),
-        "fixed128x32"
+      const amountRaisedFN = Util.fixedNumber(amountRaisedExpected);
+      const minimumRaise = Util.fixedNumber(
+        minimumCreatorRaise.add(redeemInit).add(seederFee)
       );
 
-      const poolRedeemableBalanceFN = ethers.FixedNumber.from(
-        poolRedeemableBalanceExpected,
-        "fixed128x32"
+      const poolRedeemableBalanceFN = Util.fixedNumber(
+        poolRedeemableBalanceExpected
       );
-      const redeemableInitSupplyFN = ethers.FixedNumber.from(
-        redeemableERC20Config.initialSupply,
-        "fixed128x32"
+      const redeemableInitSupplyFN = Util.fixedNumber(
+        redeemableERC20Config.initialSupply
       );
 
       // percentRaised = amountRaised / minimumRaise
@@ -2343,7 +2338,7 @@ describe("Subgraph Trusts Test", function () {
       expect(data.tokenBalance).to.equals(balanceExpected);
     });
 
-    it("should query correclty after a few Swaps", async function () {
+    it("should query the Pool correclty after a few Swaps", async function () {
       // Function helper
       const swapReserveForTokens = async (
         signer: SignerWithAddress,
@@ -2417,7 +2412,7 @@ describe("Subgraph Trusts Test", function () {
       );
     });
 
-    it("should query distributionStatus as TradingCanEnd", async function () {
+    it("should update the DutchAuction entity after endDutchAuction is called", async function () {
       // Waiting until the block + 1 where the Trust can end distribution
       await Util.createEmptyBlock(
         tradStartBlock +
@@ -2426,28 +2421,6 @@ describe("Subgraph Trusts Test", function () {
           (await ethers.provider.getBlockNumber())
       );
 
-      await waitForSubgraphToBeSynced();
-
-      const query = `
-        {
-          distributionProgress(id: "${trust.address.toLowerCase()}"){
-            distributionStatus
-          }
-        }
-      `;
-
-      const queryResponse = await subgraph({
-        query: query,
-      });
-      const data = queryResponse.data.distributionProgress;
-
-      // I'm wondering about how we can get this value
-      expect(data.distributionStatus).to.be.equals(
-        DistributionStatus.TradingCanEnd
-      );
-    });
-
-    it("should update the DutchAuction entity after endDutchAuction is called", async function () {
       // Here should be able to get if it a succes of failed distribution
 
       // Arbitrary user: Use `signer1` to ends rase
@@ -2488,26 +2461,44 @@ describe("Subgraph Trusts Test", function () {
     it("should update the DistributionProgress after endDutchAuction", async function () {
       // Here should be able to get if it a succes of failed distribution
 
-      const poolReserveBalanceExpected = await reserve.balanceOf(
-        bPoolContract.address // 0
+      // pool Balances. After endDutchAuction should be zero
+      const poolReserveBalanceExpected = "0";
+      const poolRedeemableBalanceExpected = "0";
+
+      const { finalBalance, poolDust } = await Util.getEventArgs(
+        transaction,
+        "EndDutchAuction",
+        trust
       );
-      const poolRedeemableBalanceExpected =
-        await redeemableERC20Contract.balanceOf(
-          bPoolContract.address // 0
-        );
 
-      // poolReserveBalance
-      const amountRaisedExpected = poolReserveBalanceExpected;
+      // amountRaised should stay frozen, equal before calling endDutchAuction
+      // That value it is the finalBalance in trust + poolDust trapped on balancerPool - reserveInit
+      const amountRaisedExpected = ethers.BigNumber.from(finalBalance)
+        .add(poolDust)
+        .sub(reserveInit);
 
-      // amountRaised / minimumRaise
-      const percentRaisedExpected = amountRaisedExpected.div(
+      // Using Fixed Numbers
+      const amountRaisedFN = Util.fixedNumber(amountRaisedExpected);
+      const minimumRaiseFN = Util.fixedNumber(
         minimumCreatorRaise.add(redeemInit).add(seederFee)
       );
 
-      // poolRedeemableBalance / RedeemableERC20.totalSupply
-      const percentAvailableExpected = poolRedeemableBalanceExpected.div(
+      const poolRedeemableBalanceFN = Util.fixedNumber(
+        poolRedeemableBalanceExpected
+      );
+      const redeemableSupplyFN = Util.fixedNumber(
         await redeemableERC20Contract.totalSupply()
       );
+
+      // percentRaised = amountRaised / minimumRaise
+      const percentRaisedExpected = amountRaisedFN
+        .mulUnsafe(Util.oneHundredFN)
+        .divUnsafe(minimumRaiseFN);
+
+      // poolRedeemableBalance / RedeemableERC20.totalSupply
+      const percentAvailableExpected = poolRedeemableBalanceFN
+        .mulUnsafe(Util.oneHundredFN)
+        .divUnsafe(redeemableSupplyFN);
 
       const query = `
         {
@@ -2534,9 +2525,41 @@ describe("Subgraph Trusts Test", function () {
         poolRedeemableBalanceExpected
       );
 
-      expect(data.amountRaised).to.equals(amountRaisedExpected);
-      expect(data.percentRaised).to.equals(percentRaisedExpected);
-      expect(data.percentAvailable).to.equals(percentAvailableExpected);
+      expect(data.amountRaised).to.equals(
+        amountRaisedExpected,
+        `wrong amountRaised: should be frozen after endDutchAuction`
+      );
+      expect(data.percentRaised).to.equals(percentRaisedExpected.toString());
+      expect(data.percentAvailable).to.equals(
+        percentAvailableExpected.toString()
+      );
+    });
+
+    it("should update the Pool after endDutchAuction", async function () {
+      // pool Balances. After endDutchAuction should be zero
+      const poolReserveBalanceExpected = "0";
+      const poolRedeemableBalanceExpected = "0";
+
+      const query = `
+        {
+          pool (id: "${bPoolContract.address.toLowerCase()}") {
+            poolReserveBalance
+            poolRedeemableBalance
+          }
+        }
+      `;
+
+      // Create Subgraph Connection
+      const queryResponse = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const data = queryResponse.data.pool;
+
+      expect(data.poolReserveBalance).to.equals(poolReserveBalanceExpected);
+      expect(data.poolRedeemableBalance).to.equals(
+        poolRedeemableBalanceExpected
+      );
     });
 
     it("should query Seeder Holder after pull the SeedERC20 correctly", async function () {
