@@ -21,6 +21,7 @@ import seedERC20Json from "@beehiveinnovation/rain-protocol/artifacts/contracts/
 import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
 import bPoolFeeEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/BPoolFeeEscrow.sol/BPoolFeeEscrow.json";
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
+import noticeBoardJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/noticeboard/NoticeBoard.sol/NoticeBoard.json";
 
 import erc20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
 import erc20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
@@ -59,6 +60,7 @@ import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typecha
 import { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
 import { BPoolFeeEscrow } from "@beehiveinnovation/rain-protocol/typechain/BPoolFeeEscrow";
 import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
+import { NoticeBoard } from "@beehiveinnovation/rain-protocol/typechain/NoticeBoard";
 
 // Should update path after a new commit
 import erc721BalanceTierFactoryJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTierFactory.sol/ERC721BalanceTierFactory.json";
@@ -92,6 +94,7 @@ let minimumTier: Tier,
 
 // Export Factories
 export let subgraph: ApolloFetch,
+  noticeBoard: NoticeBoard,
   seedERC20Factory: SeedERC20Factory,
   redeemableERC20Factory: RedeemableERC20Factory,
   trustFactory: TrustFactory,
@@ -132,6 +135,10 @@ before(async function () {
   recipient = signers[6];
   feeRecipient = signers[7];
   admin = signers[9];
+
+  // Verify factory
+  noticeBoard = (await deploy(noticeBoardJson, deployer, [])) as NoticeBoard;
+  const noticeBoardBlock = noticeBoard.deployTransaction.blockNumber;
 
   [crpFactory, bFactory] = (await Util.balancerDeploy(deployer)) as [
     CRPFactory,
@@ -241,6 +248,9 @@ before(async function () {
   const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
 
   // Saving addresses and individuals blocks to index
+  configLocal.noticeBoard = noticeBoard.address;
+  configLocal.noticeBoardBlock = noticeBoardBlock;
+
   configLocal.factory = trustFactory.address;
   configLocal.startBlock = currentBlock;
 
@@ -294,7 +304,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  it("should get all the contracts from the Trust Construction Event", async function () {
+  xit("should get all the contracts from the Trust Construction Event", async function () {
     const queryResponse = await subgraph({
       query: getFactories(trustFactory.address.toLowerCase()),
     });
@@ -314,6 +324,45 @@ describe("Subgraph Trusts Test", function () {
     expect(factories.bPoolFeeEscrow).to.equals(
       bPoolFeeEscrow.address.toLowerCase()
     );
+  });
+
+  it("should get Notice from NoticeBoard correctly", async function () {
+    const notices = [
+      {
+        subject: Util.zeroAddress,
+        data: "0x01",
+      },
+    ];
+
+    transaction = await noticeBoard.connect(signer2).createNotices(notices);
+
+    const noticeId = transaction.hash.toLowerCase();
+    const [deployBlock, deployTime] = await getTxTimeblock(transaction);
+
+    await waitForSubgraphToBeSynced();
+
+    const query = `
+      {
+        notice (id: "${noticeId}") {
+          sender
+          subject
+          data
+          deployBlock
+          deployTimestamp
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query: query,
+    })) as FetchResult;
+    const data = queryResponse.data.notice;
+
+    expect(data.sender).to.equals(signer2.address.toLowerCase());
+    expect(data.subject).to.equals(Util.zeroAddress.toLowerCase());
+    expect(data.data).to.equals("0x01");
+    expect(data.deployBlock).to.equals(deployBlock.toString());
+    expect(data.deployTimestamp).to.equals(deployTime.toString());
   });
 
   describe("Trust happy path queries", function () {
@@ -1185,49 +1234,6 @@ describe("Subgraph Trusts Test", function () {
       expect(data.redeemInit).to.equals(redeemInit); // trust.initialize.TrustConfig.redeemInit
       expect(data.finalWeight).to.equals(finalWeightExpected); // see above
       expect(data.successPoolBalance).to.equals(successPoolBalanceExpected); // see above
-    });
-
-    it("should get Notice correctly", async function () {
-      transaction = await trust.connect(signer2).sendNotice("0x01");
-
-      const noticeId = transaction.hash.toLowerCase();
-      const [deployBlock, deployTime] = await getTxTimeblock(transaction);
-
-      await waitForSubgraphToBeSynced();
-
-      const query = `
-        {
-          trust (id: "${trust.address.toLowerCase()}") {
-            notices {
-              id
-            }
-          }
-          notice (id: "${noticeId}") {
-            trust {
-              id
-            }
-            sender
-            data
-            deployBlock
-            deployTimestamp
-          }
-        }
-      `;
-
-      const queryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
-      const dataTrust = queryResponse.data.trust;
-      const data = queryResponse.data.notice;
-
-      expect(dataTrust.notices).to.have.lengthOf(1);
-      expect(dataTrust.notices).to.deep.include({ id: noticeId });
-
-      expect(data.trust.id).to.equals(trust.address.toLowerCase());
-      expect(data.sender).to.equals(signer2.address.toLowerCase());
-      expect(data.data).to.equals("0x01");
-      expect(data.deployBlock).to.equals(deployBlock.toString());
-      expect(data.deployTimestamp).to.equals(deployTime.toString());
     });
 
     it("should query the Seed entity correctly after a Seed.", async function () {
