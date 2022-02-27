@@ -16,6 +16,9 @@ export function handleNewChild(event: NewChild): void {
     verify.approvers = []
     verify.removers = []
     verify.banners = []
+    verify.approverAdmins = []
+    verify.bannerAdmins = []
+    verify.removerAdmins = []
     verify.save()
 
     let children = verifyFactory.children

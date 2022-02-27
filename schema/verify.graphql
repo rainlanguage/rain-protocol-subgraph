@@ -17,6 +17,9 @@ type Verify @entity{
     approvers: [Role!]
     removers: [Role!]
     banners: [Role!]
+    approverAdmins: [Role!]
+    bannerAdmins: [Role!]
+    removerAdmins: [Role!]
 }
 
 interface VerifyEvent {

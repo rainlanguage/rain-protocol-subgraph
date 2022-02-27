@@ -1,4 +1,4 @@
-import { Address } from "@graphprotocol/graph-ts"
+import { Address, log } from "@graphprotocol/graph-ts"
 import { Verify, VerifyAddress, VerifyApprove, VerifyBan, VerifyRemove, VerifyRequestApprove, VerifyRequestBan, VerifyRequestRemove } from "../../generated/schema"
 import { Approve, Ban, Remove, RequestApprove, RequestBan, RequestRemove, RoleAdminChanged, RoleGranted, RoleRevoked} from "../../generated/templates/VerifyTemplate/Verify"
 import { RequestStatus, Role, Status } from "../utils"
@@ -209,15 +209,13 @@ export function handleRequestRemove(event: RequestRemove): void {
 }
 
 export function handleRoleAdminChanged(event: RoleAdminChanged): void {
-
+    log.info(" Role Name : {}",[event.params.role.toHexString()])
 }
 
 export function handleRoleGranted(event: RoleGranted): void {
-
 }
 
 export function handleRoleRevoked(event: RoleRevoked): void {
-
 }
 
 function getverifyAddress(verifyContract: string, account: string): VerifyAddress {
