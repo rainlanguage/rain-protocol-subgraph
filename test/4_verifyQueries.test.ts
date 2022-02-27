@@ -27,6 +27,7 @@ import {
   admin,
   // Contracts factory
   verifyFactory,
+  noticeBoard,
 } from "./1_trustQueries.test";
 
 const enum RequestType {
@@ -192,6 +193,47 @@ describe("Verify Factory - Queries", function () {
       expect(data.deployer).to.equals(deployer.address.toLowerCase());
       expect(data.deployBlock).to.equals(deployBlock.toString());
       expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
+    });
+
+    it("should query Notice in Verify correctly", async function () {
+      const notices = [
+        {
+          subject: verify.address,
+          data: "0x01",
+        },
+      ];
+
+      transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+      const noticeId = transaction.hash.toLowerCase();
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          verify (id: "${verify.address.toLowerCase()}") {
+            notices {
+              id
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject
+            data
+          }
+        }
+      `;
+
+      const queryResponse = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataVerify = queryResponse.data.verify.notices;
+      const dataNotice = queryResponse.data.notice;
+
+      expect(dataVerify).deep.include({ id: noticeId });
+
+      expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
+      expect(dataNotice.subject).to.equals(verify.address.toLowerCase());
+      expect(dataNotice.data).to.equals("0x01");
     });
 
     it("should query the VerifyRequestApprove after a RequestApprove ", async function () {

@@ -23,6 +23,7 @@ import {
   // Factories
   gatedNFTFactory,
   erc20BalanceTierFactory,
+  noticeBoard,
 } from "./1_trustQueries.test";
 
 let reserve: ReserveTokenTest,
@@ -491,5 +492,46 @@ describe("Subgraph GatedNFT test", function () {
 
     expect(dataGate.address).to.equals(gatedWrongTier.address.toLowerCase());
     expect(dataGate.tier.id).to.equals(Util.zeroAddress.toLowerCase());
+  });
+
+  it("should query Notice in GatedNFT correctly", async function () {
+    const notices = [
+      {
+        subject: gatedNFT.address,
+        data: "0x01",
+      },
+    ];
+
+    transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+    const noticeId = transaction.hash.toLowerCase();
+    await waitForSubgraphToBeSynced();
+
+    const query = `
+      {
+        gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
+          notices {
+            id
+          }
+        }
+        notice (id: "${noticeId}") {
+          sender
+          subject
+          data
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query: query,
+    })) as FetchResult;
+    const dataGatedNFT = queryResponse.data.gatedNFT.notices;
+    const dataNotice = queryResponse.data.notice;
+
+    expect(dataGatedNFT).deep.include({ id: noticeId });
+
+    expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
+    expect(dataNotice.subject).to.equals(gatedNFT.address.toLowerCase());
+    expect(dataNotice.data).to.equals("0x01");
   });
 });

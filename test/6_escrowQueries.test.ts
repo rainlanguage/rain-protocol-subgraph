@@ -35,6 +35,7 @@ import {
   // Factories
   trustFactory,
   redeemableERC20ClaimEscrow as claimEscrow, // With a new name
+  noticeBoard,
 } from "./1_trustQueries.test";
 const enum SaleStatus {
   Pending,
@@ -80,6 +81,47 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     depositor2 = signer2.address.toLowerCase();
 
     await waitForSubgraphToBeSynced();
+  });
+
+  it("should query Notice in Escrow correctly", async function () {
+    const notices = [
+      {
+        subject: claimEscrow.address,
+        data: "0x01",
+      },
+    ];
+
+    transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+    const noticeId = transaction.hash.toLowerCase();
+    await waitForSubgraphToBeSynced();
+
+    const query = `
+      {
+        redeemableERC20ClaimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
+          notices {
+            id
+          }
+        }
+        notice (id: "${noticeId}") {
+          sender
+          subject
+          data
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query: query,
+    })) as FetchResult;
+    const dataEscrow = queryResponse.data.redeemableERC20ClaimEscrow.notices;
+    const dataNotice = queryResponse.data.notice;
+
+    expect(dataEscrow).deep.include({ id: noticeId });
+
+    expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
+    expect(dataNotice.subject).to.equals(claimEscrow.address.toLowerCase());
+    expect(dataNotice.data).to.equals("0x01");
   });
 
   describe("Escrow with succesfull Sale", function () {

@@ -49,6 +49,7 @@ import {
   feeRecipient,
   erc20BalanceTierFactory,
   redeemableERC20Factory,
+  noticeBoard,
 } from "./1_trustQueries.test";
 
 enum Status {
@@ -524,6 +525,47 @@ describe("Sales queries test", function () {
       expect(queryData.tier.address).to.equals(
         erc20BalanceTier.address.toLowerCase()
       );
+    });
+
+    it("should query Notice in Sale correctly", async function () {
+      const notices = [
+        {
+          subject: sale.address,
+          data: "0x01",
+        },
+      ];
+  
+      transaction = await noticeBoard.connect(signer1).createNotices(notices);
+  
+      const noticeId = transaction.hash.toLowerCase();
+      await waitForSubgraphToBeSynced();
+  
+      const query = `
+        {
+          sale (id: "${sale.address.toLowerCase()}") {
+            notices {
+              id
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject
+            data
+          }
+        }
+      `;
+  
+      const queryResponse = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataSale = queryResponse.data.sale.notices;
+      const dataNotice = queryResponse.data.notice;
+  
+      expect(dataSale).deep.include({ id: noticeId });
+  
+      expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
+      expect(dataNotice.subject).to.equals(sale.address.toLowerCase());
+      expect(dataNotice.data).to.equals("0x01");
     });
 
     it("should query after sale start correctly", async function () {

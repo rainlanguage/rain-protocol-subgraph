@@ -1236,6 +1236,47 @@ describe("Subgraph Trusts Test", function () {
       expect(data.successPoolBalance).to.equals(successPoolBalanceExpected); // see above
     });
 
+    it("should query Notice in Trust correctly", async function () {
+      const notices = [
+        {
+          subject: trust.address,
+          data: "0x01",
+        },
+      ];
+
+      transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+      const noticeId = transaction.hash.toLowerCase();
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          trust (id: "${trust.address.toLowerCase()}") {
+            notices {
+              id
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject
+            data
+          }
+        }
+      `;
+
+      const queryResponse = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTrust = queryResponse.data.trust.notices;
+      const dataNotice = queryResponse.data.notice;
+
+      expect(dataTrust).deep.include({ id: noticeId });
+
+      expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
+      expect(dataNotice.subject).to.equals(trust.address.toLowerCase());
+      expect(dataNotice.data).to.equals("0x01");
+    });
+
     it("should query the Seed entity correctly after a Seed.", async function () {
       const reserveAmount = seedPrice.mul(seeder1Units);
 
