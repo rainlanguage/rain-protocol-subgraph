@@ -219,6 +219,7 @@ before(async function () {
 
   // SaleFactory
   const saleConstructorConfig = {
+    maximumCooldownDuration: 1000,
     redeemableERC20Factory: redeemableERC20Factory.address,
   };
   saleFactory = (await deploy(saleFactoryJson, deployer, [
