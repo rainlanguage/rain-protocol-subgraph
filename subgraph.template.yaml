@@ -253,6 +253,8 @@ dataSources:
       abis:
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: Trust
+          file: ./abis/Trust.json
         - name: RedeemableERC20ClaimEscrow
           file: ./abis/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.json
       eventHandlers:

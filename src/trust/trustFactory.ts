@@ -5,7 +5,7 @@ import {
     Trust
 } from '../../generated/schema'
 import { TrustTemplate } from "../../generated/templates"
-import { ZERO_BI, ONE_BI } from '../utils'
+import { ZERO_BI, ONE_BI, SaleStatus } from '../utils'
 import { log, Address, DataSourceContext } from '@graphprotocol/graph-ts'
 export function handleNewChild(event: NewChild): void {
     let trustFactory = TrustFactory.load(event.address.toHex())
@@ -15,6 +15,7 @@ export function handleNewChild(event: NewChild): void {
     trust.creator = event.params.sender
     trust.deployBlock = event.block.number
     trust.deployTimestamp = event.block.timestamp
+    trust.saleStatus = SaleStatus.Pending
     trust.trustParticipants = []
     trust.notices = []
     trust.save()

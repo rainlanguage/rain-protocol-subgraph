@@ -1,4 +1,4 @@
-import { Address } from "@graphprotocol/graph-ts"
+import { Address, log } from "@graphprotocol/graph-ts"
 import { Verify, VerifyAddress, VerifyApprove, VerifyBan, VerifyRemove, VerifyRequestApprove, VerifyRequestBan, VerifyRequestRemove } from "../../generated/schema"
 import { Approve, Ban, Remove, RequestApprove, RequestBan, RequestRemove, RoleAdminChanged, RoleGranted, RoleRevoked} from "../../generated/templates/VerifyTemplate/Verify"
 import { RequestStatus, Role, Status } from "../utils"
@@ -150,13 +150,6 @@ export function handleRequestApprove(event: RequestApprove): void {
 
     let verifyAddress = getverifyAddress(event.address.toHex(),event.params.sender.toHex())
     verifyAddress.requestStatus = RequestStatus.REQUEST_APPROVE
-    
-    let verify = Verify.load(event.address.toHex())
-    let verifyAddresses = verify.verifyAddresses
-    if(!verifyAddresses.includes(verifyAddress.id))
-        verifyAddresses.push(verifyAddress.id)
-    verify.verifyAddresses = verifyAddresses
-    verify.save()
  
     let events  = verifyAddress.events
     events.push(verifyRequestApprove.id)
@@ -216,15 +209,13 @@ export function handleRequestRemove(event: RequestRemove): void {
 }
 
 export function handleRoleAdminChanged(event: RoleAdminChanged): void {
-
+    log.info(" Role Name : {}",[event.params.role.toHexString()])
 }
 
 export function handleRoleGranted(event: RoleGranted): void {
-
 }
 
 export function handleRoleRevoked(event: RoleRevoked): void {
-
 }
 
 function getverifyAddress(verifyContract: string, account: string): VerifyAddress {
@@ -237,6 +228,12 @@ function getverifyAddress(verifyContract: string, account: string): VerifyAddres
         verifyAddress.requestStatus = RequestStatus.NONE
         verifyAddress.roles = []
         verifyAddress.events = []
+
+        let verify = Verify.load(verifyContract)
+        let verifyAddresses = verify.verifyAddresses
+        verifyAddresses.push(verifyAddress.id)  
+        verify.verifyAddresses = verifyAddresses
+        verify.save()
     }
     return verifyAddress as VerifyAddress 
 }

@@ -306,3 +306,4 @@ type ERC20Pull @entity {
 interface Isale {
     saleStatus: Int
 }
+

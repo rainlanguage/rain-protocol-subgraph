@@ -1138,7 +1138,7 @@ describe("Verify Factory - Queries", function () {
     });
   });
 
-  describe("Verify contract - Roles", function () {
+  describe.only("Verify contract - Roles", function () {
     let adminVerifyAddress: string,
       signer1VerifyAddress: string,
       signer2VerifyAddress: string;

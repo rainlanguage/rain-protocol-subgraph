@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect, assert } from "chai";
@@ -240,7 +241,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             redeemable {
               id
             }
@@ -282,7 +283,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         SaleStatus.Pending,
         `wrong sale status in redeemableEscrowPendingDeposit`
       );
-      expect(data.saleAddress).to.equals(
+      expect(data.iSaleAddress).to.equals(
         trustAddress,
         `trust address in response is NOT "${trustAddress}"`
       );
@@ -377,7 +378,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             escrow {
               id
             }
@@ -401,6 +402,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const response = (await subgraph({
         query: query,
       })) as FetchResult;
+
       const data = response.data.redeemableEscrowPendingDepositorToken;
 
       // Sale expected response
@@ -408,7 +410,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         SaleStatus.Pending,
         `wrong sale status`
       );
-      expect(data.saleAddress).to.equals(
+      expect(data.iSaleAddress).to.equals(
         trustAddress,
         `wrong sale address. Expected ${trustAddress}`
       );
@@ -450,7 +452,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.totalDeposited).to.equals(
         deposited,
         `wrong amount in response
-        expected  ${deposited.toStrng()}
+        expected  ${deposited.toString()}
         got       ${data.totalDeposited}`
       );
 
@@ -566,6 +568,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const query = `
         {
           redeemableEscrowDepositor (id: "${escrowDepositorId}") {
+            address
             supplyTokenDeposits {
               id
             }
@@ -622,7 +625,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             redeemable {
               id
             }
@@ -668,7 +671,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.saleAddress).to.equals(trustAddress, `wrong Sale address`);
+      expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
 
       expect(data.redeemable.id).to.equals(
         redeemableAddress,
@@ -686,11 +689,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.redeemableSupply).to.equals(
         redeemableSupply.toString(),
         `wrong redeemable supply - should be the same as when the deposit was made
-        expected  ${data.redeemableSupply}
-        got       ${redeemableSupply}`
+        expected  ${redeemableSupply}
+        got       ${data.redeemableSupply}`
       );
       expect(data.tokenAmount).to.equals(
-        deposited.toStirng(),
+        deposited.toString(),
         `wrong token amount deposited
         expected  ${deposited}
         got       ${data.tokenAmount}`
@@ -720,7 +723,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             escrow {
               id
             }
@@ -731,7 +734,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             depositors {
               id
             }
-            depositorAddresses
+            depositorAddress
             token {
               id
             }
@@ -752,7 +755,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.saleAddress).to.equals(trustAddress, `wrong Sale address`);
+      expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
 
       expect(data.escrow.id).to.equals(
         claimEscrowAddress,
@@ -772,7 +775,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         { id: escrowDepositorId },
         `redeemableEscrowSupplyTokenDeposit does not include the depositor entity ID ${escrowDepositorId}`
       );
-      expect(data.depositorAddresses).deep.include(
+      expect(data.depositorAddress).deep.include(
         depositor1,
         `redeemableEscrowSupplyTokenDeposit does not include the depositor addres ${depositor1}`
       );
@@ -948,7 +951,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             redeemable {
               id
             }
@@ -994,7 +997,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.saleAddress).to.equals(trustAddress, `wrong Sale address`);
+      expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
 
       expect(data.redeemable.id).to.equals(
         redeemableAddress,
@@ -1083,7 +1086,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           redeemableSupply
         );
 
-      totalDeposited = totalDeposited.sub(amountWithdrawn);
+      const { amount: Withdrawn } = await Util.getEventArgs(transaction, "Withdraw", claimEscrow);
+
+      totalDeposited = totalDeposited.sub(Withdrawn);
 
       await waitForSubgraphToBeSynced();
 
@@ -1107,7 +1112,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       })) as FetchResult;
       const data = response.data.redeemableERC20ClaimEscrow;
 
-      expect(data.wwithdraws).deep.include(
+      expect(data.withdraws).deep.include(
         { id: withdrawId },
         `redeemableERC20ClaimEscrow does include the withdraw with ID "${withdrawId}"`
       );
@@ -1136,10 +1141,10 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
               id
             }
             escrowAddress
+            iSaleAddress
             iSale {
               saleStatus
             }
-            saleAddress
             redeemable {
               id
             }
@@ -1152,10 +1157,12 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           }
         }
       `;
+
       const response = (await subgraph({
         query: query,
       })) as FetchResult;
-      const data = response.data.RedeemableEscrowWithdraw;
+
+      const data = response.data.redeemableEscrowWithdraw;
 
       expect(data.withdrawer).to.equals(
         depositor1,
@@ -1179,11 +1186,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${SaleStatus.Success}
         got       ${data.iSale.saleStatus}`
       );
-      expect(data.saleAddress).to.equals(
+      expect(data.iSaleAddress).to.equals(
         trustAddress,
         `wrong sale address
         expected  ${trustAddress}
-        got       ${data.saleAddress}`
+        got       ${data.iSaleAddress}`
       );
 
       expect(data.redeemable.id).to.equals(
@@ -1539,11 +1546,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       const depositId = transaction.hash.toLowerCase();
 
-      const supplyTokenDepositId = `${trustAddress}-${claimEscrowAddress}-${redeemableSupply}-${claimableTokenAddress}`;
+      const supplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
       const query = `
         {
-          redeemableEscrowSupplyTokenDeposit (id: ${supplyTokenDepositId}){
+          redeemableEscrowSupplyTokenDeposit (id: "${supplyTokenDepositId}"){
             deposits {
               id
             }
@@ -1575,7 +1582,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           undepositAmount
         );
 
-      totalDeposited = totalDeposited.add(undepositAmount);
+      totalDeposited = totalDeposited.sub(undepositAmount);
 
       await waitForSubgraphToBeSynced();
 
@@ -1607,7 +1614,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         claimEscrow
       );
 
-      const supplyTokenDepositId = `${trustAddress}-${claimEscrowAddress}-${redeemableSupply}-${claimableTokenAddress}`;
+      const supplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
       const query = `
         {
@@ -1671,7 +1678,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             iSale {
               saleStatus
             }
-            saleAddress
+            iSaleAddress
             token {
               id
             }
@@ -1698,10 +1705,10 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       // Sale expected values
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Pending,
+        SaleStatus.Fail,
         `wrong sale status in redeemableEscrowPendingDeposit`
       );
-      expect(data.saleAddress).to.equals(
+      expect(data.iSaleAddress).to.equals(
         trustAddress,
         `trust address in response is NOT "${trustAddress}"`
       );
@@ -1723,7 +1730,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         got       ${data.redeemableSupply}`
       );
 
-      expect(data.amount).to.equals(
+      expect(data.tokenAmount).to.equals(
         undepositAmount,
         `wrong undeposit amount in response
         expected  ${undepositAmount}
