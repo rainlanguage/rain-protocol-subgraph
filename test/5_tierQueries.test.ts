@@ -125,8 +125,9 @@ const enum RequestType {
 let trust: Trust,
   reserve: ReserveTokenTest,
   reserveNFT: ReserveNFT,
-  verifyTier: VerifyTier,
   verify: Verify,
+  verifyTier: VerifyTier,
+  erc20BalanceTier: ERC20BalanceTier,
   combineTier: CombineTier,
   erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
@@ -162,6 +163,8 @@ describe("Subgraph Tier Test", function () {
       await verify.connect(admin).grantRole(APPROVER, admin.address);
       await verify.connect(admin).grantRole(REMOVER, admin.address);
       await verify.connect(admin).grantRole(BANNER, admin.address);
+
+      await waitForSubgraphToBeSynced();
 
       // Verify Address IDs
       signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
@@ -763,18 +766,19 @@ describe("Subgraph Tier Test", function () {
   });
 
   describe("ERC20BalanceTier Factory - Queries", function () {
-    let erc20BalanceTier: ERC20BalanceTier;
-
     it("should query ERC20BalanceTierFactory correctly after construction", async function () {
-      await waitForSubgraphToBeSynced();
-
+      // Get the BalanceERC20 implementation
+      const implementation = (
+        await Util.getEventArgs(
+          verifyTierFactory.deployTransaction,
+          "Implementation",
+          verifyTierFactory
+        )
+      ).implementation;
       const query = `
         {
           erc20BalanceTierFactory  (id: "${erc20BalanceTierFactory.address.toLowerCase()}") {
             address
-            children {
-              id
-            }
           }
         }
       `;

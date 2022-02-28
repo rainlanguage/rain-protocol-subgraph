@@ -169,9 +169,6 @@ describe("Sales queries test", function () {
       {
         saleFactory (id: "${saleFactory.address.toLowerCase()}") {
           address
-          children {
-            id
-          }
           redeemableERC20Factory
         }
       }
@@ -183,7 +180,6 @@ describe("Sales queries test", function () {
 
     const data = queryResponse.data.saleFactory;
 
-    expect(data.children).to.be.equals("1");
     expect(data.address).to.equals(saleFactory.address.toLowerCase());
     expect(data.redeemableERC20Factory).to.equals(
       redeemableERC20Factory.address.toLowerCase()
