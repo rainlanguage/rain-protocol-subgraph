@@ -1209,7 +1209,7 @@ describe("Verify Factory - Queries", function () {
     });
   });
 
-  describe.only("Verify contract - Roles", function () {
+  describe("Verify contract - Roles", function () {
     let adminVerifyAddress: string,
       signer1VerifyAddress: string,
       signer2VerifyAddress: string;

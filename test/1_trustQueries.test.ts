@@ -305,7 +305,7 @@ describe("Subgraph Trusts Test", function () {
     );
   });
 
-  xit("should get all the contracts from the Trust Construction Event", async function () {
+  it("should get all the contracts from the Trust Construction Event", async function () {
     const queryResponse = await subgraph({
       query: getFactories(trustFactory.address.toLowerCase()),
     });
