@@ -504,7 +504,7 @@ describe("Subgraph GatedNFT test", function () {
 
     transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
-    const noticeId = transaction.hash.toLowerCase();
+    const noticeId = `${gatedNFT.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
     await waitForSubgraphToBeSynced();
 
     const query = `
@@ -516,7 +516,9 @@ describe("Subgraph GatedNFT test", function () {
         }
         notice (id: "${noticeId}") {
           sender
-          subject
+          subject{
+            id
+          }
           data
         }
       }
@@ -531,7 +533,7 @@ describe("Subgraph GatedNFT test", function () {
     expect(dataGatedNFT).deep.include({ id: noticeId });
 
     expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
-    expect(dataNotice.subject).to.equals(gatedNFT.address.toLowerCase());
+    expect(dataNotice.subject.id).to.equals(gatedNFT.address.toLowerCase());
     expect(dataNotice.data).to.equals("0x01");
   });
 });

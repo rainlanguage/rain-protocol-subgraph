@@ -15,6 +15,7 @@ export function handleNewChild(event: NewChild): void {
     erc721BalanceTier.deployer = event.transaction.from
     erc721BalanceTier.factory = event.address.toHex()
     erc721BalanceTier.tierValues = erc20BalanceTierContract.tierValues()
+    erc721BalanceTier.notices = []
 
     let children = erc721BalanceTierFactory.children
     children.push(erc721BalanceTier.id)

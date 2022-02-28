@@ -33,6 +33,7 @@ export function handleNewChild(event: NewChild): void {
     sale.buys = []
     sale.refunds = []
     sale.saleTransactions = []
+    sale.notices = []
     sale.save()
 
     let children = saleFactory.children

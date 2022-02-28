@@ -86,7 +86,7 @@ const BANNER_ADMIN = ethers.utils.keccak256(
 );
 const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
 
-xdescribe("Verify Factory - Queries", function () {
+describe("Verify Factory - Queries", function () {
   it("should query VerifyFactory correctly after construction", async function () {
     // Get the verify implementation
     const implementation = (
@@ -205,7 +205,7 @@ xdescribe("Verify Factory - Queries", function () {
 
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
-      const noticeId = transaction.hash.toLowerCase();
+      const noticeId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
       await waitForSubgraphToBeSynced();
 
       const query = `
@@ -217,7 +217,9 @@ xdescribe("Verify Factory - Queries", function () {
           }
           notice (id: "${noticeId}") {
             sender
-            subject
+            subject{
+              id
+            }
             data
           }
         }
@@ -232,7 +234,7 @@ xdescribe("Verify Factory - Queries", function () {
       expect(dataVerify).deep.include({ id: noticeId });
 
       expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
-      expect(dataNotice.subject).to.equals(verify.address.toLowerCase());
+      expect(dataNotice.subject.id).to.equals(verify.address.toLowerCase());
       expect(dataNotice.data).to.equals("0x01");
     });
 

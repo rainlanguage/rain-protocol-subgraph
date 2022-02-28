@@ -12,6 +12,7 @@ export function handleNewChild(event: NewChild): void {
     verifyTier.deployTimestamp = event.block.timestamp
     verifyTier.deployer = event.transaction.from
     verifyTier.factory = event.address.toHex()
+    verifyTier.notices = []
 
     let children = verifyTierFactory.children
     children.push(verifyTier.id)

@@ -258,6 +258,7 @@ function getRedeemableERC20ClaimEscrow(address: string): RedeemableERC20ClaimEsc
         redeemableERC20ClaimEscrow.supplyTokenDeposits = []
         redeemableERC20ClaimEscrow.depositors = []
         redeemableERC20ClaimEscrow.withdrawers = []
+        redeemableERC20ClaimEscrow.notices = []
         redeemableERC20ClaimEscrow.save()
     }
     return redeemableERC20ClaimEscrow as RedeemableERC20ClaimEscrow

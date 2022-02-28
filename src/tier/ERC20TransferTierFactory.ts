@@ -24,6 +24,7 @@ export function handleNewChild(event: NewChild): void {
     erc20TransferTier.deployer = event.transaction.from
     erc20TransferTier.factory = event.address.toHex()
     erc20TransferTier.tierValues = erc20TransferTierContract.tierValues()
+    erc20TransferTier.notices = []
     
     erc20TransferTier.tierChanges = []
     erc20TransferTier.tierLevels = []

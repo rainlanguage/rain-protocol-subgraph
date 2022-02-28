@@ -292,7 +292,7 @@ before(async function () {
   await waitForSubgraphToBeSynced();
 });
 
-describe.only("Subgraph Trusts Test", function () {
+describe("Subgraph Trusts Test", function () {
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
@@ -338,7 +338,7 @@ describe.only("Subgraph Trusts Test", function () {
 
     transaction = await noticeBoard.connect(signer2).createNotices(notices);
 
-    const noticeId = `${Util.zeroAddress} - ${transaction.hash.toLowerCase()} - 0`;
+    const noticeId = `UNKNOWN_NOTICES - ${transaction.hash.toLowerCase()} - 0`;
     const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
     await waitForSubgraphToBeSynced();
@@ -1250,7 +1250,7 @@ describe.only("Subgraph Trusts Test", function () {
 
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
-      const noticeId = `${trust.address} - ${transaction.hash.toLowerCase()} - 0`;
+      const noticeId = `${trust.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
       await waitForSubgraphToBeSynced();
 
       const query = `
@@ -1276,7 +1276,7 @@ describe.only("Subgraph Trusts Test", function () {
       const dataTrust = queryResponse.data.trust.notices;
       const dataNotice = queryResponse.data.notice;
 
-      expect(dataTrust).to.deep.include({ id: noticeId });
+      expect(dataTrust).deep.include({ id: noticeId });
 
       expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
       expect(dataNotice.subject.id).to.equals(trust.address.toLowerCase());

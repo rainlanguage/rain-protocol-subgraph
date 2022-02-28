@@ -1,9 +1,10 @@
+/* eslint-disable prefer-const */
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
-import { ContractTransaction, Signer, BigNumber } from "ethers";
+import { ContractTransaction, Signer, BigNumber, Transaction } from "ethers";
 import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
 import { deploy, waitForSubgraphToBeSynced, Tier } from "./utils/utils";
@@ -81,47 +82,6 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     depositor2 = signer2.address.toLowerCase();
 
     await waitForSubgraphToBeSynced();
-  });
-
-  it("should query Notice in Escrow correctly", async function () {
-    const notices = [
-      {
-        subject: claimEscrow.address,
-        data: "0x01",
-      },
-    ];
-
-    transaction = await noticeBoard.connect(signer1).createNotices(notices);
-
-    const noticeId = transaction.hash.toLowerCase();
-    await waitForSubgraphToBeSynced();
-
-    const query = `
-      {
-        redeemableERC20ClaimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
-          notices {
-            id
-          }
-        }
-        notice (id: "${noticeId}") {
-          sender
-          subject
-          data
-        }
-      }
-    `;
-
-    const queryResponse = (await subgraph({
-      query: query,
-    })) as FetchResult;
-    const dataEscrow = queryResponse.data.redeemableERC20ClaimEscrow.notices;
-    const dataNotice = queryResponse.data.notice;
-
-    expect(dataEscrow).deep.include({ id: noticeId });
-
-    expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
-    expect(dataNotice.subject).to.equals(claimEscrow.address.toLowerCase());
-    expect(dataNotice.data).to.equals("0x01");
   });
 
   describe("Escrow with succesfull Sale", function () {
@@ -233,6 +193,49 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         { id: escrowDepositorId },
         `depositors response does not include ID "${escrowDepositorId}"`
       );
+    });
+
+    it("should query Notice in Escrow correctly", async function () {
+      const notices = [
+        {
+          subject: claimEscrow.address,
+          data: "0x01",
+        },
+      ];
+  
+      let transaction1: ContractTransaction = await noticeBoard.connect(signer1).createNotices(notices);
+  
+      const noticeId = `${claimEscrow.address.toLowerCase()} - ${transaction1.hash.toLowerCase()} - 0`;
+      await waitForSubgraphToBeSynced();
+  
+      const query = `
+        {
+          redeemableERC20ClaimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
+            notices {
+              id
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject{
+              id
+            }
+            data
+          }
+        }
+      `;
+  
+      const queryResponse = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataEscrow = queryResponse.data.redeemableERC20ClaimEscrow.notices;
+      const dataNotice = queryResponse.data.notice;
+  
+      expect(dataEscrow).deep.include({ id: noticeId });
+  
+      expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
+      expect(dataNotice.subject.id).to.equals(claimEscrow.address.toLowerCase());
+      expect(dataNotice.data).to.equals("0x01");
     });
 
     it("should query the ERC20 token that was used in PendingDeposit", async function () {
@@ -1510,6 +1513,10 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         got       ${supplyTokenDeposit_2.redeemableSupply}`
       );
     });
+  
+  
+  
+  
   });
 
   describe("Escrow with failed Sale", function () {
