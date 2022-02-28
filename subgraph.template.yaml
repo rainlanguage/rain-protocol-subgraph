@@ -615,17 +615,17 @@ templates:
         - name: Verify
           file: ./abis/verify/Verify.json
       eventHandlers:
-        - event: Approve(address,address,bytes)
+        - event: Approve(address,(address,bytes))
           handler: handleApprove
-        - event: Ban(address,address,bytes)
+        - event: Ban(address,(address,bytes))
           handler: handleBan
-        - event: Remove(address,address,bytes)
+        - event: Remove(address,(address,bytes))
           handler: handleRemove
-        - event: RequestApprove(address,bytes)
+        - event: RequestApprove(address,(address,bytes))
           handler: handleRequestApprove
-        - event: RequestBan(address,address,bytes)
+        - event: RequestBan(address,(address,bytes))
           handler: handleRequestBan
-        - event: RequestRemove(address,address,bytes)
+        - event: RequestRemove(address,(address,bytes))
           handler: handleRequestRemove
         - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
           handler: handleRoleAdminChanged
