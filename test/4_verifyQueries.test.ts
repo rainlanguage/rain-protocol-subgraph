@@ -1524,7 +1524,7 @@ describe.only("Verify Factory - Queries", function () {
         {
           verify (id: "${verify.address.toLowerCase()}") {
             banners {
-              id
+              address
             }
           }
         }

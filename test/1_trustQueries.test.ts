@@ -1092,7 +1092,7 @@ describe("Subgraph Trusts Test", function () {
             unseeds {
               id
             }
-            redeemSeed {
+            redeemSeeds {
               id
             }
             seederUnitsAvail
@@ -1109,7 +1109,7 @@ describe("Subgraph Trusts Test", function () {
       const seedERC20Data = queryResponse.data.seedERC20;
       expect(seedERC20Data.seeds.length).to.equals(0);
       expect(seedERC20Data.unseeds.length).to.equals(0);
-      expect(seedERC20Data.redeemSeed.length).to.equals(0);
+      expect(seedERC20Data.redeemSeeds.length).to.equals(0);
       expect(seedERC20Data.seederUnitsAvail).to.equals(
         seedERC20Config.initialSupply.toString() // Any tx was made with this seed yet
       );
@@ -2672,7 +2672,7 @@ describe("Subgraph Trusts Test", function () {
         seedContract
       );
 
-      const redeemSeedId = `${transaction.hash.toLowerCase()}-0`;
+      const redeemSeedId = `${transaction.hash.toLowerCase()} - 0`;
 
       const query = `
         {
@@ -2683,7 +2683,7 @@ describe("Subgraph Trusts Test", function () {
               id
             }
             redeemAmount
-            reserveAmount
+            treasuryAssetAmount
             deployBlock
             deployTimestamp
           }
@@ -2702,14 +2702,14 @@ describe("Subgraph Trusts Test", function () {
       expect(data.seedERC20.id).to.equals(seedContract.address.toLowerCase());
 
       expect(data.redeemAmount).to.equals(redeemAmount);
-      expect(data.reserveAmount).to.equals(assetAmount);
+      expect(data.treasuryAssetAmount).to.equals(assetAmount);
       expect(data.deployBlock).to.equals(deployBlock.toString());
       expect(data.deployTimestamp).to.equals(deployTime.toString());
     });
 
     it("should update the TrustParticipant after a redeem in SeedERC20", async function () {
       const trustParticId = `${seeder1.address.toLowerCase()} - ${trust.address.toLowerCase()}`;
-      const redeemSeedId = `${transaction.hash.toLowerCase()}-0`;
+      const redeemSeedId = `${transaction.hash.toLowerCase()} - 0`;
 
       const query = `
        {
@@ -2731,12 +2731,12 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should update the SeedERC20 after a redeem", async function () {
-      const redeemSeedId = `${transaction.hash.toLowerCase()}-0`;
+      const redeemSeedId = `${transaction.hash.toLowerCase()} - 0`;
 
       const query = `
        {
         seedERC20 (id: "${seedContract.address.toLowerCase()}") {
-          redeemSeed {
+          redeemSeeds {
             id
           }
         }
@@ -2745,7 +2745,7 @@ describe("Subgraph Trusts Test", function () {
       const queryResponse = await subgraph({
         query: query,
       });
-      const data = queryResponse.data.seedERC20.redeemSeed;
+      const data = queryResponse.data.seedERC20.redeemSeeds;
 
       expect(data).to.have.lengthOf(1);
 
@@ -2796,7 +2796,7 @@ describe("Subgraph Trusts Test", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const redeemId = `${transaction.hash.toLowerCase()}-0`;
+      const redeemId = `${transaction.hash.toLowerCase()} - 0`;
 
       // The treasuryAssets ID
       const treasuryAssetsId = `${redeemableERC20Contract.address.toLowerCase()} - ${reserve.address.toLowerCase()}`;
@@ -2856,7 +2856,7 @@ describe("Subgraph Trusts Test", function () {
     it("should query the redeem in TreasuryAssets and RedeemableERC20 after a redeem", async function () {
       // The treasuryAssets ID
       const treasuryAssetsId = `${redeemableERC20Contract.address.toLowerCase()} - ${reserve.address.toLowerCase()}`;
-      const redeemId = `${transaction.hash.toLowerCase()}-0`;
+      const redeemId = `${transaction.hash.toLowerCase()} - 0`;
 
       const query = `
         {
@@ -2887,7 +2887,7 @@ describe("Subgraph Trusts Test", function () {
 
     it("should update the TrustParticipant after a redeem in RedeemableERC20", async function () {
       const trustParticId = `${signer2.address.toLowerCase()} - ${trust.address.toLowerCase()}`;
-      const redeemId = `${transaction.hash.toLowerCase()}-0`;
+      const redeemId = `${transaction.hash.toLowerCase()} - 0`;
 
       const query = `
        {

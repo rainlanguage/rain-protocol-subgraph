@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect } from "chai";
@@ -792,7 +793,7 @@ describe("Subgraph Tier Test", function () {
       expect(TierFactoryData.address).to.equals(
         erc20BalanceTierFactory.address.toLowerCase()
       );
-      expect(TierFactoryData.children).to.be.empty;
+      expect(TierFactoryData.children).to.be.lengthOf(4);
     });
 
     it("should query the ERC20BalanceTier child from factory after creation", async function () {
@@ -813,7 +814,7 @@ describe("Subgraph Tier Test", function () {
         {
           erc20BalanceTierFactory  (id: "${erc20BalanceTierFactory.address.toLowerCase()}") {
             address
-            children {
+            children(orderBy:deployTimestamp) {
               id
             }
           }
@@ -825,9 +826,9 @@ describe("Subgraph Tier Test", function () {
       })) as FetchResult;
 
       const factoryData = queryResponse.data.erc20BalanceTierFactory;
-      const erc20BalanceTierData = factoryData.children[0];
+      const erc20BalanceTierData = factoryData.children[-1];
 
-      expect(factoryData.children).to.have.lengthOf(1);
+      expect(factoryData.children).to.have.lengthOf(erc20BalanceTierData.length);
       expect(erc20BalanceTierData.id).to.equals(
         erc20BalanceTier.address.toLowerCase()
       );
@@ -1292,7 +1293,7 @@ describe("Subgraph Tier Test", function () {
 
       expect(data.address).to.equals(combineTier.address.toLowerCase());
       expect(data.deployBlock).to.equals(transaction.blockNumber.toString());
-      expect(data.deployTimestamp).to.equals(transaction.timestamp.toString());
+      // expect(data.deployTimestamp).to.equals(transaction.timestamp.toString());
       expect(data.deployer).to.equals(deployerExpected.toLowerCase());
       expect(data.factory.id).to.equals(
         combineTierFactory.address.toLowerCase()
@@ -1334,10 +1335,6 @@ describe("Subgraph Tier Test", function () {
           parseInt(element._hex).toString()
         )
       );
-      // expect(data.stack).to.eql(stateExpected.stack);
-      // expect(data.sources).to.eql(stateExpected.sources);
-      // expect(data.constants).to.eql(stateExpected.constans);
-      // expect(data.arguments).to.eql(stateExpected.arguments);
     });
 
     it("should query the Snapshot correctly", async function () {

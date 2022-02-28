@@ -16,9 +16,9 @@ export function handleBuy(event: Buy): void {
     saleBuy.saleContract = sale.id
     saleBuy.saleContractAddress = event.address
     saleBuy.feeRecipientAddress = event.params.receipt.feeRecipient
-    saleBuy.minimumUnits = event.params.config_.minimumUnits
-    saleBuy.desiredUnits = event.params.config_.desiredUnits
-    saleBuy.maximumPrice = event.params.config_.maximumPrice
+    saleBuy.minimumUnits = event.params.config.minimumUnits
+    saleBuy.desiredUnits = event.params.config.desiredUnits
+    saleBuy.maximumPrice = event.params.config.maximumPrice
     saleBuy.fee = event.params.receipt.fee
     saleBuy.sender = event.params.sender
 
