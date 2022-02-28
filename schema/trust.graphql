@@ -205,7 +205,7 @@ type SeedERC20 @entity{
     # Update after Transfer events
     holders: [Holder!] #addresses of token holders
     # Update after Redeem events for this SeedERC20
-    redeemSeed: [RedeemSeed!] #redeem
+    redeemSeeds: [RedeemSeed!] #redeem
 }
 
 type Holder @entity {
@@ -260,7 +260,7 @@ type RedeemSeed @entity {
     caller: Bytes! #address indexed redeemer
     seedERC20: SeedERC20! #the SeedERC20 that emitted the event
     redeemAmount: BigInt! #redeemAmounts[0]
-    reserveAmount: BigInt! #redeemAmounts[1]
+    treasuryAssetAmount: BigInt! #redeemAmounts[1]
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
 }

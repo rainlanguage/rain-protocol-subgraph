@@ -1,10 +1,9 @@
 
-import { Address, dataSource, log } from "@graphprotocol/graph-ts";
-import { Seed, Unseed, SeedERC20, Holder, DistributionProgress, Contract, TrustParticipant } from "../../generated/schema";
-import { CooldownInitialize, Initialize, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../../generated/templates/SeedERC20Template/SeedERC20";
-import { getTrustParticipent, HUNDRED_BD, notAContract, ZERO_ADDRESS, ZERO_BI } from "../utils";
+import { Address, dataSource, BigInt } from "@graphprotocol/graph-ts";
+import { Seed, Unseed, SeedERC20, Holder, DistributionProgress, TrustParticipant, RedeemSeed, TreasuryAsset } from "../../generated/schema";
+import { CooldownInitialize, Initialize, Redeem as RedeemEvent, Seed as SeedEvent, Transfer, Unseed as UnseedEvent } from "../../generated/templates/SeedERC20Template/SeedERC20";
+import { getTrustParticipent, HUNDRED_BD, notAContract, ZERO_BI } from "../utils";
 import { SeedERC20 as SeedERC20Contract } from "../../generated/templates/SeedERC20Template/SeedERC20"
-import { ERC20 } from "../../generated/TrustFactory/ERC20";
 import { Trust } from "../../generated/TrustFactory/Trust"
 
 export function  handleCooldownInitialize(event: CooldownInitialize): void {
@@ -100,6 +99,34 @@ export function handleInitialize(event: Initialize): void {
     seedERC20.reserve = event.params.reserve
     seedERC20.seedPrice = event.params.seedPrice
     seedERC20.save()
+}
+
+export function handleRedeem(event: RedeemEvent): void {
+    let context = dataSource.context()
+    let seedERC20 = SeedERC20.load(event.address.toHex())
+    let redeemSeeds = seedERC20.redeemSeeds
+
+    let redeem = new RedeemSeed(event.transaction.hash.toHex() + " - " + BigInt.fromI32(redeemSeeds.length).toString())
+    redeem.caller = event.params.sender
+    redeem.redeemAmount = event.params.redeemAmount
+    redeem.treasuryAssetAmount = event.params.assetAmount
+    redeem.deployBlock = event.block.number
+    redeem.deployTimestamp = event.block.timestamp
+    redeem.seedERC20 = event.address.toHex()
+
+    redeem.save()
+
+    redeemSeeds.push(redeem.id)
+    seedERC20.redeemSeeds = redeemSeeds
+
+    seedERC20.save()
+
+    let trustParticipant = getTrustParticipent(event.params.sender, context.getString("trust"))
+    let tRedeemSeeds = trustParticipant.redeemSeeds
+    tRedeemSeeds.push(redeem.id)
+    trustParticipant.redeemSeeds = tRedeemSeeds
+
+    trustParticipant.save()
 }
 
 export function handleTransfer(event: Transfer): void {

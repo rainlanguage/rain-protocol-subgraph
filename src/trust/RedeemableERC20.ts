@@ -93,7 +93,7 @@ export function handleERC20PullInitialize(event: ERC20PullInitialize): void {
 export function handleRedeem(event: RedeemEvent): void {
     let redeemableERC20 = RedeemableERC20.load(event.address.toHex())
     let totalRedeems = redeemableERC20.redeems.length
-    let redeem = new Redeem(event.transaction.hash.toHex() + "-" + totalRedeems.toString())
+    let redeem = new Redeem(event.transaction.hash.toHex() + " - " + totalRedeems.toString())
     let treasuryAsset = TreasuryAsset.load(event.address.toHex() + " - " + event.params.treasuryAsset.toHex())
     let context = dataSource.context()
 

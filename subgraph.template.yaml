@@ -355,6 +355,8 @@ templates:
           handler: handleCooldownInitialize
         - event: Seed(address,uint256,uint256)
           handler: handleSeed
+        - event: Redeem(address,address,uint256,uint256)
+          handler: handleRedeem
         - event: Initialize(address,address,address,uint256)
           handler: handleInitialize
         - event: Unseed(address,uint256,uint256)
@@ -578,7 +580,7 @@ templates:
       eventHandlers:
         - event: Buy(address,(address,uint256,uint256,uint256,uint256),(uint256,address,uint256,uint256,uint256))
           handler: handleBuy
-        - event: Construct(address,(address))
+        - event: Construct(address,(uint256,address))
           handler: handleConstruct
         - event: CooldownInitialize(address,uint256)
           handler: handleCooldownInitialize

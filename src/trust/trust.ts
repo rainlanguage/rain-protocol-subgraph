@@ -242,7 +242,7 @@ function createSeedERC20(event: Initialize): string {
     seedERC20.seeds = []
     seedERC20.unseeds = []
     seedERC20.holders = []
-    seedERC20.redeemSeed = []
+    seedERC20.redeemSeeds = []
     
     seedERC20.seededAmount = ZERO_BI
     seedERC20.percentSeeded = ZERO_BD

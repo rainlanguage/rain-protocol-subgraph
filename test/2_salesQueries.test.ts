@@ -184,7 +184,7 @@ describe("Sales queries test", function () {
 
     const data = queryResponse.data.saleFactory;
 
-    expect(data.children).to.be.equals("1");
+    expect(data.children).to.be.empty;
     expect(data.address).to.equals(saleFactory.address.toLowerCase());
     expect(data.redeemableERC20Factory).to.equals(
       redeemableERC20Factory.address.toLowerCase()
