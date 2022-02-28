@@ -5,7 +5,7 @@ type VerifyFactory @entity{
     children: [Verify!]! #all the children that were deployed by this factory
 }
 
-type Verify @entity{
+type Verify implements INotice @entity {
     id: ID! #Verify contract address
     address: Bytes! #Verify contract address
     deployBlock: BigInt! #the block the contract was deployed
@@ -20,6 +20,7 @@ type Verify @entity{
     approverAdmins: [Role!]
     bannerAdmins: [Role!]
     removerAdmins: [Role!]
+    notices: [Notice!]
 }
 
 interface VerifyEvent {
@@ -124,3 +125,4 @@ type VerifyAddress implements Role @entity{
     events: [VerifyEvent!] #all the event entities associated with this address for this Verify
     roles: [Int!]
 }
+

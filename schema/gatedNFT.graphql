@@ -5,7 +5,7 @@ type GatedNFTFactory @entity {
     children: [GatedNFT!] #all the children that were deployed by this factory
 }
 
-type GatedNFT @entity {
+type GatedNFT implements INotice @entity {
     id: ID! #contract address
     address: Bytes! #contract address
     deployBlock: BigInt
@@ -29,6 +29,7 @@ type GatedNFT @entity {
     royaltyPercent: BigDecimal # = royaltyBPS / 100
     royaltyRecipientHistory: [UpdatedRoyaltyRecipient!]
     ownershipHistory: [OwnershipTransferred!]
+    notices: [Notice!]
 }
 
 type UpdatedRoyaltyRecipient @entity {

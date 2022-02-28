@@ -1,4 +1,4 @@
-type RedeemableERC20ClaimEscrow @entity {
+type RedeemableERC20ClaimEscrow implements INotice @entity {
     id: ID! # address of the escrow contract
     address: Bytes! #address of the escrow contract
     pendingDeposits: [RedeemableEscrowPendingDeposit!]
@@ -9,6 +9,7 @@ type RedeemableERC20ClaimEscrow @entity {
     supplyTokenDeposits: [RedeemableEscrowSupplyTokenDeposit!]
     depositors: [RedeemableEscrowDepositor!]
     withdrawers: [RedeemableEscrowWithdrawer!]
+    notices: [Notice!]
 }
 
 # represents one depositor for one escrow
