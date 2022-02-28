@@ -19,6 +19,7 @@ export function handleNewChild(event: NewChild): void {
     gatedNFT.owner = gatedNFTContract.owner()
     gatedNFT.royaltyRecipientHistory = []
     gatedNFT.ownershipHistory = []
+    gatedNFT.notices = []
     gatedNFT.deployBlock = event.block.number
     gatedNFT.deployTimestamp = event.block.timestamp
 

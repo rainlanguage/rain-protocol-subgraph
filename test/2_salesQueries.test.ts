@@ -183,7 +183,7 @@ describe("Sales queries test", function () {
 
     const data = queryResponse.data.saleFactory;
 
-    expect(data.children).to.be.empty;
+    expect(data.children).to.be.equals("1");
     expect(data.address).to.equals(saleFactory.address.toLowerCase());
     expect(data.redeemableERC20Factory).to.equals(
       redeemableERC20Factory.address.toLowerCase()
@@ -548,7 +548,8 @@ describe("Sales queries test", function () {
 
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
-      const noticeId = transaction.hash.toLowerCase();
+      // const noticeId = `${transaction.hash.toLowerCase()} - 0`;
+      const noticeId = `${sale.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
       await waitForSubgraphToBeSynced();
 
       const query = `
@@ -560,7 +561,9 @@ describe("Sales queries test", function () {
           }
           notice (id: "${noticeId}") {
             sender
-            subject
+            subject{
+              id
+            }
             data
           }
         }
@@ -575,7 +578,7 @@ describe("Sales queries test", function () {
       expect(dataSale).deep.include({ id: noticeId });
 
       expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
-      expect(dataNotice.subject).to.equals(sale.address.toLowerCase());
+      expect(dataNotice.subject.id).to.equals(sale.address.toLowerCase());
       expect(dataNotice.data).to.equals("0x01");
     });
 

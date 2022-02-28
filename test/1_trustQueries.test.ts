@@ -338,7 +338,8 @@ describe("Subgraph Trusts Test", function () {
     transaction = await noticeBoard.connect(signer2).createNotices(notices);
 
     // eslint-disable-next-line
-    const noticeId = `${Util.zeroAddress} - ${transaction.hash.toLowerCase()} - 0`;
+    // const noticeId = `${Util.zeroAddress} - ${transaction.hash.toLowerCase()} - 0`;
+    const noticeId = `UNKNOWN_NOTICES - ${transaction.hash.toLowerCase()} - 0`;
     const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
     await waitForSubgraphToBeSynced();
@@ -1250,7 +1251,8 @@ describe("Subgraph Trusts Test", function () {
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
       // eslint-disable-next-line
-      const noticeId = `${trust.address} - ${transaction.hash.toLowerCase()} - 0`;
+      // const noticeId = `${trust.address} - ${transaction.hash.toLowerCase()} - 0`;
+      const noticeId = `${trust.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
       await waitForSubgraphToBeSynced();
 
       const query = `
@@ -1276,7 +1278,7 @@ describe("Subgraph Trusts Test", function () {
       const dataTrust = queryResponse.data.trust.notices;
       const dataNotice = queryResponse.data.notice;
 
-      expect(dataTrust).to.deep.include({ id: noticeId });
+      expect(dataTrust).deep.include({ id: noticeId });
 
       expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
       expect(dataNotice.subject.id).to.equals(trust.address.toLowerCase());

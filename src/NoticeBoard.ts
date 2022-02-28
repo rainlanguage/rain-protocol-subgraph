@@ -175,16 +175,25 @@ export function handleNewNotice(event: NewNotice): void {
         notices.push(newNotice.id)
         unknownTier.notices = notices
         unknownTier.save()
-    }else{
-        newNotice = new Notice(subject + " - " + event.transaction.hash.toHex() + " - 0")
+    }
+    else{
+        let unknownNotice = UnknownNotice.load("UNKNOWN_NOTICES")
+        if(unknownNotice == null){
+            unknownNotice = new UnknownNotice("UNKNOWN_NOTICES")
+            unknownNotice.notices = []
+        }
+
+        let notices = unknownNotice.notices
+
+        newNotice = new Notice("UNKNOWN_NOTICES" + " - " + event.transaction.hash.toHex() + " - " + BigInt.fromI32(notices.length).toString())
         newNotice.data = event.params.notice.data
         newNotice.sender = event.params.sender
         newNotice.deployBlock = event.block.number
         newNotice.deployTimestamp = event.block.timestamp
         newNotice.subject = "UNKNOWN_NOTICES"
-
-        let unknownNotice = new UnknownNotice("UNKNOWN_NOTICES")
-        unknownNotice.notices = [newNotice.id]
+           
+        notices.push(newNotice.id)
+        unknownNotice.notices = notices
         unknownNotice.save()
     }
 
