@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect } from "chai";
@@ -399,8 +398,12 @@ describe("Sales queries test", function () {
       const endData = response.data.sale.canEndStateConfig;
       const calculatePriceData = response.data.sale.calculatePriceStateConfig;
 
-      expect(startData.sources).to.deep.equals([Util.uint8ArrayToHex(canStartStateConfig.sources.pop())]);
-      expect(startData.constants).to.deep.equals(canStartStateConfig.constants.map(ele => ele.toString()));
+      expect(startData.sources).to.deep.equals([
+        Util.uint8ArrayToHex(canStartStateConfig.sources.pop()),
+      ]);
+      expect(startData.constants).to.deep.equals(
+        canStartStateConfig.constants.map((ele) => ele.toString())
+      );
       expect(startData.stackLength).to.equals(
         canStartStateConfig.stackLength.toString()
       );
@@ -408,8 +411,12 @@ describe("Sales queries test", function () {
         canStartStateConfig.argumentsLength.toString()
       );
 
-      expect(endData.sources).to.deep.equals([Util.uint8ArrayToHex(canEndStateConfig.sources.pop())]);
-      expect(endData.constants).to.deep.equals(canEndStateConfig.constants.map(ele => ele.toString()));
+      expect(endData.sources).to.deep.equals([
+        Util.uint8ArrayToHex(canEndStateConfig.sources.pop()),
+      ]);
+      expect(endData.constants).to.deep.equals(
+        canEndStateConfig.constants.map((ele) => ele.toString())
+      );
       expect(endData.stackLength).to.equals(
         canEndStateConfig.stackLength.toString()
       );
@@ -417,8 +424,12 @@ describe("Sales queries test", function () {
         canEndStateConfig.argumentsLength.toString()
       );
 
-      expect(calculatePriceData.sources).to.deep.equals([Util.uint8ArrayToHex(calculatePriceStateConfig.sources.pop())]);
-      expect(calculatePriceData.constants).to.deep.equals(calculatePriceStateConfig.constants.map(ele => ele.toString()));
+      expect(calculatePriceData.sources).to.deep.equals([
+        Util.uint8ArrayToHex(calculatePriceStateConfig.sources.pop()),
+      ]);
+      expect(calculatePriceData.constants).to.deep.equals(
+        calculatePriceStateConfig.constants.map((ele) => ele.toString())
+      );
       expect(calculatePriceData.stackLength).to.equals(
         calculatePriceStateConfig.stackLength.toString()
       );
@@ -534,12 +545,12 @@ describe("Sales queries test", function () {
           data: "0x01",
         },
       ];
-  
+
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
-  
+
       const noticeId = transaction.hash.toLowerCase();
       await waitForSubgraphToBeSynced();
-  
+
       const query = `
         {
           sale (id: "${sale.address.toLowerCase()}") {
@@ -554,15 +565,15 @@ describe("Sales queries test", function () {
           }
         }
       `;
-  
+
       const queryResponse = (await subgraph({
         query: query,
       })) as FetchResult;
       const dataSale = queryResponse.data.sale.notices;
       const dataNotice = queryResponse.data.notice;
-  
+
       expect(dataSale).deep.include({ id: noticeId });
-  
+
       expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
       expect(dataNotice.subject).to.equals(sale.address.toLowerCase());
       expect(dataNotice.data).to.equals("0x01");

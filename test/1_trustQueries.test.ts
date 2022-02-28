@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
@@ -292,7 +291,7 @@ before(async function () {
   await waitForSubgraphToBeSynced();
 });
 
-describe.only("Subgraph Trusts Test", function () {
+describe("Subgraph Trusts Test", function () {
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
@@ -338,6 +337,7 @@ describe.only("Subgraph Trusts Test", function () {
 
     transaction = await noticeBoard.connect(signer2).createNotices(notices);
 
+    // eslint-disable-next-line
     const noticeId = `${Util.zeroAddress} - ${transaction.hash.toLowerCase()} - 0`;
     const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
@@ -1198,11 +1198,10 @@ describe.only("Subgraph Trusts Test", function () {
       });
       const data = queryResponse.data.distributionProgress;
 
-      expect(data.minimumCreatorRaise).to.equals(minimumCreatorRaise); // trust.initialize.TrustConfig.minimumCreatorRaise
+      expect(data.minimumCreatorRaise).to.equals(minimumCreatorRaise);
       expect(data.minimumTradingDuration).to.equals(
-        minimumTradingDuration.toString() // trust.initialize.TrustConfig.minimumTradingDuration
+        minimumTradingDuration.toString()
       );
-      // minimumCreatorRaise + trust.initialize.TrustConfig.redeemInit + trust.initialize.TrustConfig.seederFee
       expect(data.minimumRaise).to.equals(minimumRaiseExpected);
     });
 
@@ -1233,11 +1232,11 @@ describe.only("Subgraph Trusts Test", function () {
       });
       const data = queryResponse.data.distributionProgress;
 
-      expect(data.finalBalance).to.equals("0"); // Only set when end the Dutch Auction
-      expect(data.finalValuation).to.equals(finalValuation); // trust.initialize.TrustConfig.finalValuation
-      expect(data.redeemInit).to.equals(redeemInit); // trust.initialize.TrustConfig.redeemInit
-      expect(data.finalWeight).to.equals(finalWeightExpected); // see above
-      expect(data.successPoolBalance).to.equals(successPoolBalanceExpected); // see above
+      expect(data.finalBalance).to.equals("0");
+      expect(data.finalValuation).to.equals(finalValuation);
+      expect(data.redeemInit).to.equals(redeemInit);
+      expect(data.finalWeight).to.equals(finalWeightExpected);
+      expect(data.successPoolBalance).to.equals(successPoolBalanceExpected);
     });
 
     it("should query Notice in Trust correctly", async function () {
@@ -1250,6 +1249,7 @@ describe.only("Subgraph Trusts Test", function () {
 
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
+      // eslint-disable-next-line
       const noticeId = `${trust.address} - ${transaction.hash.toLowerCase()} - 0`;
       await waitForSubgraphToBeSynced();
 

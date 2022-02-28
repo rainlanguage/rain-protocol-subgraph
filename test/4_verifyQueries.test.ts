@@ -11,9 +11,6 @@ import {
   verifyDeploy,
 } from "./utils/utils";
 
-// Artifacts
-import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
-
 // Types
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
 
@@ -86,7 +83,7 @@ const BANNER_ADMIN = ethers.utils.keccak256(
 );
 const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
 
-xdescribe("Verify Factory - Queries", function () {
+describe("Verify Factory - Queries", function () {
   it("should query VerifyFactory correctly after construction", async function () {
     // Get the verify implementation
     const implementation = (
@@ -246,7 +243,7 @@ xdescribe("Verify Factory - Queries", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const requestId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const requestId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
       const query = `
@@ -287,7 +284,7 @@ xdescribe("Verify Factory - Queries", function () {
     });
 
     it("should query the VerifyEvent after a RequestApprove ", async function () {
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
@@ -330,7 +327,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should query the verifyAddress after RequestApprove from the Verify contract", async function () {
       const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -401,7 +398,7 @@ xdescribe("Verify Factory - Queries", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const approveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLocaleLowerCase()}`;
+      const approveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
       const query = `
@@ -441,7 +438,7 @@ xdescribe("Verify Factory - Queries", function () {
     });
 
     it("should query the VerifyEvent after an Approve ", async function () {
-      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
@@ -484,7 +481,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that has been Approve", async function () {
       const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -528,7 +525,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that has Approved the user", async function () {
       const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -587,7 +584,7 @@ xdescribe("Verify Factory - Queries", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const requestRemoveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const requestRemoveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
       const query = `
@@ -620,7 +617,7 @@ xdescribe("Verify Factory - Queries", function () {
     });
 
     it("should query the VerifyEvent after a RequestRemove ", async function () {
-      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
@@ -663,7 +660,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that has a RequestRemove", async function () {
       const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -707,7 +704,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that call RequestRemove", async function () {
       const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -744,7 +741,7 @@ xdescribe("Verify Factory - Queries", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const removeId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const removeId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
       const query = `
@@ -777,7 +774,7 @@ xdescribe("Verify Factory - Queries", function () {
     });
 
     it("should query the VerifyEvent after a Remove ", async function () {
-      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
@@ -820,7 +817,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that has been Remove", async function () {
       const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -863,7 +860,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress  that has Removed the user", async function () {
       const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -921,7 +918,7 @@ xdescribe("Verify Factory - Queries", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const requestBanId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const requestBanId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
       const query = `
@@ -954,7 +951,7 @@ xdescribe("Verify Factory - Queries", function () {
     });
 
     it("should query the VerifyEvent after a RequestBan ", async function () {
-      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
@@ -997,7 +994,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that has a RequestBan", async function () {
       const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -1025,7 +1022,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that call RequestBan", async function () {
       const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -1062,7 +1059,7 @@ xdescribe("Verify Factory - Queries", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const banId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const banId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
       const query = `
@@ -1095,7 +1092,7 @@ xdescribe("Verify Factory - Queries", function () {
     });
 
     it("should query the VerifyEvent after a Ban ", async function () {
-      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const eventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
@@ -1138,7 +1135,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that has been Banned", async function () {
       const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {
@@ -1181,7 +1178,7 @@ xdescribe("Verify Factory - Queries", function () {
 
     it("should update the verifyAddress that has Banned the user", async function () {
       const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
-      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const query = `
         {

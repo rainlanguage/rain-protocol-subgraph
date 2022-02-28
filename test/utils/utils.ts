@@ -550,7 +550,12 @@ export const getEventArgs = async (
     throw new Error(`Could not find event with name ${eventName}`);
   }
 
-  return contract.interface.decodeEventLog(eventName, eventObj.data);
+  const iface = contract.interface;
+  if (eventObj.data !== "0x") {
+    return iface.decodeEventLog(eventName, eventObj.data);
+  } else {
+    return iface.decodeEventLog(eventName, eventObj.data, eventObj.topics);
+  }
 };
 
 export function delay(ms: number): Promise<void> {

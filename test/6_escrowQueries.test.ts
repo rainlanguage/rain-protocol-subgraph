@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { expect, assert } from "chai";
@@ -1112,8 +1111,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
-      const { supply: redeemableSupply } =
-        await Util.getEventArgs(transaction, "Deposit", claimEscrow);
+      const { supply: redeemableSupply } = await Util.getEventArgs(
+        transaction,
+        "Deposit",
+        claimEscrow
+      );
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -1128,7 +1130,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           redeemableSupply
         );
 
-      const { amount: Withdrawn } = await Util.getEventArgs(transaction, "Withdraw", claimEscrow);
+      const { amount: Withdrawn } = await Util.getEventArgs(
+        transaction,
+        "Withdraw",
+        claimEscrow
+      );
 
       totalDeposited = totalDeposited.sub(Withdrawn);
 
