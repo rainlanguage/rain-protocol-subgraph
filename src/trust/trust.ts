@@ -5,7 +5,6 @@ import {
     CreatorFundsRelease,
     EndDutchAuction,
     Initialize,
-    Notice,
     PhaseScheduled,
     StartDutchAuction,
 } from '../../generated/TrustFactory/Trust'
@@ -98,25 +97,6 @@ export function handleInitialize(event: Initialize): void {
     trust.contracts = contracts.id
     trust.distributionProgress = distributionProgress.id
     trust.save()
-}
-
-export function handleNotice(event: Notice): void {
-    let trustAddress = event.address
-    let trust = Trust.load(trustAddress.toHex())
-
-    let notice = new NoticeScheme(event.transaction.hash.toHex())
-    notice.trust = trust.id
-    notice.data = event.params.data
-    notice.sender = event.params.sender
-    notice.deployBlock= event.block.number
-    notice.deployTimestamp= event.block.timestamp
-
-    let notices = trust.notices
-    notices.push(notice.id)
-    trust.notices = notices
-
-    trust.save()
-    notice.save()
 }
 
 export function handlePhaseScheduled(event: PhaseScheduled): void {

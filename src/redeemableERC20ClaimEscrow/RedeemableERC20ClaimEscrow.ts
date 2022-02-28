@@ -1,17 +1,18 @@
 import { Address, ethereum, BigInt, log } from "@graphprotocol/graph-ts"
-import { Deposit, PendingDeposit, Undeposit, Withdraw} from "../../generated/RedeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow"
+import { Deposit, PendingDeposit, Sweep, Undeposit, Withdraw} from "../../generated/RedeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow"
 import { ERC20, RedeemableERC20, RedeemableERC20ClaimEscrow, RedeemableEscrowDeposit, RedeemableEscrowDepositor, RedeemableEscrowPendingDeposit, RedeemableEscrowPendingDepositorToken, RedeemableEscrowSupplyTokenDeposit, RedeemableEscrowUndeposit, RedeemableEscrowWithdraw, RedeemableEscrowWithdrawer, Sale, Trust, UnknownSale} from "../../generated/schema"
 import { ERC20 as ERC20Contract} from "../../generated/RedeemableERC20ClaimEscrow/ERC20"
-import { SaleStatus, ZERO_ADDRESS, ZERO_BI } from "../utils"
+import { SaleStatus, ZERO_BI } from "../utils"
 import { Trust as TrustContract } from "../../generated/RedeemableERC20ClaimEscrow/Trust"
 
 export function handleDeposit(event: Deposit): void {
+    log.info("deposit Supply : {}", [event.params.supply.toString()])
     let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
     let redeemableEscrowDeposit = new RedeemableEscrowDeposit(event.transaction.hash.toHex())
     redeemableEscrowDeposit.depositorAddress = event.params.depositor
     redeemableEscrowDeposit.escrow = redeemableERC20ClaimEscrow.id
     redeemableEscrowDeposit.escrowAddress = event.address
-    redeemableEscrowDeposit.iSaleAddress = event.params.trust
+    redeemableEscrowDeposit.iSaleAddress = event.params.sale
     redeemableEscrowDeposit.redeemableSupply = event.params.supply
     redeemableEscrowDeposit.tokenAmount = event.params.amount
 
@@ -23,25 +24,8 @@ export function handleDeposit(event: Deposit): void {
     redeemableEscrowDeposit.token = token.id
     redeemableEscrowDeposit.tokenAddress = event.params.token
 
-    let iSale= getIsale(event.params.trust.toHex())
+    let iSale= getIsale(event.params.sale.toHex())
     redeemableEscrowDeposit.iSale = iSale
-
-    let trust = Trust.load(iSale)
-    let sale = Sale.load(iSale)
-    if(trust != null){
-        if(SaleStatus.Success == trust.saleStatus || SaleStatus.Fail == trust.saleStatus){
-            // let repdt = getRedeemableEscrowPendingDepositorToken(Address.fromString(iSale), event.address, event.params.depositor, event.params.token)
-            // repdt.swept = true
-            // repdt.save()
-        }
-    }
-    else if(sale != null){
-        if(SaleStatus.Success == trust.saleStatus || SaleStatus.Fail == trust.saleStatus){
-            let repdt = getRedeemableEscrowPendingDepositorToken(Address.fromString(iSale), event.address, event.params.depositor, event.params.token)
-            repdt.swept = true
-            repdt.save()
-        }
-    }
 
     let depositor = getRedeemableEscrowDepositor(event.address.toHex(), event.params.depositor)
     let dDeposits = depositor.deposits
@@ -97,7 +81,7 @@ export function handlePendingDeposit(event: PendingDeposit): void {
     redeemableEscrowPendingDeposit.depositorAddress = event.params.sender
     redeemableEscrowPendingDeposit.escrow = redeemableERC20ClaimEscrow.id
     redeemableEscrowPendingDeposit.escrowAddress = event.address
-    redeemableEscrowPendingDeposit.iSaleAddress = event.params.trust
+    redeemableEscrowPendingDeposit.iSaleAddress = event.params.sale
     redeemableEscrowPendingDeposit.amount = event.params.amount
 
     let redeemableERC20 = RedeemableERC20.load(event.params.redeemable.toHex())
@@ -108,7 +92,7 @@ export function handlePendingDeposit(event: PendingDeposit): void {
     redeemableEscrowPendingDeposit.token = token.id
     redeemableEscrowPendingDeposit.tokenAddress = event.params.token
 
-    let iSale = getIsale(event.params.trust.toHex())
+    let iSale = getIsale(event.params.sale.toHex())
     redeemableEscrowPendingDeposit.iSale = iSale
 
     let depositor = getRedeemableEscrowDepositor(event.address.toHex(), event.params.sender)
@@ -156,6 +140,25 @@ export function handlePendingDeposit(event: PendingDeposit): void {
     redeemableERC20ClaimEscrow.save()
 }
 
+export function handleSweep(event: Sweep): void {
+    let trust = Trust.load(event.params.sale.toHex())
+    let sale = Sale.load(event.params.sale.toHex())
+    if(trust != null){
+        if(SaleStatus.Success == trust.saleStatus || SaleStatus.Fail == trust.saleStatus){
+            let repdt = getRedeemableEscrowPendingDepositorToken(event.params.sale, event.address, event.params.depositor, event.params.token)
+            repdt.swept = true
+            repdt.save()
+        }
+    }
+    else if(sale != null){
+        if(SaleStatus.Success == trust.saleStatus || SaleStatus.Fail == trust.saleStatus){
+            let repdt = getRedeemableEscrowPendingDepositorToken(event.params.sale, event.address, event.params.depositor, event.params.token)
+            repdt.swept = true
+            repdt.save()
+        }
+    }
+}
+
 
 export function handleUndeposit(event: Undeposit): void {
     let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex())
@@ -164,9 +167,9 @@ export function handleUndeposit(event: Undeposit): void {
     redeemableEscrowUndeposit.sender = event.params.sender
     redeemableEscrowUndeposit.escrow = event.address.toHex() 
     redeemableEscrowUndeposit.escrowAddress = event.address
-    redeemableEscrowUndeposit.iSaleAddress = event.params.trust
+    redeemableEscrowUndeposit.iSaleAddress = event.params.sale
 
-    let iSale = getIsale(event.params.trust.toHex())
+    let iSale = getIsale(event.params.sale.toHex())
     redeemableEscrowUndeposit.iSale = iSale
 
     let token = getERC20(event.params.token, event.block)
@@ -202,9 +205,9 @@ export function handleWithdraw(event: Withdraw): void {
     redeemableEscrowWithdraw.withdrawer = event.params.withdrawer
     redeemableEscrowWithdraw.escrow = event.address.toHex()
     redeemableEscrowWithdraw.escrowAddress = event.address
-    redeemableEscrowWithdraw.iSaleAddress = event.params.trust
+    redeemableEscrowWithdraw.iSaleAddress = event.params.sale
 
-    let iSale = getIsale(event.params.trust.toHex())
+    let iSale = getIsale(event.params.sale.toHex())
     redeemableEscrowWithdraw.iSale = iSale
 
     redeemableEscrowWithdraw.redeemable = event.params.redeemable.toHex()
@@ -238,6 +241,7 @@ export function handleWithdraw(event: Withdraw): void {
 
     let resdt = getRedeemableEscrowSupplyTokenDeposit(Address.fromString(iSale), event.address, event.params.supply, event.params.token)
     resdt.totalDeposited = resdt.totalDeposited.minus(event.params.amount)
+
     resdt.save()
 }
 

@@ -86,7 +86,7 @@ const BANNER_ADMIN = ethers.utils.keccak256(
 );
 const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
 
-describe("Verify Factory - Queries", function () {
+xdescribe("Verify Factory - Queries", function () {
   it("should query VerifyFactory correctly after construction", async function () {
     // Get the verify implementation
     const implementation = (

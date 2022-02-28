@@ -20,7 +20,7 @@ type TrustFactory @entity{
 # Trust entity
 # created when NewChild event is emited by TrustFactory
 # src/trustFactory.ts/handleNewChild
-type Trust implements Isale @entity{
+type Trust implements Isale & INotice @entity{
     id: ID! #address of trust contract - from TrustFactory NewContract events
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
@@ -39,7 +39,7 @@ type Trust implements Isale @entity{
 # src/trust.ts/handleNotice
 type Notice @entity{
     id: ID! #tx hash
-    trust: Trust! #the trust that emitted the event
+    subject: INotice! #the trust that emitted the event
     sender: Bytes! #the address of the sender, from the event
     data: Bytes! #from the event
     deployBlock: BigInt! #block of event
@@ -307,6 +307,13 @@ interface Isale {
     saleStatus: Int
 }
 
-type UnknownNotice implements INotice {
+interface INotice {
+    id: ID!
     notices: [Notice!]
 }
+
+type UnknownNotice implements INotice @entity {
+    id: ID!
+    notices: [Notice!]
+}
+

@@ -11,7 +11,7 @@ interface TierContract {
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes #address of the deployer - get from event Initialize.sender
-    factory: TierFactory #the factory that deployed this contract
+    factory: TierFactory
 }
 
 type VerifyTierFactory implements TierFactory @entity {
@@ -21,15 +21,16 @@ type VerifyTierFactory implements TierFactory @entity {
     children: [TierContract!] #all the children that were deployed by this factory
 }
 
-type VerifyTier implements TierContract @entity {
+type VerifyTier implements TierContract & INotice @entity {
     id: ID! #tier contract address
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes #address of the deployer - get from event Initialize.verify
-    factory: TierFactory #the factory that deployed this contract
+    factory: TierFactory
 
     verifyContract: Verify #the Verify contract checked for reports - from event Initialize.verify
+    notices: [Notice!]
 }
 
 type ERC20BalanceTierFactory implements TierFactory @entity{
@@ -40,16 +41,17 @@ type ERC20BalanceTierFactory implements TierFactory @entity{
 }
 
 # ERC20BalanceTier - created by listening to NewChild events on the factory
-type ERC20BalanceTier implements TierContract  @entity{
+type ERC20BalanceTier implements TierContract & INotice @entity{
     id: ID! #tier contract address
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes #address of the deployer - get from event Initialize.sender
-    factory: TierFactory #the factory that deployed this contract
+    factory: TierFactory
 
     token: ERC20 #map by id = Intialize.erc20
     tierValues: [BigInt!]! #get from ERC20BalanceTier.tierValues() view method
+    notices: [Notice!]
 }
 
 type ERC20 @entity{
@@ -70,18 +72,19 @@ type ERC20TransferTierFactory implements TierFactory @entity{
 }
 
 # ERC20TransferTier - created by listening to NewChild events on the factory
-type ERC20TransferTier implements TierContract @entity{
+type ERC20TransferTier implements TierContract & INotice @entity{
     id: ID! #tier contract address
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes #address of the deployer - get from event Initialize.sender
-    factory: TierFactory #the factory that deployed this contract
+    factory: TierFactory
 
     token: ERC20 #map by id = Intialize.erc20
     tierValues: [BigInt!] #get from ERC20BalanceTier.tierValues() view method
     tierChanges: [TierChange!] #get from TierChange event
     tierLevels: [TierLevel!] #always eight for a Tier contract
+    notices: [Notice!]
 }
 
 type TierChange @entity{
@@ -94,6 +97,7 @@ type TierChange @entity{
     account: Bytes #get from TierChange.account
     startTier: BigInt
     endTier: BigInt
+    
 }
 
 type TierLevel @entity{
@@ -114,16 +118,17 @@ type ERC721BalanceTierFactory implements TierFactory @entity{
 }
 
 # Created by listening to NewChild events on the factory
-type ERC721BalanceTier implements TierContract @entity{
+type ERC721BalanceTier implements TierContract & INotice @entity{
     id: ID! #tier contract address
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes #address of the deployer - get from event Initialize.sender
-    factory: TierFactory #the factory that deployed this contract
+    factory: TierFactory
 
     token: ERC721 #map by id = Intialize.erc20
-    tierValues: [BigInt!] #get from ERC721BalanceTier.tierValues() view method
+    tierValues: [BigInt!] #get from ERC721BalanceTier.tierValues() view method\
+    notices: [Notice!]
 }
 
 type ERC721 @entity{
@@ -143,15 +148,16 @@ type CombineTierFactory implements TierFactory @entity{
 }
 
 # Created by listening to NewChild events on the factory
-type CombineTier implements TierContract @entity{
+type CombineTier implements TierContract & INotice @entity{
     id: ID! #tier contract address
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes #address of the deployer - get from the Snapshot event emitted by this contract - Snapshot.sender
-    factory: TierFactory #the factory that deployed this contract
+    factory: TierFactory
 
     state: State #from event Snapshot.state
+    notices: [Notice!]
 }
 
 type UnknownTier implements TierContract @entity{
@@ -160,6 +166,7 @@ type UnknownTier implements TierContract @entity{
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
     deployer: Bytes #address of the deployer - get from event Initialize.sender
-    factory: TierFactory #is this possible when using the TierContract interface?
+    factory: TierFactory  #is this possible when using the TierContract interface?
+    notices: [Notice!]
 }
 

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
@@ -291,7 +292,7 @@ before(async function () {
   await waitForSubgraphToBeSynced();
 });
 
-describe("Subgraph Trusts Test", function () {
+describe.only("Subgraph Trusts Test", function () {
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
@@ -337,7 +338,7 @@ describe("Subgraph Trusts Test", function () {
 
     transaction = await noticeBoard.connect(signer2).createNotices(notices);
 
-    const noticeId = transaction.hash.toLowerCase();
+    const noticeId = `${Util.zeroAddress} - ${transaction.hash.toLowerCase()} - 0`;
     const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
     await waitForSubgraphToBeSynced();
@@ -346,7 +347,9 @@ describe("Subgraph Trusts Test", function () {
       {
         notice (id: "${noticeId}") {
           sender
-          subject
+          subject{
+            id
+          }
           data
           deployBlock
           deployTimestamp
@@ -360,7 +363,7 @@ describe("Subgraph Trusts Test", function () {
     const data = queryResponse.data.notice;
 
     expect(data.sender).to.equals(signer2.address.toLowerCase());
-    expect(data.subject).to.equals(Util.zeroAddress.toLowerCase());
+    expect(data.subject.id).to.equals("UNKNOWN_NOTICES");
     expect(data.data).to.equals("0x01");
     expect(data.deployBlock).to.equals(deployBlock.toString());
     expect(data.deployTimestamp).to.equals(deployTime.toString());
@@ -1247,7 +1250,7 @@ describe("Subgraph Trusts Test", function () {
 
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
-      const noticeId = transaction.hash.toLowerCase();
+      const noticeId = `${trust.address} - ${transaction.hash.toLowerCase()} - 0`;
       await waitForSubgraphToBeSynced();
 
       const query = `
@@ -1259,7 +1262,9 @@ describe("Subgraph Trusts Test", function () {
           }
           notice (id: "${noticeId}") {
             sender
-            subject
+            subject{
+                id
+            }
             data
           }
         }
@@ -1271,10 +1276,10 @@ describe("Subgraph Trusts Test", function () {
       const dataTrust = queryResponse.data.trust.notices;
       const dataNotice = queryResponse.data.notice;
 
-      expect(dataTrust).deep.include({ id: noticeId });
+      expect(dataTrust).to.deep.include({ id: noticeId });
 
       expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
-      expect(dataNotice.subject).to.equals(trust.address.toLowerCase());
+      expect(dataNotice.subject.id).to.equals(trust.address.toLowerCase());
       expect(dataNotice.data).to.equals("0x01");
     });
 

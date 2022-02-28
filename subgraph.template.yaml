@@ -258,15 +258,37 @@ dataSources:
         - name: RedeemableERC20ClaimEscrow
           file: ./abis/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.json
       eventHandlers:
-        - event: Deposit(address,address,address,address,uint256,uint256)
+        - event: Deposit(address,address,address,address,address,uint256,uint256)
           handler: handleDeposit
         - event: PendingDeposit(address,address,address,address,uint256)
           handler: handlePendingDeposit
-        - event: Undeposit(address,address,address,uint256,uint256)
+        - event: Sweep(address,address,address,address,address,uint256)
+          handler: handleSweep
+        - event: Undeposit(address,address,address,address,uint256,uint256)
           handler: handleUndeposit
         - event: Withdraw(address,address,address,address,uint256,uint256)
           handler: handleWithdraw
       file: ./src/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.ts 
+  - kind: ethereum/contract
+    name: NoticeBoard
+    network: {{ network }}
+    source:
+      address: "{{ noticeBoard }}"
+      abi: NoticeBoard
+      startBlock: {{ noticeBoardBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Notice
+      abis:
+        - name: NoticeBoard
+          file: ./abis/NoticeBoard.json
+      eventHandlers:
+        - event: NewNotice(address,(address,bytes))
+          handler: handleNewNotice
+      file: ./src/NoticeBoard.ts
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -300,8 +322,6 @@ templates:
           handler: handleEndDutchAuction
         - event: Initialize(address,(address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256),address,address,address,uint256)
           handler: handleInitialize
-        - event: Notice(address,bytes)
-          handler: handleNotice
         - event: PhaseScheduled(address,uint256,uint256)
           handler: handlePhaseScheduled
         - event: StartDutchAuction(address,address,uint256)
