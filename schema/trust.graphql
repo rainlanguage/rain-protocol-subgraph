@@ -307,3 +307,6 @@ interface Isale {
     saleStatus: Int
 }
 
+type UnknownNotice implements INotice {
+    notices: [Notice!]
+}
