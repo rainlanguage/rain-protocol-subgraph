@@ -1112,7 +1112,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
-      const { supply: redeemableSupply, amount: amountWithdrawn } =
+      const { supply: redeemableSupply } =
         await Util.getEventArgs(transaction, "Deposit", claimEscrow);
 
       assert(
