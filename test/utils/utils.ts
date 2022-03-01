@@ -33,9 +33,14 @@ import TrustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contrac
 
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 import SaleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
-import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
+
+import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
+import verifyTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTier.sol/VerifyTier.json";
 import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
+import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
+import erc20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
+import combineTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
 
 // Types
 import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
@@ -49,8 +54,16 @@ import { SeedERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/See
 import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
 
-import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
-import { ERC20TransferTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
+import {
+  ERC20BalanceTier,
+  ERC20BalanceTierConfigStruct,
+} from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
+
+import {
+  ERC20TransferTier,
+  ERC20TransferTierConfigStruct,
+} from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
+
 import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
 import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
@@ -134,6 +147,38 @@ interface BasicArtifact {
 export const LEVELS = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros).toString()
 ); // [1,2,3,4,5,6,7,8]
+
+// A fixed range to Tier Levels
+type levelsRange = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+/**
+ * Calculate the amount necessary to send or refund for get a `desiredLevel` from `currentLevel` on a TierContract
+ * @param desiredLvl Desired TierLevel. Required to be between 0-8
+ * @param currentLevel - (Optional) Current TierLevel, by default if Tier.Zero -  Required to be between 0-8
+ * @param levels - (Optional) The reference about requiere price by each Level. By default is LEVELS
+ */
+export const amountToLevel = (
+  desiredLvl: levelsRange,
+  currentLevel: levelsRange = 0,
+  levels = LEVELS
+): string => {
+  if (currentLevel == desiredLvl) {
+    return "0";
+  }
+  const BN = ethers.BigNumber;
+
+  let valueFrom =
+    currentLevel == 0 ? BN.from("0") : BN.from(levels[currentLevel - 1]);
+
+  let valueTo =
+    desiredLvl == 0 ? BN.from("0") : BN.from(levels[desiredLvl - 1]);
+
+  if (valueFrom.gt(valueTo)) {
+    [valueFrom, valueTo] = [valueTo, valueFrom];
+  }
+
+  return valueTo.sub(valueFrom).toString();
+};
 
 /**
  * Create a fixed number with ethers. This intend to reduce the code and
@@ -424,12 +469,46 @@ export const verifyTierDeploy = async (
   // Creating child
   const verifyTier = (await createChildTyped(
     verifyTierFactory,
-    verifyJson,
+    verifyTierJson,
     [verifyAddress, override],
     creator
   )) as VerifyTier & Contract;
 
   return verifyTier;
+};
+
+export const erc20BalanceTierDeploy = async (
+  erc20BalanceTierFactory: ERC20BalanceTierFactory,
+  creator: SignerWithAddress,
+  erc20BalanceTierConfig: ERC20BalanceTierConfigStruct,
+  override: Overrides = {}
+): Promise<ERC20BalanceTier> => {
+  // Creating child
+  const erc20BalanceTier = (await createChildTyped(
+    erc20BalanceTierFactory,
+    erc20BalanceTierJson,
+    [erc20BalanceTierConfig, override],
+    creator
+  )) as ERC20BalanceTier & Contract;
+
+  return erc20BalanceTier;
+};
+
+export const erc20TransferTierDeploy = async (
+  erc20TransferTierFactory: ERC20TransferTierFactory,
+  creator: SignerWithAddress,
+  erc20TransferTierConfigStruct: ERC20TransferTierConfigStruct,
+  override: Overrides = {}
+): Promise<ERC20TransferTier> => {
+  // Creating child
+  const erc20TransferTier = (await createChildTyped(
+    erc20TransferTierFactory,
+    erc20TransferTierJson,
+    [erc20TransferTierConfigStruct, override],
+    creator
+  )) as ERC20TransferTier & Contract;
+
+  return erc20TransferTier;
 };
 
 /**

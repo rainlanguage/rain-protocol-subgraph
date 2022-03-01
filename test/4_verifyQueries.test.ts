@@ -83,7 +83,7 @@ const BANNER_ADMIN = ethers.utils.keccak256(
 );
 const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
 
-describe.only("Verify Factory - Queries", function () {
+describe("Verify Factory - Queries", function () {
   it("should query VerifyFactory correctly after construction", async function () {
     // Get the verify implementation
     const implementation = (
@@ -1228,24 +1228,12 @@ describe.only("Verify Factory - Queries", function () {
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
-            approvers {
-              id
-            }
-            removers {
-              id
-            }
-            banners {
-              id
-            }
-            approverAdmins {
-              id
-            }
-            bannerAdmins {
-              id
-            }
-            removerAdmins {
-              id
-            }
+            approvers
+            removers
+            banners
+            approverAdmins
+            bannerAdmins
+            removerAdmins
           }
         }
       `;
@@ -1331,15 +1319,9 @@ describe.only("Verify Factory - Queries", function () {
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
-            approverAdmins {
-              id
-            }
-            bannerAdmins {
-              id
-            }
-            removerAdmins {
-              id
-            }
+            approverAdmins
+            bannerAdmins
+            removerAdmins
           }
         }
       `;
@@ -1376,15 +1358,9 @@ describe.only("Verify Factory - Queries", function () {
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
-            approverAdmins {
-              id
-            }
-            bannerAdmins {
-              id
-            }
-            removerAdmins {
-              id
-            }
+            approverAdmins
+            bannerAdmins
+            removerAdmins
           }
         }
       `;
@@ -1480,15 +1456,9 @@ describe.only("Verify Factory - Queries", function () {
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
-            approvers {
-              id
-            }
-            banners {
-              id
-            }
-            removers {
-              id
-            }
+            approvers
+            banners
+            removers
           }
         }
       `;

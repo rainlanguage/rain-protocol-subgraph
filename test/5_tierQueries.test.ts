@@ -1,7 +1,6 @@
-/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { expect } from "chai";
+import { expect, assert } from "chai";
 import { ethers } from "hardhat";
 import { FetchResult } from "apollo-fetch";
 import { BigNumber, ContractTransaction } from "ethers";
@@ -91,8 +90,8 @@ import {
   erc20TransferTierFactory,
   combineTierFactory,
   erc721BalanceTierFactory,
+  noticeBoard,
 } from "./1_trustQueries.test";
-import { version } from "process";
 
 const enum Status {
   Nil,
@@ -126,9 +125,6 @@ const enum RequestType {
 let trust: Trust,
   reserve: ReserveTokenTest,
   reserveNFT: ReserveNFT,
-  verify: Verify,
-  verifyTier: VerifyTier,
-  erc20BalanceTier: ERC20BalanceTier,
   combineTier: CombineTier,
   erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
@@ -143,6 +139,8 @@ describe("Subgraph Tier Test", function () {
   });
 
   describe("VerifyTier Factory - Queries", function () {
+    let verify: Verify, verifyTier: VerifyTier;
+
     const APPROVER = ethers.utils.keccak256(
       ethers.utils.toUtf8Bytes("APPROVER")
     );
@@ -767,401 +765,503 @@ describe("Subgraph Tier Test", function () {
   });
 
   describe("ERC20BalanceTier Factory - Queries", function () {
+    let erc20BalanceTier: ERC20BalanceTier;
+
+    before("deploy fresh test contracts", async function () {
+      // Creating a new reserve token
+      reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
+    });
+
     it("should query ERC20BalanceTierFactory correctly after construction", async function () {
-      // Get the BalanceERC20 implementation
+      // Get the ERC20BalanceTier implementation
       const implementation = (
         await Util.getEventArgs(
-          verifyTierFactory.deployTransaction,
+          erc20BalanceTierFactory.deployTransaction,
           "Implementation",
-          verifyTierFactory
+          erc20BalanceTierFactory
         )
       ).implementation;
+
       const query = `
         {
           erc20BalanceTierFactory  (id: "${erc20BalanceTierFactory.address.toLowerCase()}") {
             address
+            implementation
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const TierFactoryData = queryResponse.data.erc20BalanceTierFactory;
+      const data = response.data.erc20BalanceTierFactory;
 
-      expect(TierFactoryData.address).to.equals(
+      expect(data.implementation).to.equals(implementation.toLowerCase());
+      expect(data.address).to.equals(
         erc20BalanceTierFactory.address.toLowerCase()
       );
-      expect(TierFactoryData.children).to.be.lengthOf(4);
     });
 
     it("should query the ERC20BalanceTier child from factory after creation", async function () {
-      transaction = await erc20BalanceTierFactory.createChildTyped({
-        erc20: reserve.address,
-        tierValues: LEVELS,
-      });
-
-      erc20BalanceTier = (await getContractChild(
-        transaction,
+      // Deploying the child
+      erc20BalanceTier = await Util.erc20BalanceTierDeploy(
         erc20BalanceTierFactory,
-        erc20BalanceTierJson
-      )) as ERC20BalanceTier;
+        creator,
+        {
+          erc20: reserve.address,
+          tierValues: LEVELS,
+        }
+      );
 
       await waitForSubgraphToBeSynced();
 
       const query = `
         {
           erc20BalanceTierFactory  (id: "${erc20BalanceTierFactory.address.toLowerCase()}") {
-            address
-            children(orderBy:deployTimestamp) {
+            children {
               id
             }
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const factoryData = queryResponse.data.erc20BalanceTierFactory;
-      const erc20BalanceTierData = factoryData.children[-1];
+      const data = response.data.erc20BalanceTierFactory;
 
-      expect(factoryData.children).to.have.lengthOf(erc20BalanceTierData.length);
-      expect(erc20BalanceTierData.id).to.equals(
-        erc20BalanceTier.address.toLowerCase()
-      );
+      expect(data.children).deep.include({
+        id: erc20BalanceTier.address.toLowerCase(),
+      });
     });
 
     it("should query the ERC20BalanceTier correctly", async function () {
-      await waitForSubgraphToBeSynced();
+      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+        erc20BalanceTier.deployTransaction
+      );
 
-      // The address that made the tx where BalanceTier contract was created
-      const balanceTierCreator = transaction.from.toLocaleLowerCase();
-
-      const tierQuery = `
+      const query = `
         {
           erc20BalanceTier   (id: "${erc20BalanceTier.address.toLowerCase()}") {
             address
+            deployer
             deployBlock
             deployTimestamp
-            deployer
-            tierValues
-            factory {
-              address
-            }
             token {
               id
-              name
             }
-          }
-        }
-      `;
-
-      const queryTierresponse = (await subgraph({
-        query: tierQuery,
-      })) as FetchResult;
-      const tierData = queryTierresponse.data.erc20BalanceTier;
-      const tokenData = tierData.token;
-
-      expect(tierData.factory.address).to.equals(
-        erc20BalanceTierFactory.address.toLowerCase()
-      );
-      expect(tierData.address).to.equals(
-        erc20BalanceTier.address.toLowerCase()
-      );
-      expect(tierData.tierValues).deep.equal(LEVELS);
-      expect(tokenData.id).to.equals(reserve.address.toLowerCase());
-    });
-
-    it("should query the ERC20 token from tier contract correctly", async function () {
-      await waitForSubgraphToBeSynced();
-
-      const tierQuery = `
-        {
-          erc20BalanceTier   (id: "${erc20BalanceTier.address.toLowerCase()}") {
-            address
             tierValues
             factory {
-              address
+              id
             }
-            token {
-              symbol
-              totalSupply
-              decimals
-              name
+            notices {
+              id
             }
           }
         }
       `;
 
-      const queryTierresponse = (await subgraph({
-        query: tierQuery,
+      const response = (await subgraph({
+        query: query,
       })) as FetchResult;
-      const tierData = queryTierresponse.data.erc20BalanceTier;
-      const tokenData = tierData.token;
+      const data = response.data.erc20BalanceTier;
 
-      expect(tierData.factory.address).to.equals(
+      expect(data.address).to.equals(erc20BalanceTier.address.toLowerCase());
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
+
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
+
+      expect(data.token.id).to.equals(reserve.address.toLowerCase());
+      expect(data.tierValues).to.eql(LEVELS);
+
+      expect(data.notices).to.be.empty;
+      expect(data.factory.id).to.equals(
         erc20BalanceTierFactory.address.toLowerCase()
       );
-      expect(tierData.address).to.equals(
-        erc20BalanceTier.address.toLowerCase()
-      );
-      expect(tierData.tierValues).to.eql(LEVELS);
+    });
 
-      expect(tokenData.name).to.equals(await reserve.name());
-      expect(tokenData.symbol).to.equals(await reserve.symbol());
-      expect(tokenData.decimals).to.equals(await reserve.decimals());
-      expect(tokenData.totalSupply).to.equals(await reserve.totalSupply());
+    it("should query the ERC20 token used in tier contract correctly", async function () {
+      const query = `
+        {
+          erc20 (id: "${reserve.address.toLowerCase()}") {
+            name
+            symbol
+            decimals
+            totalSupply
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.erc20;
+
+      expect(data.name).to.equals(await reserve.name());
+      expect(data.symbol).to.equals(await reserve.symbol());
+      expect(data.decimals).to.equals(await reserve.decimals());
+      expect(data.totalSupply).to.equals(await reserve.totalSupply());
+    });
+
+    it("should query Notice in ERC20BalanceTier correctly", async function () {
+      const notices = [
+        {
+          subject: erc20BalanceTier.address,
+          data: "0x01",
+        },
+      ];
+
+      transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+      // Waiting for sync
+      await waitForSubgraphToBeSynced();
+
+      const noticeId = `${erc20BalanceTier.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
+
+      const query = `
+        {
+          {
+            erc20BalanceTier   (id: "${erc20BalanceTier.address.toLowerCase()}") {
+              notices {
+                id
+              }
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject{
+              id
+            }
+            data
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataTier = response.data.erc20BalanceTier.notices;
+      const data = response.data.notice;
+
+      expect(dataTier).deep.include({ id: noticeId });
+
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.subject.id).to.equals(erc20BalanceTier.address.toLowerCase());
+      expect(data.data).to.equals("0x01");
     });
   });
 
   describe("ERC20TransferTier Factory - Queries", function () {
     let erc20TransferTier: ERC20TransferTier;
 
-    it("should query ERC20TransferTierFactory correctly after construction", async function () {
-      await waitForSubgraphToBeSynced();
+    // Represent a counter for the members on each TierLevel. Should be used
+    // after each setTier function with the correct upgrade/downgrade
+    const membersCount: number[] = new Array(9).fill(0);
 
-      const tierFactoriesQuery = `
+    before("deploy fresh test contracts", async function () {
+      // Creating a new reserve token
+      reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
+    });
+
+    it("should query ERC20TransferTierFactory correctly after construction", async function () {
+      // Get the ERC20TransferTier implementation
+      const implementation = (
+        await Util.getEventArgs(
+          erc20TransferTierFactory.deployTransaction,
+          "Implementation",
+          erc20TransferTierFactory
+        )
+      ).implementation;
+
+      const query = `
         {
-          tierFactory  (id: "${erc20TransferTierFactory.address.toLowerCase()}") {
+          erc20TransferTierFactory (id: "${erc20TransferTierFactory.address.toLowerCase()}") {
             address
-            children {
-              id
-            }
+            implementation
           }
         }
       `;
 
-      const queryTierFactoriesresponse = (await subgraph({
-        query: tierFactoriesQuery,
+      const response = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const TierFactoryData = queryTierFactoriesresponse.data.tierFactory;
+      const data = response.data.erc20TransferTierFactory;
 
-      expect(TierFactoryData.address).to.equals(
+      expect(data.implementation).to.equals(implementation.toLowerCase());
+      expect(data.address).to.equals(
         erc20TransferTierFactory.address.toLowerCase()
       );
-
-      expect(TierFactoryData.children).to.be.empty;
     });
 
     it("should query the ERC20TransferTier child from factory after creation", async function () {
-      const tierCreator = erc20TransferTierFactory.signer;
-      const tx = await erc20TransferTierFactory.createChildTyped({
-        erc20: reserve.address,
-        tierValues: LEVELS,
-      });
-
-      erc20TransferTier = (await getContractChild(
-        tx,
+      erc20TransferTier = await Util.erc20TransferTierDeploy(
         erc20TransferTierFactory,
-        erc20TransferTierJson
-      )) as ERC20TransferTier;
+        creator,
+        {
+          erc20: reserve.address,
+          tierValues: LEVELS,
+        }
+      );
 
+      // Waiting for sync
       await waitForSubgraphToBeSynced();
 
-      const tierFactoryQuery = `
+      const query = `
         {
-          tierFactory  (id: "${erc20TransferTierFactory.address.toLowerCase()}") {
-            address
+          erc20TransferTierFactory  (id: "${erc20TransferTierFactory.address.toLowerCase()}") {
             children {
               id
-              deployer
             }
           }
         }
       `;
 
-      const queryTierFactoryResponse = (await subgraph({
-        query: tierFactoryQuery,
+      const response = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const TierFactoryData = queryTierFactoryResponse.data.tierFactory;
-      const erc20TransferTierData = TierFactoryData.children[0];
+      const data = response.data.erc20TransferTierFactory;
 
-      expect(TierFactoryData.children).to.have.lengthOf(1);
-      expect(erc20TransferTierData.id).to.equals(
-        erc20TransferTier.address.toLowerCase()
-      );
-      expect(erc20TransferTierData.deployer).to.equals(
-        (await tierCreator.getAddress()).toLowerCase()
-      );
+      expect(data.children).deep.include({
+        id: erc20TransferTier.address.toLowerCase(),
+      });
     });
 
     it("should query the ERC20TransferTier correctly", async function () {
-      await waitForSubgraphToBeSynced();
+      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+        erc20TransferTier.deployTransaction
+      );
 
-      const tierQuery = `
+      const query = `
         {
           erc20TransferTier   (id: "${erc20TransferTier.address.toLowerCase()}") {
             address
-            tierValues
+            deployer
             factory {
-              address
+              id
             }
             token {
               id
             }
-          }
-        }
-      `;
-
-      const queryTierResponse = (await subgraph({
-        query: tierQuery,
-      })) as FetchResult;
-      const tierData = queryTierResponse.data.erc20TransferTier;
-
-      expect(tierData.factory.address).to.equals(
-        erc20TransferTierFactory.address.toLowerCase()
-      );
-      expect(tierData.address).to.equals(
-        erc20TransferTier.address.toLowerCase()
-      );
-      expect(tierData.tierValues).to.eql(LEVELS);
-      expect(tierData.token.id).to.equals(reserve.address.toLowerCase());
-    });
-
-    it("should query the Tier Change after upgrade with setTier correctly", async function () {
-      const requiredTierFive = LEVELS[4];
-
-      const signers = await ethers.getSigners();
-      const beneficiator = signers[8];
-      const beneficiary = signers[9];
-
-      // give to signer1 the exact amount for Tier FIVE
-      await reserve.transfer(beneficiator.address, requiredTierFive);
-
-      // set the tier FIVE
-      await reserve
-        .connect(beneficiator)
-        .approve(erc20TransferTier.address, requiredTierFive);
-
-      const tx = await erc20TransferTier
-        .connect(beneficiator)
-        .setTier(beneficiary.address, Tier.FIVE, []);
-
-      await waitForSubgraphToBeSynced();
-
-      const TierContractQuery = `
-        {
-          erc20TransferTier (id: "${erc20TransferTier.address.toLowerCase()}") {
-            address
+            deployBlock
+            deployTimestamp
+            tierValues
             tierChanges {
-              transactionHash
-              sender
-              account
-              startTier
-              endTier
+              id
+            }
+            notices {
+              id
             }
           }
         }
       `;
 
-      const queryTierFactoriesresponse = (await subgraph({
-        query: TierContractQuery,
+      const response = (await subgraph({
+        query: query,
       })) as FetchResult;
+      const data = response.data.erc20TransferTier;
 
-      const TierContractData =
-        queryTierFactoriesresponse.data.erc20TransferTier;
-      const tierChange =
-        queryTierFactoriesresponse.data.erc20TransferTier.tierChanges[0];
+      expect(data.address).to.equals(erc20TransferTier.address.toLowerCase());
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
 
-      expect(TierContractData.address).to.equals(
-        erc20TransferTier.address.toLowerCase()
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
+
+      expect(data.tierValues).to.eql(LEVELS);
+
+      expect(data.tierChanges).to.be.empty;
+      expect(data.notices).to.be.empty;
+
+      expect(data.token.id).to.equals(reserve.address.toLowerCase());
+      expect(data.factory.id).to.equals(
+        erc20TransferTierFactory.address.toLowerCase()
       );
-      expect(TierContractData.tierChanges).to.have.lengthOf(1);
-      expect(tierChange.sender).to.equals(beneficiator.address.toLowerCase());
-      expect(tierChange.account).to.equals(beneficiary.address.toLowerCase());
-      expect(tierChange.startTier).to.equals(Tier.ZERO.toString());
-      expect(tierChange.endTier).to.equals(Tier.FIVE.toString());
-      expect(tierChange.transactionHash).to.equals(tx.hash.toLowerCase());
     });
 
-    it("should query a level with members correctly", async function () {
-      await waitForSubgraphToBeSynced();
-
-      const Level = Tier.FIVE;
-
-      const tierLevelQuery = `
+    it("should query the initial state on a TierLevels", async function () {
+      const queryTier = `
         {
-          tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${Level}") {
-            tierLevel
-            tierContractAddress
-            memberCount
+          erc20TransferTier (id: "${erc20TransferTier.address.toLowerCase()}") {
+            tierLevels {
+              id
+            }
           }
         }
       `;
 
-      const tierLevelQueryResponse = (await subgraph({
-        query: tierLevelQuery,
+      const responseTier = (await subgraph({
+        query: queryTier,
       })) as FetchResult;
+      const dataTier = responseTier.data.erc20TransferTier;
 
-      const TierLevelData = tierLevelQueryResponse.data.tierLevel;
+      expect(dataTier.tierLevels).to.have.lengthOf(9); // From 0 to 8
 
-      expect(TierLevelData.tierContractAddress).to.equals(
-        erc20TransferTier.address.toLocaleLowerCase()
-      );
-      expect(TierLevelData.tierLevel).to.equals(Level.toString());
-      expect(TierLevelData.memberCount).to.equals("1");
-    });
-
-    it("should query a level without members correctly", async function () {
-      await waitForSubgraphToBeSynced();
-
-      const Level = Tier.ONE;
-
-      const tierLevelQuery = `
-        {
-          tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${Level}") {
-            tierLevel
-            tierContractAddress
-            memberCount
+      // Query each TierLevel (LEVEL 0 to LEVEL 8)
+      for (let i = 0; i < 9; i++) {
+        const level = i;
+        const tierLevelId = `${erc20TransferTier.address.toLowerCase()} - ${level}`;
+        const query = `
+          {
+            tierLevel (id: "${tierLevelId}") {
+              tierLevel
+              memberCount
+              tierContractAddress
+              tierContract {
+                id
+              }
+            }
           }
-        }
-      `;
+        `;
 
-      const tierLevelQueryResponse = (await subgraph({
-        query: tierLevelQuery,
-      })) as FetchResult;
+        const response = (await subgraph({
+          query: query,
+        })) as FetchResult;
+        const dataLoop = response.data.tierLevel;
 
-      const TierLevelData = tierLevelQueryResponse.data.tierLevel;
+        expect(dataTier.tierLevels).deep.include({ id: tierLevelId });
 
-      expect(TierLevelData.tierContractAddress).to.equals(
-        erc20TransferTier.address.toLowerCase()
-      );
-      expect(TierLevelData.tierLevel).to.equals(Level.toString());
-      expect(TierLevelData.memberCount).to.equals("0");
-      /**
-       * Im not sure if this entity will be null until it is created with TierChange event.
-       * If that it is the case, will be null
-       * else, the address and level should be query correclty and the memberCount will be 0
-       */
-
-      // expect(TierLevelData.tierContractAddress).to.equals(
-      //   erc20TransferTier.address.toLocaleLowerCase
-      // );
-      // expect(TierLevelData.tierLevel).to.equals(Level);
-      // expect(TierLevelData.memberCount).to.equals(0);
+        expect(dataLoop.tierLevel).to.equals(level.toString());
+        expect(dataLoop.memberCount).to.equals("0");
+        expect(dataLoop.tierContractAddress).to.equals(
+          erc20TransferTier.address.toLowerCase()
+        );
+        expect(dataLoop.tierContract.id).to.equals(
+          erc20TransferTier.address.toLowerCase()
+        );
+      }
     });
 
-    it("should query the Tier change after downgrade with setTier correclty", async function () {
-      const tierContractAddress = erc20TransferTier.address.toLowerCase();
+    it("should query the TierChange after upgrade with setTier correctly", async function () {
+      // Amount required to Level
+      const desiredLevel = Tier.FIVE;
+      const requiredTierFive = Util.amountToLevel(desiredLevel);
 
-      const signers = await ethers.getSigners();
-      const tierOwner = signers[9];
+      // give to signer1 the exact amount for Tier FIVE
+      await reserve.transfer(signer1.address, requiredTierFive);
 
-      const tx = await erc20TransferTier
-        .connect(tierOwner)
-        .setTier(tierOwner.address, Tier.FOUR, []);
+      // set the tier FIVE
+      await reserve
+        .connect(signer1)
+        .approve(erc20TransferTier.address, requiredTierFive);
+
+      // Signer1 give tier FIVE to signer2
+      transaction = await erc20TransferTier
+        .connect(signer1)
+        .setTier(signer2.address, desiredLevel, []);
+
+      // Increasing the counter
+      membersCount[desiredLevel]++;
 
       await waitForSubgraphToBeSynced();
 
-      const tierChangeQuery = `
+      const { startTier, endTier } = await Util.getEventArgs(
+        transaction,
+        "TierChange",
+        erc20TransferTier
+      );
+
+      assert(desiredLevel == endTier, `wrong endTier`);
+
+      const tierChangeId = `${transaction.hash.toLowerCase()} - ${erc20TransferTier.address.toLowerCase()}`;
+      const [changeBlock, changeTime] = await Util.getTxTimeblock(transaction);
+
+      const query = `
         {
-          tierChange  (id: "${tx.hash.toLowerCase()} - ${tierContractAddress}") {
+          erc20TransferTier (id: "${erc20TransferTier.address.toLowerCase()}") {
+            tierChanges {
+              id
+            }
+          }
+          tierChange (id: "${tierChangeId}") {
+            sender
+            account
+            startTier
+            endTier
             transactionHash
+            changeblock
+            changetimestamp
+            tierContract {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const dataTier = response.data.erc20TransferTier;
+      const data = response.data.tierChange;
+
+      expect(dataTier.tierChanges).deep.include({ id: tierChangeId });
+
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.account).to.equals(signer2.address.toLowerCase());
+      expect(data.startTier).to.equals(startTier.toString());
+      expect(data.endTier).to.equals(endTier.toString());
+
+      expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
+      expect(data.changeblock).to.equals(changeBlock.toString());
+      expect(data.changetimestamp).to.equals(changeTime.toString());
+      expect(data.tierContract.id).to.equals(
+        erc20TransferTier.address.toLowerCase()
+      );
+    });
+
+    it("should query the TierLevel after upgrade with setTier correctly", async function () {
+      const { endTier: level } = await Util.getEventArgs(
+        transaction,
+        "TierChange",
+        erc20TransferTier
+      );
+
+      const query = `
+        {
+          tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${level}") {
+            memberCount 
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const data = response.data.tierLevel;
+
+      expect(data.memberCount).to.equals(membersCount[level].toString());
+    });
+
+    it("should query the TierChange after downgrade with setTier correclty", async function () {
+      const desiredLevel = Tier.FOUR;
+
+      // Signer2 downgrade his Level
+      transaction = await erc20TransferTier
+        .connect(signer2)
+        .setTier(signer2.address, desiredLevel, []);
+
+      await waitForSubgraphToBeSynced();
+
+      const { startTier, endTier } = await Util.getEventArgs(
+        transaction,
+        "TierChange",
+        erc20TransferTier
+      );
+
+      // Fill the counter correcly
+      membersCount[endTier]++;
+      membersCount[startTier]--;
+
+      assert(desiredLevel == endTier, `wrong endTier`);
+
+      const query = `
+        {
+          tierChange  (id: "${transaction.hash.toLowerCase()} - ${erc20TransferTier.address.toLowerCase()}") {
             sender
             account
             startTier
@@ -1170,17 +1270,95 @@ describe("Subgraph Tier Test", function () {
         }
       `;
 
-      const queryTierFactoriesresponse = (await subgraph({
-        query: tierChangeQuery,
+      const response = (await subgraph({
+        query: query,
       })) as FetchResult;
 
-      const tierChangeData = queryTierFactoriesresponse.data.tierChange;
+      const data = response.data.tierChange;
 
-      expect(tierChangeData.transactionHash).to.equals(tx.hash.toLowerCase());
-      expect(tierChangeData.sender).to.equals(tierOwner.address.toLowerCase());
-      expect(tierChangeData.account).to.equals(tierOwner.address.toLowerCase());
-      expect(tierChangeData.startTier).to.equals(Tier.FIVE.toString());
-      expect(tierChangeData.endTier).to.equals(Tier.FOUR.toString());
+      expect(data.sender).to.equals(signer2.address.toLowerCase());
+      expect(data.account).to.equals(signer2.address.toLowerCase());
+      expect(data.startTier).to.equals(startTier.toString());
+      expect(data.endTier).to.equals(endTier.toString());
+    });
+
+    it("should query the TierLevel after downgrade with setTier correctly", async function () {
+      const { startTier: startLevel, endTier: endLevel } =
+        await Util.getEventArgs(transaction, "TierChange", erc20TransferTier);
+
+      const query = `
+        {
+          startLevel: tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${startLevel}") {
+            memberCount 
+          }
+          endLevel: tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${endLevel}") {
+            memberCount 
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const data = response.data;
+
+      expect(data.startLevel.memberCount).to.equals(
+        membersCount[startLevel].toString()
+      );
+      expect(data.endLevel.memberCount).to.equals(
+        membersCount[endLevel].toString()
+      );
+    });
+
+    it("should query Notice in ERC20TransferTier correctly", async function () {
+      const notices = [
+        {
+          subject: erc20TransferTier.address,
+          data: "0x01",
+        },
+      ];
+
+      transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+      // Waiting for sync
+      await waitForSubgraphToBeSynced();
+
+      const noticeId = `${erc20TransferTier.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
+
+      const query = `
+        {
+          {
+            erc20TransferTier   (id: "${erc20TransferTier.address.toLowerCase()}") {
+              notices {
+                id
+              }
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject{
+              id
+            }
+            data
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const dataTier = response.data.erc20TransferTier.notices;
+      const data = response.data.notice;
+
+      expect(dataTier).deep.include({ id: noticeId });
+
+      expect(data.data).to.equals("0x01");
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.subject.id).to.equals(
+        erc20TransferTier.address.toLowerCase()
+      );
     });
   });
 
