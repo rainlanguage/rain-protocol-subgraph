@@ -66,7 +66,6 @@ import {
   noticeBoard,
 } from "./1_trustQueries.test";
 
-
 const enum Opcode {
   END,
   VAL,
