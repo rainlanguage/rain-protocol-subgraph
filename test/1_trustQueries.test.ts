@@ -1,4 +1,4 @@
-import { expect, assert } from "chai";
+import { expect } from "chai";
 import { ethers } from "hardhat";
 import { ApolloFetch, FetchResult } from "apollo-fetch";
 import * as path from "path";
@@ -31,7 +31,6 @@ import verifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contra
 import saleFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
 import gatedNFTFactoryJson from "@beehiveinnovation/rain-statusfi/artifacts/contracts/GatedNFTFactory.sol/GatedNFTFactory.json";
 import redeemableERC20ClaimEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/RedeemableERC20ClaimEscrow.sol/RedeemableERC20ClaimEscrow.json";
-import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 
 // Types
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -90,7 +89,7 @@ let minimumTier: Tier,
   bPoolContract: BPool,
   reserve: ReserveTokenTest, // ERC20
   erc20BalanceTier: ERC20BalanceTier,
-  transaction: ContractTransaction; // use to save/facilite a tx
+  transaction: ContractTransaction;
 
 // Export Factories
 export let subgraph: ApolloFetch,
@@ -337,8 +336,6 @@ describe("Subgraph Trusts Test", function () {
 
     transaction = await noticeBoard.connect(signer2).createNotices(notices);
 
-    // eslint-disable-next-line
-    // const noticeId = `${Util.zeroAddress} - ${transaction.hash.toLowerCase()} - 0`;
     const noticeId = `UNKNOWN_NOTICES - ${transaction.hash.toLowerCase()} - 0`;
     const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
@@ -421,17 +418,15 @@ describe("Subgraph Trusts Test", function () {
       await reserve.transfer(signer1.address, level4);
       await reserve.transfer(signer2.address, level4);
 
-      // Deploying a balance tier
-      transaction = await erc20BalanceTierFactory.createChildTyped({
-        erc20: reserve.address,
-        tierValues: LEVELS,
-      });
-
-      erc20BalanceTier = (await Util.getContractChild(
-        transaction,
+      // Deploying a ERC20BalanceTier
+      erc20BalanceTier = await Util.erc20BalanceTierDeploy(
         erc20BalanceTierFactory,
-        erc20BalanceTierJson
-      )) as ERC20BalanceTier;
+        creator,
+        {
+          erc20: reserve.address,
+          tierValues: LEVELS,
+        }
+      );
 
       const trustFactoryDeployer = trustFactory.connect(deployer); // make explicit
 
@@ -560,9 +555,6 @@ describe("Subgraph Trusts Test", function () {
 
       const data = queryResponse.data.contract.tier;
 
-      // Inside the RedeemableERC20 contract there is an event called 'initializeTierByConstruction'
-      // that contain the tier address used in the trust. This event exist in the Contract because
-      // have inherit from TierByConstruction contract
       expect(data.id).to.equals(erc20BalanceTier.address.toLowerCase());
       expect(data.factory.id).to.equals(
         erc20BalanceTierFactory.address.toLowerCase()
@@ -1250,8 +1242,6 @@ describe("Subgraph Trusts Test", function () {
 
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
-      // eslint-disable-next-line
-      // const noticeId = `${trust.address} - ${transaction.hash.toLowerCase()} - 0`;
       const noticeId = `${trust.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
       await waitForSubgraphToBeSynced();
 
@@ -2538,13 +2528,6 @@ describe("Subgraph Trusts Test", function () {
         minimumCreatorRaise.add(redeemInit).add(seederFee)
       );
 
-      const poolRedeemableBalanceFN = Util.fixedNumber(
-        poolRedeemableBalanceExpected
-      );
-      const redeemableSupplyFN = Util.fixedNumber(
-        await redeemableERC20Contract.totalSupply()
-      );
-
       // percentRaised = amountRaised / minimumRaise
       const percentRaisedExpected = amountRaisedFN
         .mulUnsafe(Util.oneHundredFN)
@@ -2948,17 +2931,14 @@ describe("Subgraph Trusts Test", function () {
       )) as ReserveTokenTest;
 
       // Deploying a new balanceTier to new Trust
-      erc20BalanceTier = (await Util.createChildTyped(
+      erc20BalanceTier = await Util.erc20BalanceTierDeploy(
         erc20BalanceTierFactory,
-        erc20BalanceTierJson,
-        [
-          {
-            erc20: reserve.address,
-            tierValues: LEVELS,
-          },
-        ],
-        deployer
-      )) as ERC20BalanceTier;
+        creator,
+        {
+          erc20: reserve.address,
+          tierValues: LEVELS,
+        }
+      );
 
       // Giving the necessary amount to signer1 and signer2 for a level 4
       minimumTier = Tier.FOUR;

@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
 import { FetchResult } from "apollo-fetch";
 import { BigNumber, ContractTransaction } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { hexlify, concat } from "ethers/lib/utils";
 
 import * as Util from "./utils/utils";
@@ -19,6 +16,8 @@ import {
   Tier,
   VMState,
   LEVELS,
+  OpcodeTier,
+  OpcodeSale,
 } from "./utils/utils";
 
 // Artifacts
@@ -27,19 +26,17 @@ import reserveNFTJson from "@vishalkale15107/rain-protocol/artifacts/contracts/t
 
 import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
-import erc20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
 
 // Types
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { ReserveNFT } from "@vishalkale15107/rain-protocol/typechain/ReserveNFT";
 
-import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { Sale } from "@beehiveinnovation/rain-protocol/typechain/Sale";
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
 import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
 import { ERC20TransferTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
 import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
+
 // Should update path after a new commit
 import { ERC721BalanceTier } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
 
@@ -49,13 +46,10 @@ import {
   // Signers
   deployer,
   creator,
-  seeder1,
-  seeder2,
   signer1,
   signer2,
   admin,
   // Contracts factories
-  trustFactory,
   verifyFactory,
   verifyTierFactory,
   erc20BalanceTierFactory,
@@ -63,23 +57,10 @@ import {
   combineTierFactory,
   erc721BalanceTierFactory,
   noticeBoard,
+  gatedNFTFactory,
+  saleFactory,
+  trustFactory,
 } from "./1_trustQueries.test";
-
-const enum Opcode {
-  END,
-  VAL,
-  DUP,
-  ZIPMAP,
-  BLOCK_NUMBER,
-  BLOCK_TIMESTAMP,
-  REPORT,
-  NEVER,
-  ALWAYS,
-  DIFF,
-  UPDATE_BLOCKS_FOR_TIER_RANGE,
-  SELECT_LTE,
-  ACCOUNT,
-}
 
 const enum RequestType {
   APPROVE,
@@ -90,10 +71,6 @@ const enum RequestType {
 let reserve: ReserveTokenTest, transaction: ContractTransaction;
 
 describe("Subgraph Tier Test", function () {
-  before("Deploy fresh test contracts", async function () {
-    reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
-  });
-
   describe("VerifyTier Factory - Queries", function () {
     let verify: Verify, verifyTier: VerifyTier;
 
@@ -1317,7 +1294,7 @@ describe("Subgraph Tier Test", function () {
   describe("CombineTier Factory - Queries", function () {
     let combineTier: CombineTier;
 
-    const sourceAlways = concat([op(Opcode.ALWAYS)]);
+    const sourceAlways = concat([op(OpcodeTier.ALWAYS)]);
 
     const stateConfigAlways: VMState = {
       sources: [sourceAlways],
@@ -1721,45 +1698,101 @@ describe("Subgraph Tier Test", function () {
   });
 
   describe("UnknownTiers - Queries", function () {
-    let trust: Trust, sale: Sale, verify: Verify;
+    // It will work with any Tier Contract deployed without any the indexed Tier Factories
+    // Deploying an `ERC20BalanceTier` independient that should be Unknown in all Entities
+    let tierIndependent: ERC20BalanceTier;
 
-    // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
-    // in other contracts like trusts or sales
+    before("deploy independent tier contract", async function () {
+      // Creating a new reserve ERC20 token
+      reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
 
-    // All this tiers are contracts "independents" - deployed without the factory indexed
-    let verifyTier: VerifyTier,
-      erc20BalanceTierIndepent: ERC20BalanceTier,
-      erc20TransferTierIndepent: ERC20TransferTier,
-      combineTier: CombineTier,
-      erc721BalanceTier: ERC721BalanceTier;
-
-    before("deploy Independent TierContracts", async function () {
-      // Deploy and initialize an ERC20BalanceTierIndependent
-      erc20BalanceTierIndepent = (await deploy(
+      // Deploy and initialize an Independent Tier
+      tierIndependent = (await deploy(
         erc20BalanceTierJson,
         deployer,
         []
       )) as ERC20BalanceTier;
 
-      await erc20BalanceTierIndepent.initialize({
-        erc20: reserve.address,
-        tierValues: LEVELS,
-      });
-
-      // Deploy and initialize an ERC20BalanceTierIndependent
-      erc20TransferTierIndepent = (await deploy(
-        erc20TransferTierJson,
-        deployer,
-        []
-      )) as ERC20TransferTier;
-
-      await erc20TransferTierIndepent.initialize({
+      await tierIndependent.initialize({
         erc20: reserve.address,
         tierValues: LEVELS,
       });
     });
 
-    it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Trust", async function () {
+    it("should be UnknownTier when used in a GatedNFT contract", async function () {
+      const configGated = {
+        name: "TestSubgraph",
+        symbol: "TESTSG",
+        description: "Testing Subgraph",
+        animationUrl:
+          "https://ipfs.io/ipfsbafybeify52a63pgcshhbtkff4nxxxp2zp5yjn2xw43jcy4knwful7ymmgy",
+        imageUrl:
+          "https://ipfs.io/ipfsbafybeify52a63pgcshhbtkff4nxxxp2zp5yjn2xw43jcy4knwful7ymmgy",
+        animationHash:
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        imageHash:
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+      };
+
+      const gatedNFT = await Util.gatedNFTDeploy(
+        gatedNFTFactory,
+        creator,
+        configGated,
+        tierIndependent.address,
+        1,
+        1,
+        1,
+        100,
+        signer1.address,
+        1
+      );
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
+            tier {
+              __typename
+              ... on UnknownTier {
+                id
+              }
+            }
+          }
+          unknownTier (id: "${tierIndependent.address.toLowerCase()}") {
+            address
+            deployer
+            deployBlock
+            deployTimestamp
+            factory {
+              id
+            }
+            notices {
+              id
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const dataGated = response.data.gatedNFT.tier;
+      const data = response.data.unknownTier;
+
+      expect(dataGated.id).to.equals(tierIndependent.address.toLowerCase());
+      expect(dataGated.__typename).to.equals("UnknownTier");
+
+      expect(data.factory).to.be.null;
+      expect(data.notices).to.be.empty;
+
+      expect(data.address).to.equals(tierIndependent.address.toLowerCase());
+      expect(data.deployer).to.equals(Util.zeroAddress);
+      expect(data.deployBlock).to.equals("0");
+      expect(data.deployTimestamp).to.equals("0");
+    });
+
+    it("should be an UnknownTier when used in a Trust contract", async function () {
       // Properties of this trust
       const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
       const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
@@ -1778,10 +1811,6 @@ describe("Subgraph Tier Test", function () {
       const seederFee = ethers.BigNumber.from("100" + sixZeros);
       const seederUnits = 10;
       const seederCooldownDuration = 1;
-      const seedPrice = reserveInit.div(10);
-      const minSeedUnits = 0;
-      const seeder1Units = 4;
-      const seeder2Units = 6;
       const seedERC20Config = {
         name: "SeedToken",
         symbol: "SDT",
@@ -1796,7 +1825,7 @@ describe("Subgraph Tier Test", function () {
 
       const minimumTier = Tier.TWO;
 
-      trust = (await Util.trustDeploy(
+      const trust = await Util.trustDeploy(
         trustFactory,
         creator,
         {
@@ -1812,7 +1841,7 @@ describe("Subgraph Tier Test", function () {
         },
         {
           erc20Config: redeemableERC20Config,
-          tier: erc20BalanceTierIndepent.address,
+          tier: tierIndependent.address,
           minimumTier,
         },
         {
@@ -1821,9 +1850,7 @@ describe("Subgraph Tier Test", function () {
           erc20Config: seedERC20Config,
         },
         { gasLimit: 15000000 }
-      )) as Trust;
-
-      await trust.deployed();
+      );
 
       await waitForSubgraphToBeSynced();
 
@@ -1835,36 +1862,129 @@ describe("Subgraph Tier Test", function () {
                 __typename
                 ... on UnknownTier {
                   id
-                  address
-                  deployer
-                  factory {
+                }
+              }
+              redeemableERC20 {
+                tier {
+                  __typename
+                  ... on UnknownTier {
                     id
                   }
                 }
               }
-              
             }
           }
         }
       `;
-      // erc20BalanceTierIndepent
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const tierData = queryResponse.data.trust.contracts.tier;
+      const dataTier = response.data.trust.contracts.tier;
+      const dataRedeem = response.data.trust.contracts.redeemableERC20.tier;
 
-      expect(tierData.deployer).to.equals(zeroAddress);
-      expect(tierData.address).to.equals(
-        erc20BalanceTierIndepent.address.toLowerCase()
-      );
-      expect(tierData.__typename).to.equals("UnknownTier");
-      expect(tierData.factory).to.be.null;
+      expect(dataTier.__typename).to.equals("UnknownTier");
+      expect(dataTier.id).to.equals(tierIndependent.address.toLowerCase());
+
+      expect(dataRedeem.__typename).to.equals("UnknownTier");
+      expect(dataRedeem.id).to.equals(tierIndependent.address.toLowerCase());
     });
 
-    it("should be an UnknownTier if TierContract was deployed without the factory and exist in a Sale", async function () {
-      //
+    it("should be an UnknownTier if TierContract was deployed without the factory and exist in a SaleRedeemableERC20", async function () {
+      const afterBlockNumberConfig = (blockNumber: number) => {
+        return {
+          sources: [
+            concat([
+              // (BLOCK_NUMBER blockNumberSub1 gt)
+              op(OpcodeSale.BLOCK_NUMBER),
+              op(OpcodeSale.VAL, 0),
+              op(OpcodeSale.GREATER_THAN),
+            ]),
+          ],
+          constants: [blockNumber - 1],
+          stackLength: 3,
+          argumentsLength: 0,
+        };
+      };
+
+      const saleTimeout = 30;
+      const startBlock = (await ethers.provider.getBlockNumber()) + 5;
+
+      const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+      const vBasePrice = op(OpcodeSale.VAL, 0);
+      const constants = [staticPrice];
+      const sources = [concat([vBasePrice])];
+
+      // SaleConfig
+      const canStartStateConfig = afterBlockNumberConfig(startBlock);
+      const canEndStateConfig = afterBlockNumberConfig(
+        startBlock + saleTimeout
+      );
+      const calculatePriceStateConfig = {
+        sources,
+        constants,
+        stackLength: 1,
+        argumentsLength: 0,
+      };
+      const cooldownDuration = 1;
+      const minimumRaise = ethers.BigNumber.from("150000").mul(
+        Util.RESERVE_ONE
+      );
+      const dustSize = 0;
+
+      // SaleRedeemableERC20Config
+      const redeemableERC20Config = {
+        name: "Token",
+        symbol: "TKN",
+        distributor: Util.zeroAddress,
+        initialSupply: ethers.BigNumber.from("2000").mul(Util.ONE),
+      };
+      const minimumTier = Tier.ZERO;
+      const distributionEndForwardingAddress = ethers.constants.AddressZero;
+
+      const sale = await Util.saleDeploy(
+        saleFactory,
+        creator,
+        {
+          canStartStateConfig,
+          canEndStateConfig,
+          calculatePriceStateConfig,
+          recipient: signer1.address,
+          reserve: reserve.address,
+          cooldownDuration,
+          minimumRaise,
+          dustSize,
+        },
+        {
+          erc20Config: redeemableERC20Config,
+          tier: tierIndependent.address,
+          minimumTier,
+          distributionEndForwardingAddress,
+        }
+      );
+
+      const redeemableERC20Address = await sale.token();
+
+      const query = `
+        {
+          saleRedeemableERC20 (id: "${redeemableERC20Address.toLowerCase()}") {
+            tier {
+              __typename
+              ... on UnknownTier {
+                id
+              }
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.saleRedeemableERC20.tier;
+
+      expect(data.__typename).to.equals("UnknownTier");
+      expect(data.id).to.equals(tierIndependent.address.toLowerCase());
     });
   });
 });

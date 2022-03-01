@@ -33,6 +33,7 @@ import TrustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contrac
 
 import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
 import SaleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
+import gatedNFTJson from "@beehiveinnovation/rain-statusfi/artifacts/contracts/GatedNFT.sol/GatedNFT.json";
 import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 
 import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
@@ -55,6 +56,7 @@ import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typecha
 import { SeedERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
 import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
 import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
+import { GatedNFTFactory } from "@beehiveinnovation/rain-statusfi/typechain/GatedNFTFactory";
 
 import {
   ERC20BalanceTier,
@@ -76,6 +78,10 @@ import {
   ERC721BalanceTierConfigStruct,
 } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
 
+import {
+  GatedNFT,
+  ConfigStruct,
+} from "@beehiveinnovation/rain-statusfi/typechain/GatedNFT";
 import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
 import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
@@ -125,6 +131,67 @@ export enum Tier {
   SIX, // DIAMOND
   SEVEN, // CHAD
   EIGHT, // JAWAD
+}
+
+export enum OpcodeSale {
+  SKIP,
+  VAL,
+  DUP,
+  ZIPMAP,
+  BLOCK_NUMBER,
+  BLOCK_TIMESTAMP,
+  SENDER,
+  IS_ZERO,
+  EAGER_IF,
+  EQUAL_TO,
+  LESS_THAN,
+  GREATER_THAN,
+  EVERY,
+  ANY,
+  ADD,
+  SUB,
+  MUL,
+  DIV,
+  MOD,
+  POW,
+  MIN,
+  MAX,
+  REPORT,
+  NEVER,
+  ALWAYS,
+  SATURATING_DIFF,
+  UPDATE_BLOCKS_FOR_TIER_RANGE,
+  SELECT_LTE,
+  ERC20_BALANCE_OF,
+  ERC20_TOTAL_SUPPLY,
+  ERC721_BALANCE_OF,
+  ERC721_OWNER_OF,
+  ERC1155_BALANCE_OF,
+  ERC1155_BALANCE_OF_BATCH,
+  REMAINING_UNITS,
+  TOTAL_RESERVE_IN,
+  LAST_BUY_BLOCK,
+  LAST_BUY_UNITS,
+  LAST_BUY_PRICE,
+  CURRENT_BUY_UNITS,
+  TOKEN_ADDRESS,
+  RESERVE_ADDRESS,
+}
+
+export enum OpcodeTier {
+  END,
+  VAL,
+  DUP,
+  ZIPMAP,
+  BLOCK_NUMBER,
+  BLOCK_TIMESTAMP,
+  REPORT,
+  NEVER,
+  ALWAYS,
+  DIFF,
+  UPDATE_BLOCKS_FOR_TIER_RANGE,
+  SELECT_LTE,
+  ACCOUNT,
 }
 
 export interface VMState {
@@ -554,6 +621,40 @@ export const erc721BalanceTierDeploy = async (
   )) as ERC721BalanceTier & Contract;
 
   return erc721BalanceTier;
+};
+
+export const gatedNFTDeploy = async (
+  gatedNFTFactory: GatedNFTFactory,
+  creator: SignerWithAddress,
+  config: ConfigStruct,
+  tier: string,
+  minimumStatus: BigNumber | number,
+  maxPerAddress: BigNumber | number,
+  transferrable: number,
+  maxMintable: BigNumber | number,
+  royaltyRecipient: string,
+  royaltyBPS: BigNumber | number,
+  override: Overrides = {}
+): Promise<GatedNFT> => {
+  // Creating child
+  const gatedNFT = (await createChildTyped(
+    gatedNFTFactory,
+    gatedNFTJson,
+    [
+      config,
+      tier,
+      minimumStatus,
+      maxPerAddress,
+      transferrable,
+      maxMintable,
+      royaltyRecipient,
+      royaltyBPS,
+      override,
+    ],
+    creator
+  )) as GatedNFT & Contract;
+
+  return gatedNFT;
 };
 
 /**

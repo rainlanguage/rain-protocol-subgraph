@@ -1,23 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
-import { ContractTransaction, Signer, BigNumber, Transaction } from "ethers";
+import { ContractTransaction, BigNumber } from "ethers";
 import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
 import { deploy, waitForSubgraphToBeSynced, Tier } from "./utils/utils";
 
 import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 import readWriteTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
-import redeemableERC20ClaimEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/RedeemableERC20ClaimEscrow.sol/RedeemableERC20ClaimEscrow.json";
-import bPoolFeeEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/BPoolFeeEscrow.sol/BPoolFeeEscrow.json";
-import claimEscroWrapperJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/wrappers/RedeemableERC20ClaimEscrowWrapper.sol/RedeemableERC20ClaimEscrowWrapper.json";
 
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
-import { RedeemableERC20ClaimEscrow } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20ClaimEscrow";
-import { BPoolFeeEscrow } from "@beehiveinnovation/rain-protocol/typechain/BPoolFeeEscrow";
-import { RedeemableERC20ClaimEscrowWrapper } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20ClaimEscrowWrapper";
 import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
 import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
 import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
@@ -45,8 +37,7 @@ const enum SaleStatus {
 
 let claimableReserveToken: ReserveTokenTest,
   tier: ReadWriteTier,
-  claimEscrowWrapper: RedeemableERC20ClaimEscrowWrapper,
-  transaction: ContractTransaction; // use to save/facilite a tx;
+  transaction: ContractTransaction;
 
 let reserve: ReserveTokenTest,
   trust: Trust,
@@ -54,7 +45,6 @@ let reserve: ReserveTokenTest,
   bPool: BPool,
   redeemableERC20: RedeemableERC20,
   minimumTradingDuration: number,
-  minimumCreatorRaise: BigNumber,
   successLevel: BigNumber,
   startBlock: number;
 
@@ -101,7 +91,6 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         bPool,
         redeemableERC20,
         minimumTradingDuration,
-        minimumCreatorRaise,
         successLevel,
       } = await Util.basicSetup(
         deployer,
@@ -1290,7 +1279,6 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         `wrong total supply`
       );
 
-      const depositId = transaction.hash.toLowerCase();
       const escrowSupplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
       const query = `
@@ -1541,7 +1529,6 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         bPool,
         redeemableERC20,
         minimumTradingDuration,
-        minimumCreatorRaise,
         successLevel,
       } = await Util.basicSetup(
         deployer,

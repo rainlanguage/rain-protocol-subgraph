@@ -5,9 +5,7 @@ import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
 import { deploy, waitForSubgraphToBeSynced, LEVELS } from "./utils/utils";
 
-import gatedNFTJson from "@beehiveinnovation/rain-statusfi/artifacts/contracts/GatedNFT.sol/GatedNFT.json";
 import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 
 import { GatedNFT } from "@beehiveinnovation/rain-statusfi/typechain/GatedNFT";
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
@@ -58,16 +56,14 @@ describe("Subgraph GatedNFT test", function () {
 
     reserve = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
 
-    transaction = await erc20BalanceTierFactory.createChildTyped({
-      erc20: reserve.address,
-      tierValues: LEVELS,
-    });
-
-    erc20BalanceTier = (await Util.getContractChild(
-      transaction,
+    erc20BalanceTier = await Util.erc20BalanceTierDeploy(
       erc20BalanceTierFactory,
-      erc20BalanceTierJson
-    )) as ERC20BalanceTier;
+      deployer,
+      {
+        erc20: reserve.address,
+        tierValues: LEVELS,
+      }
+    );
 
     // Giving the necessary amount to signer1 for a level 2
     const level2 = LEVELS[1];
@@ -113,24 +109,19 @@ describe("Subgraph GatedNFT test", function () {
   });
 
   it("should query the GatedNFT child from factory after creation", async function () {
-    transaction = await gatedNFTFactory
-      .connect(signer1)
-      .createChildTyped(
-        configGated,
-        erc20BalanceTier.address,
-        minimumStatus,
-        maxPerAddress,
-        transferrable,
-        maxMintable,
-        royaltyRecipient,
-        royaltyBPS
-      );
-
-    gatedNFT = (await Util.getContractChild(
-      transaction,
+    // Deploying the GatedNFT Child
+    gatedNFT = await Util.gatedNFTDeploy(
       gatedNFTFactory,
-      gatedNFTJson
-    )) as GatedNFT;
+      signer1,
+      configGated,
+      erc20BalanceTier.address,
+      minimumStatus,
+      maxPerAddress,
+      transferrable,
+      maxMintable,
+      royaltyRecipient,
+      royaltyBPS
+    );
 
     await waitForSubgraphToBeSynced();
 
@@ -155,9 +146,9 @@ describe("Subgraph GatedNFT test", function () {
   });
 
   it("should query the GatedNFT correctly after creation", async function () {
-    const deployBlock = transaction.blockNumber;
-    const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
-      .timestamp;
+    const [deployBlock, deloyTimestamp] = await Util.getTxTimeblock(
+      gatedNFT.deployTransaction
+    );
     // The signer use to call the factory
     const creatorExpected = signer1.address;
     const ownerExpected = signer1.address;
@@ -191,8 +182,6 @@ describe("Subgraph GatedNFT test", function () {
   });
 
   it("should query the tier contract in GatedNFT correctly", async function () {
-    const deployerExpected = await erc20BalanceTierFactory.signer.getAddress();
-
     const query = `
       {
         gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
@@ -216,7 +205,7 @@ describe("Subgraph GatedNFT test", function () {
 
     expect(data.id).to.equals(erc20BalanceTier.address.toLowerCase());
     expect(data.address).to.equals(erc20BalanceTier.address.toLowerCase());
-    expect(data.deployer).to.equals(deployerExpected.toLowerCase());
+    expect(data.deployer).to.equals(deployer.address.toLowerCase());
     expect(data.factory.id).to.equals(
       erc20BalanceTierFactory.address.toLowerCase()
     );
@@ -290,9 +279,11 @@ describe("Subgraph GatedNFT test", function () {
     const senderExpected = signer1.address;
     const newOwnerExpected = signer1.address;
 
-    const deployBlock = transaction.blockNumber;
-    const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
-      .timestamp;
+    const ownershipTransferId = gatedNFT.deployTransaction.hash.toLowerCase();
+
+    const [deployBlock, deloyTimestamp] = await Util.getTxTimeblock(
+      gatedNFT.deployTransaction
+    );
 
     const query = `
       {
@@ -301,7 +292,7 @@ describe("Subgraph GatedNFT test", function () {
             id
           }
         }
-        ownershipTransferred (id: "${transaction.hash.toLowerCase()}") {
+        ownershipTransferred (id: "${ownershipTransferId}") {
           emitter
           sender
           oldOwner
@@ -317,21 +308,18 @@ describe("Subgraph GatedNFT test", function () {
     })) as FetchResult;
 
     const dataGated = queryResponse.data.gatedNFT.ownershipHistory;
-    const dataOwnership = queryResponse.data.ownershipTransferred;
+    const data = queryResponse.data.ownershipTransferred;
 
-    expect(dataGated).to.have.lengthOf(1);
-    expect(dataGated[0].id).to.equals(transaction.hash.toLowerCase());
+    expect(dataGated).deep.include({ id: ownershipTransferId });
 
-    expect(dataOwnership.emitter).to.equals(gatedNFT.address.toLowerCase());
-    expect(dataOwnership.sender).to.equals(senderExpected.toLowerCase());
+    expect(data.emitter).to.equals(gatedNFT.address.toLowerCase());
+    expect(data.sender).to.equals(senderExpected.toLowerCase());
 
-    expect(dataOwnership.oldOwner).to.equals(
-      gatedNFTFactory.address.toLowerCase()
-    );
-    expect(dataOwnership.newOwner).to.equals(newOwnerExpected.toLowerCase());
+    expect(data.oldOwner).to.equals(gatedNFTFactory.address.toLowerCase());
+    expect(data.newOwner).to.equals(newOwnerExpected.toLowerCase());
 
-    expect(dataOwnership.block).to.equals(deployBlock.toString());
-    expect(dataOwnership.timestamp).to.equals(deloyTimestamp.toString());
+    expect(data.block).to.equals(deployBlock.toString());
+    expect(data.timestamp).to.equals(deloyTimestamp.toString());
   });
 
   it("should query correctly after an updateRoyaltyRecipient", async function () {
@@ -441,24 +429,19 @@ describe("Subgraph GatedNFT test", function () {
   });
 
   it("should continue querying if a non-ITier address is provide as TierContract", async function () {
-    transaction = await gatedNFTFactory
-      .connect(signer1)
-      .createChildTyped(
-        configGated,
-        Util.zeroAddress,
-        minimumStatus,
-        maxPerAddress,
-        transferrable,
-        maxMintable,
-        royaltyRecipient,
-        royaltyBPS
-      );
-
-    const gatedWrongTier = (await Util.getContractChild(
-      transaction,
+    // Deploying new GatedNFT Child with non-ITier address
+    const gatedWrongTier = await Util.gatedNFTDeploy(
       gatedNFTFactory,
-      gatedNFTJson
-    )) as GatedNFT;
+      signer1,
+      configGated,
+      Util.zeroAddress,
+      minimumStatus,
+      maxPerAddress,
+      transferrable,
+      maxMintable,
+      royaltyRecipient,
+      royaltyBPS
+    );
 
     await waitForSubgraphToBeSynced();
 

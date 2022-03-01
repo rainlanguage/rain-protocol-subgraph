@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber, ContractTransaction } from "ethers";
@@ -14,11 +12,11 @@ import {
   eighteenZeros,
   Tier,
   LEVELS,
+  OpcodeSale,
 } from "./utils/utils";
 
 import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
-import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
@@ -27,12 +25,6 @@ import type {
   BuyEvent,
   Sale,
 } from "@beehiveinnovation/rain-protocol/typechain/Sale";
-import type {
-  SaleConfigStruct,
-  SaleFactory,
-  SaleRedeemableERC20ConfigStruct,
-} from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
-import { isContext } from "vm";
 
 import {
   // Subgraph fetch
@@ -41,7 +33,6 @@ import {
   deployer,
   creator,
   signer1,
-  signer2,
   recipient,
   // Factories
   saleFactory,
@@ -58,59 +49,14 @@ enum Status {
   FAIL,
 }
 
-const enum Opcode {
-  SKIP,
-  VAL,
-  DUP,
-  ZIPMAP,
-  BLOCK_NUMBER,
-  BLOCK_TIMESTAMP,
-  SENDER,
-  IS_ZERO,
-  EAGER_IF,
-  EQUAL_TO,
-  LESS_THAN,
-  GREATER_THAN,
-  EVERY,
-  ANY,
-  ADD,
-  SUB,
-  MUL,
-  DIV,
-  MOD,
-  POW,
-  MIN,
-  MAX,
-  REPORT,
-  NEVER,
-  ALWAYS,
-  SATURATING_DIFF,
-  UPDATE_BLOCKS_FOR_TIER_RANGE,
-  SELECT_LTE,
-  ERC20_BALANCE_OF,
-  ERC20_TOTAL_SUPPLY,
-  ERC721_BALANCE_OF,
-  ERC721_OWNER_OF,
-  ERC1155_BALANCE_OF,
-  ERC1155_BALANCE_OF_BATCH,
-  REMAINING_UNITS,
-  TOTAL_RESERVE_IN,
-  LAST_BUY_BLOCK,
-  LAST_BUY_UNITS,
-  LAST_BUY_PRICE,
-  CURRENT_BUY_UNITS,
-  TOKEN_ADDRESS,
-  RESERVE_ADDRESS,
-}
-
 const afterBlockNumberConfig = (blockNumber: number) => {
   return {
     sources: [
       concat([
         // (BLOCK_NUMBER blockNumberSub1 gt)
-        op(Opcode.BLOCK_NUMBER),
-        op(Opcode.VAL, 0),
-        op(Opcode.GREATER_THAN),
+        op(OpcodeSale.BLOCK_NUMBER),
+        op(OpcodeSale.VAL, 0),
+        op(OpcodeSale.GREATER_THAN),
       ]),
     ],
     constants: [blockNumber - 1],
@@ -150,17 +96,14 @@ describe("Sales queries test", function () {
     )) as ReserveTokenTest;
 
     // Deploying a new Tier Contract
-    erc20BalanceTier = (await Util.createChildTyped(
+    erc20BalanceTier = await Util.erc20BalanceTierDeploy(
       erc20BalanceTierFactory,
-      erc20BalanceTierJson,
-      [
-        {
-          erc20: reserve.address,
-          tierValues: LEVELS,
-        },
-      ],
-      deployer
-    )) as ERC20BalanceTier;
+      creator,
+      {
+        erc20: reserve.address,
+        tierValues: LEVELS,
+      }
+    );
   });
 
   it("should query the saleFactory after construction correctly", async function () {
@@ -202,7 +145,7 @@ describe("Sales queries test", function () {
     const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
 
     const constants = [staticPrice];
-    const vBasePrice = op(Opcode.VAL, 0);
+    const vBasePrice = op(OpcodeSale.VAL, 0);
 
     const sources = [concat([vBasePrice])];
 

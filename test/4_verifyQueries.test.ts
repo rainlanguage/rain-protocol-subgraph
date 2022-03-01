@@ -367,7 +367,6 @@ describe("Verify Factory - Queries", function () {
         requestStatus: 1,
         status: 0,
       });
-      // expect(dataVerifyContract[0].id).to.equals(signer1Id); ...
 
       // Expected verifyAddress
       expect(dataVerifyAddress.verifyContract.id).to.equals(
@@ -1332,15 +1331,15 @@ describe("Verify Factory - Queries", function () {
 
       expect(data.approverAdmins).deep.include(
         { id: signer1VerifyAddress },
-        `approvers admins does NOT include the new approver verify address "${signer1VerifyAddress}"`
+        `approvers admins does include the new approver verify address "${signer1VerifyAddress}"`
       );
       expect(data.bannerAdmins).deep.include(
         { id: signer2VerifyAddress },
-        `banner adminss does NOT include the new banner verify address "${signer2VerifyAddress}"`
+        `banner adminss does include the new banner verify address "${signer2VerifyAddress}"`
       );
       expect(data.removerAdmins).deep.include(
         { id: signer2VerifyAddress },
-        `remover admins does NOT include the new remover verify address "${signer2VerifyAddress}"`
+        `remover admins does include the new remover verify address "${signer2VerifyAddress}"`
       );
     });
 
@@ -1471,16 +1470,16 @@ describe("Verify Factory - Queries", function () {
 
       expect(data.approvers).deep.include(
         { id: signer1VerifyAddress },
-        `approvers in verify doest NOT include the approver verifyAddress ${signer1VerifyAddress}`
+        `approvers in verify doest include the approver verifyAddress ${signer1VerifyAddress}`
       );
       expect(data.banners).deep.include(
         { id: signer1VerifyAddress },
-        `banners in verify doest NOT include the banner verifyAddress ${signer1VerifyAddress}`
+        `banners in verify doest include the banner verifyAddress ${signer1VerifyAddress}`
       );
 
       expect(data.removers).deep.include(
         { id: signer2VerifyAddress },
-        `removers in verify doest NOT include the remover verifyAddress ${signer2VerifyAddress}`
+        `removers in verify doest include the remover verifyAddress ${signer2VerifyAddress}`
       );
     });
 
