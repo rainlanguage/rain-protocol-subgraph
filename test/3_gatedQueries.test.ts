@@ -328,9 +328,7 @@ describe("Subgraph GatedNFT test", function () {
       .connect(signer1)
       .updateRoyaltyRecipient(signer2.address);
 
-    const deployBlock = transaction.blockNumber;
-    const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
-      .timestamp;
+    const [deployBlock, deloyTime] = await Util.getTxTimeblock(transaction);
 
     await waitForSubgraphToBeSynced();
 
@@ -371,7 +369,7 @@ describe("Subgraph GatedNFT test", function () {
       signer2.address.toLowerCase()
     );
     expect(dataUpdatedRoyalty.block).to.equals(deployBlock.toString());
-    expect(dataUpdatedRoyalty.timestamp).to.equals(deloyTimestamp.toString());
+    expect(dataUpdatedRoyalty.timestamp).to.equals(deloyTime.toString());
   });
 
   it("should query correctly after a transferOwnership", async function () {
@@ -381,9 +379,7 @@ describe("Subgraph GatedNFT test", function () {
       .transferOwnership(signer2.address);
 
     const ownershipTransferId = transaction.hash.toLowerCase();
-    const deployBlock = transaction.blockNumber;
-    const deloyTimestamp = (await ethers.provider.getBlock(deployBlock))
-      .timestamp;
+    const [deployBlock, deloyTime] = await Util.getTxTimeblock(transaction);
 
     await waitForSubgraphToBeSynced();
 
@@ -425,7 +421,7 @@ describe("Subgraph GatedNFT test", function () {
     expect(dataOwnership.newOwner).to.equals(signer2.address.toLowerCase());
 
     expect(dataOwnership.block).to.equals(deployBlock.toString());
-    expect(dataOwnership.timestamp).to.equals(deloyTimestamp.toString());
+    expect(dataOwnership.timestamp).to.equals(deloyTime.toString());
   });
 
   it("should continue querying if a non-ITier address is provide as TierContract", async function () {
