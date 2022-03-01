@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
 import { ContractTransaction } from "ethers";
 import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
