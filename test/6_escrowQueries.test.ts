@@ -122,51 +122,6 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       await waitForSubgraphToBeSynced();
     });
 
-    it("should query Notice in Escrow correctly", async function () {
-      const notices = [
-        {
-          subject: claimEscrow.address,
-          data: "0x01",
-        },
-      ];
-
-      transaction = await noticeBoard.connect(signer1).createNotices(notices);
-
-      const noticeId = `${claimEscrow.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
-      await waitForSubgraphToBeSynced();
-
-      const query = `
-        {
-          redeemableERC20ClaimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
-            notices {
-              id
-            }
-          }
-          notice (id: "${noticeId}") {
-            sender
-            subject{
-              id
-            }
-            data
-          }
-        }
-      `;
-
-      const queryResponse = (await subgraph({
-        query: query,
-      })) as FetchResult;
-      const dataEscrow = queryResponse.data.redeemableERC20ClaimEscrow.notices;
-      const dataNotice = queryResponse.data.notice;
-
-      expect(dataEscrow).deep.include({ id: noticeId });
-
-      expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
-      expect(dataNotice.subject.id).to.equals(
-        claimEscrow.address.toLowerCase()
-      );
-      expect(dataNotice.data).to.equals("0x01");
-    });
-
     it("should update the RedeemableERC20ClaimEscrow entity after a PendingDeposit", async function () {
       // Make a swap with signer1 the Util function
       const spend = ethers.BigNumber.from("200" + Util.sixZeros);
@@ -1519,6 +1474,51 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         expected  ${supply2}
         got       ${supplyTokenDeposit_2.redeemableSupply}`
       );
+    });
+
+    it("should query Notice in Escrow correctly", async function () {
+      const notices = [
+        {
+          subject: claimEscrow.address,
+          data: "0x01",
+        },
+      ];
+
+      transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+      const noticeId = `${claimEscrow.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          redeemableERC20ClaimEscrow (id: "${claimEscrow.address.toLowerCase()}") {
+            notices {
+              id
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject{
+              id
+            }
+            data
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const dataEscrow = response.data.redeemableERC20ClaimEscrow.notices;
+      const dataNotice = response.data.notice;
+
+      expect(dataEscrow).deep.include({ id: noticeId });
+
+      expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
+      expect(dataNotice.subject.id).to.equals(
+        claimEscrow.address.toLowerCase()
+      );
+      expect(dataNotice.data).to.equals("0x01");
     });
   });
 

@@ -2548,12 +2548,11 @@ describe("Subgraph Trusts Test", function () {
       // percentRaised = amountRaised / minimumRaise
       const percentRaisedExpected = amountRaisedFN
         .mulUnsafe(Util.oneHundredFN)
-        .divUnsafe(minimumRaiseFN);
+        .divUnsafe(minimumRaiseFN)
+        .toString();
 
       // poolRedeemableBalance / RedeemableERC20.totalSupply
-      const percentAvailableExpected = poolRedeemableBalanceFN
-        .mulUnsafe(Util.oneHundredFN)
-        .divUnsafe(redeemableSupplyFN);
+      const percentAvailableExpected = "0";
 
       const query = `
         {
@@ -2584,10 +2583,8 @@ describe("Subgraph Trusts Test", function () {
         amountRaisedExpected,
         `wrong amountRaised: should be frozen after endDutchAuction`
       );
-      expect(data.percentRaised).to.equals(percentRaisedExpected.toString());
-      expect(data.percentAvailable).to.equals(
-        percentAvailableExpected.toString()
-      );
+      expect(data.percentRaised).to.equals(percentRaisedExpected.slice(0, -1));
+      expect(data.percentAvailable).to.equals(percentAvailableExpected);
     });
 
     it("should update the Pool after endDutchAuction", async function () {

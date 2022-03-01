@@ -153,7 +153,7 @@ type CombineTier implements TierContract & INotice @entity{
     address: Bytes! #tier contract address
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes #address of the deployer - get from the Snapshot event emitted by this contract - Snapshot.sender
+    deployer: Bytes #address of the deployer
     factory: TierFactory
 
     state: State #from event Snapshot.state

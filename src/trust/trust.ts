@@ -55,6 +55,7 @@ export function handleEndDutchAuction(event: EndDutchAuction): void {
     distributionProgress.finalBalance = event.params.finalBalance
     distributionProgress.poolReserveBalance = ZERO_BI
     distributionProgress.poolRedeemableBalance = ZERO_BI
+    distributionProgress.percentAvailable = ZERO_BD
 
     let contracts = Contract.load(event.address.toHex())
     let pool = Pool.load(contracts.pool)

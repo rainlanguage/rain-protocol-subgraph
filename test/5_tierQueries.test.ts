@@ -12,7 +12,6 @@ import {
   op,
   deploy,
   getTxTimeblock,
-  getContractChild,
   waitForSubgraphToBeSynced,
   eighteenZeros,
   sixZeros,
@@ -25,30 +24,14 @@ import {
 // Artifacts
 import reserveJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 import reserveNFTJson from "@vishalkale15107/rain-protocol/artifacts/contracts/test/ReserveNFT.sol/ReserveNFT.json";
-import trustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
-import erc20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
-import erc20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
-import combineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
-import verifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
-import verifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
 
 import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 import erc20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
-import combineTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
-import verifyTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTier.sol/VerifyTier.json";
 import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 
 // Types
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { ReserveNFT } from "@vishalkale15107/rain-protocol/typechain/ReserveNFT";
-import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
-import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
-import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
-import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
-import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTierFactory";
-import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
-import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
-import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
 
 import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
 import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
@@ -58,18 +41,8 @@ import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTie
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
 
 // Should update path after a new commit
-import erc721BalanceTierFactoryJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTierFactory.sol/ERC721BalanceTierFactory.json";
 import erc721BalanceTierJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTier.sol/ERC721BalanceTier.json";
-import { ERC721BalanceTierFactory } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTierFactory";
 import { ERC721BalanceTier } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
-
-import {
-  getContracts,
-  getFactories,
-  getTrust,
-  NOTICE_QUERY,
-  QUERY,
-} from "./utils/queries";
 
 import {
   // Subgraph
@@ -93,12 +66,6 @@ import {
   noticeBoard,
 } from "./1_trustQueries.test";
 
-const enum Status {
-  Nil,
-  Added,
-  Approved,
-  Banned,
-}
 
 const enum Opcode {
   END,
@@ -125,8 +92,6 @@ const enum RequestType {
 let trust: Trust,
   reserve: ReserveTokenTest,
   reserveNFT: ReserveNFT,
-  combineTier: CombineTier,
-  erc721BalanceTier: ERC721BalanceTier,
   transaction: ContractTransaction; // use to save/facilite a tx
 
 describe("Subgraph Tier Test", function () {
@@ -135,7 +100,6 @@ describe("Subgraph Tier Test", function () {
 
   before("Deploy fresh test contracts", async function () {
     reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
-    reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
   });
 
   describe("VerifyTier Factory - Queries", function () {
@@ -923,11 +887,9 @@ describe("Subgraph Tier Test", function () {
 
       const query = `
         {
-          {
-            erc20BalanceTier   (id: "${erc20BalanceTier.address.toLowerCase()}") {
-              notices {
-                id
-              }
+          erc20BalanceTier  (id: "${erc20BalanceTier.address.toLowerCase()}") {
+            notices {
+              id
             }
           }
           notice (id: "${noticeId}") {
@@ -1328,11 +1290,9 @@ describe("Subgraph Tier Test", function () {
 
       const query = `
         {
-          {
-            erc20TransferTier   (id: "${erc20TransferTier.address.toLowerCase()}") {
-              notices {
-                id
-              }
+          erc20TransferTier   (id: "${erc20TransferTier.address.toLowerCase()}") {
+            notices {
+              id
             }
           }
           notice (id: "${noticeId}") {
@@ -1363,6 +1323,8 @@ describe("Subgraph Tier Test", function () {
   });
 
   describe("CombineTier Factory - Queries", function () {
+    let combineTier: CombineTier;
+
     const sourceAlways = concat([op(Opcode.ALWAYS)]);
 
     const stateConfigAlways: VMState = {
@@ -1373,8 +1335,7 @@ describe("Subgraph Tier Test", function () {
     };
 
     it("should query CombineTierFactory correctly", async function () {
-      await waitForSubgraphToBeSynced();
-
+      // Get the CombineTier implementation
       const implementation = (
         await Util.getEventArgs(
           combineTierFactory.deployTransaction,
@@ -1385,41 +1346,29 @@ describe("Subgraph Tier Test", function () {
 
       const query = `
         {
-          combineTierFactories {
-            id
+          combineTierFactory (id: "${combineTierFactory.address.toLowerCase()}"){
             address
             implementation
-            children {
-              id
-            }
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponse.data.combineTierFactories[0];
+      const data = response.data.combineTierFactory;
 
-      expect(queryResponse.data.combineTierFactories).to.have.lengthOf(1);
-
-      expect(data.id).to.equals(combineTierFactory.address.toLowerCase());
       expect(data.address).to.equals(combineTierFactory.address.toLowerCase());
-      expect(data.implementation).to.equals(implementation.toLocaleLowerCase());
-      expect(data.children).to.be.empty;
+      expect(data.implementation).to.equals(implementation.toLowerCase());
     });
 
     it("should query the CombineTier child from factory after creation", async function () {
-      transaction = await combineTierFactory.createChildTyped(
+      combineTier = await Util.combineTierDeploy(
+        combineTierFactory,
+        creator,
         stateConfigAlways
       );
-
-      combineTier = (await getContractChild(
-        transaction,
-        combineTierFactory,
-        combineTierJson
-      )) as CombineTier;
 
       await waitForSubgraphToBeSynced();
 
@@ -1439,133 +1388,190 @@ describe("Subgraph Tier Test", function () {
 
       const data = queryResponse.data.combineTierFactory;
 
-      expect(data.children).to.have.lengthOf(1);
-      expect(data.children[0].id).to.equals(combineTier.address.toLowerCase());
+      expect(data.children).deep.include({
+        id: combineTier.address.toLowerCase(),
+      });
     });
 
     it("should query the CombineTier correctly", async function () {
-      await waitForSubgraphToBeSynced();
+      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+        combineTier.deployTransaction
+      );
 
-      // The signer assigned to the instance
-      const deployerExpected = await combineTierFactory.signer.getAddress();
-
+      const stateId = combineTier.deployTransaction.hash.toLowerCase();
       const query = `
         {
           combineTier (id: "${combineTier.address.toLowerCase()}") {
             address
+            deployer
             deployBlock
             deployTimestamp
-            deployer
             factory {
               id
             }
-          }
+            state {
+              id
+            }
+            notices {
+              id
+            }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponse.data.combineTier;
+      const data = response.data.combineTier;
 
       expect(data.address).to.equals(combineTier.address.toLowerCase());
-      expect(data.deployBlock).to.equals(transaction.blockNumber.toString());
-      // expect(data.deployTimestamp).to.equals(transaction.timestamp.toString());
-      expect(data.deployer).to.equals(deployerExpected.toLowerCase());
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
+
+      expect(data.notices).to.be.empty;
+      expect(data.state.id).to.equals(stateId);
       expect(data.factory.id).to.equals(
         combineTierFactory.address.toLowerCase()
       );
     });
 
-    it("should query the correct state in CombineTier", async function () {
-      await waitForSubgraphToBeSynced();
+    it("should query the State present on CombineTier correclty", async function () {
+      const stateId = `${combineTier.deployTransaction.hash.toLowerCase()}`;
 
       const stateExpected = (
-        await Util.getEventArgs(transaction, "Snapshot", combineTier)
-      ).state_;
+        await Util.getEventArgs(
+          combineTier.deployTransaction,
+          "Snapshot",
+          combineTier
+        )
+      ).state;
+
+      const arrayToString = (arr: BigNumber[]): string[] => {
+        return arr.map((x: BigNumber) => x.toString());
+      };
+
+      // Using the values form Event
+      const stackIndexExpected = stateExpected.stackIndex.toString();
+      const stackExpected = arrayToString(stateExpected.stack);
+      const sourcesExpected = stateExpected.sources;
+      const constantsExpected = arrayToString(stateExpected.constants);
+      const argumentsExpected = arrayToString(stateExpected.arguments);
 
       const query = `
         {
-          combineTier (id: "${combineTier.address.toLowerCase()}") {
-            state {
-              id
-              stackIndex
-              stack
-              sources
-              constants
-              arguments
-            }
+          state (id: "${stateId}") {
+            stackIndex
+            stack
+            sources
+            constants
+            arguments
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponse.data.combineTier.state;
+      const data = response.data.state;
 
-      expect(data.id).to.equals(transaction.hash.toLowerCase());
-      expect(data.stackIndex).to.equals(stateExpected.stackIndex);
-      expect(data.stack).to.deep.equals(
-        stateExpected.stack.map((element: BigNumber) =>
-          parseInt(element._hex).toString()
-        )
-      );
+      expect(data.stackIndex).to.equals(stackIndexExpected);
+      expect(data.stack).to.eql(stackExpected);
+      expect(data.sources).to.eql(sourcesExpected);
+      expect(data.constants).to.eql(constantsExpected);
+      expect(data.arguments).to.eql(argumentsExpected);
     });
 
     it("should query the Snapshot correctly", async function () {
-      await waitForSubgraphToBeSynced();
+      const snapshotId = `${combineTier.deployTransaction.hash.toLowerCase()} - 0`;
+      const stateId = `${combineTier.deployTransaction.hash.toLowerCase()}`;
 
-      const eventArgs = await Util.getEventArgs(
+      const { pointer } = await Util.getEventArgs(
         transaction,
         "Snapshot",
         combineTier
       );
 
-      const stateSourcesExpected = eventArgs.state_.sources;
-      const pointerExpected = eventArgs.pointer;
-      // The address that made the tx where the contract was created
-      const combineTierCreator = transaction.from.toLocaleLowerCase();
-
       const query = `
         {
-          snapshots {
-            id
+          snapshots (id: "${snapshotId}") {
             sender
             pointer
             state {
               id
-              sources
             }
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponse.data.snapshots[0];
+      const data = response.data.snapshot;
 
-      expect(data.sender).to.equal(combineTierCreator);
-      expect(data.pointer).to.equal(pointerExpected);
+      expect(data.sender).to.equals(combineTierFactory.address.toLowerCase());
+      expect(data.pointer).to.equals(pointer.toLowerCase());
+      expect(data.state.id).to.equals(stateId);
+    });
 
-      // Checking the State
-      expect(data.state.id).to.equal(transaction.hash.toLocaleLowerCase());
-      expect(data.state.sources).to.eql(stateSourcesExpected);
+    it("should query Notice in CombineTier correctly", async function () {
+      const notices = [
+        {
+          subject: combineTier.address,
+          data: "0x01",
+        },
+      ];
 
-      // We don't know the random part in the Snapshot ID here
-      // Could be: `address (where the event was emitted) - randomPart` (?)
-      expect(data.id).to.include(combineTier.address.toLocaleLowerCase());
+      transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+      // Waiting for sync
+      await waitForSubgraphToBeSynced();
+
+      const noticeId = `${combineTier.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
+
+      const query = `
+        {
+          combineTier (id: "${combineTier.address.toLowerCase()}") {
+            notices {
+              id
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject{
+              id
+            }
+            data
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const dataTier = response.data.combineTier.notices;
+      const data = response.data.notice;
+
+      expect(dataTier).deep.include({ id: noticeId });
+
+      expect(data.data).to.equals("0x01");
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.subject.id).to.equals(combineTier.address.toLowerCase());
     });
   });
 
   describe("ERC721BalanceTier Factory - Queries", function () {
-    it("should query ERC721BalanceTierFactory correctly", async function () {
-      await waitForSubgraphToBeSynced();
+    let erc721BalanceTier: ERC721BalanceTier;
 
+    before("deploy fresh test contracts", async function () {
+      // Creating a new reserve token
+      reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
+    });
+
+    it("should query ERC721BalanceTierFactory correctly", async function () {
       const implementation = (
         await Util.getEventArgs(
           erc721BalanceTierFactory.deployTransaction,
@@ -1576,44 +1582,34 @@ describe("Subgraph Tier Test", function () {
 
       const query = `
         {
-          erc721BalanceTierFactories {
-            id
+          erc721BalanceTierFactory (id: "${erc721BalanceTierFactory.address.toLowerCase()}") {
             address
             implementation
-            children {
-              id
-            }
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponse.data.erc721BalanceTierFactories[0];
+      const data = response.data.erc721BalanceTierFactory;
 
-      expect(queryResponse.data.erc721BalanceTierFactories).to.have.lengthOf(1);
-
-      expect(data.id).to.equals(erc721BalanceTierFactory.address.toLowerCase());
+      expect(data.implementation).to.equals(implementation.toLocaleLowerCase());
       expect(data.address).to.equals(
         erc721BalanceTierFactory.address.toLowerCase()
       );
-      expect(data.implementation).to.equals(implementation.toLocaleLowerCase());
-      expect(data.children).to.be.empty;
     });
 
     it("should query the ERC721BalanceTier child from factory after creation", async function () {
-      transaction = await erc721BalanceTierFactory.createChildTyped({
-        erc721: reserveNFT.address,
-        tierValues: LEVELS,
-      });
-
-      erc721BalanceTier = (await getContractChild(
-        transaction,
+      erc721BalanceTier = await Util.erc721BalanceTierDeploy(
         erc721BalanceTierFactory,
-        erc721BalanceTierJson
-      )) as ERC721BalanceTier;
+        creator,
+        {
+          erc721: reserveNFT.address,
+          tierValues: LEVELS,
+        }
+      );
 
       await waitForSubgraphToBeSynced();
 
@@ -1633,83 +1629,133 @@ describe("Subgraph Tier Test", function () {
 
       const data = queryResponse.data.erc721BalanceTierFactory;
 
-      expect(data.children).to.have.lengthOf(1);
-      expect(data.children[0].id).to.equals(
-        erc721BalanceTier.address.toLowerCase()
-      );
+      expect(data.children).deep.include({
+        id: erc721BalanceTier.address.toLowerCase(),
+      });
     });
 
     it("should query the ERC721BalanceTier correctly", async function () {
-      await waitForSubgraphToBeSynced();
-
-      // The address that made the tx where BalanceTier contract was created
-      const balanceTier721Creator = transaction.from.toLocaleLowerCase();
+      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+        erc721BalanceTier.deployTransaction
+      );
 
       const query = `
         {
           erc721BalanceTier (id: "${erc721BalanceTier.address.toLowerCase()}") {
             address
+            deployer
             deployBlock
             deployTimestamp
-            deployer
-            factory {
-              address
-            }
             tierValues
+            factory {
+              id
+            }
             token {
+              id
+            }
+            notices {
               id
             }
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponse.data.erc721BalanceTier;
+      const data = response.data.erc721BalanceTier;
 
       expect(data.address).to.equals(erc721BalanceTier.address.toLowerCase());
-      // expect(data.deployBlock).to.equals(transaction.blockNumber.toString());
-      // expect(data.deployTimestamp).to.equals(transaction.timestamp.toString());
-      expect(data.deployer).to.equals(balanceTier721Creator);
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
 
-      expect(data.factory.address).to.equals(
+      expect(data.notices).to.be.empty;
+      expect(data.tierValues).to.eql(LEVELS);
+      expect(data.token.id).to.equals(reserveNFT.address.toLowerCase());
+      expect(data.factory.id).to.equals(
         erc721BalanceTierFactory.address.toLowerCase()
       );
-      expect(data.tierValues).to.eql(LEVELS);
-      expect(data.token.id).to.equal(reserveNFT.address.toLowerCase());
     });
 
     it("should query the ERC721-NFT of the ERC721BalanceTier correctly", async function () {
-      await waitForSubgraphToBeSynced();
+      // On this TX is where the reference to the ERC721 token start
+      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+        erc721BalanceTier.deployTransaction
+      );
 
       const query = `
         {
           erc721 (id: "${reserveNFT.address.toLowerCase()}") {
+            name
             symbol
             totalSupply
-            name
             deployBlock
             deployTimestamp
           }
         }
       `;
 
-      const queryResponse = (await subgraph({
+      const response = (await subgraph({
         query: query,
       })) as FetchResult;
 
-      const data = queryResponse.data.erc721;
+      const data = response.data.erc721;
 
+      expect(data.name).to.equals(await reserveNFT.name());
       expect(data.symbol).to.equals(await reserveNFT.symbol());
       expect(data.totalSupply).to.equals(await reserveNFT.totalSupply());
-      expect(data.name).to.equals(await reserveNFT.name());
-      expect(data.deployBlock).to.equals(
-        reserveNFT.deployTransaction.blockNumber.toString()
-      );
-      expect(data.deployTimestamp).to.equals(
-        reserveNFT.deployTransaction.timestamp.toString()
+
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
+    });
+
+    it("should query Notice in CombineTier correctly", async function () {
+      const notices = [
+        {
+          subject: erc721BalanceTier.address,
+          data: "0x01",
+        },
+      ];
+
+      transaction = await noticeBoard.connect(signer1).createNotices(notices);
+
+      // Waiting for sync
+      await waitForSubgraphToBeSynced();
+
+      const noticeId = `${erc721BalanceTier.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
+
+      const query = `
+        {
+          erc721BalanceTier (id: "${erc721BalanceTier.address.toLowerCase()}") {
+            notices {
+              id
+            }
+          }
+          notice (id: "${noticeId}") {
+            sender
+            subject{
+              id
+            }
+            data
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const dataTier = response.data.erc721BalanceTier.notices;
+      const data = response.data.notice;
+
+      expect(dataTier).deep.include({ id: noticeId });
+
+      expect(data.data).to.equals("0x01");
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.subject.id).to.equals(
+        erc721BalanceTier.address.toLowerCase()
       );
     });
   });

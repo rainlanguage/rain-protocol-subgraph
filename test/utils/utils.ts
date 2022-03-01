@@ -41,6 +41,7 @@ import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/cont
 import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 import erc20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
 import combineTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
+import erc721BalanceTierJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTier.sol/ERC721BalanceTier.json";
 
 // Types
 import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
@@ -48,6 +49,7 @@ import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typec
 import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
 import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
 import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
+import { ERC721BalanceTierFactory } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTierFactory";
 
 import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
 import { SeedERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
@@ -64,7 +66,16 @@ import {
   ERC20TransferTierConfigStruct,
 } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
 
-import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
+import {
+  CombineTier,
+  StateConfigStruct,
+} from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
+
+import {
+  ERC721BalanceTier,
+  ERC721BalanceTierConfigStruct,
+} from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
+
 import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
 import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
@@ -509,6 +520,40 @@ export const erc20TransferTierDeploy = async (
   )) as ERC20TransferTier & Contract;
 
   return erc20TransferTier;
+};
+
+export const combineTierDeploy = async (
+  combineTierFactory: CombineTierFactory,
+  creator: SignerWithAddress,
+  stateConfigStruct: StateConfigStruct,
+  override: Overrides = {}
+): Promise<CombineTier> => {
+  // Creating child
+  const combineTier = (await createChildTyped(
+    combineTierFactory,
+    combineTierJson,
+    [stateConfigStruct, override],
+    creator
+  )) as CombineTier & Contract;
+
+  return combineTier;
+};
+
+export const erc721BalanceTierDeploy = async (
+  erc721BalanceTierFactory: ERC721BalanceTierFactory,
+  creator: SignerWithAddress,
+  erc721BalanceTierConfigStruct: ERC721BalanceTierConfigStruct,
+  override: Overrides = {}
+): Promise<ERC721BalanceTier> => {
+  // Creating child
+  const erc721BalanceTier = (await createChildTyped(
+    erc721BalanceTierFactory,
+    erc721BalanceTierJson,
+    [erc721BalanceTierConfigStruct, override],
+    creator
+  )) as ERC721BalanceTier & Contract;
+
+  return erc721BalanceTier;
 };
 
 /**
