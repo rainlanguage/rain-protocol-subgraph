@@ -1407,6 +1407,7 @@ describe("Subgraph Tier Test", function () {
             notices {
               id
             }
+          }
         }
       `;
 

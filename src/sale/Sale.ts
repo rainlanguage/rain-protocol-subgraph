@@ -42,7 +42,12 @@ export function handleBuy(event: Buy): void {
         saleFeeRecipient.totalFees = ZERO_BI
         saleFeeRecipient.buys = []
         saleFeeRecipient.refunds = []
+        saleFeeRecipient.sale = event.address.toHex()
         saleFeeRecipient.save()
+
+        let saleFeeRecipients = sale.saleFeeRecipients
+        saleFeeRecipients.push(saleFeeRecipient.id)
+        sale.saleFeeRecipients = saleFeeRecipients
     }
 
     saleBuy.feeRecipient = saleFeeRecipient.id
