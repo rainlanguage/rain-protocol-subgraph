@@ -25,23 +25,22 @@ import {
 import reserveJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 import reserveNFTJson from "@vishalkale15107/rain-protocol/artifacts/contracts/test/ReserveNFT.sol/ReserveNFT.json";
 
+import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 import erc20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
-import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
 
 // Types
 import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
 import { ReserveNFT } from "@vishalkale15107/rain-protocol/typechain/ReserveNFT";
 
 import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
+import { Sale } from "@beehiveinnovation/rain-protocol/typechain/Sale";
+import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
+import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
 import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
 import { ERC20TransferTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
 import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
-import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
-import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
-
 // Should update path after a new commit
-import erc721BalanceTierJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTier.sol/ERC721BalanceTier.json";
 import { ERC721BalanceTier } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
 
 import {
@@ -88,15 +87,9 @@ const enum RequestType {
   REMOVE,
 }
 
-let trust: Trust,
-  reserve: ReserveTokenTest,
-  reserveNFT: ReserveNFT,
-  transaction: ContractTransaction; // use to save/facilite a tx
+let reserve: ReserveTokenTest, transaction: ContractTransaction;
 
 describe("Subgraph Tier Test", function () {
-  // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
-  // in other contracts like trusts or sales
-
   before("Deploy fresh test contracts", async function () {
     reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
   });
@@ -1482,39 +1475,6 @@ describe("Subgraph Tier Test", function () {
       expect(data.arguments).to.eql(argumentsExpected);
     });
 
-    it("should query the Snapshot correctly", async function () {
-      const snapshotId = `${combineTier.deployTransaction.hash.toLowerCase()} - 0`;
-      const stateId = `${combineTier.deployTransaction.hash.toLowerCase()}`;
-
-      const { pointer } = await Util.getEventArgs(
-        transaction,
-        "Snapshot",
-        combineTier
-      );
-
-      const query = `
-        {
-          snapshots (id: "${snapshotId}") {
-            sender
-            pointer
-            state {
-              id
-            }
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const data = response.data.snapshot;
-
-      expect(data.sender).to.equals(combineTierFactory.address.toLowerCase());
-      expect(data.pointer).to.equals(pointer.toLowerCase());
-      expect(data.state.id).to.equals(stateId);
-    });
-
     it("should query Notice in CombineTier correctly", async function () {
       const notices = [
         {
@@ -1563,7 +1523,7 @@ describe("Subgraph Tier Test", function () {
   });
 
   describe("ERC721BalanceTier Factory - Queries", function () {
-    let erc721BalanceTier: ERC721BalanceTier;
+    let erc721BalanceTier: ERC721BalanceTier, reserveNFT: ReserveNFT;
 
     before("deploy fresh test contracts", async function () {
       // Creating a new reserve token
@@ -1760,20 +1720,19 @@ describe("Subgraph Tier Test", function () {
   });
 
   describe("UnknownTiers - Queries", function () {
-    // All are contracts "independents" - deployed without the factory indexed
-    let verify: Verify,
-      verifyTier: VerifyTier,
+    let trust: Trust, sale: Sale, verify: Verify;
+
+    // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
+    // in other contracts like trusts or sales
+
+    // All this tiers are contracts "independents" - deployed without the factory indexed
+    let verifyTier: VerifyTier,
       erc20BalanceTierIndepent: ERC20BalanceTier,
       erc20TransferTierIndepent: ERC20TransferTier,
-      combineTier: CombineTier;
-
-    let deployer: SignerWithAddress, creator: SignerWithAddress;
+      combineTier: CombineTier,
+      erc721BalanceTier: ERC721BalanceTier;
 
     before("deploy Independent TierContracts", async function () {
-      const signers = await ethers.getSigners();
-      deployer = signers[0];
-      creator = signers[1];
-
       // Deploy and initialize an ERC20BalanceTierIndependent
       erc20BalanceTierIndepent = (await deploy(
         erc20BalanceTierJson,
