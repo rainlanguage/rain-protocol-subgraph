@@ -34,6 +34,7 @@ type Sale implements Isale & INotice @entity{
     totalFees: BigInt # get by adding all SaleBuy.fee and subtracting all SaleRefund.fee
     saleStatus: Int #starts at SaleStatus.Pending, Start event moves it to Active, End event provides the last saleStatus (will be Success/Fail)
     notices: [Notice!]
+    saleFeeRecipients: [SaleFeeRecipient!]
 }
 
 type SaleRedeemableERC20 @entity{
@@ -139,6 +140,7 @@ type SaleFeeRecipient @entity{
     totalFees: BigInt! #total fees for this recipient for this Sale. Get by adding all SaleFeeRecipient.buys.fee and subtracting all SaleFeeRecipient.refunds.fee
     buys: [SaleBuy!]! #all buys that reference this feeRecipient
     refunds: [SaleRefund!]! #all refunds that reference this feeRcipient
+    sale: Sale!
 }
 
 enum SaleStatus {

@@ -1414,6 +1414,7 @@ describe("Subgraph Tier Test", function () {
             notices {
               id
             }
+          }
         }
       `;
 
@@ -1480,39 +1481,6 @@ describe("Subgraph Tier Test", function () {
       expect(data.sources).to.eql(sourcesExpected);
       expect(data.constants).to.eql(constantsExpected);
       expect(data.arguments).to.eql(argumentsExpected);
-    });
-
-    it("should query the Snapshot correctly", async function () {
-      const snapshotId = `${combineTier.deployTransaction.hash.toLowerCase()} - 0`;
-      const stateId = `${combineTier.deployTransaction.hash.toLowerCase()}`;
-
-      const { pointer } = await Util.getEventArgs(
-        transaction,
-        "Snapshot",
-        combineTier
-      );
-
-      const query = `
-        {
-          snapshots (id: "${snapshotId}") {
-            sender
-            pointer
-            state {
-              id
-            }
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const data = response.data.snapshot;
-
-      expect(data.sender).to.equals(combineTierFactory.address.toLowerCase());
-      expect(data.pointer).to.equals(pointer.toLowerCase());
-      expect(data.state.id).to.equals(stateId);
     });
 
     it("should query Notice in CombineTier correctly", async function () {
