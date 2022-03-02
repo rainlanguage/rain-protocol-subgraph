@@ -6,7 +6,7 @@ import {
 } from '../../generated/schema'
 import { TrustTemplate } from "../../generated/templates"
 import { ZERO_BI, ONE_BI, SaleStatus } from '../utils'
-import { log, Address, DataSourceContext } from '@graphprotocol/graph-ts'
+import { log, DataSourceContext } from '@graphprotocol/graph-ts'
 export function handleNewChild(event: NewChild): void {
     let trustFactory = TrustFactory.load(event.address.toHex())
 

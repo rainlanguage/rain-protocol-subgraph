@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, ByteArray, crypto } from '@graphprotocol/graph-ts'
 import { Contract, Trust, TrustParticipant } from '../generated/schema'
 import { SeedERC20 } from "../generated/TrustFactory/SeedERC20"
 import { RedeemableERC20 } from "../generated/TrustFactory/RedeemableERC20"
@@ -43,6 +43,9 @@ export enum Transferrable {
 
 export enum Role {
     NONE,
+    APPROVER_ADMIN,
+    REMOVER_ADMIN,
+    BANNER_ADMIN,
     APPROVER,
     REMOVER,
     BANNER
@@ -55,7 +58,21 @@ export enum DistributionStatus {
     TradingCanEnd,
     Success,
     Fail,
-  }
+}
+
+let APPROVER_ADMIN = "0x2d4d1d70bd81797c3479f5c3f873a5c9203d249659c3b317cdad46367472783c"
+/// Role for `APPROVER`.
+let APPROVER = "0x5ff1fb0ce9089603e6e193667ed17164e0360a6148f4a39fc194055588948a31"
+
+/// Admin role for `REMOVER`.
+let REMOVER_ADMIN = "0x9d65f741849e7609dd1e2c70f0d7da5f5433b36bfcf3ba4d27d2bb08ad2155b1"
+/// Role for `REMOVER`.
+let REMOVER = "0x794e4221ebb6dd4e460d558b4ec709511d44017d6610ba89daa896c0684ddfac"
+
+/// Admin role for `BANNER`.
+let BANNER_ADMIN = "0xbb496ca6fee71a17f78592fbc6fc7f04a436edb9c709c4289d6bbfbc5fd45f4d"
+/// Role for `BANNER`.
+let BANNER = "0x5a686c9d070917be517818979fb56f451f007e3ae83e96fb5a22a304929b070d"
 
 
 export {
@@ -67,7 +84,13 @@ export {
     ETHER,
     BONE,
     MAX_WEIGHT,
-    MIN_WEIGHT
+    MIN_WEIGHT,
+    APPROVER_ADMIN,
+    APPROVER,
+    REMOVER_ADMIN,
+    REMOVER,
+    BANNER_ADMIN,
+    BANNER
 }
 
 export function getTrustParticipent(participant: Address, trust: string) : TrustParticipant {

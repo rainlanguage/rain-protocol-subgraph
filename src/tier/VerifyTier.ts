@@ -21,6 +21,7 @@ export function handleInitialize(event: Initialize): void {
         verify.approverAdmins = []
         verify.bannerAdmins = []
         verify.removerAdmins = []
+        verify.verifyEventCount = ZERO_BI
         verify.save()
     }
     

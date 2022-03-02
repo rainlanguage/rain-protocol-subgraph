@@ -8,7 +8,7 @@
    
 type TrustFactory @entity{
     id: ID! #address of the TrustFactory
-    trustCount: BigInt
+    trustCount: BigInt!
     balancerFactory: Bytes
     crpFactory: Bytes
     redeemableERC20Factory: Bytes

@@ -2,6 +2,7 @@
 import { NewChild, Implementation } from '../../generated/VerifyFactory/VerifyFactory'
 import { VerifyFactory, Verify } from '../../generated/schema'
 import { VerifyTemplate } from "../../generated/templates"
+import { ZERO_BI } from '../utils'
 
 export function handleNewChild(event: NewChild): void {
     let verifyFactory = VerifyFactory.load(event.address.toHex())
@@ -13,6 +14,13 @@ export function handleNewChild(event: NewChild): void {
     verify.deployer = event.transaction.from
     verify.factory = verifyFactory.id
     verify.verifyAddresses = []
+    verify.verifyRequestApprovals = []
+    verify.verifyRequestBans = []
+    verify.verifyRequestRemovals = []
+    verify.verifyApprovals = []
+    verify.verifyRemovals = []
+    verify.verifyEventCount = ZERO_BI
+    verify.verifyBans = []
     verify.approvers = []
     verify.removers = []
     verify.banners = []

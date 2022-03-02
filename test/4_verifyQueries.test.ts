@@ -183,7 +183,7 @@ describe("Verify Factory - Queries", function () {
 
       const data = queryResponse.data.verify;
 
-      expect(data.verifyAddresses).to.be.empty;
+      expect(data.verifyAddresses).to.be.not.empty;
       expect(data.address).to.equals(verify.address.toLowerCase());
       expect(data.factory.id).to.equals(verifyFactory.address.toLowerCase());
 
@@ -1227,12 +1227,24 @@ describe("Verify Factory - Queries", function () {
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
-            approvers
-            removers
-            banners
-            approverAdmins
-            bannerAdmins
-            removerAdmins
+            approvers{
+              address
+            }
+            removers{
+              address
+            }
+            banners{
+              address
+            }
+            approverAdmins{
+              address
+            }
+            bannerAdmins{
+              address
+            }
+            removerAdmins{
+              address
+            }
           }
         }
       `;
@@ -1245,16 +1257,16 @@ describe("Verify Factory - Queries", function () {
       expect(data.removers, `ERROR: removers NOT granted yet`).to.be.empty;
       expect(data.banners, `ERROR: banners NOT granted yet`).to.be.empty;
 
-      expect(data.approverAdmins).deep.include(
-        { id: adminVerifyAddress },
+      expect(data.approverAdmins).to.deep.include(
+        { address: adminVerifyAddress },
         `wrong initial rol status: admin have the initial approveAdmin rol`
       );
-      expect(data.bannerAdmins).deep.include(
-        { id: adminVerifyAddress },
+      expect(data.bannerAdmins).to.deep.include(
+        { address: adminVerifyAddress },
         `wrong initial rol status: admin have the initial bannerAdmin rol`
       );
-      expect(data.removerAdmins).deep.include(
-        { id: adminVerifyAddress },
+      expect(data.removerAdmins).to.deep.include(
+        { address: adminVerifyAddress },
         `wrong initial rol status: admin have the initial removerAdmin rol`
       );
     });
@@ -1268,7 +1280,7 @@ describe("Verify Factory - Queries", function () {
 
       const query = `
         {
-          verifyAddress (id: "${adminVerifyAddress}") {
+          verifyAddress (id: "${verify.address.toLowerCase()} - ${adminVerifyAddress}") {
             status
             requestStatus
             roles
@@ -1291,7 +1303,7 @@ describe("Verify Factory - Queries", function () {
       );
 
       expect(data.roles).to.eql(
-        expectedRoles,
+        expectedRoles.map((role) => role.toString()),
         `wrong roles in verify address
         expected  ${expectedRoles}
         got       ${data.roles}`
@@ -1318,9 +1330,15 @@ describe("Verify Factory - Queries", function () {
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
-            approverAdmins
-            bannerAdmins
-            removerAdmins
+            approverAdmins{
+              address
+            }
+            bannerAdmins{
+              address
+            }
+            removerAdmins{
+              address
+            }
           }
         }
       `;
@@ -1329,16 +1347,16 @@ describe("Verify Factory - Queries", function () {
       })) as FetchResult;
       const data = response.data.verify;
 
-      expect(data.approverAdmins).deep.include(
-        { id: signer1VerifyAddress },
+      expect(data.approverAdmins).to.deep.include(
+        { address: signer1VerifyAddress },
         `approvers admins does include the new approver verify address "${signer1VerifyAddress}"`
       );
-      expect(data.bannerAdmins).deep.include(
-        { id: signer2VerifyAddress },
+      expect(data.bannerAdmins).to.deep.include(
+        { address: signer2VerifyAddress },
         `banner adminss does include the new banner verify address "${signer2VerifyAddress}"`
       );
-      expect(data.removerAdmins).deep.include(
-        { id: signer2VerifyAddress },
+      expect(data.removerAdmins).to.deep.include(
+        { address: signer2VerifyAddress },
         `remover admins does include the new remover verify address "${signer2VerifyAddress}"`
       );
     });
@@ -1357,9 +1375,15 @@ describe("Verify Factory - Queries", function () {
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
-            approverAdmins
-            bannerAdmins
-            removerAdmins
+            approverAdmins{
+              address
+            }
+            bannerAdmins{
+              address
+            }
+            removerAdmins{
+              address
+            }
           }
         }
       `;
@@ -1369,15 +1393,15 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verify;
 
       expect(data.approverAdmins).to.not.deep.include(
-        { id: adminVerifyAddress },
+        { address: adminVerifyAddress },
         `wrong query: admin has not been removed from approverAdmins after leaving role`
       );
       expect(data.bannerAdmins).to.not.deep.include(
-        { id: adminVerifyAddress },
+        { address: adminVerifyAddress },
         `wrong query: admin has not been removed from bannerAdmins after leaving role`
       );
       expect(data.removerAdmins).to.not.deep.include(
-        { id: adminVerifyAddress },
+        { address: adminVerifyAddress },
         `wrong query: admin has not been removed from removerAdmins after leaving role`
       );
     });
@@ -1390,7 +1414,7 @@ describe("Verify Factory - Queries", function () {
 
       const query = `
         {
-          verifyAddress (id: "${adminVerifyAddress}") {
+          verifyAddress (id: "${verify.address.toLowerCase()} - ${adminVerifyAddress}") {
             roles
           }
         }
@@ -1415,10 +1439,10 @@ describe("Verify Factory - Queries", function () {
 
       const query = `
         {
-          verifyAddress1: verifyAddress (id: "${signer1VerifyAddress}") {
+          verifyAddress1: verifyAddress (id: "${verify.address.toLowerCase()} - ${signer1VerifyAddress}") {
             roles
           }
-          verifyAddress2: verifyAddress (id: "${signer2VerifyAddress}") {
+          verifyAddress2: verifyAddress (id: "${verify.address.toLowerCase()} - ${signer2VerifyAddress}") {
             roles
           }
         }
@@ -1430,12 +1454,12 @@ describe("Verify Factory - Queries", function () {
       const data2 = response.data.verifyAddress2;
 
       expect(data1.roles).to.eql(
-        signer1RolesExpected,
+        signer1RolesExpected.map((role) => role.toString()),
         `signer1 verify address does not have the approverAdmin role`
       );
 
       expect(data2.roles).to.eql(
-        signer2RolesExpected,
+        signer2RolesExpected.map((role) => role.toString()),
         `signer2RolesExpectedsigner2 verify address does not have the removerAdmin and bannerAdmin roles`
       );
     });
@@ -1455,9 +1479,15 @@ describe("Verify Factory - Queries", function () {
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
-            approvers
-            banners
-            removers
+            approvers{
+              address
+            }
+            banners{
+              address
+            }
+            removers{
+              address
+            }
           }
         }
       `;
@@ -1468,17 +1498,17 @@ describe("Verify Factory - Queries", function () {
 
       const data = response.data.verify;
 
-      expect(data.approvers).deep.include(
-        { id: signer1VerifyAddress },
+      expect(data.approvers).to.deep.include(
+        { address: signer1VerifyAddress },
         `approvers in verify doest include the approver verifyAddress ${signer1VerifyAddress}`
       );
-      expect(data.banners).deep.include(
-        { id: signer1VerifyAddress },
+      expect(data.banners).to.deep.include(
+        { address: signer1VerifyAddress },
         `banners in verify doest include the banner verifyAddress ${signer1VerifyAddress}`
       );
 
       expect(data.removers).deep.include(
-        { id: signer2VerifyAddress },
+        { address: signer2VerifyAddress },
         `removers in verify doest include the remover verifyAddress ${signer2VerifyAddress}`
       );
     });
@@ -1506,7 +1536,7 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verify;
 
       expect(data.banners).to.not.deep.include(
-        { id: signer1VerifyAddress },
+        { address: signer1VerifyAddress },
         `wrong: verifyAddress has not been remove from banners after revoking their role`
       );
     });

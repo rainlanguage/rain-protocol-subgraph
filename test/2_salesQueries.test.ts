@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { BigNumber, ContractTransaction } from "ethers";
+import { ContractTransaction } from "ethers";
 import { FetchResult } from "apollo-fetch";
 import { concat } from "ethers/lib/utils";
 
@@ -9,7 +9,6 @@ import {
   op,
   deploy,
   waitForSubgraphToBeSynced,
-  eighteenZeros,
   Tier,
   LEVELS,
   OpcodeSale,
@@ -406,13 +405,69 @@ describe("Sales queries test", function () {
       );
     });
 
+    it("should query the RedeemableERC20 entity", async function () {
+      const [deployBlock, deployTime] = await Util.getTxTimeblock(
+        redeemableERC20Contract.deployTransaction
+      );
+      const query = `
+        {
+          redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
+            deployer
+            admin
+            factory
+            redeems {
+              id
+            }
+            treasuryAssets {
+              id
+            }
+            tier {
+              id
+            }
+            minimumTier
+            name
+            symbol
+            totalSupply
+            deployBlock
+            deployTimestamp
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+
+      const data = response.data.redeemableERC20;
+
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
+      expect(data.admin).to.equals(sale.address.toLowerCase());
+      expect(data.factory).to.equals(
+        redeemableERC20Factory.address.toLowerCase()
+      );
+
+      expect(data.redeems).to.be.empty;
+      expect(data.treasuryAssets).to.deep.include({
+        id: `${redeemableERC20Contract.address.toLowerCase()} - ${reserve.address.toLowerCase()}`,
+      });
+      expect(data.tier.id).to.equals(erc20BalanceTier.address.toLowerCase());
+
+      expect(data.minimumTier).to.equals(minimumTier.toString());
+      expect(data.name).to.equals(redeemableERC20Config.name);
+      expect(data.symbol).to.equals(redeemableERC20Config.symbol);
+      expect(data.totalSupply).to.equals(redeemableERC20Config.initialSupply);
+
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTime.toString());
+    });
+
     it("should query the SaleRedeemableERC20 entity correctly", async function () {
       const [deployBlock, deployTime] = await Util.getTxTimeblock(
         redeemableERC20Contract.deployTransaction
       );
       const query = `
         {
-          saleRedeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
+            redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
             name
             symbol
             decimals
@@ -431,7 +486,7 @@ describe("Sales queries test", function () {
         query,
       })) as FetchResult;
 
-      const data = response.data.saleRedeemableERC20;
+      const data = response.data.redeemableERC20;
 
       expect(data.name).to.equals(redeemableERC20Config.name);
       expect(data.symbol).to.equals(redeemableERC20Config.symbol);
