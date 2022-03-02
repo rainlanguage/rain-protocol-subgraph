@@ -109,7 +109,7 @@ export function handleEnd(event: End): void {
 export function handleInitialize(event: Initialize): void {
     let sale = Sale.load(event.address.toHex())
     
-    let token = getRedeemableERC20(event.params.token, event.block)
+    let token = getRedeemableERC20(event.transaction.from, event.params.token, event.block)
     sale.token = token.id
     let reserve = getERC20(event.params.config.reserve, event.block)
     sale.reserve = reserve.id
@@ -241,7 +241,7 @@ function getERC20(token: Address, block: ethereum.Block): ERC20 {
     return erc20 as ERC20
 }
 
-function getRedeemableERC20(token: Address, block: ethereum.Block): RedeemableERC20 {
+function getRedeemableERC20(deployer: Address, token: Address, block: ethereum.Block): RedeemableERC20 {
     let redeemableERC20 = RedeemableERC20.load(token.toHex())
     let erc20Contract = ERC20Contract.bind(token)
     if(redeemableERC20 == null){
@@ -259,6 +259,7 @@ function getRedeemableERC20(token: Address, block: ethereum.Block): RedeemableER
             redeemableERC20.decimals = decimals.value
             redeemableERC20.totalSupply = totalSupply.value
         }
+        redeemableERC20.deployer = deployer
         redeemableERC20.redeems = []
         redeemableERC20.treasuryAssets = []
         redeemableERC20.holders = []

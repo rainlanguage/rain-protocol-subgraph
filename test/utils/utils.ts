@@ -196,7 +196,7 @@ export enum OpcodeTier {
 
 export interface VMState {
   sources: Uint8Array[];
-  constants: BigNumber[];
+  constants: number[] | BigNumber[];
   stackLength: number;
   argumentsLength: number;
 }
@@ -1075,15 +1075,29 @@ export const determineReserveDust = (
   return dust;
 };
 
-export const uint8ArrayToHex = (array: Uint8Array): string => {
-  let str = "0x";
-  array.forEach((element) => {
-    const hex = parseInt(element.toString(), 10).toString(16);
-    if (hex.length < 2) {
-      str = str + ("0" + hex);
-    } else {
-      str = str + hex;
-    }
-  });
-  return str;
+/**
+ * Auxiliar function that convert an config that is a VMState to get all their
+ * components as string
+ * @param config Config on a VMState to convert
+ * @returns the configuration with all the components as string
+ */
+export const convertConfig = (
+  config: VMState
+): {
+  sources: string[];
+  constants: string[];
+  stackLength: string;
+  argumentsLength: string;
+} => {
+  const sources = config.sources.map((x: BytesLike) => ethers.utils.hexlify(x));
+  const constants = config.constants.map((x) => x.toString());
+  const stackLength = config.stackLength.toString();
+  const argumentsLength = config.argumentsLength.toString();
+
+  return {
+    sources,
+    constants,
+    stackLength,
+    argumentsLength,
+  };
 };

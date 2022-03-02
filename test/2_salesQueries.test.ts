@@ -13,6 +13,7 @@ import {
   Tier,
   LEVELS,
   OpcodeSale,
+  VMState,
 } from "./utils/utils";
 
 import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
@@ -65,13 +66,6 @@ const afterBlockNumberConfig = (blockNumber: number) => {
   };
 };
 
-interface StateConfig {
-  sources: Uint8Array[];
-  constants: number[] | BigNumber[];
-  stackLength: number;
-  argumentsLength: number;
-}
-
 interface BuyConfig {
   feeRecipient: string;
   fee: BigNumber;
@@ -107,23 +101,33 @@ describe("Sales queries test", function () {
   });
 
   it("should query the saleFactory after construction correctly", async function () {
-    // The redeemableERC20Factory entity not exist yet, but Josh said that maybe will be implemented
+    // Get the Sale implementation
+    const implementation = (
+      await Util.getEventArgs(
+        saleFactory.deployTransaction,
+        "Implementation",
+        saleFactory
+      )
+    ).implementation;
+
     const query = `
       {
         saleFactory (id: "${saleFactory.address.toLowerCase()}") {
           address
+          implementation
           redeemableERC20Factory
         }
       }
     `;
 
-    const queryResponse = (await subgraph({
+    const response = (await subgraph({
       query: query,
     })) as FetchResult;
 
-    const data = queryResponse.data.saleFactory;
+    const data = response.data.saleFactory;
 
     expect(data.address).to.equals(saleFactory.address.toLowerCase());
+    expect(data.implementation).to.equals(implementation.toLowerCase());
     expect(data.redeemableERC20Factory).to.equals(
       redeemableERC20Factory.address.toLowerCase()
     );
@@ -149,8 +153,8 @@ describe("Sales queries test", function () {
 
     const sources = [concat([vBasePrice])];
 
-    let canStartStateConfig: StateConfig;
-    let canEndStateConfig: StateConfig;
+    let canStartStateConfig: VMState;
+    let canEndStateConfig: VMState;
     const calculatePriceStateConfig = {
       sources,
       constants,
@@ -213,8 +217,6 @@ describe("Sales queries test", function () {
           saleFactory (id: "${saleFactory.address.toLowerCase()}") {
             children {
               id
-              address
-              deployer
             }
           }
         }
@@ -224,21 +226,54 @@ describe("Sales queries test", function () {
         query: query,
       })) as FetchResult;
 
-      const factoryData = response.data.saleFactory;
-      const saleData = factoryData.children[0];
+      const data = response.data.saleFactory;
 
-      expect(factoryData.children).to.have.lengthOf(1);
-      expect(saleData.id).to.equals(sale.address.toLowerCase());
-      expect(saleData.address).to.equals(sale.address.toLowerCase());
-      expect(saleData.deployer).to.equals(creator.address.toLowerCase());
+      expect(data.children).deep.include({ id: sale.address.toLowerCase() });
     });
 
-    it("should query the init properties of the sale correctly", async function () {
-      const initUnitsAvailable = await redeemableERC20Contract.balanceOf(
-        sale.address
+    it("should query the Sale correctly", async function () {
+      const [deployBlock, deployTime] = await Util.getTxTimeblock(
+        sale.deployTransaction
       );
 
-      const saleQuery = `
+      const query = `
+        {
+          sale (id: "${sale.address.toLowerCase()}") {
+            address
+            deployer
+            deployBlock
+            deployTimestamp
+            factory {
+              id
+            }
+            reserve {
+              id
+            }
+            token {
+              id
+            }
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query: query,
+      })) as FetchResult;
+      const data = response.data.sale;
+
+      expect(data.address).to.equals(sale.address.toLowerCase());
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTime.toString());
+
+      expect(data.factory.id).to.equals(saleFactory.address.toLowerCase());
+      expect(data.reserve.id).to.equals(reserve.address.toLowerCase());
+      expect(data.token.id).to.equals(
+        redeemableERC20Contract.address.toLowerCase()
+      );
+    });
+
+    it("should query the initial properties of the Sale correctly", async function () {
+      const query = `
         {
           sale (id: "${sale.address.toLowerCase()}") {
             recipient
@@ -249,40 +284,51 @@ describe("Sales queries test", function () {
             totalRaised
             percentRaised
             totalFees
-            saleStatus
           }
         }
       `;
 
       const response = (await subgraph({
-        query: saleQuery,
+        query: query,
       })) as FetchResult;
 
-      const saleData = response.data.sale;
+      const data = response.data.sale;
 
-      expect(saleData.recipient).to.equals(recipient.address.toLowerCase());
-      expect(saleData.cooldownDuration).to.equals(cooldownDuration.toString());
-      expect(saleData.minimumRaise).to.equals(minimumRaise.toString());
-      expect(saleData.dustSize).to.equals(dustSize.toString());
+      expect(data.recipient).to.equals(recipient.address.toLowerCase());
+      expect(data.cooldownDuration).to.equals(cooldownDuration.toString());
+      expect(data.minimumRaise).to.equals(minimumRaise.toString());
+      expect(data.dustSize).to.equals(dustSize.toString());
+      expect(data.unitsAvailable).to.equals(totalTokenSupply.toString());
 
-      expect(saleData.unitsAvailable).to.equals(initUnitsAvailable.toString());
-      expect(saleData.totalRaised).to.equals("0");
-      expect(saleData.percentRaised).to.equals("0");
-      expect(saleData.totalFees).to.equals("0");
-      expect(saleData.saleStatus).to.equals(Status.PENDING);
+      expect(data.totalRaised).to.equals("0");
+      expect(data.percentRaised).to.equals("0");
+      expect(data.totalFees).to.equals("0");
     });
 
-    it("should query correctly the null values", async function () {
-      const saleQuery = `
+    it("should query the Sale the initial status values", async function () {
+      const query = `
       {
         sale (id: "${sale.address.toLowerCase()}") {
-          id
-          buys
-          refunds
+          saleStatus
           startEvent {
             id
           }
           endEvent {
+            id
+          }
+          buys {
+            id
+          }
+          refunds {
+            id
+          }
+          saleTransactions {
+            id
+          }
+          notices {
+            id
+          }
+          saleFeeRecipients {
             id
           }
         }
@@ -290,21 +336,29 @@ describe("Sales queries test", function () {
     `;
 
       const response = (await subgraph({
-        query: saleQuery,
+        query: query,
       })) as FetchResult;
+      const data = response.data.sale;
 
-      const saleData = response.data.sale;
+      expect(data.saleStatus).to.equals(Status.PENDING);
 
-      expect(saleData.buys).to.be.empty;
-      expect(saleData.refunds).to.be.empty;
+      expect(data.startEvent).to.be.null;
+      expect(data.endEvent).to.be.null;
 
-      // Because any event was emitted
-      expect(saleData.startEvent).to.be.null;
-      expect(saleData.endEvent).to.be.null;
+      expect(data.buys).to.be.empty;
+      expect(data.refunds).to.be.empty;
+      expect(data.saleTransactions).to.be.empty;
+      expect(data.notices).to.be.empty;
+      expect(data.saleFeeRecipients).to.be.empty;
     });
 
-    it("should query the state configs after creation correctly", async function () {
-      const statesQuery = `
+    it("should query the State configs after Sale creation", async function () {
+      // Converting the configs
+      const startConfigExpected = Util.convertConfig(canStartStateConfig);
+      const endConfigExpected = Util.convertConfig(canEndStateConfig);
+      const priceConfigExpected = Util.convertConfig(calculatePriceStateConfig);
+
+      const query = `
         {
           sale (id: "${sale.address.toLowerCase()}") {
             canStartStateConfig {
@@ -330,93 +384,60 @@ describe("Sales queries test", function () {
       `;
 
       const response = (await subgraph({
-        query: statesQuery,
+        query: query,
       })) as FetchResult;
 
       const startData = response.data.sale.canStartStateConfig;
       const endData = response.data.sale.canEndStateConfig;
-      const calculatePriceData = response.data.sale.calculatePriceStateConfig;
+      const priceData = response.data.sale.calculatePriceStateConfig;
 
-      expect(startData.sources).to.deep.equals([
-        Util.uint8ArrayToHex(canStartStateConfig.sources.pop()),
-      ]);
-      expect(startData.constants).to.deep.equals(
-        canStartStateConfig.constants.map((ele) => ele.toString())
-      );
-      expect(startData.stackLength).to.equals(
-        canStartStateConfig.stackLength.toString()
-      );
+      expect(startData.sources).to.eql(startConfigExpected.sources);
+      expect(startData.constants).to.eql(startConfigExpected.constants);
+      expect(startData.stackLength).to.equals(startConfigExpected.stackLength);
       expect(startData.argumentsLength).to.equals(
-        canStartStateConfig.argumentsLength.toString()
+        startConfigExpected.argumentsLength
       );
 
-      expect(endData.sources).to.deep.equals([
-        Util.uint8ArrayToHex(canEndStateConfig.sources.pop()),
-      ]);
-      expect(endData.constants).to.deep.equals(
-        canEndStateConfig.constants.map((ele) => ele.toString())
-      );
-      expect(endData.stackLength).to.equals(
-        canEndStateConfig.stackLength.toString()
-      );
+      expect(endData.sources).to.eql(endConfigExpected.sources);
+      expect(endData.constants).to.eql(endConfigExpected.constants);
+      expect(endData.stackLength).to.equals(endConfigExpected.stackLength);
       expect(endData.argumentsLength).to.equals(
-        canEndStateConfig.argumentsLength.toString()
+        endConfigExpected.argumentsLength
       );
 
-      expect(calculatePriceData.sources).to.deep.equals([
-        Util.uint8ArrayToHex(calculatePriceStateConfig.sources.pop()),
-      ]);
-      expect(calculatePriceData.constants).to.deep.equals(
-        calculatePriceStateConfig.constants.map((ele) => ele.toString())
-      );
-      expect(calculatePriceData.stackLength).to.equals(
-        calculatePriceStateConfig.stackLength.toString()
-      );
-      expect(calculatePriceData.argumentsLength).to.equals(
-        calculatePriceStateConfig.argumentsLength.toString()
+      expect(priceData.sources).to.eql(priceConfigExpected.sources);
+      expect(priceData.constants).to.eql(priceConfigExpected.constants);
+      expect(priceData.stackLength).to.equals(priceConfigExpected.stackLength);
+      expect(priceData.argumentsLength).to.equals(
+        priceConfigExpected.argumentsLength
       );
     });
 
-    it("should query the correct ERC20 tokens", async function () {
-      const tokensQuery = `
-        {
-          sale (id: "${sale.address.toLowerCase()}") {
-            token {
-              id
-            }
-            reserve {
-              id
-            }
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query: tokensQuery,
-      })) as FetchResult;
-
-      const erc20Tokens = response.data.sale;
-
-      expect(erc20Tokens.token.id).to.equals(
-        redeemableERC20Contract.address.toLowerCase()
+    it("should query the RedeemableERC20 entity", async function () {
+      const [deployBlock, deployTime] = await Util.getTxTimeblock(
+        redeemableERC20Contract.deployTransaction
       );
-      expect(erc20Tokens.reserve.id).to.equals(reserve.address.toLowerCase());
-    });
-
-    it("should query the redeemableERC20 entity", async function () {
       const query = `
         {
           redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
-            redeems{
+            deployer
+            admin
+            factory
+            redeems {
+              id
+            }
+            treasuryAssets {
+              id
+            }
+            tier {
               id
             }
             minimumTier
             name
             symbol
             totalSupply
-            holders {
-              id
-            }
+            deployBlock
+            deployTimestamp
           }
         }
       `;
@@ -425,32 +446,44 @@ describe("Sales queries test", function () {
         query: query,
       })) as FetchResult;
 
-      const redeemableERC20Data = response.data.redeemableERC20;
+      const data = response.data.redeemableERC20;
 
-      expect(redeemableERC20Data.redeems).to.be.empty;
-      expect(redeemableERC20Data.minimumTier).to.equals(Tier.ZERO.toString());
-      expect(redeemableERC20Data.name).to.equals(redeemableERC20Config.name);
-      expect(redeemableERC20Data.symbol).to.equals(
-        redeemableERC20Config.symbol
+      expect(data.deployer).to.equals(creator.address.toLowerCase());
+      expect(data.admin).to.equals(sale.address.toLowerCase());
+      expect(data.factory).to.equals(
+        redeemableERC20Factory.address.toLowerCase()
       );
-      expect(redeemableERC20Data.totalSupply).to.equals(
-        redeemableERC20Config.initialSupply
-      );
+
+      expect(data.redeems).to.be.empty;
+      expect(data.treasuryAssets.id).to.equals(reserve.address.toLowerCase());
+      expect(data.tier.id).to.equals(erc20BalanceTier.address.toLowerCase());
+
+      expect(data.minimumTier).to.equals(minimumTier.toString());
+      expect(data.name).to.equals(redeemableERC20Config.name);
+      expect(data.symbol).to.equals(redeemableERC20Config.symbol);
+      expect(data.totalSupply).to.equals(redeemableERC20Config.initialSupply);
+
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTime.toString());
     });
 
     it("should query the SaleRedeemableERC20 entity correctly", async function () {
-      const saleRedeemableERC20 = redeemableERC20Contract.address.toLowerCase();
+      const [deployBlock, deployTime] = await Util.getTxTimeblock(
+        redeemableERC20Contract.deployTransaction
+      );
       const query = `
         {
-          redeemableERC20 (id: "${saleRedeemableERC20}") {
-            symbol
-            totalSupply
-            decimals
+          saleRedeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
             name
+            symbol
+            decimals
+            totalSupply
             tier {
-              address
+              id
             }
             minimumTier
+            deployBlock
+            deployTimestamp
           }
         }
       `;
@@ -459,22 +492,18 @@ describe("Sales queries test", function () {
         query: query,
       })) as FetchResult;
 
-      const queryData = response.data.redeemableERC20;
+      const data = response.data.saleRedeemableERC20;
 
-      expect(queryData.symbol).to.equals(
-        await redeemableERC20Contract.symbol()
-      );
-      expect(queryData.name).to.equals(await redeemableERC20Contract.name());
-      expect(queryData.minimumTier).to.equals(Tier.ZERO.toString());
-      expect(queryData.decimals).to.equals(
-        await redeemableERC20Contract.decimals()
-      );
-      expect(queryData.totalSupply).to.equals(
-        await redeemableERC20Contract.totalSupply()
-      );
-      expect(queryData.tier.address).to.equals(
-        erc20BalanceTier.address.toLowerCase()
-      );
+      expect(data.name).to.equals(redeemableERC20Config.name);
+      expect(data.symbol).to.equals(redeemableERC20Config.symbol);
+      expect(data.decimals).to.equals(await redeemableERC20Contract.decimals());
+      expect(data.totalSupply).to.equals(redeemableERC20Config.initialSupply);
+
+      expect(data.tier.id).to.equals(erc20BalanceTier.address.toLowerCase());
+      expect(data.minimumTier).to.equals(minimumTier.toString());
+
+      expect(data.deployBlock).to.equals(deployBlock.toString());
+      expect(data.deployTimestamp).to.equals(deployTime.toString());
     });
 
     it("should query Notice in Sale correctly", async function () {
@@ -918,17 +947,15 @@ describe("Sales queries test", function () {
     });
   });
 
+  describe("Zero minimum raise ", function () {
+    // distributionEndForwardingAddress need to be non zero address
+  });
+
   describe("Failed sale? - Query", function () {
     // SaleRefund
   });
 
   describe("Sale with a non-ERC20 token", function () {
     // The subgraph must not crash with non-ERC20 token / address as reserve
-  });
-
-  describe("Use a tier deployed with and without factory", function () {
-    // Maybe i should add this to the Tiers test files
-    // Existing ContractTier Entity when deployed with factory
-    // UnknownTier when deployed without factory
   });
 });
