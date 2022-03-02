@@ -124,7 +124,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.verifyTierFactories[0];
@@ -155,7 +155,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.verifyTierFactory;
@@ -186,7 +186,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.verifyTier;
@@ -228,7 +228,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.verifyTier.verifyContract;
@@ -287,7 +287,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier1 = response.data.verifyTier1.verifyContract;
       const dataTier2 = response.data.verifyTier2.verifyContract;
@@ -350,7 +350,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier1 = response.data.verifyTier1.verifyContract;
       const dataTier2 = response.data.verifyTier2.verifyContract;
@@ -409,7 +409,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier1 = response.data.verifyTier1.verifyContract;
       const dataTier2 = response.data.verifyTier2.verifyContract;
@@ -462,7 +462,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier1 = response.data.verifyTier1.verifyContract;
       const dataTier2 = response.data.verifyTier2.verifyContract;
@@ -521,7 +521,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier1 = response.data.verifyTier1.verifyContract;
       const dataTier2 = response.data.verifyTier2.verifyContract;
@@ -572,7 +572,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier1 = response.data.verifyTier1.verifyContract;
       const dataTier2 = response.data.verifyTier2.verifyContract;
@@ -618,7 +618,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier = response.data.verifyTier;
       const data = response.data.verifyTier.verifyContract;
@@ -677,7 +677,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier = response.data.verifyTier;
       const data = response.data.verifyTier.verifyContract;
@@ -725,7 +725,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.erc20BalanceTierFactory;
@@ -760,7 +760,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.erc20BalanceTierFactory;
@@ -797,7 +797,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.erc20BalanceTier;
 
@@ -829,7 +829,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.erc20;
 
@@ -872,7 +872,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTier = response.data.erc20BalanceTier.notices;
       const data = response.data.notice;
@@ -917,7 +917,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.erc20TransferTierFactory;
@@ -952,7 +952,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.erc20TransferTierFactory;
@@ -992,7 +992,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.erc20TransferTier;
 
@@ -1049,7 +1049,7 @@ describe("Subgraph Tier Test", function () {
         `;
 
         const response = (await subgraph({
-          query: query,
+          query,
         })) as FetchResult;
         const dataLoop = response.data.tierLevel;
 
@@ -1123,7 +1123,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataTier = response.data.erc20TransferTier;
@@ -1160,7 +1160,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.tierLevel;
@@ -1202,7 +1202,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.tierChange;
@@ -1229,7 +1229,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data;
@@ -1275,7 +1275,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataTier = response.data.erc20TransferTier.notices;
@@ -1323,7 +1323,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.combineTierFactory;
@@ -1352,7 +1352,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = queryResponse.data.combineTierFactory;
@@ -1389,7 +1389,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.combineTier;
@@ -1441,7 +1441,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.state;
@@ -1486,7 +1486,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataTier = response.data.combineTier.notices;
@@ -1527,7 +1527,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.erc721BalanceTierFactory;
@@ -1561,7 +1561,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = queryResponse.data.erc721BalanceTierFactory;
@@ -1598,7 +1598,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.erc721BalanceTier;
@@ -1635,7 +1635,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.erc721;
@@ -1681,7 +1681,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataTier = response.data.erc721BalanceTier.notices;
@@ -1774,7 +1774,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataGated = response.data.gatedNFT.tier;
@@ -1878,7 +1878,7 @@ describe("Subgraph Tier Test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataTier = response.data.trust.contracts.tier;
@@ -1979,7 +1979,7 @@ describe("Subgraph Tier Test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.saleRedeemableERC20.tier;
 

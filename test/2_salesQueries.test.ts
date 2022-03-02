@@ -30,7 +30,7 @@ import type {
 import {
   // Subgraph fetch
   subgraph,
-  //Signers
+  // Signers
   deployer,
   creator,
   signer1,
@@ -66,19 +66,10 @@ const afterBlockNumberConfig = (blockNumber: number) => {
   };
 };
 
-interface BuyConfig {
-  feeRecipient: string;
-  fee: BigNumber;
-  minimumUnits: BigNumber;
-  desiredUnits: BigNumber;
-  maximumPrice: BigNumber;
-}
-
 let reserve: ReserveTokenTest,
   erc20BalanceTier: ERC20BalanceTier,
   sale: Sale,
   redeemableERC20Contract: RedeemableERC20,
-  buyConfig: BuyConfig,
   transaction: ContractTransaction; // Use to save the tx between statements
 
 describe("Sales queries test", function () {
@@ -121,7 +112,7 @@ describe("Sales queries test", function () {
     `;
 
     const response = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const data = response.data.saleFactory;
@@ -134,7 +125,6 @@ describe("Sales queries test", function () {
   });
 
   describe("Success sale - Queries", function () {
-    let startBlock: number;
     const saleTimeout = 30;
     const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
 
@@ -153,8 +143,10 @@ describe("Sales queries test", function () {
 
     const sources = [concat([vBasePrice])];
 
-    let canStartStateConfig: VMState;
-    let canEndStateConfig: VMState;
+    let startBlock: number,
+      canStartStateConfig: VMState,
+      canEndStateConfig: VMState;
+
     const calculatePriceStateConfig = {
       sources,
       constants,
@@ -170,8 +162,9 @@ describe("Sales queries test", function () {
     const fee = ethers.BigNumber.from("1").mul(Util.RESERVE_ONE);
 
     // Test aux
-    let totalRaised = ethers.BigNumber.from("0"),
-      totalFees = ethers.BigNumber.from("0");
+    let totalRaisedExpected = ethers.BigNumber.from("0"),
+      totalFeesExpected = ethers.BigNumber.from("0"),
+      feeRecipientTotalFees = ethers.BigNumber.from("0");
 
     before("creating the sale child", async function () {
       // 5 blocks from now
@@ -223,7 +216,7 @@ describe("Sales queries test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.saleFactory;
@@ -256,7 +249,7 @@ describe("Sales queries test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.sale;
 
@@ -289,7 +282,7 @@ describe("Sales queries test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.sale;
@@ -336,7 +329,7 @@ describe("Sales queries test", function () {
     `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.sale;
 
@@ -384,7 +377,7 @@ describe("Sales queries test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const startData = response.data.sale.canStartStateConfig;
@@ -413,60 +406,6 @@ describe("Sales queries test", function () {
       );
     });
 
-    it("should query the RedeemableERC20 entity", async function () {
-      const [deployBlock, deployTime] = await Util.getTxTimeblock(
-        redeemableERC20Contract.deployTransaction
-      );
-      const query = `
-        {
-          redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
-            deployer
-            admin
-            factory
-            redeems {
-              id
-            }
-            treasuryAssets {
-              id
-            }
-            tier {
-              id
-            }
-            minimumTier
-            name
-            symbol
-            totalSupply
-            deployBlock
-            deployTimestamp
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const data = response.data.redeemableERC20;
-
-      expect(data.deployer).to.equals(creator.address.toLowerCase());
-      expect(data.admin).to.equals(sale.address.toLowerCase());
-      expect(data.factory).to.equals(
-        redeemableERC20Factory.address.toLowerCase()
-      );
-
-      expect(data.redeems).to.be.empty;
-      expect(data.treasuryAssets.id).to.equals(reserve.address.toLowerCase());
-      expect(data.tier.id).to.equals(erc20BalanceTier.address.toLowerCase());
-
-      expect(data.minimumTier).to.equals(minimumTier.toString());
-      expect(data.name).to.equals(redeemableERC20Config.name);
-      expect(data.symbol).to.equals(redeemableERC20Config.symbol);
-      expect(data.totalSupply).to.equals(redeemableERC20Config.initialSupply);
-
-      expect(data.deployBlock).to.equals(deployBlock.toString());
-      expect(data.deployTimestamp).to.equals(deployTime.toString());
-    });
-
     it("should query the SaleRedeemableERC20 entity correctly", async function () {
       const [deployBlock, deployTime] = await Util.getTxTimeblock(
         redeemableERC20Contract.deployTransaction
@@ -489,7 +428,7 @@ describe("Sales queries test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.saleRedeemableERC20;
@@ -516,7 +455,6 @@ describe("Sales queries test", function () {
 
       transaction = await noticeBoard.connect(signer1).createNotices(notices);
 
-      // const noticeId = `${transaction.hash.toLowerCase()} - 0`;
       const noticeId = `${sale.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - 0`;
       await waitForSubgraphToBeSynced();
 
@@ -538,7 +476,7 @@ describe("Sales queries test", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataSale = queryResponse.data.sale.notices;
       const dataNotice = queryResponse.data.notice;
@@ -550,55 +488,80 @@ describe("Sales queries test", function () {
       expect(dataNotice.data).to.equals("0x01");
     });
 
-    it("should query after sale start correctly", async function () {
+    it("should query the Sale after start correctly", async function () {
       // Waiting to start the sale
       await Util.createEmptyBlock(
         startBlock - (await ethers.provider.getBlockNumber())
       );
 
       // Starting with signer1
-      const tx = await sale.connect(signer1).start();
+      transaction = await sale.connect(signer1).start();
 
       await waitForSubgraphToBeSynced();
 
       const query = `
         {
           sale (id: "${sale.address.toLowerCase()}") {
+            saleStatus
             startEvent {
               id
-            }
-            saleStatus
-          }
-          saleStart (id: "${tx.hash.toLowerCase()}") {
-            transactionHash
-            sender
-            saleContract {
-              address
             }
           }
         }
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
-      const saleData = response.data.sale;
-      const saleEventData = response.data.saleStart;
+      const data = response.data.sale;
 
-      expect(saleData.startEvent.id).to.equals(tx.hash.toLowerCase());
-      expect(saleData.saleStatus).to.equals(Status.ACTIVE);
-
-      expect(saleEventData.transactionHash).to.equals(tx.hash.toLowerCase());
-      expect(saleEventData.sender).to.equals(signer1.address.toLowerCase());
-      expect(saleEventData.saleContract.address).to.equals(
-        sale.address.toLowerCase()
-      );
+      expect(data.saleStatus).to.equals(Status.ACTIVE);
+      expect(data.startEvent.id).to.equals(transaction.hash.toLowerCase());
     });
 
-    it("should recognize the saleBuy after a buy correctly", async function () {
-      // Values to Buy
-      const desiredUnits = totalTokenSupply.div(2);
+    it("should query the SaleStart after start the Sale", async function () {
+      const saleStartId = transaction.hash.toLowerCase();
+
+      const [deployBlock, deployTime] = await Util.getTxTimeblock(transaction);
+
+      // Get the sender from event
+      const { sender } = await Util.getEventArgs(transaction, "Start", sale);
+
+      const query = `
+        {
+          saleStart (id: "${saleStartId}") {
+            transactionHash
+            sender
+            saleContract {
+              id
+            }
+            block
+            timestamp
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data = response.data.saleStart;
+
+      expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
+      expect(data.sender).to.equals(sender.toLowerCase());
+
+      expect(data.saleContract.id).to.equals(sale.address.toLowerCase());
+      expect(data.block).to.equals(deployBlock.toString());
+      expect(data.timestamp).to.equals(deployTime.toString());
+    });
+
+    it("should update the Sale after buy correctly", async function () {
+      // Buy the 50% of the units availables
+      const desiredUnits = (
+        await redeemableERC20Contract.balanceOf(sale.address)
+      ).div(2);
+
       const cost = staticPrice.mul(desiredUnits).div(Util.ONE);
 
       // give signer1 reserve to cover cost + fee
@@ -609,7 +572,7 @@ describe("Sales queries test", function () {
         .connect(signer1)
         .approve(sale.address, signer1ReserveBalance);
 
-      buyConfig = {
+      const buyConfig = {
         feeRecipient: feeRecipient.address,
         fee,
         minimumUnits: desiredUnits,
@@ -626,59 +589,25 @@ describe("Sales queries test", function () {
         sale
       )) as BuyEvent["args"];
 
-      const totalInCalculated = ethers.BigNumber.from(receipt.units)
+      const totalInExpected = receipt.units
         .mul(receipt.price)
-        .div(ethers.BigNumber.from("1" + eighteenZeros));
+        .div(Util.ONE)
+        .add(receipt.fee);
 
-      // Acumulating and saving the acumulates values
-      totalRaised = totalRaised.add(totalInCalculated);
-      totalFees = totalFees.add(fee);
+      // Manage the expected values
+      totalRaisedExpected = totalRaisedExpected.add(totalInExpected);
+      totalFeesExpected = totalFeesExpected.add(fee);
+      feeRecipientTotalFees = feeRecipientTotalFees.add(fee);
 
       await waitForSubgraphToBeSynced();
 
-      const query = `
-        {
-          sale (id: "${sale.address.toLowerCase()}") {
-            buys {
-              id
-            }
-          }
-          saleBuy (id: "${transaction.hash.toLowerCase()}") {
-            transactionHash
-            saleContractAddress
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const saleData = response.data.sale;
-      const saleBuyData = response.data.saleBuy;
-
-      expect(saleData.buys).deep.include(
-        { id: transaction.hash.toLowerCase() },
-        `sale entity does not include the buy
-        expected include the ID: ${transaction.hash.toLowerCase()}
-        got buys with:
-        ${JSON.stringify(saleData.buys, null, 2)}`
-      );
-
-      expect(saleBuyData.transactionHash).to.equals(
-        transaction.hash.toLowerCase()
-      );
-      expect(saleBuyData.saleContractAddress).to.equals(
-        sale.address.toLowerCase()
-      );
-    });
-
-    it("should query sale properties after buy correctly", async function () {
-      const percentRaised = totalRaised.mul(100).div(minimumRaise);
-
-      const initUnitsAvailable = await redeemableERC20Contract.balanceOf(
+      const unitsAvailableExpected = await redeemableERC20Contract.balanceOf(
         sale.address
       );
+
+      const percentRaisedExpected = totalRaisedExpected
+        .mul(100)
+        .div(minimumRaise);
 
       const query = `
         {
@@ -692,56 +621,221 @@ describe("Sales queries test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
+      const data = response.data.sale;
 
-      const saleData = response.data.sale;
-
-      expect(saleData.unitsAvailable).to.equals(initUnitsAvailable);
-      expect(saleData.totalRaised).to.equals(totalRaised);
-      expect(saleData.percentRaised).to.equals(percentRaised);
-      expect(saleData.totalFees).to.equals(totalFees);
+      expect(data.unitsAvailable).to.equals(unitsAvailableExpected);
+      expect(data.totalRaised).to.equals(totalRaisedExpected);
+      expect(data.percentRaised).to.equals(percentRaisedExpected);
+      expect(data.totalFees).to.equals(totalFeesExpected);
     });
 
-    it("should query the Buy config values correctly", async function () {
-      const txHash = transaction.hash.toLowerCase();
+    it("should query the SaleBuy after buy", async function () {
+      const [buyBlock, buyTimestamp] = await Util.getTxTimeblock(transaction);
+
+      const saleBuyId = transaction.hash.toLowerCase();
+      const feeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLowerCase()}`;
+
+      const { receipt, config } = (await Util.getEventArgs(
+        transaction,
+        "Buy",
+        sale
+      )) as BuyEvent["args"];
+
+      const { fee: feeExpected, units, price, id: receiptId } = receipt;
+
+      const {
+        minimumUnits: minimumUnitsExpected,
+        desiredUnits: desiredUnitsExpected,
+        maximumPrice: maximumPriceExpected,
+      } = config;
+
+      const totalInExpected = units.mul(price).div(Util.ONE);
+
+      const saleReceiptId = `${sale.address.toLowerCase()} - ${receiptId}`;
 
       const query = `
         {
-          saleBuy (id: "${txHash}") {
+          sale (id: "${sale.address.toLowerCase()}") {
+            buys {
+              id
+            }
+          }
+          saleBuy (id: "${saleBuyId}") {
+            transactionHash
+            sender
+            block
+            timestamp
+            saleContract {
+              id
+            }
+            saleContractAddress
+            feeRecipient {
+              id
+            }
             feeRecipientAddress
+            totalIn
             fee
             minimumUnits
             desiredUnits
             maximumPrice
+            receipt {
+              id
+            }
+            refunded
+            refundEvent {
+              id
+            }
           }
         }
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
-      const buyData = response.data.saleBuy;
+      const saleData = response.data.sale;
+      const data = response.data.saleBuy;
 
-      expect(buyData.fee).to.equals(buyConfig.fee);
-      expect(buyData.minimumUnits).to.equals(buyConfig.minimumUnits);
-      expect(buyData.desiredUnits).to.equals(buyConfig.desiredUnits);
-      expect(buyData.maximumPrice).to.equals(buyConfig.maximumPrice);
-      expect(buyData.feeRecipientAddress).to.equals(
-        buyConfig.feeRecipient.toLowerCase()
+      expect(saleData.buys).deep.include(
+        { id: saleBuyId },
+        `buy with ID ${saleBuyId} it is NOT present on the Sale`
       );
+
+      expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.block).to.equals(buyBlock.toString());
+      expect(data.timestamp).to.equals(buyTimestamp.toString());
+
+      expect(data.saleContract.id).to.equals(sale.address.toLowerCase());
+      expect(data.saleContractAddress).to.equals(sale.address.toLowerCase());
+      expect(data.feeRecipient.id).to.equals(feeRecipientId);
+      expect(data.feeRecipientAddress).to.equals(
+        feeRecipient.address.toLowerCase()
+      );
+
+      expect(data.fee).to.equals(feeExpected);
+      expect(data.minimumUnits).to.equals(minimumUnitsExpected);
+      expect(data.desiredUnits).to.equals(desiredUnitsExpected);
+      expect(data.maximumPrice).to.equals(maximumPriceExpected);
+      expect(data.totalIn).to.equals(totalInExpected);
+
+      expect(data.receipt.id).to.equals(saleReceiptId);
+      expect(data.refunded).to.be.false;
+      expect(data.refundEvent).to.be.null;
     });
 
-    it("should query the SaleFeeRecipient after a buy", async function () {
-      const txHash = transaction.hash.toLowerCase();
-      const saleFeeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLocaleLowerCase()}`;
+    it("should query the SaleTransaction after a buy", async function () {
+      const [saleBlock, saleTimestamp] = await Util.getTxTimeblock(transaction);
+
+      const saleTransactionId = transaction.hash.toLowerCase();
+      const feeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLowerCase()}`;
+
+      const { receipt } = (await Util.getEventArgs(
+        transaction,
+        "Buy",
+        sale
+      )) as BuyEvent["args"];
+
+      const saleReceiptId = `${sale.address.toLowerCase()} - ${receipt.id}`;
 
       const query = `
         {
-          saleBuy (id: "${txHash}") {
+          sale (id: "${sale.address.toLowerCase()}") {
+            saleTransactions {
+              id
+            }
+          }
+          saleTransaction (id: "${saleTransactionId}") {
+            transactionHash
+            sender
+            block
+            timestamp
+            saleContract {
+              id
+            }
+            saleContractAddress
             feeRecipient {
-              address
+              id
+            }
+            feeRecipientAddress
+            receipt {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const dataSale = response.data.sale;
+      const data = response.data.saleTransaction;
+
+      expect(dataSale.saleTransactions).deep.include({ id: saleTransactionId });
+
+      expect(data.transactionHash).to.equals(saleTransactionId);
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.block).to.equals(saleBlock.toString());
+      expect(data.timestamp).to.equals(saleTimestamp.toString());
+
+      expect(data.saleContract.id).to.equals(sale.address.toLowerCase());
+      expect(data.saleContractAddress).to.equals(sale.address.toLowerCase());
+      expect(data.feeRecipient.id).to.equals(feeRecipientId);
+      expect(data.feeRecipientAddress).to.equals(
+        feeRecipient.address.toLowerCase()
+      );
+
+      expect(data.receipt.id).to.equals(saleReceiptId);
+    });
+
+    it("should query the SaleReceipt after a buy", async function () {
+      const { receipt } = (await Util.getEventArgs(
+        transaction,
+        "Buy",
+        sale
+      )) as BuyEvent["args"];
+
+      const { id: receiptId, feeRecipient, fee, units, price } = receipt;
+
+      const saleReceiptId = `${sale.address.toLowerCase()} - ${receiptId}`;
+
+      const query = `
+        {
+          saleReceipt (id: "${saleReceiptId}") {
+            receiptId
+            feeRecipient
+            fee
+            units
+            price
+            saleTransaction
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const data = response.data.saleReceipt;
+
+      expect(data.receiptId).to.equals(receiptId);
+      expect(data.feeRecipient).to.equals(feeRecipient.toLowerCase());
+      expect(data.fee).to.equals(fee);
+      expect(data.units).to.equals(units);
+      expect(data.price).to.equals(price);
+      expect(data.saleTransaction).to.equals(transaction.hash.toLowerCase());
+    });
+
+    it("should query the SaleFeeRecipient after a buy", async function () {
+      const saleFeeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLowerCase()}`;
+      const saleBuyId = transaction.hash.toLowerCase();
+
+      const query = `
+        {
+          sale (id: "${sale.address.toLowerCase()}") {
+            saleFeeRecipients {
+              id
             }
           }
           saleFeeRecipient (id: "${saleFeeRecipientId}") {
@@ -753,83 +847,37 @@ describe("Sales queries test", function () {
             refunds {
               id
             }
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query: query,
-      })) as FetchResult;
-
-      const saleBuyData = response.data.saleBuy;
-      const saleFeeRecipientData = response.data.saleFeeRecipient;
-
-      expect(saleBuyData.feeRecipient.address).to.equals(
-        feeRecipient.address.toLocaleLowerCase()
-      );
-
-      expect(saleFeeRecipientData.address).to.equals(
-        feeRecipient.address.toLocaleLowerCase()
-      );
-      expect(saleFeeRecipientData.totalFees).to.equals(buyConfig.fee);
-      expect(saleFeeRecipientData.buys).to.have.lengthOf(1);
-      expect(saleFeeRecipientData.refunds).to.be.empty;
-    });
-
-    it("should query the Receipt after a buy", async function () {
-      const txHash = transaction.hash.toLowerCase();
-
-      const receipt = (await Util.getEventArgs(transaction, "Buy", sale))
-        .receipt;
-      // This is the #{Sale.address}+{receipt.id}. We use the events args obtained
-      const saleReceiptID = `${sale.address.toLowerCase()} - ${receipt.id}`;
-
-      const totalInCalculated = ethers.BigNumber.from(receipt.units)
-        .mul(receipt.price)
-        .div(ethers.BigNumber.from("1" + eighteenZeros));
-
-      const query = `
-        {
-          saleBuy (id: "${txHash}") {
-            receipt {
-              receiptId
+            sale {
+              id
             }
-            totalIn
-          }
-          saleReceipt  (id: "${saleReceiptID}") {
-            id
-            receiptId
-            feeRecipient
-            fee
-            units
-            price
           }
         }
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
+      const dataSale = response.data.sale;
+      const data = response.data.saleFeeRecipient;
 
-      const saleBuyData = response.data.saleBuy;
-      const saleReceipttData = response.data.saleReceipt;
-
-      expect(saleBuyData.receipt.receiptId).to.equals(receipt.id);
-      expect(saleBuyData.totalIn).to.equals(totalInCalculated);
-
-      expect(saleReceipttData.id).to.equals(saleReceiptID);
-      expect(saleReceipttData.receiptId).to.equals(receipt.id);
-      expect(saleReceipttData.feeRecipient).to.equals(
-        receipt.feeRecipient.toLowerCase()
+      expect(dataSale.saleFeeRecipients).deep.include(
+        { id: saleFeeRecipientId },
+        `sale does not include the saleFeeRecipient with ID ${saleFeeRecipientId}`
       );
-      expect(saleReceipttData.fee).to.equals(receipt.fee);
-      expect(saleReceipttData.units).to.equals(receipt.units);
-      expect(saleReceipttData.price).to.equals(receipt.price);
+
+      expect(data.address).to.equals(feeRecipient.address.toLowerCase());
+      expect(data.totalFees).to.equals(feeRecipientTotalFees);
+
+      expect(data.buys).deep.include({ id: saleBuyId });
+      expect(data.refunds).to.be.empty;
+      expect(data.sale.id).to.equals(sale.address.toLowerCase());
     });
 
-    it("should query after minimum raise met correctly", async function () {
+    it("should update the Sale after reaching the minimum raise", async function () {
       // Buy all the remain supply to end
-      const desiredUnits = totalTokenSupply.div(2);
+      const desiredUnits = await redeemableERC20Contract.balanceOf(
+        sale.address
+      );
       const cost = staticPrice.mul(desiredUnits).div(Util.ONE);
 
       // give signer1 reserve to cover cost + fee
@@ -840,7 +888,7 @@ describe("Sales queries test", function () {
         .connect(signer1)
         .approve(sale.address, signer1ReserveBalance);
 
-      buyConfig = {
+      const buyConfig = {
         feeRecipient: feeRecipient.address,
         fee,
         minimumUnits: desiredUnits,
@@ -856,103 +904,180 @@ describe("Sales queries test", function () {
         sale
       )) as BuyEvent["args"];
 
-      const totalInCalculated = ethers.BigNumber.from(receipt.units)
+      const totalInExpected = receipt.units
         .mul(receipt.price)
-        .div(ethers.BigNumber.from("1" + eighteenZeros));
+        .div(Util.ONE)
+        .add(receipt.fee);
 
-      const newUnitsAvailable = await redeemableERC20Contract.balanceOf(
+      // Add the fees to manage the expected value
+      totalRaisedExpected = totalRaisedExpected.add(totalInExpected);
+      totalFeesExpected = totalFeesExpected.add(fee);
+      feeRecipientTotalFees = feeRecipientTotalFees.add(fee);
+
+      await waitForSubgraphToBeSynced();
+
+      const unitsAvailableExpected = await redeemableERC20Contract.balanceOf(
         sale.address
       );
 
-      // Acumulating and saving the acumulates values
-      totalRaised = totalRaised.add(totalInCalculated);
-      totalFees = totalFees.add(fee);
-
-      const percentRaisedExpected = totalRaised.mul(100).div(minimumRaise);
-
-      await waitForSubgraphToBeSynced();
+      // Since the sale reach the minimum, then will be 100%
+      const percentRaisedExpected = "100";
 
       const query = `
         {
           sale (id: "${sale.address.toLowerCase()}") {
-            buys {
-              id
-            }
-            endEvent {
-              id
-            }
             unitsAvailable
             totalRaised
             percentRaised
             totalFees
-            saleStatus
           }
         }
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
-      const saleData = response.data.sale;
+      const data = response.data.sale;
 
-      expect(saleData.buys).to.have.length(2);
-      expect(saleData.endEvent.id).to.equals(transaction.hash.toLowerCase());
-      expect(saleData.unitsAvailable).to.equals(newUnitsAvailable);
-      expect(saleData.totalRaised).to.equals(totalRaised);
-      // Im not sure if it `percentRaised` should be 1 (100%) even when the `totalRaised` is
-      // greater than `minimumRaise`. Or could be for ex: 1.5 (150%)
-      expect(saleData.percentRaised).to.equals(percentRaisedExpected);
-      expect(saleData.totalFees).to.equals(totalFees);
-      expect(saleData.saleStatus).to.equals(Status.SUCCESS);
+      expect(data.unitsAvailable).to.equals(unitsAvailableExpected);
+      expect(data.totalRaised).to.equals(totalRaisedExpected);
+      expect(data.percentRaised).to.equals(percentRaisedExpected);
+      expect(data.totalFees).to.equals(totalFeesExpected);
     });
 
-    it("should query SaleEnd after a sale end correctly", async function () {
-      await waitForSubgraphToBeSynced();
-
-      // Using the tx saved
-      const [deployBlock, deployTime] = await Util.getTxTimeblock(transaction);
-
+    it("should update the Sale after a end the Sale", async function () {
+      // Since the minimun raise was reached, the sale automatically was ended
       const query = `
         {
-          saleEnd (id: "${transaction.hash.toLowerCase()}") {
-            block
-            transactionHash
-            timestamp
-            sender
+          sale (id: "${sale.address.toLowerCase()}") {
             saleStatus
-            saleContract {
-              address
+            endEvent {
+              id
             }
           }
         }
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
-      const saleEndData = response.data.saleEnd;
+      const data = response.data.sale;
 
-      expect(parseInt(saleEndData.block)).to.equals(deployBlock);
-      expect(parseInt(saleEndData.timestamp)).to.equals(deployTime);
-      expect(saleEndData.sender).to.equals(signer1.address.toLowerCase());
-      expect(saleEndData.saleStatus).to.equals(Status.SUCCESS);
-      expect(saleEndData.transactionHash).to.equals(
-        transaction.hash.toLowerCase()
+      expect(data.saleStatus).to.equals(Status.SUCCESS);
+      expect(data.endEvent.id).to.equals(transaction.hash.toLowerCase());
+    });
+
+    it("should query SaleEnd after a sale end", async function () {
+      const saleEndId = transaction.hash.toLowerCase();
+
+      const [endBlock, endTime] = await Util.getTxTimeblock(transaction);
+
+      const query = `
+        {
+          saleEnd (id: "${saleEndId}") {
+            transactionHash
+            sender
+            block
+            timestamp
+            saleContract {
+              id
+            }
+            saleStatus
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data = response.data.saleEnd;
+
+      expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.block).to.equals(endBlock.toString());
+      expect(data.timestamp).to.equals(endTime.toString());
+
+      expect(data.saleContract.id).to.equals(sale.address.toLowerCase());
+      expect(data.saleStatus).to.equals(Status.SUCCESS);
+    });
+  });
+
+  describe("Failed sale - Queries", function () {
+    // SaleRefund
+    const vBasePrice = op(OpcodeSale.VAL, 0);
+    const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+
+    const sources = [concat([vBasePrice])];
+    const constants = [staticPrice];
+
+    let startBlock: number,
+      canStartStateConfig: VMState,
+      canEndStateConfig: VMState;
+    const calculatePriceStateConfig = {
+      sources,
+      constants,
+      stackLength: 1,
+      argumentsLength: 0,
+    };
+    const cooldownDuration = 1;
+    const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
+    const dustSize = 0;
+
+    const saleTimeout = 30;
+
+    const redeemableERC20Config = {
+      name: "Token",
+      symbol: "TKN",
+      distributor: Util.zeroAddress,
+      initialSupply: ethers.BigNumber.from("2000").mul(Util.ONE),
+    };
+    const minimumTier = Tier.ZERO;
+    const distributionEndForwardingAddress = Util.zeroAddress;
+
+    before("creating the sale child", async function () {
+      // 5 blocks from now
+      startBlock = (await ethers.provider.getBlockNumber()) + 5;
+
+      canStartStateConfig = afterBlockNumberConfig(startBlock);
+      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
+
+      sale = await Util.saleDeploy(
+        saleFactory,
+        creator,
+        {
+          canStartStateConfig: canStartStateConfig,
+          canEndStateConfig: canEndStateConfig,
+          calculatePriceStateConfig: calculatePriceStateConfig,
+          recipient: recipient.address,
+          reserve: reserve.address,
+          cooldownDuration: cooldownDuration,
+          minimumRaise,
+          dustSize: dustSize,
+        },
+        {
+          erc20Config: redeemableERC20Config,
+          tier: erc20BalanceTier.address,
+          minimumTier: minimumTier,
+          distributionEndForwardingAddress: distributionEndForwardingAddress,
+        }
       );
-      expect(saleEndData.saleContract.address).to.equals(
-        sale.address.toLowerCase()
-      );
+
+      // Creating the instance for contracts
+      redeemableERC20Contract = (await Util.getContractChild(
+        sale.deployTransaction,
+        redeemableERC20Factory,
+        redeemableTokenJson
+      )) as RedeemableERC20;
+
+      await waitForSubgraphToBeSynced();
     });
   });
 
   describe("Zero minimum raise ", function () {
     // distributionEndForwardingAddress need to be non zero address
-  });
-
-  describe("Failed sale? - Query", function () {
-    // SaleRefund
   });
 
   describe("Sale with a non-ERC20 token", function () {

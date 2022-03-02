@@ -162,7 +162,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableERC20ClaimEscrow;
 
@@ -194,7 +194,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.erc20;
 
@@ -243,7 +243,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowPendingDeposit;
 
@@ -324,7 +324,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowDepositor;
 
@@ -389,7 +389,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.redeemableEscrowPendingDepositorToken;
@@ -524,7 +524,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableERC20ClaimEscrow;
 
@@ -568,7 +568,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowDepositor;
 
@@ -628,7 +628,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowDeposit;
 
@@ -734,7 +734,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowSupplyTokenDeposit;
 
@@ -803,7 +803,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowPendingDepositorToken;
 
@@ -842,7 +842,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableERC20ClaimEscrow;
 
@@ -863,7 +863,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowPendingDepositorToken;
 
@@ -900,7 +900,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowDepositor;
 
@@ -954,7 +954,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowDeposit;
 
@@ -1041,7 +1041,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowSupplyTokenDeposit;
 
@@ -1104,7 +1104,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableERC20ClaimEscrow;
 
@@ -1155,7 +1155,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.redeemableEscrowWithdraw;
@@ -1243,7 +1243,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowWithdrawer;
 
@@ -1289,7 +1289,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowSupplyTokenDeposit;
 
@@ -1401,7 +1401,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataClaimEscrow =
         response.data.redeemableERC20ClaimEscrow.supplyTokenDeposits;
@@ -1495,7 +1495,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataEscrow = response.data.redeemableERC20ClaimEscrow.notices;
       const dataNotice = response.data.notice;
@@ -1598,7 +1598,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowSupplyTokenDeposit;
 
@@ -1636,7 +1636,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableERC20ClaimEscrow;
 
@@ -1663,7 +1663,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowSupplyTokenDeposit;
 
@@ -1690,7 +1690,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowDepositor;
 
@@ -1728,7 +1728,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowUndeposit;
 

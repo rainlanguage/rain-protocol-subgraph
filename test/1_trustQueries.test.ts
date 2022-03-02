@@ -356,7 +356,7 @@ describe("Subgraph Trusts Test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
     const data = queryResponse.data.notice;
 
@@ -517,7 +517,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataTrust = queryResponse.data.trust;
       const datacontract = queryResponse.data.contract;
@@ -550,7 +550,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
 
       const data = queryResponse.data.contract.tier;
@@ -580,7 +580,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.contract.reserveERC20;
 
@@ -617,7 +617,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataContract = queryResponse.data.contract.redeemableERC20;
       const data = queryResponse.data.redeemableERC20;
@@ -653,7 +653,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.redeemableERC20;
 
@@ -685,7 +685,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataRedemableHolders = queryResponse.data.redeemableERC20.holders;
       const data = queryResponse.data.holder;
@@ -716,7 +716,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataTreAssets = queryResponse.data.redeemableERC20.treasuryAssets;
       const data = dataTreAssets[0];
@@ -751,7 +751,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.treasuryAsset;
 
@@ -801,7 +801,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataCallers = queryResponse.data.treasuryAsset.callers;
       const data = queryResponse.data.treasuryAssetCaller;
@@ -850,7 +850,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data;
 
@@ -881,7 +881,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataPulls = queryResponse.data.erc20Pulls;
       const data = queryResponse.data.redeemableERC20.erc20Pull;
@@ -910,7 +910,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const gSendersData = queryResponse.data.redeemableERC20.grantedSenders;
 
@@ -928,7 +928,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const gReceiversData =
         queryResponse.data.redeemableERC20.grantedReceivers;
@@ -963,7 +963,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataContract = queryResponse.data.contract;
       const data = queryResponse.data.seedERC20;
@@ -1001,7 +1001,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.seedERC20;
 
@@ -1030,7 +1030,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.seedERC20;
 
@@ -1058,7 +1058,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
 
       const dataSeed = queryResponse.data.seedERC20;
@@ -1095,7 +1095,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
 
       const seedERC20Data = queryResponse.data.seedERC20;
@@ -1126,7 +1126,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataTrust = queryResponse.data.trust;
       const data = queryResponse.data.distributionProgress;
@@ -1156,7 +1156,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.distributionProgress;
 
@@ -1187,7 +1187,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.distributionProgress;
 
@@ -1221,7 +1221,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.distributionProgress;
 
@@ -1263,7 +1263,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTrust = queryResponse.data.trust.notices;
       const dataNotice = queryResponse.data.notice;
@@ -1318,7 +1318,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataSeeds = queryResponse.data.seeds;
       const data = dataSeeds[0];
@@ -1364,7 +1364,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.seedERC20;
 
@@ -1396,7 +1396,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
 
       const dataSeedERC20 = queryResponse.data.seedERC20;
@@ -1443,7 +1443,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Create Subgraph Connection
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataTrust = queryResponse.data.trust;
@@ -1501,7 +1501,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Create Subgraph Connection
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataSeedERC20 = queryResponse.data.seedERC20;
@@ -1545,7 +1545,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataTrust = queryResponse.data.trust;
       const data = queryResponse.data.trustParticipant;
@@ -1571,7 +1571,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataArray = queryResponse.data.trustParticipants;
@@ -1617,7 +1617,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Create Subgraph Connection
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataArr = queryResponse.data.unseeds;
@@ -1666,7 +1666,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Create Subgraph Connection
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = queryResponse.data.seedERC20;
@@ -1714,7 +1714,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Create Subgraph Connection
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataParticipants = queryResponse.data.trustParticipants;
@@ -1777,7 +1777,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataSeeds = queryResponse.data.seeds;
       const data = queryResponse.data.seed;
@@ -1824,7 +1824,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.seedERC20;
 
@@ -1849,7 +1849,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.distributionProgress;
 
@@ -1895,7 +1895,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dutchAuctionsData = queryResponse.data.dutchAuctions;
       const trustData = queryResponse.data.trust;
@@ -1938,7 +1938,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.distributionProgress;
 
@@ -1980,7 +1980,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.distributionProgress;
 
@@ -2024,7 +2024,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
 
       const dataContract = queryResponse.data.contract;
@@ -2069,7 +2069,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.pool;
 
@@ -2105,7 +2105,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
 
       const dataHolders = queryResponse.data.redeemableERC20.holders;
@@ -2175,7 +2175,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataSwaps = queryResponse.data.swaps;
       const data = queryResponse.data.swaps[0];
@@ -2226,7 +2226,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.pool;
 
@@ -2263,7 +2263,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
 
       const dataHolders = queryResponse.data.redeemableERC20.holders;
@@ -2322,7 +2322,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.distributionProgress;
 
@@ -2367,7 +2367,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Create Subgraph Connection
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataTrust = queryResponse.data.trust;
@@ -2444,7 +2444,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Create Subgraph Connection
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = queryResponse.data.pool;
@@ -2491,7 +2491,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.dutchAuction;
 
@@ -2551,7 +2551,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.distributionProgress;
 
@@ -2586,7 +2586,7 @@ describe("Subgraph Trusts Test", function () {
 
       // Create Subgraph Connection
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = queryResponse.data.pool;
@@ -2629,7 +2629,7 @@ describe("Subgraph Trusts Test", function () {
       `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.holder;
 
@@ -2670,7 +2670,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataRedeems = queryResponse.data.redeemSeeds;
       const data = dataRedeems[0];
@@ -2701,7 +2701,7 @@ describe("Subgraph Trusts Test", function () {
        }
      `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.trustParticipant.redeemSeeds;
 
@@ -2723,7 +2723,7 @@ describe("Subgraph Trusts Test", function () {
        }
      `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.seedERC20.redeemSeeds;
 
@@ -2758,7 +2758,7 @@ describe("Subgraph Trusts Test", function () {
         `;
 
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.holder;
 
@@ -2812,7 +2812,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataArr = queryResponse.data.redeems;
       const data = dataArr[0];
@@ -2853,7 +2853,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const dataTAsset = queryResponse.data.treasuryAsset;
       const dataRedeemable = queryResponse.data.redeemableERC20;
@@ -2879,7 +2879,7 @@ describe("Subgraph Trusts Test", function () {
        }
      `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.trustParticipant.redeems;
 
@@ -3011,7 +3011,7 @@ describe("Subgraph Trusts Test", function () {
         }
       `;
       const queryResponse = await subgraph({
-        query: query,
+        query,
       });
       const data = queryResponse.data.trust.contracts;
 

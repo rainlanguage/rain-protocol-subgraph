@@ -105,7 +105,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const factoriesData = queryResponse.data.verifyFactories;
@@ -144,7 +144,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryVerifyFactoryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = queryVerifyFactoryResponse.data.verifyFactory;
@@ -178,7 +178,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = queryResponse.data.verify;
@@ -223,7 +223,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataVerify = queryResponse.data.verify.notices;
       const dataNotice = queryResponse.data.notice;
@@ -266,7 +266,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataApproves = queryResponse.data.verifyRequestApproves;
@@ -308,7 +308,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataArray = queryResponse.data.verifyEvents;
@@ -355,7 +355,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataVerifyContract = queryResponse.data.verify.verifyAddresses;
@@ -420,7 +420,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataApproves = response.data.verifyApproves;
       const data = response.data.verifyApprove;
@@ -461,7 +461,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataEvents = queryResponse.data.verifyEvents;
@@ -504,7 +504,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataVerifyContract = response.data.verify.verifyAddresses;
       const data = response.data.verifyAddress;
@@ -541,7 +541,7 @@ describe("Verify Factory - Queries", function () {
         `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
@@ -603,7 +603,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyRequestRemove;
 
@@ -640,7 +640,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataEvents = queryResponse.data.verifyEvents;
@@ -683,7 +683,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataVerifyContract = response.data.verify.verifyAddresses;
       const data = response.data.verifyAddress;
@@ -718,7 +718,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
@@ -760,7 +760,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyRemove;
 
@@ -797,7 +797,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataEvents = queryResponse.data.verifyEvents;
@@ -840,7 +840,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataVerifyContract = response.data.verify.verifyAddresses;
       const data = response.data.verifyAddress;
@@ -876,7 +876,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
@@ -937,7 +937,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyRequestBan;
 
@@ -974,7 +974,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataEvents = queryResponse.data.verifyEvents;
@@ -1010,7 +1010,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
@@ -1036,7 +1036,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
@@ -1078,7 +1078,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyBan;
 
@@ -1115,7 +1115,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const queryResponse = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const dataEvents = queryResponse.data.verifyEvents;
@@ -1158,7 +1158,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const dataVerifyContract = response.data.verify.verifyAddresses;
       const data = response.data.verifyAddress;
@@ -1194,7 +1194,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
@@ -1237,7 +1237,7 @@ describe("Verify Factory - Queries", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verify;
 
@@ -1276,7 +1276,7 @@ describe("Verify Factory - Queries", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
@@ -1325,7 +1325,7 @@ describe("Verify Factory - Queries", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verify;
 
@@ -1364,7 +1364,7 @@ describe("Verify Factory - Queries", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verify;
 
@@ -1396,7 +1396,7 @@ describe("Verify Factory - Queries", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
@@ -1424,7 +1424,7 @@ describe("Verify Factory - Queries", function () {
         }
       `;
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
       const data1 = response.data.verifyAddress1;
       const data2 = response.data.verifyAddress2;
@@ -1463,7 +1463,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.verify;
@@ -1500,7 +1500,7 @@ describe("Verify Factory - Queries", function () {
       `;
 
       const response = (await subgraph({
-        query: query,
+        query,
       })) as FetchResult;
 
       const data = response.data.verify;

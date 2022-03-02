@@ -94,7 +94,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const data = queryResponse.data.gatedNFTFactories[0];
@@ -135,7 +135,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const data = queryResponse.data.gatedNFTFactory;
@@ -166,7 +166,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const data = queryResponse.data.gatedNFT;
@@ -197,7 +197,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const data = queryResponse.data.gatedNFT.tier;
@@ -226,7 +226,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const data = queryResponse.data.gatedNFT;
@@ -258,7 +258,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const data = queryResponse.data.gatedNFT;
@@ -303,7 +303,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const dataGated = queryResponse.data.gatedNFT.ownershipHistory;
@@ -352,7 +352,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const dataGate = queryResponse.data.gatedNFT;
@@ -402,7 +402,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const dataGate = queryResponse.data.gatedNFT;
@@ -457,7 +457,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
 
     const dataFactory = queryResponse.data.gatedNFTFactory;
@@ -503,7 +503,7 @@ describe("Subgraph GatedNFT test", function () {
     `;
 
     const queryResponse = (await subgraph({
-      query: query,
+      query,
     })) as FetchResult;
     const dataGatedNFT = queryResponse.data.gatedNFT.notices;
     const dataNotice = queryResponse.data.notice;

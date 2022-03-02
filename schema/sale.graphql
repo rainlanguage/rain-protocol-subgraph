@@ -100,9 +100,9 @@ type SaleBuy implements SaleTransaction @entity{
     desiredUnits: BigInt! #from Buy.desiredUnits
     maximumPrice: BigInt! #from Buy.maximumPrice
     receipt: SaleReceipt! #from Buy.receipt
-    totalIn: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18)
-    refunded: Boolean!
-    refundEvent: SaleRefund
+    totalIn: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18) + Buy.receipt.fee
+    refunded: Boolean! #false at first, becomes true when the corresponding receipt is emitted in a Refund event
+    refundEvent: SaleRefund # pointing to SaleRefund Entity that match the same receipt
 }
 
 # from the Refund event on Sale
@@ -118,7 +118,7 @@ type SaleRefund implements SaleTransaction @entity{
     feeRecipient: SaleFeeRecipient! # created/referenced by id {Sale.address}+{Refund.feeRecipient}
     feeRecipientAddress: Bytes! #from Buy.feeRecipient
     receipt: SaleReceipt! #from {Sale.address}+{receipt.id}
-    totalOut: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18)
+    totalOut: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18) + fee
 }
 
 type SaleReceipt @entity{ 
