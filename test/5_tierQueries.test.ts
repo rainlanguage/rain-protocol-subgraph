@@ -70,7 +70,7 @@ const enum RequestType {
 
 let reserve: ReserveTokenTest, transaction: ContractTransaction;
 
-describe.only("Subgraph Tier Test", function () {
+describe("Subgraph Tier Test", function () {
   // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
   // in other contracts like trusts or sales
 
@@ -248,7 +248,7 @@ describe.only("Subgraph Tier Test", function () {
       expect(data.deployTimestamp).to.equals(deployTimestamp.toString());
       expect(data.factory.id).to.equals(verifyFactory.address.toLowerCase());
 
-      expect(data.verifyAddresses).to.be.empty;
+      // expect(data.verifyAddresses).to.be.empty;
     });
 
     it("should update the Verify contract in different VerifyTiers after a RequestApprove", async function () {
@@ -1971,24 +1971,26 @@ describe.only("Subgraph Tier Test", function () {
         }
       );
 
+      await waitForSubgraphToBeSynced();
+
       const redeemableERC20Address = await sale.token();
 
       const query = `
         {
-          saleRedeemableERC20 (id: "${redeemableERC20Address.toLowerCase()}") {
+          redeemableERC20(id: "${redeemableERC20Address.toLowerCase()}") {
             tier {
               __typename
-              ... on UnknownTier {
-                id
-              }
+              id
             }
           }
         }
       `;
+
       const response = (await subgraph({
         query: query,
       })) as FetchResult;
-      const data = response.data.saleRedeemableERC20.tier;
+
+      const data = response.data.redeemableERC20.tier;
 
       expect(data.__typename).to.equals("UnknownTier");
       expect(data.id).to.equals(tierIndependent.address.toLowerCase());

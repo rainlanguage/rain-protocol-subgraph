@@ -455,7 +455,9 @@ describe("Sales queries test", function () {
       );
 
       expect(data.redeems).to.be.empty;
-      expect(data.treasuryAssets.id).to.equals(reserve.address.toLowerCase());
+      expect(data.treasuryAssets).to.deep.include({
+        id: `${redeemableERC20Contract.address.toLowerCase()} - ${reserve.address.toLowerCase()}`,
+      });
       expect(data.tier.id).to.equals(erc20BalanceTier.address.toLowerCase());
 
       expect(data.minimumTier).to.equals(minimumTier.toString());
@@ -473,7 +475,7 @@ describe("Sales queries test", function () {
       );
       const query = `
         {
-          saleRedeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
+            redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
             name
             symbol
             decimals
@@ -492,7 +494,7 @@ describe("Sales queries test", function () {
         query: query,
       })) as FetchResult;
 
-      const data = response.data.saleRedeemableERC20;
+      const data = response.data.redeemableERC20;
 
       expect(data.name).to.equals(redeemableERC20Config.name);
       expect(data.symbol).to.equals(redeemableERC20Config.symbol);

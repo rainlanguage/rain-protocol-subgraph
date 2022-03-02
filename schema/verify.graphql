@@ -14,12 +14,24 @@ type Verify implements INotice @entity {
     factory: VerifyFactory #the factory that deployed this contract
     #contruct and update by listening to the RequestApprove, Approve, RequestBan, Ban, RequestRemove, Remove events
     verifyAddresses: [VerifyAddress!]
+
+    verifyRequestApprovals: [VerifyRequestApprove!]
+    verifyRequestRemovals: [VerifyRequestRemove!]
+    verifyRequestBans: [VerifyRequestBan!]
+    verifyApprovals: [VerifyApprove!]
+    verifyRemovals: [VerifyRemove!]
+    verifyBans: [VerifyBan!]
+
+    verifyEventCount: BigInt!
+
     approvers: [Role!]
     removers: [Role!]
     banners: [Role!]
+    
     approverAdmins: [Role!]
     bannerAdmins: [Role!]
     removerAdmins: [Role!]
+    
     notices: [Notice!]
 }
 
@@ -108,7 +120,7 @@ type VerifyRemove implements VerifyEvent @entity{
 
 interface Role {
     address: Bytes!
-    roles: [Int!]
+    roles: [BigInt!]
 }
 
 # Created after the first RequestApprove event for an address or first role granted
@@ -123,6 +135,6 @@ type VerifyAddress implements Role @entity{
     # After the RequestApprove event and before Approve, status should be 'NONE'.
     status: Int!
     events: [VerifyEvent!] #all the event entities associated with this address for this Verify
-    roles: [Int!]
+    roles: [BigInt!]
 }
 
