@@ -70,7 +70,14 @@ const enum RequestType {
 
 let reserve: ReserveTokenTest, transaction: ContractTransaction;
 
-describe("Subgraph Tier Test", function () {
+describe.only("Subgraph Tier Test", function () {
+  // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
+  // in other contracts like trusts or sales
+
+  before("Deploy fresh test contracts", async function () {
+    reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
+  });
+
   describe("VerifyTier Factory - Queries", function () {
     let verify: Verify, verifyTier: VerifyTier;
 

@@ -1,7 +1,7 @@
 import { Address, log } from "@graphprotocol/graph-ts"
 import { Verify, VerifyAddress, VerifyApprove, VerifyBan, VerifyRemove, VerifyRequestApprove, VerifyRequestBan, VerifyRequestRemove } from "../../generated/schema"
 import { Approve, Ban, Remove, RequestApprove, RequestBan, RequestRemove, RoleAdminChanged, RoleGranted, RoleRevoked} from "../../generated/templates/VerifyTemplate/Verify"
-import { RequestStatus, Role, Status } from "../utils"
+import { APPROVER, APPROVER_ADMIN, BANNER, BANNER_ADMIN, REMOVER, REMOVER_ADMIN, RequestStatus, Role, Status } from "../utils"
 
 export function handleApprove(event: Approve): void {
     let verifyApprove = new VerifyApprove(event.address.toHex() + " - " + event.transaction.hash.toHex())
@@ -209,7 +209,14 @@ export function handleRequestRemove(event: RequestRemove): void {
 }
 
 export function handleRoleAdminChanged(event: RoleAdminChanged): void {
-    log.info(" RoleAdmin : {}",[event.params.role.toHex()])
+    log.info("APPROVER_ADMIN : {}",[APPROVER_ADMIN])
+    log.info("REMOVER_ADMIN : {}",[REMOVER_ADMIN])
+    log.info("BANNER_ADMIN : {}",[BANNER_ADMIN])
+    log.info("APPROVER : {}",[APPROVER])
+    log.info("REMOVER : {}",[REMOVER])
+    log.info("BANNER : {}",[BANNER])
+    log.info("ROLE : {}",[event.params.role.toHex()])
+    
 }
 
 export function handleRoleGranted(event: RoleGranted): void {

@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, ByteArray, crypto } from '@graphprotocol/graph-ts'
 import { Contract, Trust, TrustParticipant } from '../generated/schema'
 import { SeedERC20 } from "../generated/TrustFactory/SeedERC20"
 import { RedeemableERC20 } from "../generated/TrustFactory/RedeemableERC20"
@@ -55,7 +55,21 @@ export enum DistributionStatus {
     TradingCanEnd,
     Success,
     Fail,
-  }
+}
+
+let APPROVER_ADMIN = crypto.keccak256(ByteArray.fromHexString("APPROVER_ADMIN")).toHexString();
+/// Role for `APPROVER`.
+let APPROVER = crypto.keccak256(ByteArray.fromHexString("APPROVER")).toHexString();
+
+/// Admin role for `REMOVER`.
+let REMOVER_ADMIN = crypto.keccak256(ByteArray.fromHexString("REMOVER_ADMIN")).toHexString();
+/// Role for `REMOVER`.
+let REMOVER = crypto.keccak256(ByteArray.fromHexString("REMOVER")).toHexString();
+
+/// Admin role for `BANNER`.
+let BANNER_ADMIN = crypto.keccak256(ByteArray.fromHexString("BANNER_ADMIN")).toHexString();
+/// Role for `BANNER`.
+let BANNER = crypto.keccak256(ByteArray.fromHexString("BANNER")).toHexString();
 
 
 export {
@@ -67,7 +81,13 @@ export {
     ETHER,
     BONE,
     MAX_WEIGHT,
-    MIN_WEIGHT
+    MIN_WEIGHT,
+    APPROVER_ADMIN,
+    APPROVER,
+    REMOVER_ADMIN,
+    REMOVER,
+    BANNER_ADMIN,
+    BANNER
 }
 
 export function getTrustParticipent(participant: Address, trust: string) : TrustParticipant {
