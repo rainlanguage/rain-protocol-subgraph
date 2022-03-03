@@ -304,8 +304,10 @@ export const waitForSubgraphToBeSynced = async (
   delay = 1000
 ): Promise<SyncedSubgraphType> =>
   new Promise<{ synced: boolean }>((resolve, reject) => {
-    // Wait for 5s
-    const deadline = Date.now() + 30 * 1000;
+    // Wait for 60s2
+    // Does not care about waiting the 60s -  the function
+    // already try to handle if does not receive a response
+    const deadline = Date.now() + 60 * 1000;
 
     let currentBlock: number;
     ethers.provider.getBlockNumber().then((x) => (currentBlock = x));

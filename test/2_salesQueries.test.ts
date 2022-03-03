@@ -73,7 +73,7 @@ let reserve: ReserveTokenTest,
   transaction: ContractTransaction, // Use to save the tx between statements
   transactionAux: ContractTransaction;
 
-describe.only("Sales queries test", function () {
+describe("Sales queries test", function () {
   before("getting the factory", async function () {
     reserve = (await deploy(
       reserveTokenJson,
