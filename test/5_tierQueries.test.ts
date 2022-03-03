@@ -1898,7 +1898,7 @@ describe("Subgraph Tier Test", function () {
       expect(dataRedeem.id).to.equals(tierIndependent.address.toLowerCase());
     });
 
-    it("should be an UnknownTier if TierContract was deployed without the factory and exist in a SaleRedeemableERC20", async function () {
+    it("should be an UnknownTier when used in a SaleRedeemableERC20", async function () {
       const afterBlockNumberConfig = (blockNumber: number) => {
         return {
           sources: [
