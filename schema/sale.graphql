@@ -29,7 +29,7 @@ type Sale implements Isale & INotice @entity{
     saleTransactions: [SaleTransaction!] #all SaleBuys and SaleRefunds
     # extra calculated fields
     unitsAvailable: BigInt # token.balanceOf(Sale.address) - initially set on the Initialize event, then updates after every Buy/Refund event.
-    totalRaised: BigInt # get this by adding totalIn from all SaleBuy entities, and subtracting totalOut from all SaleRefund entities
+    totalRaised: BigInt # get this by adding totalIn from all SaleBuy entities, and subtracting totalOut from all SaleRefund entities - the totalFees
     percentRaised: BigDecimal #totalRaised / minimumRaise
     totalFees: BigInt # get by adding all SaleBuy.fee and subtracting all SaleRefund.fee
     saleStatus: Int #starts at SaleStatus.Pending, Start event moves it to Active, End event provides the last saleStatus (will be Success/Fail)
@@ -118,7 +118,7 @@ type SaleRefund implements SaleTransaction @entity{
     feeRecipient: SaleFeeRecipient! # created/referenced by id {Sale.address}+{Refund.feeRecipient}
     feeRecipientAddress: Bytes! #from Buy.feeRecipient
     receipt: SaleReceipt! #from {Sale.address}+{receipt.id}
-    totalOut: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18) + fee
+    totalOut: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18) + Buy.receipt.fee
 }
 
 type SaleReceipt @entity{ 

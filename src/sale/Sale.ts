@@ -32,7 +32,7 @@ export function handleBuy(event: Buy): void {
     receipt.save()
 
     saleBuy.receipt = receipt.id
-    saleBuy.totalIn = receipt.units.times(receipt.price).div(ETHER)
+    saleBuy.totalIn = receipt.units.times(receipt.price).div(ETHER).plus(event.params.receipt.fee)
     
     let saleFeeRecipient = SaleFeeRecipient.load(sale.id + " - " + event.params.receipt.feeRecipient.toHex())
 
@@ -119,6 +119,8 @@ export function handleInitialize(event: Initialize): void {
     sale.recipient = event.params.config.recipient
     sale.cooldownDuration = event.params.config.cooldownDuration
     sale.minimumRaise = event.params.config.minimumRaise
+    if(sale.minimumRaise == ZERO_BI)
+        sale.percentRaised = HUNDRED_BD
     sale.dustSize = event.params.config.dustSize
     sale.saleStatus = SaleStatus.Pending
     sale.unitsAvailable = tokenContrct.balanceOf(event.address)
@@ -170,7 +172,7 @@ export function handleRefund(event: Refund): void {
 
     let receipt = SaleReceipt.load(sale.id + " - " + event.params.receipt.id.toString())
     saleRefund.receipt = receipt.id
-    saleRefund.totalOut = receipt.units.times(receipt.price).div(ETHER)
+    saleRefund.totalOut = receipt.units.times(receipt.price).div(ETHER).plus(event.params.receipt.fee)
     
     let feeRecipient = SaleFeeRecipient.load(sale.id + " - " + saleRefund.feeRecipientAddress.toHex())
     saleRefund.feeRecipient = feeRecipient.id
@@ -332,7 +334,7 @@ function updateSale(sale: Sale): void {
         refundFee = refundFee.plus(saleRefund.fee)
     }
     if(sale.saleStatus >= SaleStatus.Active)
-        sale.totalRaised = totalIn.minus(totalOut)
+        sale.totalRaised = totalIn.minus(totalOut).minus(buyFee.minus(refundFee))
     sale.totalFees = buyFee.minus(refundFee)
 
     if(sale.minimumRaise == ZERO_BI)
