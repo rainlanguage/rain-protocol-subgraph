@@ -24,13 +24,13 @@ type Verify implements INotice @entity {
 
     verifyEventCount: BigInt!
 
-    approvers: [Role!]
-    removers: [Role!]
-    banners: [Role!]
+    approvers: [VerifyAddress!]
+    removers: [VerifyAddress!]
+    banners: [VerifyAddress!]
     
-    approverAdmins: [Role!]
-    bannerAdmins: [Role!]
-    removerAdmins: [Role!]
+    approverAdmins: [VerifyAddress!]
+    bannerAdmins: [VerifyAddress!]
+    removerAdmins: [VerifyAddress!]
     
     notices: [Notice!]
 }
@@ -118,13 +118,8 @@ type VerifyRemove implements VerifyEvent @entity{
     data: Bytes! #event Remove.data
 }
 
-interface Role {
-    address: Bytes!
-    roles: [BigInt!]
-}
-
 # Created after the first RequestApprove event for an address or first role granted
-type VerifyAddress implements Role @entity{
+type VerifyAddress @entity{
     id: ID! #concat {Verify.address}+{VerifyAddress.address}
     verifyContract: Verify!
     address: Bytes! #the account address

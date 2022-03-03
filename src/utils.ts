@@ -11,9 +11,8 @@ let HUNDRED_BD = BigDecimal.fromString("100.0")
 let ETHER = BigInt.fromString("1000000000000000000")
 
 let BONE = BigInt.fromString("1000000000000000000")
-let MIN_WEIGHT = BONE
-let MAX_WEIGHT = BONE.times(BigInt.fromI32(50))
 
+// enum for SaleStatus on Trust and Sale
 export enum SaleStatus {
     Pending,
     Active,
@@ -21,6 +20,7 @@ export enum SaleStatus {
     Fail
 }
 
+// enum for RequestStatus on VerifyAddresses
 export enum RequestStatus {
     NONE,
     REQUEST_APPROVE,
@@ -28,6 +28,7 @@ export enum RequestStatus {
     REQUEST_REMOVE
 }
 
+// enum for Status on VerifyAddresses
 export enum Status {
     NONE,
     APPROVED,
@@ -51,6 +52,7 @@ export enum Role {
     BANNER
 }
 
+// enum for DistributionStatus on Trust
 export enum DistributionStatus {
     Pending,
     Seeded,
@@ -60,6 +62,7 @@ export enum DistributionStatus {
     Fail,
 }
 
+/// Role for `APPROVER_ADMIN`.
 let APPROVER_ADMIN = "0x2d4d1d70bd81797c3479f5c3f873a5c9203d249659c3b317cdad46367472783c"
 /// Role for `APPROVER`.
 let APPROVER = "0x5ff1fb0ce9089603e6e193667ed17164e0360a6148f4a39fc194055588948a31"
@@ -83,8 +86,6 @@ export {
     ZERO_ADDRESS,
     ETHER,
     BONE,
-    MAX_WEIGHT,
-    MIN_WEIGHT,
     APPROVER_ADMIN,
     APPROVER,
     REMOVER_ADMIN,
@@ -93,11 +94,34 @@ export {
     BANNER
 }
 
+/****************************************************************
+    FUNCTION:    A function to create a trustParticipant if not exists.
+
+    ARGUMENTS:      1. participant: Address
+                    Address of user.
+                
+                    2. trust: string
+                    Address of Trust.
+
+    RETURNS:      TrustParticipant Enitity.
+****************************************************************/ 
 export function getTrustParticipent(participant: Address, trust: string) : TrustParticipant {
-    let trustParticipant = TrustParticipant.load(participant.toHex() + " - "+ trust)
+    // load trustParticipant using "participant - trust"
+    let trustParticipant = TrustParticipant.load(participant.toHex() + " - " + trust)
+    
+    // load contracts of trust Address
     let contracts = Contract.load(trust)
+
+    // create seedERC20Contract using seeder from contracts
     let seedERC20Contract = SeedERC20.bind(Address.fromString(contracts.seeder))
+
+    // create seedERC20Contract using redeemableERC20 from contracts
     let redeemableERC20Contract = RedeemableERC20.bind(Address.fromString(contracts.redeemableERC20))
+    
+    /*
+        check if trustParticipant exists
+        If not create a bew one with default value.
+    */
     if(trustParticipant == null){
         trustParticipant = new TrustParticipant(participant.toHex() + " - "+ trust)
         trustParticipant.address = participant
@@ -110,10 +134,12 @@ export function getTrustParticipent(participant: Address, trust: string) : Trust
 
         let trustEntity = Trust.load(trust)
         let tp = trustEntity.trustParticipants
-        tp.push(trustParticipant.id)
+        tp.push(trustParticipant.id) // add the trustParticipant in Trust
         trustEntity.trustParticipants = tp
         trustEntity.save()
     }
+
+    // Update the seedBalance and tokenBalance everytime when getting trustParticipant
     let seedBalance = seedERC20Contract.try_balanceOf(participant)
     let tokenBalance = redeemableERC20Contract.try_balanceOf(participant)
 
@@ -121,10 +147,22 @@ export function getTrustParticipent(participant: Address, trust: string) : Trust
         trustParticipant.seedBalance = seedBalance.value
     if(!tokenBalance.reverted)
         trustParticipant.tokenBalance = tokenBalance.value
+        
     return trustParticipant as TrustParticipant
 }
 
+/****************************************************************
+    FUNCTION:    A function to chechk if a given address is not a ZERO_ADDRESSE
+                    or contract address for the given Trust.
 
+    ARGUMENTS:       1. address: string
+                    Address to check.
+                
+                    2. trust: string
+                    Address of Trust.
+
+    RETURNS:      True if not any contract address or ZERO_ADDRESSE else False.
+****************************************************************/ 
 export function notAContract(address: string, trust: string): boolean {
     let contracts = Contract.load(trust)
     if(address == ZERO_ADDRESS)
