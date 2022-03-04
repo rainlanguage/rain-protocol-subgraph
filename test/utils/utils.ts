@@ -301,17 +301,19 @@ export const fetchSubgraph = (
  * @param delay - (optional: 1000ms by default) Time between queries to Subgraph about sync
  */
 export const waitForSubgraphToBeSynced = async (
-  delay = 1000
-): Promise<SyncedSubgraphType> =>
-  new Promise<{ synced: boolean }>((resolve, reject) => {
-    // Wait for 60s
-    // Does not care about waiting the 60s -  the function
-    // already try to handle if does not receive a response
-    const deadline = Date.now() + 60 * 1000;
+  delay = 1000,
+  seconds = 60
+): Promise<SyncedSubgraphType> => {
+  /**
+   * Waiting for 60s by default
+   * Does not care about waiting the 60s -  the function already try to handle if does not receive
+   * a response. If the subgraph need to wait for a big number of blocks, would be good increse
+   * the seconds to wait by sync.
+   */
+  const deadline = Date.now() + seconds * 1000;
+  const currentBlock = await ethers.provider.getBlockNumber();
 
-    let currentBlock: number;
-    ethers.provider.getBlockNumber().then((x) => (currentBlock = x));
-
+  const resp = new Promise<SyncedSubgraphType>((resolve, reject) => {
     // Function to check if the subgraph is synced
     const checkSubgraphSynced = async () => {
       try {
@@ -352,6 +354,14 @@ export const waitForSubgraphToBeSynced = async (
           reject(new Error(`Unable to connect to Subgraph node: ${message}`));
         }
 
+        if (message == "Unknown Error") {
+          new Error(`${message} - ${e}`);
+        }
+
+        if (!currentBlock) {
+          reject(new Error(`current block is undefined`));
+        }
+
         if (Date.now() > deadline) {
           reject(new Error(`Timed out waiting for the subgraph to sync`));
         } else {
@@ -363,6 +373,9 @@ export const waitForSubgraphToBeSynced = async (
     // Periodically check whether the subgraph has synced
     setTimeout(checkSubgraphSynced, delay);
   });
+
+  return resp;
+};
 
 // Contracts Management
 export const deploy = async (
