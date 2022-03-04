@@ -29,7 +29,7 @@ import {
   BigInt,
   store,
 } from "@graphprotocol/graph-ts";
-import { ERC20 as ERC20Contract} from "../../generated/TrustFactory/ERC20";
+import { ERC20 as ERC20Contract } from "../../generated/TrustFactory/ERC20";
 import {
   PoolTemplate,
   RedeemableERC20Template,
@@ -50,7 +50,7 @@ import {
  * @param event Construction event
  */
 export function handleConstruction(event: Construction): void {
-    // Get the datasource Context to get factory addresss
+  // Get the datasource Context to get factory addresss
   let context = dataSource.context();
 
   // Load the TrustFactory Entity using context
@@ -76,7 +76,7 @@ export function handleCreatorFundsRelease(event: CreatorFundsRelease): void {
  */
 export function handleEndDutchAuction(event: EndDutchAuction): void {
   // Load the DutchAuction entity
-    let dutchAuction = DutchAuction.load(event.address.toHex());
+  let dutchAuction = DutchAuction.load(event.address.toHex());
   dutchAuction.enderAddress = event.params.sender;
   dutchAuction.finalBalance = event.params.finalBalance;
   dutchAuction.seederPay = event.params.seederPay;
@@ -117,7 +117,7 @@ export function handleEndDutchAuction(event: EndDutchAuction): void {
  * @param event Initialize event
  */
 export function handleInitialize(event: Initialize): void {
-    // load the Trust entity
+  // load the Trust entity
   let trust = Trust.load(event.address.toHex());
 
   // Create the new Contract for the trust
@@ -152,7 +152,7 @@ export function handleInitialize(event: Initialize): void {
   );
   distributionProgress.save();
 
-    // Add the Contract and DistributionProgress in to the Trust
+  // Add the Contract and DistributionProgress in to the Trust
   trust.contracts = contracts.id;
   trust.distributionProgress = distributionProgress.id;
   trust.save();
@@ -167,7 +167,7 @@ export function handlePhaseScheduled(event: PhaseScheduled): void {
  * @param event StartDutchAuction
  */
 export function handleStartDutchAuction(event: StartDutchAuction): void {
-    // Load the Trust entity
+  // Load the Trust entity
   let trust = Trust.load(event.address.toHex());
 
   // Create a new DutchAuction entity since it is a Start of auction
@@ -224,12 +224,12 @@ function createConfigurableRightPool(event: Initialize): string {
  * @returns string i.e iD of ReserveERC20 entity
  */
 function createReserveERC20(event: Initialize): string {
-// Load the ERC20 entity
+  // Load the ERC20 entity
   let reserveERC20 = ERC20.load(event.params.config.reserve.toHex());
 
   // Bind the reserev ERC20 address to ERC20 abi to make readonly calls to smartContract.
   let reserveERC20Contract = ERC20Contract.bind(event.params.config.reserve);
-  
+
   // create a new token if not exist
   if (reserveERC20 == null)
     reserveERC20 = new ERC20(event.params.config.reserve.toHex());
@@ -271,7 +271,9 @@ function createRedeemableERC20(event: Initialize): string {
     event.params.redeemableERC20.toHex()
   );
   // Bind the RedeemableERC20 address to ERC20 abi to make readonly calls
-  let redeemableERC20Contract = ERC20.bind(event.params.redeemableERC20);
+  let redeemableERC20Contract = ERC20Contract.bind(
+    event.params.redeemableERC20
+  );
 
   // create a new token if not exist
   if (redeemableERC20 == null)
@@ -279,7 +281,7 @@ function createRedeemableERC20(event: Initialize): string {
   else return redeemableERC20.id;
   redeemableERC20.deployBlock = event.block.number;
   redeemableERC20.deployTimestamp = event.block.timestamp;
-    // Try to get token information with try_, if any non ERC20 address is passed the subgraph will not fail
+  // Try to get token information with try_, if any non ERC20 address is passed the subgraph will not fail
   let name = redeemableERC20Contract.try_name();
   let symbol = redeemableERC20Contract.try_symbol();
   let decimals = redeemableERC20Contract.try_decimals();
@@ -332,8 +334,8 @@ function createSeedERC20(event: Initialize): string {
   // Load the TrustFactory entity
   let trustFactory = TrustFactory.load(trust.factory.toHex());
 
-// Bind the RedeemableERC20 address to ERC20 abi to make readonly calls
-  let seedERC20Contract = ERC20.bind(event.params.seeder);
+  // Bind the RedeemableERC20 address to ERC20 abi to make readonly calls
+  let seedERC20Contract = ERC20Contract.bind(event.params.seeder);
 
   if (seedERC20 == null) {
     seedERC20 = new SeedERC20(event.params.seeder.toHex());
@@ -391,7 +393,7 @@ function createSeedERC20(event: Initialize): string {
 }
 
 /**
- * @description Function to create Pool 
+ * @description Function to create Pool
  * @param event StartDutchAuction event
  * @returns string i.e iD of Pool entity
  */
@@ -437,12 +439,12 @@ function createPool(event: StartDutchAuction): string {
  */
 function updatePoolBalance(contracts: Contract): void {
   // Bind the ReserveERC20 token Address from contracts to ERC20 token abi to make readonly calls
-  let reserveTokenContract = ERC20.bind(
+  let reserveTokenContract = ERC20Contract.bind(
     Address.fromString(contracts.reserveERC20)
   );
 
   // Bind the RedeemableERC20Token token Address from contracts to ERC20 token abi to make readonly calls
-  let redeemableTokenContract = ERC20.bind(
+  let redeemableTokenContract = ERC20Contract.bind(
     Address.fromString(contracts.redeemableERC20)
   );
 
@@ -479,9 +481,11 @@ function updatePoolBalance(contracts: Contract): void {
     distributionProgress.poolReserveBalance = poolReserveBalance.value;
     pool.poolReserveBalance = poolReserveBalance.value;
 
-    if (distributionProgress.minimumRaise == ZERO_BI) { // If minimumRaise is zero set percentRaised to 100%
+    if (distributionProgress.minimumRaise == ZERO_BI) {
+      // If minimumRaise is zero set percentRaised to 100%
       distributionProgress.percentRaised = HUNDRED_BD;
-    } else { // Else apply  the formula percentReaise = amountRaised / minimumRaise * 100
+    } else {
+      // Else apply  the formula percentReaise = amountRaised / minimumRaise * 100
       distributionProgress.percentRaised = distributionProgress.amountRaised
         .toBigDecimal()
         .div(distributionProgress.minimumRaise.toBigDecimal())

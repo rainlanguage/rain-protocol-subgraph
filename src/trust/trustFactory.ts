@@ -6,7 +6,7 @@ import {
 import { TrustFactory, Trust } from "../../generated/schema";
 import { TrustTemplate } from "../../generated/templates";
 import { ZERO_BI, ONE_BI, SaleStatus } from "../utils";
-import { log, DataSourceContext } from "@graphprotocol/graph-ts";
+import { DataSourceContext } from "@graphprotocol/graph-ts";
 
 /**
  * @deprecated handler for NewChild event of TurstFactory
