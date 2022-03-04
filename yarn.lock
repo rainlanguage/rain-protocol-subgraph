@@ -1387,11 +1387,10 @@
     "@typescript-eslint/types" "4.33.0"
     eslint-visitor-keys "^2.0.0"
 
-"@vishalkale15107/rain-protocol@git+https://github.com/vishalkale151071/rain-protocol.git#e89ad9bf516110c33963171d2e3605e09bbc6677":
+"@vishalkale15107/rain-protocol@git+https://github.com/vishalkale151071/rain-protocol.git#3d0ee716430d28716365f0f1c999fe14c30f0b4b":
   version "0.0.16"
-  resolved "git+https://github.com/vishalkale151071/rain-protocol.git#e89ad9bf516110c33963171d2e3605e09bbc6677"
+  resolved "git+https://github.com/vishalkale151071/rain-protocol.git#3d0ee716430d28716365f0f1c999fe14c30f0b4b"
   dependencies:
-    "@0xsequence/sstore2" "git+https://github.com/0xsequence/sstore2.git#b9233bcf1bbbbed37f9029e0355ac3026cd3563b"
     "@beehiveinnovation/balancer-core" "0.0.7"
     "@beehiveinnovation/configurable-rights-pool" "0.0.1"
     "@openzeppelin/contracts" "^4.3.3"
@@ -1736,9 +1735,9 @@ asn1@~0.2.3:
   dependencies:
     safer-buffer "~2.1.0"
 
-"assemblyscript@git+https://github.com/AssemblyScript/assemblyscript.git#36040d5b5312f19a025782b5e36663823494c2f3":
+"assemblyscript@git+https://github.com/AssemblyScript/assemblyscript.git#v0.6":
   version "0.6.0"
-  resolved "git+https://github.com/AssemblyScript/assemblyscript.git#36040d5b5312f19a025782b5e36663823494c2f3"
+  resolved "git+https://github.com/AssemblyScript/assemblyscript.git#3ed76a97f05335504166fce1653da75f4face28f"
   dependencies:
     "@protobufjs/utf8" "^1.1.0"
     binaryen "77.0.0-nightly.20190407"
@@ -1747,9 +1746,9 @@ asn1@~0.2.3:
     opencollective-postinstall "^2.0.0"
     source-map-support "^0.5.11"
 
-"assemblyscript@git+https://github.com/AssemblyScript/assemblyscript.git#v0.6":
+"assemblyscript@https://github.com/AssemblyScript/assemblyscript#36040d5b5312f19a025782b5e36663823494c2f3":
   version "0.6.0"
-  resolved "git+https://github.com/AssemblyScript/assemblyscript.git#3ed76a97f05335504166fce1653da75f4face28f"
+  resolved "https://github.com/AssemblyScript/assemblyscript#36040d5b5312f19a025782b5e36663823494c2f3"
   dependencies:
     "@protobufjs/utf8" "^1.1.0"
     binaryen "77.0.0-nightly.20190407"
