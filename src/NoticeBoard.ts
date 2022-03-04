@@ -3,11 +3,24 @@ import { NewNotice } from "../generated/NoticeBoard/NoticeBoard"
 import {UnknownTier, Notice, Sale, Trust, Verify, ERC20BalanceTier, VerifyTier, ERC20TransferTier, ERC721BalanceTier, CombineTier, GatedNFT, RedeemableERC20ClaimEscrow, UnknownNotice} from "../generated/schema"
 import { BigInt } from "@graphprotocol/graph-ts"
 
+/**
+ * @description handler of NewNotice event
+ * @param event NewNotice Event
+ */
 export function handleNewNotice(event: NewNotice): void {
-
+    /**
+     * Get the subject of event i.e to which contract the notice is sent
+     * Currently we only save notice which sent to Trust, Sale, Verify
+     * ERC20BalancerTier, ERC20TransferTier, ERC721BalanceTIer, CombineTier
+     * UnknownTier, GatedNFT, RedeemableERC20ClaimEscrow
+     */
     let subject = event.params.notice.subject.toHex()
-    let newNotice: Notice
+    
+    let newNotice: Notice // Empty notice object
 
+    /**
+     * load all the bojects to compare  
+     */
     let trust = Trust.load(subject)
     let sale = Sale.load(subject)
     let verify = Verify.load(subject)
@@ -20,7 +33,10 @@ export function handleNewNotice(event: NewNotice): void {
     let unknownTier = UnknownTier.load(subject)
     let redeemableERC20ClaimEscrow = RedeemableERC20ClaimEscrow.load(subject)
 
-
+    /**
+     * check if subject is from which Entity and add the newNotice to it
+     * else Create a UnknownNotice Entitiy and add notice in it
+     */
     if(trust != null){
         let notices = trust.notices
 

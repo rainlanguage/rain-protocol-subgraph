@@ -94,17 +94,12 @@ export {
     BANNER
 }
 
-/****************************************************************
-    FUNCTION:    A function to create a trustParticipant if not exists.
-
-    ARGUMENTS:      1. participant: Address
-                    Address of user.
-                
-                    2. trust: string
-                    Address of Trust.
-
-    RETURNS:      TrustParticipant Enitity.
-****************************************************************/ 
+/**
+ * @description A function to create a trustParticipant if not exists.
+ * @param participant Address of user.
+ * @param trust Address of Trust.
+ * @returns TrustParticipant Enitity.
+ */
 export function getTrustParticipent(participant: Address, trust: string) : TrustParticipant {
     // load trustParticipant using "participant - trust"
     let trustParticipant = TrustParticipant.load(participant.toHex() + " - " + trust)
@@ -118,10 +113,10 @@ export function getTrustParticipent(participant: Address, trust: string) : Trust
     // create seedERC20Contract using redeemableERC20 from contracts
     let redeemableERC20Contract = RedeemableERC20.bind(Address.fromString(contracts.redeemableERC20))
     
-    /*
-        check if trustParticipant exists
-        If not create a bew one with default value.
-    */
+    /**
+     *   check if trustParticipant exists
+     *   If not create a bew one with default value.
+     */
     if(trustParticipant == null){
         trustParticipant = new TrustParticipant(participant.toHex() + " - "+ trust)
         trustParticipant.address = participant
@@ -151,18 +146,13 @@ export function getTrustParticipent(participant: Address, trust: string) : Trust
     return trustParticipant as TrustParticipant
 }
 
-/****************************************************************
-    FUNCTION:    A function to chechk if a given address is not a ZERO_ADDRESSE
-                    or contract address for the given Trust.
-
-    ARGUMENTS:       1. address: string
-                    Address to check.
-                
-                    2. trust: string
-                    Address of Trust.
-
-    RETURNS:      True if not any contract address or ZERO_ADDRESSE else False.
-****************************************************************/ 
+/**
+* @description A function to chechk if a given address is not a ZERO_ADDRESSE
+                or contract address for the given Trust.
+* @param address Address of user.
+* @param trust Address of Trust.
+* @returns True if not any contract address or ZERO_ADDRESSE else False.
+*/
 export function notAContract(address: string, trust: string): boolean {
     let contracts = Contract.load(trust)
     if(address == ZERO_ADDRESS)
