@@ -55,7 +55,7 @@ type Contract @entity {
     redeemableERC20: RedeemableERC20 #Trust.getContracts() => address redeemableERC20
     seeder: SeedERC20 #Trust.getContracts() => address seeder
     tier: TierContract #Trust.getContracts() => address tier
-    crp: CRP #Trust.getContracts() => address crp
+    configurableRightPool: ConfigurableRightPool #Trust.getContracts() => address crp
     pool: Pool #Trust.getContracts() => address pool
 }
 
@@ -104,7 +104,7 @@ type DutchAuction @entity {
     poolDust: BigInt
 }
 
-type CRP @entity{
+type ConfigurableRightPool @entity{
     id:ID!
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed

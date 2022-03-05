@@ -1,0 +1,23 @@
+{
+    "network": "mumbai",
+    "factory": "0x4726df1f0495B4E02A19Ca0AA1Df564c12F2424B",
+    "startBlock": 25220731,
+    "verifyFactory": "0xe6c315fd2860650a28dF2a82830a8Ace46126B63",
+    "blockVerifyFactory": 25220734,
+    "erc20BalanceTierFactory": "0x03E18cB188d53DFD5a965F35B7a05B654596F1c0",
+    "blockErc20BalanceTierFactory": 25220739,
+    "erc20TransferTierFactory": "0x22c7C1Ef5f828d8623366E08f2B5e6ebA1F2652E",
+    "blockErc20TransferTierFactory": 25220741,
+    "combineTierFactory": "0x5687288CF1e0464dB12a643D0a02844437C4d5Ec",
+    "blockCombineTierFactory": 25220743,
+    "verifyTierFactory": "0x83034077ea371a440c7f24e264d6317f2253e8C4",
+    "blockVerifyTierFactory": 25220736,
+    "erc721BalanceTierFactory": "0x6103007bdB897eFaCfd47E105B3C4e3c490c467e",
+    "blockErc721BalanceTierFactory": 25220745,
+    "saleFactory": "0x1560E6003460870bD172d47C449c5d01F30494fF",
+    "blockSaleFactory": 25220747,
+    "gatedNFTFactory": "0xfaF9415f9a126220D240E096dA3287feab14569D",
+    "blockGatedNFTFactory": 25220749,
+    "redeemableERC20ClaimEscrow": "0x68d6DA2b8299BEf22eEA1CaBc5278C659df71CFA",
+    "blockRedeemableERC20ClaimEscrow": 25220751
+}
