@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */
-import { Address, log, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 import {
   Verify,
   VerifyAddress,
@@ -20,6 +20,8 @@ import {
   RoleAdminChanged,
   RoleGranted,
   RoleRevoked,
+  Verify as VerifyContract,
+  Verify__statusAtBlockInputState_Struct,
 } from "../../generated/templates/VerifyTemplate/Verify";
 import {
   APPROVER,
@@ -34,16 +36,21 @@ import {
   Status,
 } from "../utils";
 
-import { Verify as VerifyContract } from "../../generated/templates/VerifyTemplate/Verify";
-
 export function handleApprove(event: Approve): void {
   let verify = Verify.load(event.address.toHex());
-
-  let verifyContract = VerifyContract.bind(event.address);
-
   verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
   let verifyApprovals = verify.verifyApprovals;
   let count = verify.verifyEventCount.toString();
+
+  let verifyContract = VerifyContract.bind(event.address);
+
+  let state = verifyContract.state(
+    event.params.evidence.account
+  ) as Verify__statusAtBlockInputState_Struct;
+
+  let status = verifyContract.statusAtBlock(state, event.block.number);
+
+  log.info("Status : {}", [status.toString()]);
 
   let verifyApprove = new VerifyApprove(
     event.address.toHex() +
@@ -70,7 +77,7 @@ export function handleApprove(event: Approve): void {
     event.params.evidence.account.toHex()
   );
   verifyAddress.requestStatus = RequestStatus.NONE;
-  
+  verifyAddress.status = Status.APPROVED;
   let events = verifyAddress.events;
   events.push(verifyApprove.id);
   verifyAddress.events = events;
@@ -313,7 +320,9 @@ export function handleRequestRemove(event: RequestRemove): void {
   verifyAddressRequester.save();
 }
 
-export function handleRoleAdminChanged(event: RoleAdminChanged): void {}
+export function handleRoleAdminChanged(event: RoleAdminChanged): void {
+  // EMPTY
+}
 
 export function handleRoleGranted(event: RoleGranted): void {
   if (event.params.role.toHex() == APPROVER) {

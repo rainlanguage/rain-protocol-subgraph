@@ -492,7 +492,7 @@ describe("Subgraph Trusts Test", function () {
       expect(trustData.trustParticipants).to.be.empty;
     });
 
-    it("should query the CRP contract of the trust correctly", async function () {
+    it("should query the configurableRightPool contract of the trust correctly", async function () {
       const [deployBlock, deployTime] = await getTxTimeblock(
         crpContract.deployTransaction
       );
@@ -505,7 +505,7 @@ describe("Subgraph Trusts Test", function () {
             }
           }
           contract (id: "${trust.address.toLowerCase()}") {
-            crp {
+            configurableRightPool {
               id
               deployBlock
               deployTimestamp
@@ -524,9 +524,15 @@ describe("Subgraph Trusts Test", function () {
 
       expect(dataTrust.contracts.id).to.be.equals(trust.address.toLowerCase());
 
-      expect(datacontract.crp.id).to.equals(crpContract.address.toLowerCase());
-      expect(datacontract.crp.deployBlock).to.equals(deployBlock.toString());
-      expect(datacontract.crp.deployTimestamp).to.equals(deployTime.toString());
+      expect(datacontract.configurableRightPool.id).to.equals(
+        crpContract.address.toLowerCase()
+      );
+      expect(datacontract.configurableRightPool.deployBlock).to.equals(
+        deployBlock.toString()
+      );
+      expect(datacontract.configurableRightPool.deployTimestamp).to.equals(
+        deployTime.toString()
+      );
       expect(datacontract.pool).to.be.null; // The pool is not created yet
     });
 

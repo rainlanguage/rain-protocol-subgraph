@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 import { NewNotice } from "../generated/NoticeBoard/NoticeBoard";
 import {
   UnknownTier,
@@ -27,31 +28,31 @@ export function handleNewNotice(event: NewNotice): void {
    * ERC20BalancerTier, ERC20TransferTier, ERC721BalanceTIer, CombineTier
    * UnknownTier, GatedNFT, RedeemableERC20ClaimEscrow
    */
-  const subject = event.params.notice.subject.toHex();
+  let subject = event.params.notice.subject.toHex();
 
   let newNotice: Notice; // Empty notice object
 
   /**
    * load all the bojects to compare
    */
-  const trust = Trust.load(subject);
-  const sale = Sale.load(subject);
-  const verify = Verify.load(subject);
-  const eRC20BalanceTier = ERC20BalanceTier.load(subject);
-  const verifyTier = VerifyTier.load(subject);
-  const eRC20TransferTier = ERC20TransferTier.load(subject);
-  const eRC721BalanceTier = ERC721BalanceTier.load(subject);
-  const combineTier = CombineTier.load(subject);
-  const gatedNFT = GatedNFT.load(subject);
-  const unknownTier = UnknownTier.load(subject);
-  const redeemableERC20ClaimEscrow = RedeemableERC20ClaimEscrow.load(subject);
+  let trust = Trust.load(subject);
+  let sale = Sale.load(subject);
+  let verify = Verify.load(subject);
+  let eRC20BalanceTier = ERC20BalanceTier.load(subject);
+  let verifyTier = VerifyTier.load(subject);
+  let eRC20TransferTier = ERC20TransferTier.load(subject);
+  let eRC721BalanceTier = ERC721BalanceTier.load(subject);
+  let combineTier = CombineTier.load(subject);
+  let gatedNFT = GatedNFT.load(subject);
+  let unknownTier = UnknownTier.load(subject);
+  let redeemableERC20ClaimEscrow = RedeemableERC20ClaimEscrow.load(subject);
 
   /**
    * check if subject is from which Entity and add the newNotice to it
    * else Create a UnknownNotice Entitiy and add notice in it
    */
   if (trust != null) {
-    const notices = trust.notices;
+    let notices = trust.notices;
 
     newNotice = new Notice(
       trust.id +
@@ -70,7 +71,7 @@ export function handleNewNotice(event: NewNotice): void {
     trust.notices = notices;
     trust.save();
   } else if (sale != null) {
-    const notices = sale.notices;
+    let notices = sale.notices;
 
     newNotice = new Notice(
       sale.id +
@@ -89,7 +90,7 @@ export function handleNewNotice(event: NewNotice): void {
     sale.notices = notices;
     sale.save();
   } else if (verify != null) {
-    const notices = verify.notices;
+    let notices = verify.notices;
 
     newNotice = new Notice(
       verify.id +
@@ -108,7 +109,7 @@ export function handleNewNotice(event: NewNotice): void {
     verify.notices = notices;
     verify.save();
   } else if (eRC20BalanceTier != null) {
-    const notices = eRC20BalanceTier.notices;
+    let notices = eRC20BalanceTier.notices;
 
     newNotice = new Notice(
       eRC20BalanceTier.id +
@@ -128,7 +129,7 @@ export function handleNewNotice(event: NewNotice): void {
     eRC20BalanceTier.notices = notices;
     eRC20BalanceTier.save();
   } else if (verifyTier != null) {
-    const notices = verifyTier.notices;
+    let notices = verifyTier.notices;
 
     newNotice = new Notice(
       verifyTier.id +
@@ -147,7 +148,7 @@ export function handleNewNotice(event: NewNotice): void {
     verifyTier.notices = notices;
     verifyTier.save();
   } else if (eRC20TransferTier != null) {
-    const notices = eRC20TransferTier.notices;
+    let notices = eRC20TransferTier.notices;
 
     newNotice = new Notice(
       eRC20TransferTier.id +
@@ -166,7 +167,7 @@ export function handleNewNotice(event: NewNotice): void {
     eRC20TransferTier.notices = notices;
     eRC20TransferTier.save();
   } else if (eRC721BalanceTier != null) {
-    const notices = eRC721BalanceTier.notices;
+    let notices = eRC721BalanceTier.notices;
 
     newNotice = new Notice(
       eRC721BalanceTier.id +
@@ -185,7 +186,7 @@ export function handleNewNotice(event: NewNotice): void {
     eRC721BalanceTier.notices = notices;
     eRC721BalanceTier.save();
   } else if (combineTier != null) {
-    const notices = combineTier.notices;
+    let notices = combineTier.notices;
 
     newNotice = new Notice(
       combineTier.id +
@@ -204,7 +205,7 @@ export function handleNewNotice(event: NewNotice): void {
     combineTier.notices = notices;
     combineTier.save();
   } else if (gatedNFT != null) {
-    const notices = gatedNFT.notices;
+    let notices = gatedNFT.notices;
 
     newNotice = new Notice(
       gatedNFT.id +
@@ -223,7 +224,7 @@ export function handleNewNotice(event: NewNotice): void {
     gatedNFT.notices = notices;
     gatedNFT.save();
   } else if (redeemableERC20ClaimEscrow != null) {
-    const notices = redeemableERC20ClaimEscrow.notices;
+    let notices = redeemableERC20ClaimEscrow.notices;
 
     newNotice = new Notice(
       redeemableERC20ClaimEscrow.id +
@@ -242,7 +243,7 @@ export function handleNewNotice(event: NewNotice): void {
     redeemableERC20ClaimEscrow.notices = notices;
     redeemableERC20ClaimEscrow.save();
   } else if (unknownTier != null) {
-    const notices = unknownTier.notices;
+    let notices = unknownTier.notices;
 
     newNotice = new Notice(
       unknownTier.id +
@@ -267,7 +268,7 @@ export function handleNewNotice(event: NewNotice): void {
       unknownNotice.notices = [];
     }
 
-    const notices = unknownNotice.notices;
+    let notices = unknownNotice.notices;
 
     newNotice = new Notice(
       "UNKNOWN_NOTICES" +
