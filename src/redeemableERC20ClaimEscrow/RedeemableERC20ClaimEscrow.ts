@@ -6,7 +6,6 @@ import { SaleStatus, ZERO_BI } from "../utils"
 import { Trust as TrustContract } from "../../generated/RedeemableERC20ClaimEscrow/Trust"
 
 export function handleDeposit(event: Deposit): void {
-    log.info("deposit Supply : {}", [event.params.supply.toString()])
     let redeemableERC20ClaimEscrow = getRedeemableERC20ClaimEscrow(event.address.toHex()) 
     let redeemableEscrowDeposit = new RedeemableEscrowDeposit(event.transaction.hash.toHex())
     redeemableEscrowDeposit.depositorAddress = event.params.depositor

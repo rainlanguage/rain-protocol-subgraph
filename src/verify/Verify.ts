@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   Verify,
   VerifyAddress,
@@ -20,8 +20,8 @@ import {
   RoleAdminChanged,
   RoleGranted,
   RoleRevoked,
-  Verify as VerifyContract,
-  Verify__statusAtBlockInputState_Struct,
+  // Verify as VerifyContract,
+  // Verify__statusAtBlockInputState_Struct,
 } from "../../generated/templates/VerifyTemplate/Verify";
 import {
   APPROVER,
@@ -36,22 +36,28 @@ import {
   Status,
 } from "../utils";
 
+/**
+ * @description Handler for Approve event emited from Verify Contract
+ * @param event Approve event
+ */
 export function handleApprove(event: Approve): void {
+  // Load the Verify entity
   let verify = Verify.load(event.address.toHex());
+
+  // Increment the event count
   verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
   let verifyApprovals = verify.verifyApprovals;
   let count = verify.verifyEventCount.toString();
 
-  let verifyContract = VerifyContract.bind(event.address);
+  // let verifyContract = VerifyContract.bind(event.address);
 
-  let state = verifyContract.state(
-    event.params.evidence.account
-  ) as Verify__statusAtBlockInputState_Struct;
+  // let state = verifyContract.state(
+  //   event.params.evidence.account
+  // ) as Verify__statusAtBlockInputState_Struct;
 
-  let status = verifyContract.statusAtBlock(state, event.block.number);
+  // let status = verifyContract.statusAtBlock(state, event.block.number);
 
-  log.info("Status : {}", [status.toString()]);
-
+  // Create a new VerifyApprove entity with "VerifyContract - transaction.hash - count" id
   let verifyApprove = new VerifyApprove(
     event.address.toHex() +
       " - " +
@@ -68,38 +74,52 @@ export function handleApprove(event: Approve): void {
   verifyApprove.data = event.params.evidence.data;
   verifyApprove.save();
 
+  // Add the VerifyApprove entity to Verify entity
   verifyApprovals.push(verifyApprove.id);
   verify.verifyApprovals = verifyApprovals;
   verify.save();
 
+  // Get VerifyAddress entity
   let verifyAddress = getVerifyAddress(
     event.address.toHex(),
     event.params.evidence.account.toHex()
   );
+
   verifyAddress.requestStatus = RequestStatus.NONE;
   verifyAddress.status = Status.APPROVED;
+
+  // Add the event to VerifyAddress's events
   let events = verifyAddress.events;
   events.push(verifyApprove.id);
   verifyAddress.events = events;
   verifyAddress.save();
 
+  // Get VerifyAddress entity of Approver
   let role = getVerifyAddress(
     event.address.toHex(),
     event.params.sender.toHex()
   );
 
+  // Add the Approve event to Approver
   let roleEvents = role.events;
   roleEvents.push(verifyApprove.id);
   role.events = roleEvents;
   role.save();
 }
-
+/**
+ * @description Handler for Ban event emited from Verify contract
+ * @param event Ban event
+ */
 export function handleBan(event: Ban): void {
+  // Load the Verify entity
   let verify = Verify.load(event.address.toHex());
+
+  // Increment the event count
   verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
   let verifyBans = verify.verifyBans;
   let count = verify.verifyEventCount.toString();
 
+  // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
   let ban = new VerifyBan(
     event.address.toHex() +
       " - " +
@@ -116,38 +136,53 @@ export function handleBan(event: Ban): void {
   ban.data = event.params.evidence.data;
   ban.save();
 
+  // Add the VerifyBan entity to Verify entity
   verifyBans.push(ban.id);
   verify.verifyBans = verifyBans;
   verify.save();
 
+  // Get VerifyAddress entity
   let verifyAddress = getVerifyAddress(
     event.address.toHex(),
     event.params.evidence.account.toHex()
   );
+
   verifyAddress.requestStatus = RequestStatus.NONE;
   verifyAddress.status = Status.BANNED;
+
+  // Add the event to VerifyAddress's events
   let events = verifyAddress.events;
   events.push(ban.id);
   verifyAddress.events = events;
   verifyAddress.save();
 
+  // Get VerifyAddress entity of Banner
   let role = getVerifyAddress(
     event.address.toHex(),
     event.params.sender.toHex()
   );
 
+  // Add the Ban event to Banner
   let roleEvents = role.events;
   roleEvents.push(ban.id);
   role.events = roleEvents;
   role.save();
 }
 
+/**
+ * @description Handler for Remove event emited from Verify contract
+ * @param event Remove event
+ */
 export function handleRemove(event: Remove): void {
+  // Load the Verify entity
   let verify = Verify.load(event.address.toHex());
+
+  // Increment the event count
   verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
   let verifyRemovals = verify.verifyRemovals;
   let count = verify.verifyEventCount.toString();
 
+  // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
   let verifyRemove = new VerifyRemove(
     event.address.toHex() +
       " - " +
@@ -155,6 +190,7 @@ export function handleRemove(event: Remove): void {
       " - " +
       count
   );
+
   verifyRemove.block = event.block.number;
   verifyRemove.transactionHash = event.transaction.hash;
   verifyRemove.timestamp = event.block.timestamp;
@@ -164,38 +200,53 @@ export function handleRemove(event: Remove): void {
   verifyRemove.data = event.params.evidence.data;
   verifyRemove.save();
 
+  // Add the VerifyRemove entity to Verify entity
   verifyRemovals.push(verifyRemove.id);
   verify.verifyRemovals = verifyRemovals;
   verify.save();
 
+  // Get VerifyAddress entity
   let verifyAddress = getVerifyAddress(
     event.address.toHex(),
     event.params.evidence.account.toHex()
   );
+
   verifyAddress.requestStatus = RequestStatus.NONE;
   verifyAddress.status = Status.REMOVED;
+
+  // Add the event to VerifyAddress's events
   let events = verifyAddress.events;
   events.push(verifyRemove.id);
   verifyAddress.events = events;
   verifyAddress.save();
 
+  // Get VerifyAddress entity of Remover
   let role = getVerifyAddress(
     event.address.toHex(),
     event.params.sender.toHex()
   );
 
+  // Add the Remove event to Remover
   let roleEvents = role.events;
   roleEvents.push(verifyRemove.id);
   role.events = roleEvents;
   role.save();
 }
 
+/**
+ * @description Handler for RequestApprove event emited from Verify contract
+ * @param event RequestApprove event
+ */
 export function handleRequestApprove(event: RequestApprove): void {
+  // Load the Verify entity
   let verify = Verify.load(event.address.toHex());
+
+  // Increment the event count
   verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
   let verifyRequestApprovals = verify.verifyRequestApprovals;
   let count = verify.verifyEventCount.toString();
 
+  // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
   let verifyRequestApprove = new VerifyRequestApprove(
     event.address.toHex() +
       " - " +
@@ -203,6 +254,7 @@ export function handleRequestApprove(event: RequestApprove): void {
       " - " +
       count
   );
+
   verifyRequestApprove.block = event.block.number;
   verifyRequestApprove.timestamp = event.block.timestamp;
   verifyRequestApprove.transactionHash = event.transaction.hash;
@@ -212,16 +264,20 @@ export function handleRequestApprove(event: RequestApprove): void {
   verifyRequestApprove.data = event.params.evidence.data;
   verifyRequestApprove.save();
 
+  // Add the VerifyRequestApprove entity to Verify entity
   verifyRequestApprovals.push(verifyRequestApprove.id);
   verify.verifyRequestApprovals = verifyRequestApprovals;
   verify.save();
 
+  // Get VerifyAddress entity
   let verifyAddress = getVerifyAddress(
     event.address.toHex(),
     event.params.sender.toHex()
   );
+
   verifyAddress.requestStatus = RequestStatus.REQUEST_APPROVE;
 
+  // Add the event to VerifyAddress's events
   let events = verifyAddress.events;
   events.push(verifyRequestApprove.id);
   verifyAddress.events = events;
@@ -230,11 +286,14 @@ export function handleRequestApprove(event: RequestApprove): void {
 }
 
 export function handleRequestBan(event: RequestBan): void {
+  // Load the Verify entity
   let verify = Verify.load(event.address.toHex());
-  verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
+
+  // Increment the event count
   let verifyRequestBans = verify.verifyRequestBans;
   let count = verify.verifyEventCount.toString();
 
+  // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
   let verifyRequestBan = new VerifyRequestBan(
     event.address.toHex() +
       " - " +
@@ -242,6 +301,7 @@ export function handleRequestBan(event: RequestBan): void {
       " - " +
       count
   );
+
   verifyRequestBan.block = event.block.number;
   verifyRequestBan.timestamp = event.block.timestamp;
   verifyRequestBan.transactionHash = event.transaction.hash;
@@ -251,23 +311,30 @@ export function handleRequestBan(event: RequestBan): void {
   verifyRequestBan.data = event.params.evidence.data;
   verifyRequestBan.save();
 
+  // Add the VerifyRequestBan entity to Verify entity
   verifyRequestBans.push(verifyRequestBan.id);
   verify.verifyRequestBans = verifyRequestBans;
   verify.save();
 
+  // Get VerifyAddress entity
   let verifyAddress = VerifyAddress.load(
     event.address.toHex() + " - " + event.params.evidence.account.toHex()
   );
+
+  // Add the event to VerifyAddress's events
   verifyAddress.requestStatus = RequestStatus.REQUEST_BAN;
   let events = verifyAddress.events;
   events.push(verifyRequestBan.id);
   verifyAddress.events = events;
   verifyAddress.save();
 
+  // Get VerifyAddress entity of Requester
   let verifyAddressRequester = getVerifyAddress(
     event.address.toHex(),
     event.params.sender.toHex()
   );
+
+  // Add the RequestBan event to Requester
   let eventsRequester = verifyAddressRequester.events;
   eventsRequester.push(verifyRequestBan.id);
   verifyAddressRequester.events = eventsRequester;
@@ -275,11 +342,15 @@ export function handleRequestBan(event: RequestBan): void {
 }
 
 export function handleRequestRemove(event: RequestRemove): void {
+  // Load the Verify entity
   let verify = Verify.load(event.address.toHex());
+
+  // Increment the event count
   verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
   let verifyRequestRemovals = verify.verifyRequestRemovals;
   let count = verify.verifyEventCount.toString();
 
+  // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
   let verifyRequestRemove = new VerifyRequestRemove(
     event.address.toHex() +
       " - " +
@@ -287,6 +358,7 @@ export function handleRequestRemove(event: RequestRemove): void {
       " - " +
       count
   );
+
   verifyRequestRemove.block = event.block.number;
   verifyRequestRemove.timestamp = event.block.timestamp;
   verifyRequestRemove.transactionHash = event.transaction.hash;
@@ -296,24 +368,31 @@ export function handleRequestRemove(event: RequestRemove): void {
   verifyRequestRemove.data = event.params.evidence.data;
   verifyRequestRemove.save();
 
+  // Add the VerifyRequestBan entity to Verify entity
   verifyRequestRemovals.push(verifyRequestRemove.id);
   verify.verifyRequestRemovals = verifyRequestRemovals;
   verify.save();
 
+  // Get VerifyAddress entity
   let verifyAddress = getVerifyAddress(
     event.address.toHex(),
     event.params.evidence.account.toHex()
   );
+
+  // Add the event to VerifyAddress's events
   verifyAddress.requestStatus = RequestStatus.REQUEST_REMOVE;
   let events = verifyAddress.events;
   events.push(verifyRequestRemove.id);
   verifyAddress.events = events;
   verifyAddress.save();
 
+  // Get VerifyAddress entity of Requester
   let verifyAddressRequester = getVerifyAddress(
     event.address.toHex(),
     event.params.sender.toHex()
   );
+
+  // Add the RequestRemove event to Requester
   let eventsRequester = verifyAddressRequester.events;
   eventsRequester.push(verifyRequestRemove.id);
   verifyAddressRequester.events = eventsRequester;
@@ -324,7 +403,19 @@ export function handleRoleAdminChanged(event: RoleAdminChanged): void {
   // EMPTY
 }
 
+/**
+ * @description Handler for RoleGranted event emited event from Verify contract
+ *              APPROVER, REMOVER, BANNER, APPROVER_ADMIN, REMOVER_ADMIN, BANNER_ADMIN
+ *              Roles are Granted
+ * @param event RoleGranted event
+ */
 export function handleRoleGranted(event: RoleGranted): void {
+  /**
+   * First check which Role has been Granted.
+   * After getting the Role, Check if VerifyAddress already has that role or not?
+   * If not Add that role in it.
+   * Push the Role in its respective Array in Verify entity
+   */
   if (event.params.role.toHex() == APPROVER) {
     let verifyAddress = getVerifyAddress(
       event.address.toHex(),
@@ -426,7 +517,17 @@ export function handleRoleGranted(event: RoleGranted): void {
   }
 }
 
+/**
+ * @description Handler for RoleRevoked event emited event from Verify contract
+ *              APPROVER, REMOVER, BANNER, APPROVER_ADMIN, REMOVER_ADMIN, BANNER_ADMIN
+ *              Roles can be Revoked
+ * @param event RoleGranted event
+ */
 export function handleRoleRevoked(event: RoleRevoked): void {
+  /**
+   * First check which Role has been Revoked.
+   * After getting the Role, Remove that role from VerifyAddress.roles
+   */
   if (event.params.role.toHex() == APPROVER_ADMIN) {
     let verifyAddress = getVerifyAddress(
       event.address.toHex(),
@@ -574,11 +675,20 @@ export function handleRoleRevoked(event: RoleRevoked): void {
   }
 }
 
+/**
+ * @description Function to create a new VerifyAddress entiy if not exists
+ * @param verifyContract string: id of Verify Contract
+ * @param account string: id address of id in hex
+ * @returns VerifyAddress entity
+ */
 function getVerifyAddress(
   verifyContract: string,
   account: string
 ): VerifyAddress {
+  // Load the VerifyAddress entity with "VerifyContract - accountAddress"
   let verifyAddress = VerifyAddress.load(verifyContract + " - " + account);
+
+  // if not exists create new VerifyAddress entity with "VerifyContract - accountAddress" id and default values
   if (verifyAddress == null) {
     verifyAddress = new VerifyAddress(verifyContract + " - " + account);
     verifyAddress.verifyContract = verifyContract;
@@ -588,6 +698,7 @@ function getVerifyAddress(
     verifyAddress.roles = [];
     verifyAddress.events = [];
 
+    // Add the Verify entity to VerifyFactoy entity
     let verify = Verify.load(verifyContract);
     let verifyAddresses = verify.verifyAddresses;
     verifyAddresses.push(verifyAddress.id);

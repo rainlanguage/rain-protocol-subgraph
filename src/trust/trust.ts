@@ -502,7 +502,7 @@ function updatePoolBalance(contracts: Contract): void {
         );
     }
   } else {
-    log.info("Poola balance Failed. reserve {}, redeemable {}", []);
+    log.info("Poola balance Failed. reserve, redeemable .", []);
   }
 
   // Update the Final weight
@@ -516,13 +516,12 @@ function updatePoolBalance(contracts: Contract): void {
 }
 
 /**
- * @param reserveBalance_ Balance of ReserveERC20 token
- * @param valuation_ BigInt
- * @returns BigInt weight
+ * @description Function to calculate finalWeight for DistributionProgress entity
+ * @param reserveBalance_ BigInt: ReserveInit from DistributionProgress entity
+ * @param valuation_ BigInt: finalValuation from DistributionProgress entity
+ * @returns BigInt: finalWeight for DistributionProgress
  */
 function valuationWeight(reserveBalance_: BigInt, valuation_: BigInt): BigInt {
-  // let weight_ = (valuation_IBalancerConstants.BONE) /
-  //     reserveBalance_;
   let weight = valuation_.times(BONE).div(reserveBalance_);
 
   return weight;
