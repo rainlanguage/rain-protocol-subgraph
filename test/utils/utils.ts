@@ -1,6 +1,7 @@
 import {
   Contract,
   Signer,
+  BigNumberish,
   BigNumber,
   FixedNumber,
   ContractTransaction,
@@ -27,81 +28,59 @@ import ConfigurableRightsPoolJson from "@beehiveinnovation/configurable-rights-p
 import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
 
 // Rain protocol contracts Artifacts
-import RedeemableERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
-import SeedERC20FactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
-import TrustFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
+import RedeemableERC20FactoryJson from "../../artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
+import SeedERC20FactoryJson from "../../artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
+import TrustFactoryJson from "../../artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
 
-import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
-import SaleJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/Sale.sol/Sale.json";
-import gatedNFTJson from "@beehiveinnovation/rain-statusfi/artifacts/contracts/GatedNFT.sol/GatedNFT.json";
-import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
+import TrustJson from "../../artifacts/contracts/trust/Trust.sol/Trust.json";
+import SaleJson from "../../artifacts/contracts/sale/Sale.sol/Sale.json";
+import gatedNFTJson from "../../artifacts/contracts/rain-statusfi/GatedNFT.sol/GatedNFT.json";
+import reserveToken from "../../artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
 
-import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
-import verifyTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTier.sol/VerifyTier.json";
-import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
-import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
-import erc20TransferTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
-import combineTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
-import erc721BalanceTierJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTier.sol/ERC721BalanceTier.json";
+import verifyJson from "../../artifacts/contracts/verify/Verify.sol/Verify.json";
+import verifyTierJson from "../../artifacts/contracts/tier/VerifyTier.sol/VerifyTier.json";
+import redeemableTokenJson from "../../artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
+import erc20BalanceTierJson from "../../artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
+import erc20TransferTierJson from "../../artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
+import combineTierJson from "../../artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
+import erc721BalanceTierJson from "../../artifacts/contracts/tier/ERC721BalanceTier.sol/ERC721BalanceTier.json";
 
 // Types
-import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
-import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTierFactory";
-import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
-import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
-import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
-import { ERC721BalanceTierFactory } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTierFactory";
+import { ERC20BalanceTierFactory } from "../../typechain/ERC20BalanceTierFactory";
+import { ERC20TransferTierFactory } from "../../typechain/ERC20TransferTierFactory";
+import { CombineTierFactory } from "../../typechain/CombineTierFactory";
+import { VerifyTierFactory } from "../../typechain/VerifyTierFactory";
+import { VerifyFactory } from "../../typechain/VerifyFactory";
+import { ERC721BalanceTierFactory } from "../../typechain/ERC721BalanceTierFactory";
 
-import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
-import { SeedERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
-import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
-import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
-import { GatedNFTFactory } from "@beehiveinnovation/rain-statusfi/typechain/GatedNFTFactory";
+import { RedeemableERC20Factory } from "../../typechain/RedeemableERC20Factory";
+import { SeedERC20Factory } from "../../typechain/SeedERC20Factory";
+import { TrustFactory } from "../../typechain/TrustFactory";
+import { SaleFactory } from "../../typechain/SaleFactory";
+import { GatedNFTFactory } from "../../typechain/GatedNFTFactory";
 
-import {
-  ERC20BalanceTier,
-  ERC20BalanceTierConfigStruct,
-} from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
+import { ERC20BalanceTier } from "../../typechain/ERC20BalanceTier";
 
-import {
-  ERC20TransferTier,
-  ERC20TransferTierConfigStruct,
-} from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
+import { ERC20TransferTier } from "../../typechain/ERC20TransferTier";
 
-import {
-  CombineTier,
-  StateConfigStruct,
-} from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
+import { CombineTier } from "../../typechain/CombineTier";
 
-import {
-  ERC721BalanceTier,
-  ERC721BalanceTierConfigStruct,
-} from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
+import { ERC721BalanceTier } from "../../typechain/ERC721BalanceTier";
 
-import {
-  GatedNFT,
-  ConfigStruct,
-} from "@beehiveinnovation/rain-statusfi/typechain/GatedNFT";
-import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
-import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
-import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
-import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
-import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
+import { GatedNFT } from "../../typechain/GatedNFT";
+import { VerifyTier } from "../../typechain/VerifyTier";
+import { Verify } from "../../typechain/Verify";
+import { ReadWriteTier } from "../../typechain/ReadWriteTier";
+import { RedeemableERC20 } from "../../typechain/RedeemableERC20";
+import { ReserveTokenTest } from "../../typechain/ReserveTokenTest";
 
-import type { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
-import type { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
-import type {
-  Trust,
-  TrustConfigStruct,
-  TrustRedeemableERC20ConfigStruct,
-  TrustSeedERC20ConfigStruct,
-} from "@beehiveinnovation/rain-protocol/typechain/Trust";
+import type { ConfigurableRightsPool } from "../../typechain/ConfigurableRightsPool";
+import type { BPool } from "../../typechain/BPool";
+import type { Trust } from "../../typechain/Trust";
 
-import type {
-  Sale,
-  SaleConfigStruct,
-  SaleRedeemableERC20ConfigStruct,
-} from "@beehiveinnovation/rain-protocol/typechain/Sale";
+import type { Sale } from "../../typechain/Sale";
+
+import { ValueTier } from "../../typechain/ValueTier";
 
 interface SyncedSubgraphType {
   synced: boolean;
@@ -222,12 +201,17 @@ interface BasicArtifact {
   bytecode: string;
 }
 
-export const LEVELS = Array.from(Array(8).keys()).map((value) =>
-  ethers.BigNumber.from(++value + eighteenZeros).toString()
-); // [1,2,3,4,5,6,7,8]
-
 // A fixed range to Tier Levels
 type levelsRange = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+type TierLevels = Awaited<ReturnType<ValueTier["tierValues"]>>;
+
+// Use the correct type and LEVELS always will be an array with 8 elements
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+export const LEVELS: TierLevels = Array.from(Array(8).keys()).map((value) =>
+  ethers.BigNumber.from(++value + eighteenZeros).toString()
+); // [1,2,3,4,5,6,7,8]
 
 /**
  * Calculate the amount necessary to send or refund for get a `desiredLevel` from `currentLevel` on a TierContract
@@ -487,9 +471,9 @@ export const factoriesDeploy = async (
 export const trustDeploy = async (
   trustFactory: TrustFactory,
   creator: SignerWithAddress,
-  trustConfig: TrustConfigStruct,
-  trustRedeemableERC20Config: TrustRedeemableERC20ConfigStruct,
-  trustSeedERC20Config: TrustSeedERC20ConfigStruct,
+  trustConfig: Parameters<TrustFactory["createChildTyped"]>[0],
+  trustRedeemableERC20Config: Parameters<TrustFactory["createChildTyped"]>[1],
+  trustSeedERC20Config: Parameters<TrustFactory["createChildTyped"]>[2],
   override: Overrides = {}
 ): Promise<Trust> => {
   // Creating the trust contract child
@@ -514,8 +498,8 @@ export const trustDeploy = async (
 export const saleDeploy = async (
   saleFactory: SaleFactory,
   creator: SignerWithAddress,
-  saleConfig: SaleConfigStruct,
-  saleRedeemableERC20Config: SaleRedeemableERC20ConfigStruct,
+  saleConfig: Parameters<SaleFactory["createChildTyped"]>[0],
+  saleRedeemableERC20Config: Parameters<SaleFactory["createChildTyped"]>[1],
   override: Overrides = {}
 ): Promise<Sale> => {
   // Creating the sale contract child
@@ -573,7 +557,9 @@ export const verifyTierDeploy = async (
 export const erc20BalanceTierDeploy = async (
   erc20BalanceTierFactory: ERC20BalanceTierFactory,
   creator: SignerWithAddress,
-  erc20BalanceTierConfig: ERC20BalanceTierConfigStruct,
+  erc20BalanceTierConfig: Parameters<
+    ERC20BalanceTierFactory["createChildTyped"]
+  >[0],
   override: Overrides = {}
 ): Promise<ERC20BalanceTier> => {
   // Creating child
@@ -590,7 +576,9 @@ export const erc20BalanceTierDeploy = async (
 export const erc20TransferTierDeploy = async (
   erc20TransferTierFactory: ERC20TransferTierFactory,
   creator: SignerWithAddress,
-  erc20TransferTierConfigStruct: ERC20TransferTierConfigStruct,
+  erc20TransferTierConfigStruct: Parameters<
+    ERC20TransferTierFactory["createChildTyped"]
+  >[0],
   override: Overrides = {}
 ): Promise<ERC20TransferTier> => {
   // Creating child
@@ -607,7 +595,7 @@ export const erc20TransferTierDeploy = async (
 export const combineTierDeploy = async (
   combineTierFactory: CombineTierFactory,
   creator: SignerWithAddress,
-  stateConfigStruct: StateConfigStruct,
+  stateConfigStruct: Parameters<CombineTierFactory["createChildTyped"]>[0],
   override: Overrides = {}
 ): Promise<CombineTier> => {
   // Creating child
@@ -624,7 +612,9 @@ export const combineTierDeploy = async (
 export const erc721BalanceTierDeploy = async (
   erc721BalanceTierFactory: ERC721BalanceTierFactory,
   creator: SignerWithAddress,
-  erc721BalanceTierConfigStruct: ERC721BalanceTierConfigStruct,
+  erc721BalanceTierConfigStruct: Parameters<
+    ERC721BalanceTierFactory["createChildTyped"]
+  >[0],
   override: Overrides = {}
 ): Promise<ERC721BalanceTier> => {
   // Creating child
@@ -641,14 +631,14 @@ export const erc721BalanceTierDeploy = async (
 export const gatedNFTDeploy = async (
   gatedNFTFactory: GatedNFTFactory,
   creator: SignerWithAddress,
-  config: ConfigStruct,
+  config: Parameters<GatedNFTFactory["createChildTyped"]>[0],
   tier: string,
-  minimumStatus: BigNumber | number,
-  maxPerAddress: BigNumber | number,
-  transferrable: number,
-  maxMintable: BigNumber | number,
+  minimumStatus: BigNumberish,
+  maxPerAddress: BigNumberish,
+  transferrable: BigNumberish,
+  maxMintable: BigNumberish,
   royaltyRecipient: string,
-  royaltyBPS: BigNumber | number,
+  royaltyBPS: BigNumberish,
   override: Overrides = {}
 ): Promise<GatedNFT> => {
   // Creating child

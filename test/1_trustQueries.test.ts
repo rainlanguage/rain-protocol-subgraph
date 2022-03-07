@@ -16,56 +16,56 @@ import {
 } from "./utils/utils";
 
 // Artifacts
-import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import seedERC20Json from "@beehiveinnovation/rain-protocol/artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
-import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
-import bPoolFeeEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/BPoolFeeEscrow.sol/BPoolFeeEscrow.json";
-import TrustJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/trust/Trust.sol/Trust.json";
-import noticeBoardJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/noticeboard/NoticeBoard.sol/NoticeBoard.json";
+import reserveTokenJson from "../artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
+import seedERC20Json from "../artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
+import redeemableTokenJson from "../artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
+import bPoolFeeEscrowJson from "../artifacts/contracts/escrow/BPoolFeeEscrow.sol/BPoolFeeEscrow.json";
+import TrustJson from "../artifacts/contracts/trust/Trust.sol/Trust.json";
+import noticeBoardJson from "../artifacts/contracts/noticeboard/NoticeBoard.sol/NoticeBoard.json";
 
-import erc20BalanceTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
-import erc20TransferTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
-import combineTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
-import verifyTierFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
-import verifyFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
-import saleFactoryJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
-import gatedNFTFactoryJson from "@beehiveinnovation/rain-statusfi/artifacts/contracts/GatedNFTFactory.sol/GatedNFTFactory.json";
-import redeemableERC20ClaimEscrowJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/escrow/RedeemableERC20ClaimEscrow.sol/RedeemableERC20ClaimEscrow.json";
+import erc20BalanceTierFactoryJson from "../artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
+import erc20TransferTierFactoryJson from "../artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
+import combineTierFactoryJson from "../artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
+import verifyTierFactoryJson from "../artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
+import verifyFactoryJson from "../artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
+import saleFactoryJson from "../artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
+import gatedNFTFactoryJson from "../artifacts/contracts/rain-statusfi/GatedNFTFactory.sol/GatedNFTFactory.json";
+import redeemableERC20ClaimEscrowJson from "../artifacts/contracts/escrow/RedeemableERC20ClaimEscrow.sol/RedeemableERC20ClaimEscrow.json";
 
 // Types
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import type { BigNumber, ContractTransaction } from "ethers";
 
-import { BFactory } from "@beehiveinnovation/rain-protocol/typechain/BFactory";
-import { CRPFactory } from "@beehiveinnovation/rain-protocol/typechain/CRPFactory";
-import { RedeemableERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20Factory";
-import { SeedERC20Factory } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20Factory";
-import { TrustFactory } from "@beehiveinnovation/rain-protocol/typechain/TrustFactory";
+import { BFactory } from "../typechain/BFactory";
+import { CRPFactory } from "../typechain/CRPFactory";
+import { RedeemableERC20Factory } from "../typechain/RedeemableERC20Factory";
+import { SeedERC20Factory } from "../typechain/SeedERC20Factory";
+import { TrustFactory } from "../typechain/TrustFactory";
 
-import { ERC20BalanceTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTierFactory";
-import { ERC20TransferTierFactory } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTierFactory";
-import { CombineTierFactory } from "@beehiveinnovation/rain-protocol/typechain/CombineTierFactory";
-import { VerifyTierFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyTierFactory";
-import { VerifyFactory } from "@beehiveinnovation/rain-protocol/typechain/VerifyFactory";
-import { SaleFactory } from "@beehiveinnovation/rain-protocol/typechain/SaleFactory";
-import { GatedNFTFactory } from "@beehiveinnovation/rain-statusfi/typechain/GatedNFTFactory";
-import { RedeemableERC20ClaimEscrow } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20ClaimEscrow";
+import { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory";
+import { ERC20TransferTierFactory } from "../typechain/ERC20TransferTierFactory";
+import { CombineTierFactory } from "../typechain/CombineTierFactory";
+import { VerifyTierFactory } from "../typechain/VerifyTierFactory";
+import { VerifyFactory } from "../typechain/VerifyFactory";
+import { SaleFactory } from "../typechain/SaleFactory";
+import { GatedNFTFactory } from "../typechain/GatedNFTFactory";
+import { RedeemableERC20ClaimEscrow } from "../typechain/RedeemableERC20ClaimEscrow";
 
-import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
-import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { SeedERC20 } from "@beehiveinnovation/rain-protocol/typechain/SeedERC20";
-import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
-import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
-import { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
-import { BPoolFeeEscrow } from "@beehiveinnovation/rain-protocol/typechain/BPoolFeeEscrow";
-import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
-import { NoticeBoard } from "@beehiveinnovation/rain-protocol/typechain/NoticeBoard";
+import { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import { Trust } from "../typechain/Trust";
+import { SeedERC20 } from "../typechain/SeedERC20";
+import { RedeemableERC20 } from "../typechain/RedeemableERC20";
+import { ConfigurableRightsPool } from "../typechain/ConfigurableRightsPool";
+import { BPool } from "../typechain/BPool";
+import { BPoolFeeEscrow } from "../typechain/BPoolFeeEscrow";
+import { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
+import { NoticeBoard } from "../typechain/NoticeBoard";
 
 // Should update path after a new commit
-import erc721BalanceTierFactoryJson from "@vishalkale15107/rain-protocol/artifacts/contracts/tier/ERC721BalanceTierFactory.sol/ERC721BalanceTierFactory.json";
-import { ERC721BalanceTierFactory } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTierFactory";
-import erc721TokenTestJson from "@vishalkale15107/rain-protocol/artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json";
-import { ERC721 } from "@vishalkale15107/rain-protocol/typechain/ERC721";
+import erc721BalanceTierFactoryJson from "../artifacts/contracts/tier/ERC721BalanceTierFactory.sol/ERC721BalanceTierFactory.json";
+import { ERC721BalanceTierFactory } from "../typechain/ERC721BalanceTierFactory";
+import erc721TokenTestJson from "../artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json";
+import { ERC721 } from "../typechain/ERC721";
 
 import { getFactories, QUERY } from "./utils/queries";
 
