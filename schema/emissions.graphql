@@ -1,0 +1,35 @@
+type EmissionsERC20Factory @entity{
+    id: ID! #factory address
+    address: Bytes! #factory address
+    implementation: Bytes! #implementation address from Implementation event
+    children: [EmissionsERC20!] #all the children that were deployed by this factory
+}
+
+type EmissionsERC20 @entity{
+    id: ID! #Emissions contract address
+    address: Bytes! #Emissions contract address
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    deployer: Bytes! #address of the deployer - get from event Initialize.sender
+    factory: EmissionsERC20Factory! #the factory that deployed this contract
+    name: String! #get from EmissionsERC20.name()
+    symbol: String! #get from EmissionsERC20.symbol()
+    decimals: Int! #get from EmissionsERC20.decimals()
+    totalSupply: BigInt! #get from EmissionsERC20.totalSupply() after every Transfer event from the zero address
+    allowDelegatedClaims: Boolean #from Initialize.allowDelegatedClaims
+    calculateClaimStateConfig: State #from Snapshot event emitted during intialization
+    claims: [EmissionsERC20Claim!] #get from Claim events
+}
+
+# populate on Claim event
+type EmissionsERC20Claim @entity{
+    id: ID! #txhash of the Claim event
+    block: BigInt! #the block of the Claim event
+    timestamp: BigInt! #the timestamp of the Claim event
+    sender: Bytes! #Claim.sender
+    claimant: Bytes! #Claim.claimant
+    data: Bytes! #Claim.data
+    amount: BigInt #from Transfer.amount - Transfer event that was emitted in the same transaction
+    emissionsERC20: EmissionsERC20! #the contract that emitted the Claim event
+}
+
