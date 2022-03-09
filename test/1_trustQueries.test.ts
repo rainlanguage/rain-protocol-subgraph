@@ -1,73 +1,77 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { ApolloFetch, FetchResult } from "apollo-fetch";
 import * as path from "path";
 
 import * as Util from "./utils/utils";
 import {
-  deploy,
   waitForSubgraphToBeSynced,
   Tier,
   sixZeros,
   eighteenZeros,
   LEVELS,
   getTxTimeblock,
-  getContractChild,
+  getEventArgs,
+  zeroAddress,
+  fixedNumber,
 } from "./utils/utils";
 
-// Artifacts
-import reserveTokenJson from "../artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import seedERC20Json from "../artifacts/contracts/seed/SeedERC20.sol/SeedERC20.json";
-import redeemableTokenJson from "../artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
-import bPoolFeeEscrowJson from "../artifacts/contracts/escrow/BPoolFeeEscrow.sol/BPoolFeeEscrow.json";
-import TrustJson from "../artifacts/contracts/trust/Trust.sol/Trust.json";
-import noticeBoardJson from "../artifacts/contracts/noticeboard/NoticeBoard.sol/NoticeBoard.json";
+import { getFactories, QUERY } from "./utils/queries";
 
-import erc20BalanceTierFactoryJson from "../artifacts/contracts/tier/ERC20BalanceTierFactory.sol/ERC20BalanceTierFactory.json";
-import erc20TransferTierFactoryJson from "../artifacts/contracts/tier/ERC20TransferTierFactory.sol/ERC20TransferTierFactory.json";
-import combineTierFactoryJson from "../artifacts/contracts/tier/CombineTierFactory.sol/CombineTierFactory.json";
-import verifyTierFactoryJson from "../artifacts/contracts/tier/VerifyTierFactory.sol/VerifyTierFactory.json";
-import verifyFactoryJson from "../artifacts/contracts/verify/VerifyFactory.sol/VerifyFactory.json";
-import saleFactoryJson from "../artifacts/contracts/sale/SaleFactory.sol/SaleFactory.json";
-import gatedNFTFactoryJson from "../artifacts/contracts/rain-statusfi/GatedNFTFactory.sol/GatedNFTFactory.json";
-import redeemableERC20ClaimEscrowJson from "../artifacts/contracts/escrow/RedeemableERC20ClaimEscrow.sol/RedeemableERC20ClaimEscrow.json";
+// Typechain Factories
+import { NoticeBoard__factory } from "../typechain/factories/NoticeBoard__factory";
+import { VerifyFactory__factory } from "../typechain/factories/VerifyFactory__factory";
+import { ERC20BalanceTierFactory__factory } from "../typechain/factories/ERC20BalanceTierFactory__factory";
+import { ERC20TransferTierFactory__factory } from "../typechain/factories/ERC20TransferTierFactory__factory";
+import { CombineTierFactory__factory } from "../typechain/factories/CombineTierFactory__factory";
+import { VerifyTierFactory__factory } from "../typechain/factories/VerifyTierFactory__factory";
+import { ERC721BalanceTierFactory__factory } from "../typechain/factories/ERC721BalanceTierFactory__factory";
+import { SaleFactory__factory } from "../typechain/factories/SaleFactory__factory";
+import { GatedNFTFactory__factory } from "../typechain/factories/GatedNFTFactory__factory";
+import { RedeemableERC20ClaimEscrow__factory } from "../typechain/factories/RedeemableERC20ClaimEscrow__factory";
+
+import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
+import { ERC721__factory } from "../typechain/factories/ERC721__factory";
+import { SeedERC20__factory } from "../typechain/factories/SeedERC20__factory";
+import { RedeemableERC20__factory } from "../typechain/factories/RedeemableERC20__factory";
+import { BPoolFeeEscrow__factory } from "../typechain/factories/BPoolFeeEscrow__factory";
+import { Trust__factory } from "../typechain/factories/Trust__factory";
 
 // Types
+import type { ApolloFetch, FetchResult } from "apollo-fetch";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import type { BigNumber, ContractTransaction } from "ethers";
 
-import { BFactory } from "../typechain/BFactory";
-import { CRPFactory } from "../typechain/CRPFactory";
-import { RedeemableERC20Factory } from "../typechain/RedeemableERC20Factory";
-import { SeedERC20Factory } from "../typechain/SeedERC20Factory";
-import { TrustFactory } from "../typechain/TrustFactory";
+// Typechain types
+import type { NoticeBoard } from "../typechain/NoticeBoard";
+import type { BFactory } from "../typechain/BFactory";
+import type { CRPFactory } from "../typechain/CRPFactory";
+import type { RedeemableERC20Factory } from "../typechain/RedeemableERC20Factory";
+import type { SeedERC20Factory } from "../typechain/SeedERC20Factory";
+import type { TrustFactory } from "../typechain/TrustFactory";
+import type { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory";
+import type { ERC20TransferTierFactory } from "../typechain/ERC20TransferTierFactory";
+import type { CombineTierFactory } from "../typechain/CombineTierFactory";
+import type { VerifyTierFactory } from "../typechain/VerifyTierFactory";
+import type { ERC721BalanceTierFactory } from "../typechain/ERC721BalanceTierFactory";
+import type { VerifyFactory } from "../typechain/VerifyFactory";
+import type { SaleFactory } from "../typechain/SaleFactory";
+import type { GatedNFTFactory } from "../typechain/GatedNFTFactory";
+import type { RedeemableERC20ClaimEscrow } from "../typechain/RedeemableERC20ClaimEscrow";
 
-import { ERC20BalanceTierFactory } from "../typechain/ERC20BalanceTierFactory";
-import { ERC20TransferTierFactory } from "../typechain/ERC20TransferTierFactory";
-import { CombineTierFactory } from "../typechain/CombineTierFactory";
-import { VerifyTierFactory } from "../typechain/VerifyTierFactory";
-import { VerifyFactory } from "../typechain/VerifyFactory";
-import { SaleFactory } from "../typechain/SaleFactory";
-import { GatedNFTFactory } from "../typechain/GatedNFTFactory";
-import { RedeemableERC20ClaimEscrow } from "../typechain/RedeemableERC20ClaimEscrow";
-
-import { ReserveTokenTest } from "../typechain/ReserveTokenTest";
-import { Trust } from "../typechain/Trust";
-import { SeedERC20 } from "../typechain/SeedERC20";
-import { RedeemableERC20 } from "../typechain/RedeemableERC20";
-import { ConfigurableRightsPool } from "../typechain/ConfigurableRightsPool";
-import { BPool } from "../typechain/BPool";
-import { BPoolFeeEscrow } from "../typechain/BPoolFeeEscrow";
-import { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
-import { NoticeBoard } from "../typechain/NoticeBoard";
-
-// Should update path after a new commit
-import erc721BalanceTierFactoryJson from "../artifacts/contracts/tier/ERC721BalanceTierFactory.sol/ERC721BalanceTierFactory.json";
-import { ERC721BalanceTierFactory } from "../typechain/ERC721BalanceTierFactory";
-import erc721TokenTestJson from "../artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json";
-import { ERC721 } from "../typechain/ERC721";
-
-import { getFactories, QUERY } from "./utils/queries";
+import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import type { SeedERC20, SeedEvent, UnseedEvent } from "../typechain/SeedERC20";
+import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
+import type { ConfigurableRightsPool } from "../typechain/ConfigurableRightsPool";
+import type { BPool, LOG_SWAPEvent } from "../typechain/BPool";
+import type { BPoolFeeEscrow } from "../typechain/BPoolFeeEscrow";
+import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
+import type { RedeemEvent } from "../typechain/ERC20Redeem";
+import type {
+  Trust,
+  ConstructionEvent,
+  StartDutchAuctionEvent,
+  EndDutchAuctionEvent,
+} from "../typechain/Trust";
 
 enum DistributionStatus {
   Pending,
@@ -81,7 +85,6 @@ enum DistributionStatus {
 const subgraphUser = "vishalkale151071";
 const subgraphName = "rain-protocol";
 let minimumTier: Tier,
-  currentBlock: number,
   seedContract: SeedERC20,
   redeemableERC20Contract: RedeemableERC20,
   trust: Trust,
@@ -97,7 +100,6 @@ export let subgraph: ApolloFetch,
   seedERC20Factory: SeedERC20Factory,
   redeemableERC20Factory: RedeemableERC20Factory,
   trustFactory: TrustFactory,
-  bPoolFeeEscrow: BPoolFeeEscrow,
   bFactory: BFactory,
   crpFactory: CRPFactory,
   verifyFactory: VerifyFactory,
@@ -121,11 +123,11 @@ export let deployer: SignerWithAddress,
   feeRecipient: SignerWithAddress,
   admin: SignerWithAddress;
 
-before(async function () {
+before("Deployment contracts and subgraph", async function () {
   const signers = await ethers.getSigners();
 
   // Signers (to avoid fetch again)
-  deployer = signers[0]; // deployer is not creator
+  deployer = signers[0]; // deployer is NOT creator
   creator = signers[1];
   seeder1 = signers[2];
   seeder2 = signers[3];
@@ -135,10 +137,10 @@ before(async function () {
   feeRecipient = signers[7];
   admin = signers[9];
 
-  // Verify factory
-  noticeBoard = (await deploy(noticeBoardJson, deployer, [])) as NoticeBoard;
-  const noticeBoardBlock = noticeBoard.deployTransaction.blockNumber;
+  // Deploying NoticeBoard contract
+  noticeBoard = await new NoticeBoard__factory(deployer).deploy();
 
+  // Deploying TrustFactory contract
   [crpFactory, bFactory] = (await Util.balancerDeploy(deployer)) as [
     CRPFactory,
     BFactory
@@ -146,151 +148,120 @@ before(async function () {
 
   ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
     await Util.factoriesDeploy(crpFactory, bFactory, deployer));
-  currentBlock = trustFactory.deployTransaction.blockNumber;
 
-  // Getting the bPoolScrow from Trust Implementation
-  const trustImplementation = (
-    await Util.getEventArgs(
-      trustFactory.deployTransaction,
-      "Implementation",
-      trustFactory
-    )
-  ).implementation;
+  // Deploying VerifyFactory contract
+  verifyFactory = await new VerifyFactory__factory(deployer).deploy();
 
-  bPoolFeeEscrow = (await Util.getContractChild(
-    trustFactory.deployTransaction,
-    new ethers.Contract(trustImplementation, TrustJson.abi, deployer),
-    bPoolFeeEscrowJson,
-    deployer,
-    "Construction", // It is a different event that emit the address
-    "bPoolFeeEscrow" // It is a different event arg that contain the address
-  )) as BPoolFeeEscrow;
+  // Deploying Tiers Factories
+  // -  ERC20BalanceTierFactory
+  erc20BalanceTierFactory = await new ERC20BalanceTierFactory__factory(
+    deployer
+  ).deploy();
 
-  // Verify factory
-  verifyFactory = (await deploy(
-    verifyFactoryJson,
-    deployer,
-    []
-  )) as VerifyFactory;
-  const verifyFactoryBlock = verifyFactory.deployTransaction.blockNumber;
+  // - ERC20TransferTierFactory
+  erc20TransferTierFactory = await new ERC20TransferTierFactory__factory(
+    deployer
+  ).deploy();
 
-  // Tiers factories
-  erc20BalanceTierFactory = (await deploy(
-    erc20BalanceTierFactoryJson,
-    deployer,
-    []
-  )) as ERC20BalanceTierFactory;
-  const erc20BalanceTierFactoryBlock =
-    erc20BalanceTierFactory.deployTransaction.blockNumber;
+  // - CombineTierFactory
+  combineTierFactory = await new CombineTierFactory__factory(deployer).deploy();
 
-  erc20TransferTierFactory = (await deploy(
-    erc20TransferTierFactoryJson,
-    deployer,
-    []
-  )) as ERC20TransferTierFactory;
-  const erc20TransferTierFactoryBlock =
-    erc20TransferTierFactory.deployTransaction.blockNumber;
+  verifyTierFactory = await new VerifyTierFactory__factory(deployer).deploy();
 
-  combineTierFactory = (await deploy(
-    combineTierFactoryJson,
-    deployer,
-    []
-  )) as CombineTierFactory;
-  const combineTierFactoryBlock =
-    combineTierFactory.deployTransaction.blockNumber;
+  // - ERC721BalanceTierFactory
+  erc721BalanceTierFactory = await new ERC721BalanceTierFactory__factory(
+    deployer
+  ).deploy();
 
-  verifyTierFactory = (await deploy(
-    verifyTierFactoryJson,
-    deployer,
-    []
-  )) as VerifyTierFactory;
-  const verifyTierFactoryBlock =
-    verifyTierFactory.deployTransaction.blockNumber;
-
-  // ERC721BalanceTierFactory
-  erc721BalanceTierFactory = (await deploy(
-    erc721BalanceTierFactoryJson,
-    deployer,
-    []
-  )) as ERC721BalanceTierFactory;
-  const erc721BalanceTierFactoryBlock =
-    erc721BalanceTierFactory.deployTransaction.blockNumber;
-
-  // SaleFactory
-  const saleConstructorConfig = {
+  // Deploying SaleFactory contract
+  saleFactory = await new SaleFactory__factory(deployer).deploy({
     maximumCooldownDuration: 1000,
     redeemableERC20Factory: redeemableERC20Factory.address,
-  };
-  saleFactory = (await deploy(saleFactoryJson, deployer, [
-    saleConstructorConfig,
-  ])) as SaleFactory;
-  const saleFactoryBlock = saleFactory.deployTransaction.blockNumber;
+  });
 
-  // GatedNFTFactory
-  gatedNFTFactory = (await deploy(
-    gatedNFTFactoryJson,
-    deployer,
-    []
-  )) as GatedNFTFactory;
-  const gatedNFTFactoryBlock = gatedNFTFactory.deployTransaction.blockNumber;
+  // Deploying GatedNFTFactory contract
+  gatedNFTFactory = await new GatedNFTFactory__factory(deployer).deploy();
 
-  // RedeemableERC20ClaimEscrow
-  redeemableERC20ClaimEscrow = (await deploy(
-    redeemableERC20ClaimEscrowJson,
-    deployer,
-    []
-  )) as RedeemableERC20ClaimEscrow;
-  const redeemableERC20ClaimEscrowBlock =
-    redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
+  // Deploying RedeemableERC20ClaimEscrow contract
+  redeemableERC20ClaimEscrow = await new RedeemableERC20ClaimEscrow__factory(
+    deployer
+  ).deploy();
 
   // Saving data in JSON
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
-  const configLocal = JSON.parse(Util.fetchFile(pathConfigLocal));
+  const config = JSON.parse(Util.fetchFile(pathConfigLocal));
 
   // Saving addresses and individuals blocks to index
-  configLocal.noticeBoard = noticeBoard.address;
-  configLocal.noticeBoardBlock = noticeBoardBlock;
+  config.noticeBoard = noticeBoard.address;
+  config.noticeBoardBlock = noticeBoard.deployTransaction.blockNumber;
 
-  configLocal.factory = trustFactory.address;
-  configLocal.startBlock = currentBlock;
+  config.factory = trustFactory.address;
+  config.startBlock = trustFactory.deployTransaction.blockNumber;
 
-  configLocal.verifyFactory = verifyFactory.address;
-  configLocal.blockVerifyFactory = verifyFactoryBlock;
+  config.verifyFactory = verifyFactory.address;
+  config.blockVerifyFactory = verifyFactory.deployTransaction.blockNumber;
 
-  configLocal.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
-  configLocal.blockErc20BalanceTierFactory = erc20BalanceTierFactoryBlock;
+  config.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
+  config.blockErc20BalanceTierFactory =
+    erc20BalanceTierFactory.deployTransaction.blockNumber;
 
-  configLocal.erc20TransferTierFactory = erc20TransferTierFactory.address;
-  configLocal.blockErc20TransferTierFactory = erc20TransferTierFactoryBlock;
+  config.erc20TransferTierFactory = erc20TransferTierFactory.address;
+  config.blockErc20TransferTierFactory =
+    erc20TransferTierFactory.deployTransaction.blockNumber;
 
-  configLocal.combineTierFactory = combineTierFactory.address;
-  configLocal.blockCombineTierFactory = combineTierFactoryBlock;
+  config.combineTierFactory = combineTierFactory.address;
+  config.blockCombineTierFactory =
+    combineTierFactory.deployTransaction.blockNumber;
 
-  configLocal.verifyTierFactory = verifyTierFactory.address;
-  configLocal.blockVerifyTierFactory = verifyTierFactoryBlock;
+  config.verifyTierFactory = verifyTierFactory.address;
+  config.blockVerifyTierFactory =
+    verifyTierFactory.deployTransaction.blockNumber;
 
-  configLocal.erc721BalanceTierFactory = erc721BalanceTierFactory.address;
-  configLocal.blockErc721BalanceTierFactory = erc721BalanceTierFactoryBlock;
+  config.erc721BalanceTierFactory = erc721BalanceTierFactory.address;
+  config.blockErc721BalanceTierFactory =
+    erc721BalanceTierFactory.deployTransaction.blockNumber;
 
-  configLocal.saleFactory = saleFactory.address;
-  configLocal.blockSaleFactory = saleFactoryBlock;
+  config.saleFactory = saleFactory.address;
+  config.blockSaleFactory = saleFactory.deployTransaction.blockNumber;
 
-  configLocal.gatedNFTFactory = gatedNFTFactory.address;
-  configLocal.blockGatedNFTFactory = gatedNFTFactoryBlock;
+  config.gatedNFTFactory = gatedNFTFactory.address;
+  config.blockGatedNFTFactory = gatedNFTFactory.deployTransaction.blockNumber;
 
-  configLocal.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
-  configLocal.blockRedeemableERC20ClaimEscrow = redeemableERC20ClaimEscrowBlock;
+  config.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
+  config.blockRedeemableERC20ClaimEscrow =
+    redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
 
-  Util.writeFile(pathConfigLocal, JSON.stringify(configLocal, null, 4));
+  Util.writeFile(pathConfigLocal, JSON.stringify(config, null, 4));
 
-  Util.exec(`yarn deploy-build:localhost`);
+  Util.exec(`npm run deploy-build:localhost`);
 
   subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
 
-  await waitForSubgraphToBeSynced();
+  // Wait for sync
+  await waitForSubgraphToBeSynced(1000);
 });
 
 describe("Subgraph Trusts Test", function () {
+  let bPoolFeeEscrow: BPoolFeeEscrow;
+
+  before(async function () {
+    // Getting the bPoolScrow
+    const implemAddress = await Util.getImplementation(trustFactory);
+    const trustImple = new Trust__factory(deployer).attach(implemAddress);
+
+    const { bPoolFeeEscrow: bPoolFeeEscrowAddr } = (await getEventArgs(
+      trustFactory.deployTransaction,
+      "Construction",
+      trustImple
+    )) as ConstructionEvent["args"];
+
+    bPoolFeeEscrow = new BPoolFeeEscrow__factory(deployer).attach(
+      bPoolFeeEscrowAddr
+    );
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    bPoolFeeEscrow.deployTransaction = trustFactory.deployTransaction;
+  });
   it("should query the trust factories", async function () {
     const queryTrustCountresponse = (await subgraph({
       query: QUERY,
@@ -329,7 +300,7 @@ describe("Subgraph Trusts Test", function () {
   it("should get Notice from NoticeBoard correctly", async function () {
     const notices = [
       {
-        subject: Util.zeroAddress,
+        subject: zeroAddress,
         data: "0x01",
       },
     ];
@@ -379,7 +350,7 @@ describe("Subgraph Trusts Test", function () {
     const redeemableERC20Config = {
       name: "Token",
       symbol: "TKN",
-      distributor: Util.zeroAddress,
+      distributor: zeroAddress,
       initialSupply: totalTokenSupply,
     };
     // - Seeder props
@@ -388,7 +359,7 @@ describe("Subgraph Trusts Test", function () {
     const seedERC20Config = {
       name: "SeedToken",
       symbol: "SDT",
-      distributor: Util.zeroAddress,
+      distributor: zeroAddress,
       initialSupply: seederUnits,
     };
     const seederCooldownDuration = 1;
@@ -406,11 +377,7 @@ describe("Subgraph Trusts Test", function () {
 
     before("Create the trust", async function () {
       // Deploying new reserve to test
-      reserve = (await deploy(
-        reserveTokenJson,
-        deployer,
-        []
-      )) as ReserveTokenTest;
+      reserve = await new ReserveTokenTest__factory(deployer).deploy();
 
       // Giving the necessary amount to signer1 and signer2 for a level 4
       minimumTier = Tier.FOUR;
@@ -428,10 +395,8 @@ describe("Subgraph Trusts Test", function () {
         }
       );
 
-      const trustFactoryDeployer = trustFactory.connect(deployer); // make explicit
-
       trust = (await Util.trustDeploy(
-        trustFactoryDeployer,
+        trustFactory,
         creator,
         {
           creator: creator.address,
@@ -450,7 +415,7 @@ describe("Subgraph Trusts Test", function () {
           minimumTier,
         },
         {
-          seeder: Util.zeroAddress,
+          seeder: zeroAddress,
           cooldownDuration: seederCooldownDuration,
           erc20Config: seedERC20Config,
         },
@@ -458,20 +423,23 @@ describe("Subgraph Trusts Test", function () {
       )) as Trust;
 
       // Creating the instance for contracts
-      redeemableERC20Contract = (await getContractChild(
-        trust.deployTransaction,
-        redeemableERC20Factory,
-        redeemableTokenJson
-      )) as RedeemableERC20;
+      redeemableERC20Contract = new RedeemableERC20__factory(deployer).attach(
+        await Util.getChild(redeemableERC20Factory, trust.deployTransaction)
+      );
 
-      seedContract = (await getContractChild(
-        trust.deployTransaction,
-        seedERC20Factory,
-        seedERC20Json
-      )) as SeedERC20;
+      seedContract = new SeedERC20__factory(deployer).attach(
+        await Util.getChild(seedERC20Factory, trust.deployTransaction)
+      );
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      redeemableERC20Contract.deployTransaction = trust.deployTransaction;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      seedContract.deployTransaction = trust.deployTransaction;
 
       // Get the CRP contract
-      crpContract = (await Util.poolContracts(creator, trust)).crp;
+      ({ crp: crpContract } = await Util.poolContracts(trust, creator));
 
       // Wait for Sync
       await waitForSubgraphToBeSynced();
@@ -644,8 +612,6 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should query the RedeemableERC20 details correctly", async function () {
-      await waitForSubgraphToBeSynced();
-
       const query = `
         {
           redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
@@ -829,10 +795,10 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should continue querying if `TreasuryAsset` is called with a non-ERC20", async function () {
-      const erc721Test = (await deploy(erc721TokenTestJson, deployer, [
+      const erc721Test = await new ERC721__factory(deployer).deploy(
         "TokenERC721",
-        "T721",
-      ])) as ERC721;
+        "T721"
+      );
 
       // Could be any non-erc20 address
       const nonErc20Address = erc721Test.address;
@@ -1299,11 +1265,11 @@ describe("Subgraph Trusts Test", function () {
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
       // Get the values from event
-      const { tokensSeeded, reserveReceived } = await Util.getEventArgs(
+      const { tokensSeeded, reserveReceived } = (await getEventArgs(
         transaction,
         "Seed",
         seedContract
-      );
+      )) as SeedEvent["args"];
 
       await waitForSubgraphToBeSynced();
 
@@ -1427,27 +1393,25 @@ describe("Subgraph Trusts Test", function () {
       const seedId = transaction.hash.toLowerCase();
 
       const query = `
-      {
-        trust (id: "${trust.address.toLowerCase()}") {
-          trustParticipants {
-            id
+        {
+          trust (id: "${trust.address.toLowerCase()}") {
+            trustParticipants {
+              id
+            }
+          }
+          trustParticipant(id: "${id}"){
+            address
+            trust {
+              id
+            }
+            seeds {
+              id
+            }
+            seedBalance
+            seedFeeClaimable
           }
         }
-        trustParticipant(id: "${id}"){
-          address
-          trust {
-            id
-          }
-          seeds {
-            id
-          }
-          seedBalance
-          seedFeeClaimable
-        }
-      }
-    `;
-
-      // Create Subgraph Connection
+      `;
       const queryResponse = (await subgraph({
         query,
       })) as FetchResult;
@@ -1504,8 +1468,6 @@ describe("Subgraph Trusts Test", function () {
           }
         }
       `;
-
-      // Create Subgraph Connection
       const queryResponse = (await subgraph({
         query,
       })) as FetchResult;
@@ -1595,11 +1557,11 @@ describe("Subgraph Trusts Test", function () {
       const unseedId = transaction.hash.toLowerCase();
 
       // Get the values from event
-      const { tokensUnseeded, reserveReturned } = await Util.getEventArgs(
+      const { tokensUnseeded, reserveReturned } = (await getEventArgs(
         transaction,
         "Unseed",
         seedContract
-      );
+      )) as UnseedEvent["args"];
 
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
@@ -1620,8 +1582,6 @@ describe("Subgraph Trusts Test", function () {
           }
         }      
       `;
-
-      // Create Subgraph Connection
       const queryResponse = (await subgraph({
         query,
       })) as FetchResult;
@@ -1669,8 +1629,6 @@ describe("Subgraph Trusts Test", function () {
           }
         }
       `;
-
-      // Create Subgraph Connection
       const queryResponse = (await subgraph({
         query,
       })) as FetchResult;
@@ -1717,8 +1675,6 @@ describe("Subgraph Trusts Test", function () {
           }
         }
       `;
-
-      // Create Subgraph Connection
       const queryResponse = (await subgraph({
         query,
       })) as FetchResult;
@@ -1760,11 +1716,11 @@ describe("Subgraph Trusts Test", function () {
       const seedId = transaction.hash.toLowerCase();
 
       // Get the values from event
-      const { tokensSeeded, reserveReceived } = await Util.getEventArgs(
+      const { tokensSeeded, reserveReceived } = (await getEventArgs(
         transaction,
         "Seed",
         seedContract
-      );
+      )) as SeedEvent["args"];
 
       const query = `
         {
@@ -1868,13 +1824,17 @@ describe("Subgraph Trusts Test", function () {
       // The signer1 (arbitrary), can startDutchAuction
       transaction = await trust.connect(signer1).startDutchAuction();
 
-      const { finalAuctionBlock } = await Util.getEventArgs(
+      const { finalAuctionBlock } = (await getEventArgs(
         transaction,
         "StartDutchAuction",
         trust
-      );
+      )) as StartDutchAuctionEvent["args"];
 
-      bPoolContract = (await Util.poolContracts(creator, trust)).bPool;
+      // Save the start and end blocks
+      tradStartBlock = transaction.blockNumber;
+      tradEndBlock = finalAuctionBlock.toNumber();
+
+      ({ bPool: bPoolContract } = await Util.poolContracts(trust, creator));
 
       await waitForSubgraphToBeSynced();
 
@@ -1926,13 +1886,6 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should query the correct distribution in DistributionProgress after StartDutchAuction", async function () {
-      // Using the tx to get block expected
-      tradStartBlock = transaction.blockNumber;
-
-      tradEndBlock = (
-        await Util.getEventArgs(transaction, "StartDutchAuction", trust)
-      ).finalAuctionBlock;
-
       const query = `
         {
           distributionProgress (id: "${trust.address.toLowerCase()}") {
@@ -2148,11 +2101,11 @@ describe("Subgraph Trusts Test", function () {
         ethers.BigNumber.from("1000000" + sixZeros)
       );
 
-      const { tokenAmountOut } = await Util.getEventArgs(
+      const { tokenAmountOut } = (await getEventArgs(
         transaction,
         "LOG_SWAP",
         bPoolContract
-      );
+      )) as LOG_SWAPEvent["args"];
 
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
@@ -2293,15 +2246,15 @@ describe("Subgraph Trusts Test", function () {
       const amountRaisedExpected = poolReserveBalanceExpected.sub(reserveInit);
 
       // Using fixed numbers
-      const amountRaisedFN = Util.fixedNumber(amountRaisedExpected);
-      const minimumRaise = Util.fixedNumber(
+      const amountRaisedFN = fixedNumber(amountRaisedExpected);
+      const minimumRaise = fixedNumber(
         minimumCreatorRaise.add(redeemInit).add(seederFee)
       );
 
-      const poolRedeemableBalanceFN = Util.fixedNumber(
+      const poolRedeemableBalanceFN = fixedNumber(
         poolRedeemableBalanceExpected
       );
-      const redeemableInitSupplyFN = Util.fixedNumber(
+      const redeemableInitSupplyFN = fixedNumber(
         redeemableERC20Config.initialSupply
       );
 
@@ -2370,8 +2323,6 @@ describe("Subgraph Trusts Test", function () {
           }
         }
       `;
-
-      // Create Subgraph Connection
       const queryResponse = (await subgraph({
         query,
       })) as FetchResult;
@@ -2390,27 +2341,6 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should query the Pool correclty after a few Swaps", async function () {
-      // Function helper
-      const swapReserveForTokens = async (
-        signer: SignerWithAddress,
-        spend: BigNumber
-      ) => {
-        // give signer some reserve
-        await reserve.transfer(signer.address, spend);
-
-        await reserve.connect(signer).approve(bPoolContract.address, spend);
-        await crpContract.connect(signer).pokeWeights();
-        await bPoolContract
-          .connect(signer)
-          .swapExactAmountIn(
-            reserve.address,
-            spend,
-            await trust.token(),
-            ethers.BigNumber.from("1"),
-            ethers.BigNumber.from("1000000" + sixZeros)
-          );
-      };
-
       // Swaps 1 in this point
       let swapCounter = ethers.BigNumber.from("1");
 
@@ -2421,12 +2351,18 @@ describe("Subgraph Trusts Test", function () {
       while (
         (await reserve.balanceOf(bPoolContract.address)).lte(finalValuation)
       ) {
-        await swapReserveForTokens(signer1, reserveSpend);
+        await Util.swapReserveForTokens(
+          crpContract,
+          bPoolContract,
+          reserve,
+          redeemableERC20Contract,
+          signer1,
+          reserveSpend
+        );
         swapCounter = swapCounter.add(1);
       }
 
       // Wait for sync
-
       await waitForSubgraphToBeSynced();
 
       const poolReserveBalanceExpected = await reserve.balanceOf(
@@ -2447,8 +2383,6 @@ describe("Subgraph Trusts Test", function () {
           }
         }
       `;
-
-      // Create Subgraph Connection
       const queryResponse = (await subgraph({
         query,
       })) as FetchResult;
@@ -2481,7 +2415,11 @@ describe("Subgraph Trusts Test", function () {
 
       // Get values from event
       const { finalBalance, seederPay, creatorPay, tokenPay, poolDust } =
-        await Util.getEventArgs(transaction, "EndDutchAuction", trust);
+        (await getEventArgs(
+          transaction,
+          "EndDutchAuction",
+          trust
+        )) as EndDutchAuctionEvent["args"];
 
       const query = `
         {
@@ -2516,11 +2454,11 @@ describe("Subgraph Trusts Test", function () {
       const poolReserveBalanceExpected = "0";
       const poolRedeemableBalanceExpected = "0";
 
-      const { finalBalance, poolDust } = await Util.getEventArgs(
+      const { finalBalance, poolDust } = (await getEventArgs(
         transaction,
         "EndDutchAuction",
         trust
-      );
+      )) as EndDutchAuctionEvent["args"];
 
       // amountRaised should stay frozen, equal before calling endDutchAuction
       // That value it is the finalBalance in trust + poolDust trapped on balancerPool - reserveInit
@@ -2529,8 +2467,8 @@ describe("Subgraph Trusts Test", function () {
         .sub(reserveInit);
 
       // Using Fixed Numbers
-      const amountRaisedFN = Util.fixedNumber(amountRaisedExpected);
-      const minimumRaiseFN = Util.fixedNumber(
+      const amountRaisedFN = fixedNumber(amountRaisedExpected);
+      const minimumRaiseFN = fixedNumber(
         minimumCreatorRaise.add(redeemInit).add(seederFee)
       );
 
@@ -2589,8 +2527,6 @@ describe("Subgraph Trusts Test", function () {
           }
         }
       `;
-
-      // Create Subgraph Connection
       const queryResponse = (await subgraph({
         query,
       })) as FetchResult;
@@ -2652,11 +2588,11 @@ describe("Subgraph Trusts Test", function () {
       // Using the tx saved
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
-      const { redeemAmount, assetAmount } = await Util.getEventArgs(
+      const { redeemAmount, assetAmount } = (await getEventArgs(
         transaction,
         "Redeem",
         seedContract
-      );
+      )) as RedeemEvent["args"];
 
       const redeemSeedId = `${transaction.hash.toLowerCase()} - 0`;
 
@@ -2790,11 +2726,11 @@ describe("Subgraph Trusts Test", function () {
       // Using the tx saved
       const [deployBlock, deployTime] = await getTxTimeblock(transaction);
 
-      const { redeemAmount, assetAmount } = await Util.getEventArgs(
+      const { redeemAmount, assetAmount } = (await getEventArgs(
         transaction,
         "Redeem",
         redeemableERC20Contract
-      );
+      )) as RedeemEvent["args"];
 
       const query = `
         {
@@ -2907,7 +2843,7 @@ describe("Subgraph Trusts Test", function () {
     const redeemableERC20Config = {
       name: "Token",
       symbol: "TKN",
-      distributor: Util.zeroAddress,
+      distributor: zeroAddress,
       initialSupply: totalTokenSupply,
     };
     // - Seeder props
@@ -2916,7 +2852,7 @@ describe("Subgraph Trusts Test", function () {
     const seedERC20Config = {
       name: "SeedToken",
       symbol: "SDT",
-      distributor: Util.zeroAddress,
+      distributor: zeroAddress,
       initialSupply: seederUnits,
     };
     const seederCooldownDuration = 1;
@@ -2930,11 +2866,7 @@ describe("Subgraph Trusts Test", function () {
 
     before("Create the trust with user as Seeder", async function () {
       // Deploying new reserve to test
-      reserve = (await deploy(
-        reserveTokenJson,
-        deployer,
-        []
-      )) as ReserveTokenTest;
+      reserve = await new ReserveTokenTest__factory(deployer).deploy();
 
       // Deploying a new balanceTier to new Trust
       erc20BalanceTier = await Util.erc20BalanceTierDeploy(
@@ -2954,10 +2886,8 @@ describe("Subgraph Trusts Test", function () {
       // This should force to no create a seed contract
       seederNonContract = signer1.address;
 
-      const trustFactoryDeployer = trustFactory.connect(deployer); // make explicit
-
       trust = (await Util.trustDeploy(
-        trustFactoryDeployer,
+        trustFactory,
         creator,
         {
           creator: creator.address,
@@ -2984,17 +2914,17 @@ describe("Subgraph Trusts Test", function () {
       )) as Trust;
 
       // Creating the instance for contracts
-      redeemableERC20Contract = (await getContractChild(
-        trust.deployTransaction,
-        redeemableERC20Factory,
-        redeemableTokenJson
-      )) as RedeemableERC20;
+      redeemableERC20Contract = new RedeemableERC20__factory(deployer).attach(
+        await Util.getChild(redeemableERC20Factory, trust.deployTransaction)
+      );
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      redeemableERC20Contract.deployTransaction = trust.deployTransaction;
 
       // Get the CRP contract
-      crpContract = (await Util.poolContracts(creator, trust)).crp;
+      ({ crp: crpContract } = await Util.poolContracts(trust, creator));
 
       // Wait for Sync
-
       await waitForSubgraphToBeSynced();
     });
 

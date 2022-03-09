@@ -1,6 +1,17 @@
 {
-  "name": "rain-protocol",
-  "license": "UNLICENSED",
+  "name": "rain-protocol-subgraph",
+  "description": "Rain protocol subgraph",
+  "version": "0.2.0",
+  "author": "Beehive Innovation",
+  "license": "CAL",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beehive-innovation/rain-protocol-subgraph.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/beehive-innovation/rain-protocol-subgraph/issues"
+  },
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
@@ -16,8 +27,8 @@
     "deploy-build:mumbai": "yarn prepare:mumbai && yarn generate-schema && yarn codegen && yarn build && yarn deploy",
     "prepare:matic": "yarn mustache config/polygon.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:matic": "yarn prepare:matic && yarn generate-schema && yarn codegen && yarn build && yarn deploy",
-    "prepare:localhost": "yarn mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
-    "deploy-build:localhost": "yarn prepare:localhost && yarn generate-schema && yarn codegen && yarn build && yarn create-local && yarn deploy-local",
+    "prepare:localhost": "npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
+    "deploy-build:localhost": "npm run prepare:localhost && npm run generate-schema && npm run codegen && npm run build && npm run create-local && npm run deploy-local",
     "lint-test": "eslint './test/**/*.ts'",
     "hardhat-node": "hardhat node",
     "graph-node": "docker-compose -f \"docker/docker-compose.yml\" up",
@@ -28,12 +39,10 @@
     "@beehiveinnovation/configurable-rights-pool": "^0.0.1",
     "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#7f81d6c808bc79c2a45dc2fe667133a870561616",
     "@beehiveinnovation/rain-statusfi": "git+https://github.com/beehive-innovation/rain-statusfi.git#288e082ae81ca796b0732619a9631db24beb7a7a",
-    "@graphprotocol/graph-cli": "0.21.0",
-    "@graphprotocol/graph-ts": "0.20.0",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
-    "@typechain/ethers-v5": "^7.0.1",
-    "@typechain/hardhat": "^2.3.0",
+    "@typechain/ethers-v5": "^8.0.5",
+    "@typechain/hardhat": "^3.1.0",
     "@types/chai": "^4.2.21",
     "@types/mocha": "^9.0.0",
     "@types/node": "^12.0.0",
@@ -53,11 +62,15 @@
     "ethereum-waffle": "^3.0.0",
     "ethers": "^5.0.0",
     "hardhat": "^2.8.3",
-    "mustache": "^3.2.1",
     "prettier": "^2.3.2",
     "prettier-plugin-solidity": "^1.0.0-beta.13",
     "ts-node": "^10.1.0",
-    "typechain": "^5.1.2",
+    "typechain": "^6.1.0",
     "typescript": "^4.5.2"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.21.0",
+    "@graphprotocol/graph-ts": "^0.20.0",
+    "mustache": "^3.2.1"
   }
 }

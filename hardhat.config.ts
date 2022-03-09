@@ -22,6 +22,9 @@ function createLocalHostConfig() {
 }
 
 const config: HardhatUserConfig = {
+  typechain: {
+    outDir: "typechain",
+  },
   solidity: {
     compilers: [
       {
