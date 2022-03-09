@@ -190,7 +190,7 @@ describe("Verify Factory - Queries", function () {
       expect(dataNotice.data).to.equals("0x01");
     });
 
-    it("should query the VerifyRequestApprove after a RequestApprove ", async function () {
+    it("should query the VerifyRequestApprove after a RequestApprove", async function () {
       // signer1 want to be added
       transaction = await verify.connect(signer1).add(evidenceAdd);
 
@@ -240,7 +240,7 @@ describe("Verify Factory - Queries", function () {
       expect(data.data).to.equals(evidenceAdd);
     });
 
-    it("should query the VerifyEvent after a RequestApprove ", async function () {
+    it("should query the VerifyEvent after a RequestApprove", async function () {
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
@@ -286,6 +286,12 @@ describe("Verify Factory - Queries", function () {
       const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
+      const expectedVerifyAddr = {
+        id: signer1Id,
+        requestStatus: RequestStatus.APPROVE,
+        status: VerifyStatus.ADDED,
+      };
+
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
@@ -314,29 +320,19 @@ describe("Verify Factory - Queries", function () {
       })) as FetchResult;
 
       const dataVerifyContract = queryResponse.data.verify.verifyAddresses;
-      const dataVerifyAddress = queryResponse.data.verifyAddress;
+      const data = queryResponse.data.verifyAddress;
 
       // Expected Verify contract values
-      expect(dataVerifyContract).to.deep.include({
-        id: signer1Id,
-        requestStatus: 1,
-        status: 0,
-      });
+      expect(dataVerifyContract).to.deep.include(expectedVerifyAddr);
 
       // Expected verifyAddress
-      expect(dataVerifyAddress.verifyContract.id).to.equals(
-        verify.address.toLowerCase()
-      );
-      expect(dataVerifyAddress.address).to.equals(
-        signer1.address.toLocaleLowerCase()
-      );
+      expect(data.verifyContract.id).to.equals(verify.address.toLowerCase());
+      expect(data.address).to.equals(signer1.address.toLocaleLowerCase());
 
-      expect(dataVerifyAddress.requestStatus).to.equals(
-        RequestStatus.REQUEST_APPROVE
-      );
-      expect(dataVerifyAddress.status).to.equals(VerifyStatus.NONE);
-      expect(dataVerifyAddress.events).to.have.lengthOf(eventsSigner1);
-      expect(dataVerifyAddress.events).to.deep.include({ id: verifyEventId });
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
+      expect(data.events).to.have.lengthOf(eventsSigner1);
+      expect(data.events).to.deep.include({ id: verifyEventId });
     });
 
     it("should query the VerifyApprove after an Approve", async function () {
@@ -439,6 +435,12 @@ describe("Verify Factory - Queries", function () {
       const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
+      const expectedVerifyAddr = {
+        id: signer1Id,
+        requestStatus: RequestStatus.NONE,
+        status: VerifyStatus.APPROVED,
+      };
+
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
@@ -465,15 +467,11 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       // Expected Verify contract values
-      expect(dataVerifyContract).to.deep.include({
-        id: signer1Id,
-        requestStatus: 0,
-        status: 1,
-      });
+      expect(dataVerifyContract).to.deep.include(expectedVerifyAddr);
 
       // Expected VerifyAddress values
-      expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(VerifyStatus.APPROVED);
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
 
       expect(data.events).to.have.lengthOf(eventsSigner1);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -482,6 +480,13 @@ describe("Verify Factory - Queries", function () {
     it("should update the verifyAddress that has Approved the user", async function () {
       const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
+
+      // The admin address does not have any status because it is not called yet,
+      // but should show his status
+      const expectedVerifyAddr = {
+        requestStatus: RequestStatus.NONE,
+        status: VerifyStatus.NIL,
+      };
 
       const query = `
         {
@@ -501,8 +506,8 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       // Expected VerifyAddress values
-      expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(VerifyStatus.NONE);
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
 
       expect(data.events).to.have.lengthOf(eventsAdmin);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -618,6 +623,12 @@ describe("Verify Factory - Queries", function () {
       const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
+      const expectedVerifyAddr = {
+        id: signer2Id,
+        requestStatus: RequestStatus.REMOVE,
+        status: VerifyStatus.APPROVED,
+      };
+
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
@@ -644,15 +655,11 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       // Expected Verify contract values
-      expect(dataVerifyContract).to.deep.include({
-        id: signer2Id,
-        requestStatus: 3,
-        status: 1,
-      });
+      expect(dataVerifyContract).to.deep.include(expectedVerifyAddr);
 
       // Expected VerifyAddress values
-      expect(data.requestStatus).to.equals(RequestStatus.REQUEST_REMOVE);
-      expect(data.status).to.equals(VerifyStatus.APPROVED);
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
 
       expect(data.events).to.have.lengthOf(eventsSigner2); // requestApprove, Approve and requestRemove
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -775,6 +782,12 @@ describe("Verify Factory - Queries", function () {
       const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
+      const expectedVerifyAddr = {
+        id: signer2Id,
+        requestStatus: RequestStatus.NONE,
+        status: VerifyStatus.NIL,
+      };
+
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
@@ -801,14 +814,10 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       // Expected Verify contract values
-      expect(dataVerifyContract).to.deep.include({
-        id: signer2Id,
-        requestStatus: 0,
-        status: 3,
-      });
+      expect(dataVerifyContract).to.deep.include(expectedVerifyAddr);
 
-      expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(VerifyStatus.REMOVED);
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
 
       expect(data.events).to.have.lengthOf(eventsSigner2);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -837,7 +846,7 @@ describe("Verify Factory - Queries", function () {
 
       // Expected VerifyAddress values
       expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(VerifyStatus.NONE);
+      expect(data.status).to.equals(VerifyStatus.NIL);
 
       expect(data.events).to.have.lengthOf(eventsAdmin);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -952,6 +961,11 @@ describe("Verify Factory - Queries", function () {
       const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
+      const expectedVerifyAddr = {
+        requestStatus: RequestStatus.BAN,
+        status: VerifyStatus.APPROVED,
+      };
+
       const query = `
         {
           verifyAddress (id: "${signer2Id}") {
@@ -969,8 +983,8 @@ describe("Verify Factory - Queries", function () {
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
-      expect(data.requestStatus).to.equals(RequestStatus.REQUEST_BAN);
-      expect(data.status).to.equals(VerifyStatus.APPROVED);
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
 
       expect(data.events).to.have.lengthOf(eventsSigner2);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -1093,6 +1107,12 @@ describe("Verify Factory - Queries", function () {
       const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
+      const expectedVerifyAddr = {
+        id: signer2Id,
+        requestStatus: RequestStatus.NONE,
+        status: VerifyStatus.BANNED,
+      };
+
       const query = `
         {
           verify (id: "${verify.address.toLowerCase()}") {
@@ -1119,14 +1139,10 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       // Expected Verify contract values
-      expect(dataVerifyContract).to.deep.include({
-        id: signer2Id,
-        requestStatus: 0,
-        status: 2,
-      });
+      expect(dataVerifyContract).to.deep.include(expectedVerifyAddr);
 
-      expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(VerifyStatus.BANNED);
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
 
       expect(data.events).to.have.lengthOf(eventsSigner2);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -1135,6 +1151,11 @@ describe("Verify Factory - Queries", function () {
     it("should update the verifyAddress that has Banned the user", async function () {
       const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
+
+      const expectedVerifyAddr = {
+        requestStatus: RequestStatus.NONE,
+        status: VerifyStatus.BANNED,
+      };
 
       const query = `
         {
@@ -1154,11 +1175,51 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       // Expected VerifyAddress values
-      expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(VerifyStatus.NONE);
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
 
       expect(data.events).to.have.lengthOf(eventsAdmin);
       expect(data.events).to.deep.include({ id: verifyEventId });
+    });
+
+    it("should not change the VerifyAddress Banned status after approving a group of address", async function () {
+      const approve1 = {
+        account: signer1.address,
+        data: evidenceApprove,
+      };
+      const approve2 = {
+        account: signer2.address, // signer already banned
+        data: evidenceApprove,
+      };
+
+      await verify.connect(admin).approve([approve1, approve2]);
+
+      // Wait for sync
+      await waitForSubgraphToBeSynced();
+
+      const signerBannedId = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
+
+      const expectedVerifyAddr = {
+        id: signerBannedId,
+        requestStatus: RequestStatus.NONE,
+        status: VerifyStatus.BANNED,
+      };
+
+      const query = `
+        {
+          verifyAddress (id: "${signerBannedId}") {
+            requestStatus
+            status
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const data = response.data.verifyAddress;
+
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
     });
   });
 
@@ -1233,6 +1294,12 @@ describe("Verify Factory - Queries", function () {
         VerifyRole.BANNER_ADMIN,
       ];
 
+      const expectedVerifyAddr = {
+        requestStatus: RequestStatus.NONE,
+        status: VerifyStatus.NIL,
+        roles: expectedRoles,
+      };
+
       const query = `
         {
           verifyAddress (id: "${verify.address.toLowerCase()} - ${adminVerifyAddress}") {
@@ -1248,12 +1315,12 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       expect(data.status).to.equals(
-        VerifyStatus.NONE,
+        expectedVerifyAddr.status,
         `wrong status - admin verify adress does not have a status`
       );
 
       expect(data.requestStatus).to.equals(
-        RequestStatus.NONE,
+        expectedVerifyAddr.requestStatus,
         `wrong status - admin verify adress has not made a request`
       );
 

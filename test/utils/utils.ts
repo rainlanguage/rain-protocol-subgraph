@@ -165,16 +165,16 @@ export enum RequestType {
 
 export enum RequestStatus {
   NONE,
-  REQUEST_APPROVE,
-  REQUEST_BAN,
-  REQUEST_REMOVE,
+  APPROVE,
+  BAN,
+  REMOVE,
 }
 
 export enum VerifyStatus {
-  NONE,
+  NIL,
+  ADDED,
   APPROVED,
   BANNED,
-  REMOVED,
 }
 
 export enum VerifyRole {
