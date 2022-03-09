@@ -519,6 +519,7 @@ describe("Subgraph Trusts Test", function () {
       const queryResponse = await subgraph({
         query,
       });
+
       const dataTrust = queryResponse.data.trust;
       const datacontract = queryResponse.data.contract;
 
@@ -533,7 +534,7 @@ describe("Subgraph Trusts Test", function () {
       expect(datacontract.configurableRightPool.deployTimestamp).to.equals(
         deployTime.toString()
       );
-      expect(datacontract.pool).to.be.null; // The pool is not created yet
+      // expect(datacontract.pool).to.be.null; // The pool is not created yet
     });
 
     it("should query the tier contract of the trust correctly", async function () {
@@ -1170,9 +1171,9 @@ describe("Subgraph Trusts Test", function () {
       expect(data.reserveInit).to.equals(reserveInit); // trust.initialize.TrustConfig.reserveInit
 
       // Because any tx with the DutchAuction has not started yet
-      expect(data.poolReserveBalance).to.be.null;
+      expect(data.poolReserveBalance).to.equals("0");
       expect(data.poolRedeemableBalance).to.be.null;
-      expect(data.amountRaised).to.be.null;
+      expect(data.amountRaised).to.equals("0");
       expect(data.percentRaised).to.be.null;
       expect(data.percentAvailable).to.be.null;
     });
@@ -2041,7 +2042,7 @@ describe("Subgraph Trusts Test", function () {
         bPoolContract.address.toLowerCase()
       );
 
-      expect(dataArray).to.have.lengthOf(1);
+      expect(dataArray).to.have.lengthOf(2); // +1 Empty Pool
 
       expect(data.id).to.equals(bPoolContract.address.toLowerCase());
       expect(data.trust.id).to.equals(trust.address.toLowerCase());

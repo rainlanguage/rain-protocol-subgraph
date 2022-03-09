@@ -6,7 +6,7 @@ import {
   ByteArray,
   crypto,
 } from "@graphprotocol/graph-ts";
-import { Contract, Trust, TrustParticipant } from "../generated/schema";
+import { Contract, Pool, Trust, TrustParticipant } from "../generated/schema";
 import { SeedERC20 } from "../generated/TrustFactory/SeedERC20";
 import { RedeemableERC20 } from "../generated/TrustFactory/RedeemableERC20";
 
@@ -125,43 +125,50 @@ export function getTrustParticipent(
   let contracts = Contract.load(trust);
 
   // create seedERC20Contract using seeder from contracts
-  let seedERC20Contract = SeedERC20.bind(Address.fromString(contracts.seeder));
-
-  // create seedERC20Contract using redeemableERC20 from contracts
-  let redeemableERC20Contract = RedeemableERC20.bind(
-    Address.fromString(contracts.redeemableERC20)
-  );
-
-  /**
-   *   check if trustParticipant exists
-   *   If not create a bew one with default value.
-   */
-  if (trustParticipant == null) {
-    trustParticipant = new TrustParticipant(
-      participant.toHex() + " - " + trust
+  if (contracts) {
+    let seedERC20Contract = SeedERC20.bind(
+      Address.fromString(contracts.seeder)
     );
-    trustParticipant.address = participant;
-    trustParticipant.trust = trust;
-    trustParticipant.seeds = [];
-    trustParticipant.unSeeds = [];
-    trustParticipant.redeems = [];
-    trustParticipant.redeemSeeds = [];
-    trustParticipant.swaps = [];
 
-    let trustEntity = Trust.load(trust);
-    let tp = trustEntity.trustParticipants;
-    tp.push(trustParticipant.id); // add the trustParticipant in Trust
-    trustEntity.trustParticipants = tp;
-    trustEntity.save();
+    // create seedERC20Contract using redeemableERC20 from contracts
+    let redeemableERC20Contract = RedeemableERC20.bind(
+      Address.fromString(contracts.redeemableERC20)
+    );
+
+    /**
+     *   check if trustParticipant exists
+     *   If not create a bew one with default value.
+     */
+    if (!trustParticipant) {
+      trustParticipant = new TrustParticipant(
+        participant.toHex() + " - " + trust
+      );
+      trustParticipant.address = participant;
+      trustParticipant.trust = trust;
+      trustParticipant.seedBalance = ZERO_BI;
+      trustParticipant.seeds = [];
+      trustParticipant.unSeeds = [];
+      trustParticipant.redeems = [];
+      trustParticipant.redeemSeeds = [];
+      trustParticipant.swaps = [];
+
+      let trustEntity = Trust.load(trust);
+      if (trustEntity) {
+        let tp = trustEntity.trustParticipants;
+        if (tp) tp.push(trustParticipant.id); // add the trustParticipant in Trust
+        trustEntity.trustParticipants = tp;
+        trustEntity.save();
+      }
+    }
+
+    // Update the seedBalance and tokenBalance everytime when getting trustParticipant
+    let seedBalance = seedERC20Contract.try_balanceOf(participant);
+    let tokenBalance = redeemableERC20Contract.try_balanceOf(participant);
+
+    if (!seedBalance.reverted) trustParticipant.seedBalance = seedBalance.value;
+    if (!tokenBalance.reverted)
+      trustParticipant.tokenBalance = tokenBalance.value;
   }
-
-  // Update the seedBalance and tokenBalance everytime when getting trustParticipant
-  let seedBalance = seedERC20Contract.try_balanceOf(participant);
-  let tokenBalance = redeemableERC20Contract.try_balanceOf(participant);
-
-  if (!seedBalance.reverted) trustParticipant.seedBalance = seedBalance.value;
-  if (!tokenBalance.reverted)
-    trustParticipant.tokenBalance = tokenBalance.value;
 
   return trustParticipant as TrustParticipant;
 }
@@ -177,11 +184,31 @@ export function notAContract(address: string, trust: string): boolean {
   let contracts = Contract.load(trust);
   if (address == ZERO_ADDRESS) return false;
   if (trust == address) return false;
-  if (contracts.seeder == address) return false;
-  if (contracts.redeemableERC20 == address) return false;
-  if (contracts.reserveERC20 == address) return false;
-  if (contracts.configurableRightPool == address) return false;
-  if (contracts.pool == address) return false;
-  if (contracts.tier == address) return false;
+  if (contracts) {
+    if (contracts.seeder == address) return false;
+    if (contracts.redeemableERC20 == address) return false;
+    if (contracts.reserveERC20 == address) return false;
+    if (contracts.configurableRightPool == address) return false;
+    if (contracts.pool == address) return false;
+    if (contracts.tier == address) return false;
+  }
   return true;
+}
+
+export function getEmptyPool(): string {
+  let pool = new Pool("EMPTY_POOL");
+  pool.deployBlock = ZERO_BI;
+  pool.deployTimestamp = ZERO_BI;
+  pool.numberOfSwaps = ZERO_BI;
+
+  let trust = new Trust("EMPTY_TRUST");
+  trust.deployBlock = ZERO_BI;
+  trust.deployTimestamp = ZERO_BI;
+  trust.creator = Address.fromString(ZERO_ADDRESS);
+  trust.factory = Address.fromString(ZERO_ADDRESS);
+  trust.save();
+
+  pool.trust = trust.id;
+  pool.save();
+  return pool.id;
 }

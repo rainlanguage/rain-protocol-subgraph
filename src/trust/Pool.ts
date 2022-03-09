@@ -25,57 +25,61 @@ export function handleLOG_SWAP(event: LOG_SWAP): void {
   let pool = Pool.load(event.address.toHex());
 
   // Create a new Swap entity
-  let swap = new Swap(event.transaction.hash.toHex());
-  swap.deployBlock = event.block.number;
-  swap.deployTimestamp = event.block.timestamp;
-  swap.pool = pool.id;
-  swap.caller = event.params.caller;
-  swap.tokenIn = event.params.tokenIn;
-  swap.tokenOut = event.params.tokenOut;
-  swap.tokenAmountIn = event.params.tokenAmountIn;
-  swap.tokenAmountOut = event.params.tokenAmountOut;
-  swap.userAddress = event.params.caller;
+  if (pool) {
+    let swap = new Swap(event.transaction.hash.toHex());
+    swap.deployBlock = event.block.number;
+    swap.deployTimestamp = event.block.timestamp;
+    swap.pool = pool.id;
+    swap.caller = event.params.caller;
+    swap.tokenIn = event.params.tokenIn;
+    swap.tokenOut = event.params.tokenOut;
+    swap.tokenAmountIn = event.params.tokenAmountIn;
+    swap.tokenAmountOut = event.params.tokenAmountOut;
+    swap.userAddress = event.params.caller;
 
-  // Bind the TokenIn token address to ERC20 abi to make readonly calls
-  let tokenIn = ERC20.bind(event.params.tokenIn);
-  swap.tokenInSym = tokenIn.symbol();
+    // Bind the TokenIn token address to ERC20 abi to make readonly calls
+    let tokenIn = ERC20.bind(event.params.tokenIn);
+    swap.tokenInSym = tokenIn.symbol();
 
-  // Bind the TokenOut token address to ERC20 abi to make readonly calls
-  let tokenOut = ERC20.bind(event.params.tokenOut);
-  swap.tokenOutSym = tokenOut.symbol();
-  swap.save();
+    // Bind the TokenOut token address to ERC20 abi to make readonly calls
+    let tokenOut = ERC20.bind(event.params.tokenOut);
+    swap.tokenOutSym = tokenOut.symbol();
+    swap.save();
 
-  // Add the Swap in Pool entity
-  let swaps = pool.swaps;
-  swaps.push(swap.id);
-  pool.swaps = swaps;
+    // Add the Swap in Pool entity
+    let swaps = pool.swaps;
+    if (swaps) swaps.push(swap.id);
+    pool.swaps = swaps;
 
-  // Increment numberOfSwaps on  pool entity
-  pool.numberOfSwaps = pool.numberOfSwaps.plus(ONE_BI);
+    // Increment numberOfSwaps on  pool entity
+    pool.numberOfSwaps = pool.numberOfSwaps.plus(ONE_BI);
 
-  pool.save();
+    pool.save();
 
-  // Get the DatasourceDontext
-  let context = dataSource.context();
+    // Get the DatasourceDontext
+    let context = dataSource.context();
 
-  // Get the TrustParticipent
-  let trustParticipant = getTrustParticipent(
-    event.params.caller,
-    context.getString("trust")
-  );
+    // Get the TrustParticipent
+    let trustParticipant = getTrustParticipent(
+      event.params.caller,
+      context.getString("trust")
+    );
 
-  // Add Swap in TrustPartcipent entity
-  let tswaps = trustParticipant.swaps;
-  tswaps.push(swap.id);
-  trustParticipant.swaps = tswaps;
+    // Add Swap in TrustPartcipent entity
+    if (trustParticipant) {
+      let tswaps = trustParticipant.swaps;
+      if (tswaps) tswaps.push(swap.id);
+      trustParticipant.swaps = tswaps;
 
-  trustParticipant.save();
+      trustParticipant.save();
+    }
 
-  // Load the Contract entity
-  let contracts = Contract.load(context.getString("trust"));
+    // Load the Contract entity
+    let contracts = Contract.load(context.getString("trust"));
 
-  // Update the poolReserveBalance and poolRedeemableBalance
-  updatePoolBalance(contracts as Contract, pool as Pool);
+    // Update the poolReserveBalance and poolRedeemableBalance
+    if (contracts) updatePoolBalance(contracts as Contract, pool as Pool);
+  }
 }
 
 /**
@@ -108,50 +112,52 @@ function updatePoolBalance(contracts: Contract, pool: Pool): void {
   );
 
   // Set the values if poolRedeemableBalance not reverted
-  if (!poolRedeemableBalance.reverted) {
-    distributionProgress.poolRedeemableBalance = poolRedeemableBalance.value;
-    pool.poolRedeemableBalance = poolRedeemableBalance.value;
-    distributionProgress.percentAvailable = poolRedeemableBalance.value
-      .toBigDecimal()
-      .div(redeemableTokenContract.totalSupply().toBigDecimal())
-      .times(HUNDRED_BD);
-  }
-
-  // Set the values if poolReserveBalance not reverted
-  if (!poolReserveBalance.reverted) {
-    distributionProgress.poolReserveBalance = poolReserveBalance.value;
-    pool.poolReserveBalance = poolReserveBalance.value;
-    if (
-      distributionProgress.poolReserveBalance != null &&
-      distributionProgress.reserveInit != null
-    ) {
-      distributionProgress.amountRaised =
-        distributionProgress.poolReserveBalance.minus(
-          distributionProgress.reserveInit
-        );
-    }
-
-    // Update the Percent Raised
-    if (distributionProgress.minimumRaise == ZERO_BI) {
-      distributionProgress.percentRaised = HUNDRED_BD;
-    } else {
-      distributionProgress.percentRaised = distributionProgress.amountRaised
+  if (distributionProgress) {
+    if (!poolRedeemableBalance.reverted) {
+      distributionProgress.poolRedeemableBalance = poolRedeemableBalance.value;
+      pool.poolRedeemableBalance = poolRedeemableBalance.value;
+      distributionProgress.percentAvailable = poolRedeemableBalance.value
         .toBigDecimal()
-        .div(distributionProgress.minimumRaise.toBigDecimal())
+        .div(redeemableTokenContract.totalSupply().toBigDecimal())
         .times(HUNDRED_BD);
     }
-  } else {
-    log.info("Poola balance Failed. reserve, redeemable.", []);
+
+    // Set the values if poolReserveBalance not reverted
+    if (!poolReserveBalance.reverted) {
+      distributionProgress.poolReserveBalance = poolReserveBalance.value;
+      pool.poolReserveBalance = poolReserveBalance.value;
+      if (
+        distributionProgress.poolReserveBalance &&
+        distributionProgress.reserveInit
+      ) {
+        distributionProgress.amountRaised =
+          distributionProgress.poolReserveBalance.minus(
+            distributionProgress.reserveInit
+          );
+      }
+
+      // Update the Percent Raised
+      if (distributionProgress.minimumRaise == ZERO_BI) {
+        distributionProgress.percentRaised = HUNDRED_BD;
+      } else {
+        distributionProgress.percentRaised = distributionProgress.amountRaised
+          .toBigDecimal()
+          .div(distributionProgress.minimumRaise.toBigDecimal())
+          .times(HUNDRED_BD);
+      }
+    } else {
+      log.info("Poola balance Failed. reserve, redeemable.", []);
+    }
+
+    // Calculate the finalWeight
+    distributionProgress.finalWeight = valuationWeight(
+      distributionProgress.reserveInit,
+      distributionProgress.finalValuation
+    );
+
+    distributionProgress.save();
+    pool.save();
   }
-
-  // Calculate the finalWeight
-  distributionProgress.finalWeight = valuationWeight(
-    distributionProgress.reserveInit,
-    distributionProgress.finalValuation
-  );
-
-  distributionProgress.save();
-  pool.save();
 }
 
 /**

@@ -51,12 +51,12 @@ type Notice @entity{
 # src/trust.ts/handleInitialize
 type Contract @entity {
     id: ID!
-    reserveERC20: ERC20 #Trust.getContracts() => address reserveERC20
-    redeemableERC20: RedeemableERC20 #Trust.getContracts() => address redeemableERC20
-    seeder: SeedERC20 #Trust.getContracts() => address seeder
-    tier: TierContract #Trust.getContracts() => address tier
-    configurableRightPool: ConfigurableRightPool #Trust.getContracts() => address crp
-    pool: Pool #Trust.getContracts() => address pool
+    reserveERC20: ERC20! #Trust.getContracts() => address reserveERC20
+    redeemableERC20: RedeemableERC20! #Trust.getContracts() => address redeemableERC20
+    seeder: SeedERC20! #Trust.getContracts() => address seeder
+    tier: TierContract! #Trust.getContracts() => address tier
+    configurableRightPool: ConfigurableRightPool! #Trust.getContracts() => address crp
+    pool: Pool! #Trust.getContracts() => address pool
 }
 
 # DistributionProgress entity
@@ -69,7 +69,7 @@ type DistributionProgress @entity {
     distributionStartBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionStartBlock
     distributionEndBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionEndBlock
     minimumTradingDuration: BigInt #RedeemableERC20Pool.minimumTradingDuration()
-    poolReserveBalance: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
+    poolReserveBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolReserveBalance
     poolRedeemableBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
     minimumCreatorRaise: BigInt #Trust.getDistributionProgress() => uint256 minimumCreatorRaise
     finalWeight: BigInt #RedeemableERC20Pool.finalWeight()
@@ -79,8 +79,8 @@ type DistributionProgress @entity {
     finalBalance: BigInt! #Trust.finalBalance()
     reserveInit: BigInt! #Trust.getDistributionProgress() => uint256 reserveInit
     redeemInit: BigInt! #Trust.getDistributionProgress() => uint256 redeemInit
-    minimumRaise: BigInt #minimumCreatorRaise + redeemInit + Trust.SeedERC20.seederFee
-    amountRaised: BigInt # = poolReserveBalance - reserveInit
+    minimumRaise: BigInt! #minimumCreatorRaise + redeemInit + Trust.SeedERC20.seederFee
+    amountRaised: BigInt! # = poolReserveBalance - reserveInit
     percentRaised: BigDecimal # = amountRaised * 100  / minimumRaise
     percentAvailable: BigDecimal # = poolTokenBalance * 100 / RedeemableERC20.totalSupply
 }
@@ -123,7 +123,7 @@ type Pool @entity{
     redeemable: RedeemableERC20 #the redeemable token for this trust
     poolReserveBalance: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
     poolRedeemableBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
-    numberOfSwaps: BigInt
+    numberOfSwaps: BigInt!
     swaps: [Swap!]
     deployBlock: BigInt! #the block the contract was deployed
     deployTimestamp: BigInt! #the timestamp the contract was deployed
@@ -151,7 +151,7 @@ type RedeemableERC20 @entity {
     factory: Bytes #Trust.redeemableERC20Factory()
     grantedReceivers: [Bytes!]
     grantedSenders: [Bytes!]
-    redeems: [Redeem!] #Redeem event in RedeemableERC20.sol
+    redeems: [Redeem!]! #Redeem event in RedeemableERC20.sol
     treasuryAssets: [TreasuryAsset!]
     minimumTier: BigInt
     symbol: String
@@ -190,8 +190,8 @@ type SeedERC20 @entity{
     seedFeePerUnit: BigInt! # = seederFee / seederUnits
     seederCooldownDuration: BigInt #Trust.seederCooldownDuration()
     # Update after Seed event
-    seederUnitsAvail: BigInt #SeedERC20.balanceOf(this)
-    seededAmount: BigInt #ReserveERC20.balanceOf(this)
+    seederUnitsAvail: BigInt! #SeedERC20.balanceOf(this)
+    seededAmount: BigInt! #ReserveERC20.balanceOf(this)
     percentSeeded: BigDecimal #SeedERC20.seededAmount / Trust.redeemInit()
     seeds: [Seed!] #Seed events
     unseeds: [Unseed!] #Unseed events
@@ -249,7 +249,7 @@ type TrustParticipant @entity {
     # Seed redeem events for the SeedERC20 associated with this trust, for this.address
     redeemSeeds: [RedeemSeed!]
     # Update after Transfer events for SeedERC20
-    seedBalance: BigInt #SeedERC20.balanceOf(this.user.address)
+    seedBalance: BigInt! #SeedERC20.balanceOf(this.user.address)
     seedFeeClaimable: BigInt # = SeedERC20.balanceOf(this.user.address) * SeedERC20.seedFeePerUnit
     # Reedeem events for this trust, for this.address
     redeems: [Redeem!]

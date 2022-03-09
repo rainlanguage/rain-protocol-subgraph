@@ -21,7 +21,6 @@ export function handleNewChild(event: NewChild): void {
   verify.deployBlock = event.block.number;
   verify.deployTimestamp = event.block.timestamp;
   verify.deployer = event.transaction.from;
-  verify.factory = verifyFactory.id;
   verify.verifyEventCount = ZERO_BI;
   verify.verifyAddresses = [];
   verify.verifyRequestApprovals = [];
@@ -37,13 +36,17 @@ export function handleNewChild(event: NewChild): void {
   verify.bannerAdmins = [];
   verify.removerAdmins = [];
   verify.notices = [];
-  verify.save();
 
   // Add the new verify contract entity in VerifyFactory entity
-  let children = verifyFactory.children;
-  children.push(verify.id);
-  verifyFactory.children = children;
-  verifyFactory.save();
+  if (verifyFactory) {
+    verify.factory = verifyFactory.id;
+    verify.save();
+
+    let children = verifyFactory.children;
+    if (children) children.push(verify.id);
+    verifyFactory.children = children;
+    verifyFactory.save();
+  }
 
   // Create a dynamic Datasource to index Verify contract events
   VerifyTemplate.create(event.params.child);

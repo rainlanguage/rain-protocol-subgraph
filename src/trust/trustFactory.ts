@@ -28,11 +28,13 @@ export function handleNewChild(event: NewChild): void {
   trust.save();
 
   // Add the newly created Trust in TrustFactory entity
-  let trusts = trustFactory.trusts;
-  trusts.push(trust.id);
-  trustFactory.trusts = trusts;
-  trustFactory.trustCount = trustFactory.trustCount.plus(ONE_BI);
-  trustFactory.save();
+  if (trustFactory) {
+    let trusts = trustFactory.trusts;
+    if (trusts) trusts.push(trust.id);
+    trustFactory.trusts = trusts;
+    trustFactory.trustCount = trustFactory.trustCount.plus(ONE_BI);
+    trustFactory.save();
+  }
 
   // Create dynamic datasource for Trust to index its events
   TrustTemplate.create(event.params.child);

@@ -41,25 +41,27 @@ export function handleInitialize(event: Initialize): void {
   // Load the RedeemableERC20 entity
   let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex());
 
-  redeemabaleERC20.factory = event.params.sender;
-  redeemabaleERC20.admin = event.params.config.erc20Config.distributor;
-  redeemabaleERC20.minimumTier = event.params.config.minimumTier;
+  if (redeemabaleERC20) {
+    redeemabaleERC20.factory = event.params.sender;
+    redeemabaleERC20.admin = event.params.config.erc20Config.distributor;
+    redeemabaleERC20.minimumTier = event.params.config.minimumTier;
 
-  // Get DataSourceContext
-  let context = dataSource.context();
+    // Get DataSourceContext
+    let context = dataSource.context();
 
-  // Load the contracts entity
-  let contracts = Contract.load(context.getString("trust"));
+    // Load the contracts entity
+    let contracts = Contract.load(context.getString("trust"));
 
-  // Set the Tier address in Contracts entity
-  contracts.tier = getTier(event.params.config.tier.toHex());
-  contracts.save();
+    // Set the Tier address in Contracts entity
+    if (contracts) {
+      contracts.tier = getTier(event.params.config.tier.toHex());
+      contracts.save();
+    }
 
-  // Set Tier in RedeemableERC20 entity
-  redeemabaleERC20.tier = getTier(event.params.config.tier.toHex());
-  redeemabaleERC20.save();
-
-  redeemabaleERC20.save();
+    // Set Tier in RedeemableERC20 entity
+    redeemabaleERC20.tier = getTier(event.params.config.tier.toHex());
+    redeemabaleERC20.save();
+  }
 }
 
 /**
@@ -71,10 +73,12 @@ export function handleSender(event: Sender): void {
   let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex());
 
   // Add Granted Sender in Redeemable
-  let grantedSenders = redeemabaleERC20.grantedSenders;
-  grantedSenders.push(event.params.grantedSender);
-  redeemabaleERC20.grantedSenders = grantedSenders;
-  redeemabaleERC20.save();
+  if (redeemabaleERC20) {
+    let grantedSenders = redeemabaleERC20.grantedSenders;
+    if (grantedSenders) grantedSenders.push(event.params.grantedSender);
+    redeemabaleERC20.grantedSenders = grantedSenders;
+    redeemabaleERC20.save();
+  }
 }
 
 /**
@@ -86,10 +90,12 @@ export function handleReceiver(event: Receiver): void {
   let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex());
 
   // Add Granted Sender in Redeemable
-  let grantedReceivers = redeemabaleERC20.grantedReceivers;
-  grantedReceivers.push(event.params.grantedReceiver);
-  redeemabaleERC20.grantedReceivers = grantedReceivers;
-  redeemabaleERC20.save();
+  if (redeemabaleERC20) {
+    let grantedReceivers = redeemabaleERC20.grantedReceivers;
+    if (grantedReceivers) grantedReceivers.push(event.params.grantedReceiver);
+    redeemabaleERC20.grantedReceivers = grantedReceivers;
+    redeemabaleERC20.save();
+  }
 }
 
 /**
@@ -108,54 +114,58 @@ export function handleTransfer(event: Transfer): void {
     let context = dataSource.context();
 
     // Get all the Holders of RedeemableERC20
-    let holders = redeemabaleERC20.holders;
+    if (redeemabaleERC20) {
+      let holders = redeemabaleERC20.holders;
 
-    // Check if Sender is not any contract address or Zero address
-    if (notAContract(event.params.from.toHex(), context.getString("trust"))) {
-      // Load the Sender's Holder entity
-      let sender = Holder.load(
-        event.address.toHex() + " - " + event.params.from.toHex()
-      );
-
-      // Create a new Holders entity if Sender doesnot exists
-      if (sender == null) {
-        sender = new Holder(
+      // Check if Sender is not any contract address or Zero address
+      if (notAContract(event.params.from.toHex(), context.getString("trust"))) {
+        // Load the Sender's Holder entity
+        let sender = Holder.load(
           event.address.toHex() + " - " + event.params.from.toHex()
         );
-        // Set the sender's balance
-        sender.balance = redeemabaleERC20Contract.balanceOf(event.params.from);
+
+        // Create a new Holders entity if Sender doesnot exists
+        if (!sender) {
+          sender = new Holder(
+            event.address.toHex() + " - " + event.params.from.toHex()
+          );
+          // Set the sender's balance
+          sender.balance = redeemabaleERC20Contract.balanceOf(
+            event.params.from
+          );
+        }
+
+        // Update the sender's balancer
+        sender.balance = sender.balance.minus(event.params.value);
       }
 
-      // Update the sender's balancer
-      sender.balance = sender.balance.minus(event.params.value);
-    }
-
-    // Check if Receiver is not any contract address or Zero address
-    if (notAContract(event.params.to.toHex(), context.getString("trust"))) {
-      // Load the Receiver's Holder entity
-      let receiver = Holder.load(
-        event.address.toHex() + " - " + event.params.to.toHex()
-      );
-
-      // Create a new Holders entity if Receiver doesnot exists
-      if (receiver == null) {
-        receiver = new Holder(
+      // Check if Receiver is not any contract address or Zero address
+      if (notAContract(event.params.to.toHex(), context.getString("trust"))) {
+        // Load the Receiver's Holder entity
+        let receiver = Holder.load(
           event.address.toHex() + " - " + event.params.to.toHex()
         );
-        // Set the Reciver's balance
-        receiver.balance = ZERO_BI;
-      }
 
-      // Update the Receiver balance
-      receiver.balance = receiver.balance.plus(event.params.value);
-      receiver.address = event.params.to;
-      receiver.save();
+        // Create a new Holders entity if Receiver doesnot exists
+        if (!receiver) {
+          receiver = new Holder(
+            event.address.toHex() + " - " + event.params.to.toHex()
+          );
+          // Set the Reciver's balance
+          receiver.balance = ZERO_BI;
+        }
 
-      // Add the Receiver in Holders if not already exists
-      if (!holders.includes(receiver.id)) {
-        holders.push(receiver.id);
-        redeemabaleERC20.holders = holders;
-        redeemabaleERC20.save();
+        // Update the Receiver balance
+        receiver.balance = receiver.balance.plus(event.params.value);
+        receiver.address = event.params.to;
+        receiver.save();
+
+        // Add the Receiver in Holders if not already exists
+        if (holders && !holders.includes(receiver.id)) {
+          holders.push(receiver.id);
+          redeemabaleERC20.holders = holders;
+          redeemabaleERC20.save();
+        }
       }
     }
   }
@@ -175,8 +185,10 @@ export function handleERC20PullInitialize(event: ERC20PullInitialize): void {
 
   // Add the ERC20Pull entity to RedemableERC20
   let redeemabaleERC20 = RedeemableERC20.load(event.address.toHex());
-  redeemabaleERC20.erc20Pull = erc20pull.id;
-  redeemabaleERC20.save();
+  if (redeemabaleERC20) {
+    redeemabaleERC20.erc20Pull = erc20pull.id;
+    redeemabaleERC20.save();
+  }
 }
 
 /**
@@ -188,52 +200,62 @@ export function handleRedeem(event: RedeemEvent): void {
   let redeemableERC20 = RedeemableERC20.load(event.address.toHex());
 
   // Get the total count of current redeems
-  let totalRedeems = redeemableERC20.redeems.length;
+  if (redeemableERC20) {
+    let totalRedeems = redeemableERC20.redeems.length;
 
-  // Create a new Redeem with "transaction.hash - totalRedeems"
-  let redeem = new Redeem(
-    event.transaction.hash.toHex() + " - " + totalRedeems.toString()
-  );
+    // Create a new Redeem with "transaction.hash - totalRedeems"
+    let redeem = new Redeem(
+      event.transaction.hash.toHex() + " - " + totalRedeems.toString()
+    );
 
-  // Load the TreasuryAsset
-  let treasuryAsset = TreasuryAsset.load(
-    event.address.toHex() + " - " + event.params.treasuryAsset.toHex()
-  );
+    // Load the TreasuryAsset
+    let treasuryAsset = TreasuryAsset.load(
+      event.address.toHex() + " - " + event.params.treasuryAsset.toHex()
+    );
 
-  // Get the DatasourceContext
-  let context = dataSource.context();
+    // Get the DatasourceContext
+    let context = dataSource.context();
 
-  redeem.redeemableERC20 = redeemableERC20.id;
-  redeem.caller = event.params.sender;
-  redeem.treasuryAsset = treasuryAsset.id;
-  redeem.treasuryAssetAmount = event.params.assetAmount;
-  redeem.redeemAmount = event.params.redeemAmount;
-  redeem.deployBlock = event.block.number;
-  redeem.deployTimestamp = event.block.timestamp;
-  redeem.trust = context.getString("trust");
-  redeem.save();
+    redeem.redeemableERC20 = redeemableERC20.id;
+    redeem.caller = event.params.sender;
+    if (treasuryAsset) redeem.treasuryAsset = treasuryAsset.id;
+    redeem.treasuryAssetAmount = event.params.assetAmount;
+    redeem.redeemAmount = event.params.redeemAmount;
+    redeem.deployBlock = event.block.number;
+    redeem.deployTimestamp = event.block.timestamp;
+    redeem.trust = context.getString("trust");
+    redeem.save();
 
-  // Add the newlyu created Redeem into TreasuryAsset entity
-  let taredeems = treasuryAsset.redeems;
-  taredeems.push(redeem.id);
-  treasuryAsset.redeems = taredeems;
+    // Add the newlyu created Redeem into TreasuryAsset entity
+    if (treasuryAsset) {
+      let taredeems = treasuryAsset.redeems;
+      if (taredeems) taredeems.push(redeem.id);
+      treasuryAsset.redeems = taredeems;
 
-  treasuryAsset.save();
+      treasuryAsset.save();
+    }
 
-  // Add the newlyu created Redeem into RedeemableERC20 entity
-  let redeems = redeemableERC20.redeems;
-  redeems.push(redeem.id);
-  redeemableERC20.redeems = redeems;
+    // Add the newlyu created Redeem into RedeemableERC20 entity
+    let redeems = redeemableERC20.redeems;
+    redeems.push(redeem.id);
+    redeemableERC20.redeems = redeems;
 
-  redeemableERC20.save();
+    redeemableERC20.save();
 
-  // Get the TrustParticipent
-  let trustParticipant = getTrustParticipent(event.params.sender, redeem.trust);
-  let tpRedeems = trustParticipant.redeems;
-  tpRedeems.push(redeem.id);
-  trustParticipant.redeems = tpRedeems;
+    // Get the TrustParticipent
+    let trustParticipant = getTrustParticipent(
+      event.params.sender,
+      redeem.trust
+    );
 
-  trustParticipant.save();
+    if (trustParticipant) {
+      let tpRedeems = trustParticipant.redeems;
+      if (tpRedeems) tpRedeems.push(redeem.id);
+      trustParticipant.redeems = tpRedeems;
+
+      trustParticipant.save();
+    }
+  }
 }
 
 /**
@@ -288,12 +310,12 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
       treasuryAsset.decimals = decimals.value;
       treasuryAsset.totalSupply = totalSupply.value;
       treasuryAsset.balance = balance.value;
-      treasuryAsset.redemptionRatio = treasuryAsset.balance.div(
+      treasuryAsset.redemptionRatio = balance.value.div(
         redeemabaleERC20Contract.totalSupply()
       );
     }
 
-    treasuryAsset.redeemableERC20 = redeemabaleERC20.id;
+    if (redeemabaleERC20) treasuryAsset.redeemableERC20 = redeemabaleERC20.id;
     treasuryAsset.address = event.params.asset;
     treasuryAsset.trust = context.getString("trust");
     treasuryAsset.callers = [];
@@ -311,16 +333,18 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
 
   // Add teh TreasuryAssetCaller to the TreasuryAsset
   let callers = treasuryAsset.callers;
-  callers.push(caller.id);
+  if (callers) callers.push(caller.id);
   treasuryAsset.callers = callers;
   treasuryAsset.save();
 
   // Add TreasuryAsset to RedeemableERC20 entity
-  let rERC20treasuryAssets = redeemabaleERC20.treasuryAssets;
-  rERC20treasuryAssets.push(treasuryAsset.id);
-  redeemabaleERC20.treasuryAssets = rERC20treasuryAssets;
+  if (redeemabaleERC20) {
+    let rERC20treasuryAssets = redeemabaleERC20.treasuryAssets;
+    if (rERC20treasuryAssets) rERC20treasuryAssets.push(treasuryAsset.id);
+    redeemabaleERC20.treasuryAssets = rERC20treasuryAssets;
 
-  redeemabaleERC20.save();
+    redeemabaleERC20.save();
+  }
 }
 
 /**

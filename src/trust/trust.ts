@@ -43,6 +43,7 @@ import {
   ONE_BI,
   DistributionStatus,
   ZERO_ADDRESS,
+  getEmptyPool,
 } from "../utils";
 
 /**
@@ -57,13 +58,14 @@ export function handleConstruction(event: Construction): void {
   let trustFactory = TrustFactory.load(context.getBytes("factory").toHex());
 
   // Initialise the Factory addresses
-  trustFactory.balancerFactory = event.params.balancerFactory;
-  trustFactory.crpFactory = event.params.crpFactory;
-  trustFactory.redeemableERC20Factory = event.params.redeemableERC20Factory;
-  trustFactory.seedERC20Factory = event.params.seedERC20Factory;
-  trustFactory.bPoolFeeEscrow = event.params.bPoolFeeEscrow;
-
-  trustFactory.save();
+  if (trustFactory) {
+    trustFactory.balancerFactory = event.params.balancerFactory;
+    trustFactory.crpFactory = event.params.crpFactory;
+    trustFactory.redeemableERC20Factory = event.params.redeemableERC20Factory;
+    trustFactory.seedERC20Factory = event.params.seedERC20Factory;
+    trustFactory.bPoolFeeEscrow = event.params.bPoolFeeEscrow;
+    trustFactory.save();
+  }
 }
 
 export function handleCreatorFundsRelease(event: CreatorFundsRelease): void {
@@ -77,39 +79,47 @@ export function handleCreatorFundsRelease(event: CreatorFundsRelease): void {
 export function handleEndDutchAuction(event: EndDutchAuction): void {
   // Load the DutchAuction entity
   let dutchAuction = DutchAuction.load(event.address.toHex());
-  dutchAuction.enderAddress = event.params.sender;
-  dutchAuction.finalBalance = event.params.finalBalance;
-  dutchAuction.seederPay = event.params.seederPay;
-  dutchAuction.creatorPay = event.params.creatorPay;
-  dutchAuction.tokenPay = event.params.tokenPay;
-  dutchAuction.poolDust = event.params.poolDust;
+  if (dutchAuction) {
+    dutchAuction.enderAddress = event.params.sender;
+    dutchAuction.finalBalance = event.params.finalBalance;
+    dutchAuction.seederPay = event.params.seederPay;
+    dutchAuction.creatorPay = event.params.creatorPay;
+    dutchAuction.tokenPay = event.params.tokenPay;
+    dutchAuction.poolDust = event.params.poolDust;
 
-  dutchAuction.save();
+    dutchAuction.save();
+  }
 
   // Load the distributionProgress uisng Trust address
   let distributionProgress = DistributionProgress.load(event.address.toHex());
-  if (event.params.finalBalance >= distributionProgress.finalBalance) {
-    distributionProgress.distributionStatus = DistributionStatus.Success;
-  } else {
-    distributionProgress.distributionStatus = DistributionStatus.Fail;
-  }
+  if (distributionProgress) {
+    if (event.params.finalBalance >= distributionProgress.finalBalance) {
+      distributionProgress.distributionStatus = DistributionStatus.Success;
+    } else {
+      distributionProgress.distributionStatus = DistributionStatus.Fail;
+    }
 
-  // Update the distributionProgress using event parameters
-  distributionProgress.finalBalance = event.params.finalBalance;
-  distributionProgress.poolReserveBalance = ZERO_BI;
-  distributionProgress.poolRedeemableBalance = ZERO_BI;
-  distributionProgress.percentAvailable = ZERO_BD;
+    // Update the distributionProgress using event parameters
+    distributionProgress.finalBalance = event.params.finalBalance;
+    distributionProgress.poolReserveBalance = ZERO_BI;
+    distributionProgress.poolRedeemableBalance = ZERO_BI;
+    distributionProgress.percentAvailable = ZERO_BD;
+
+    distributionProgress.save();
+  }
 
   // Load the Contract entity using Trust address
   let contracts = Contract.load(event.address.toHex());
 
   // Set the poolReserveBalance and poolRedeemableBalance of Pool to Zero when auction ends.
-  let pool = Pool.load(contracts.pool);
-  pool.poolReserveBalance = ZERO_BI;
-  pool.poolRedeemableBalance = ZERO_BI;
-  pool.save();
-
-  distributionProgress.save();
+  if (contracts && contracts.pool) {
+    let pool = Pool.load(contracts.pool);
+    if (pool) {
+      pool.poolReserveBalance = ZERO_BI;
+      pool.poolRedeemableBalance = ZERO_BI;
+      pool.save();
+    }
+  }
 }
 
 /**
@@ -126,36 +136,41 @@ export function handleInitialize(event: Initialize): void {
   contracts.reserveERC20 = createReserveERC20(event); // Create the ReserveERC20 token for given Trust
   contracts.seeder = createSeedERC20(event); // Create the SeedERC20 token for given Trust
   contracts.redeemableERC20 = createRedeemableERC20(event); // Create the RedeemableERC20 token for given Trust
-  contracts.pool = ZERO_ADDRESS; // Setting pool to  Zero Address. not available yet
+  contracts.pool = getEmptyPool(); // Setting pool to  Zero Address. not available yet
   contracts.tier = ZERO_ADDRESS; // Setting tier to  Zero Address. not available yet
   contracts.save();
 
   // Create the new DistributionProgress for the trust
   let distributionProgress = new DistributionProgress(event.address.toHex());
-  distributionProgress.finalBalance = ZERO_BI;
-  distributionProgress.distributionStatus = DistributionStatus.Pending;
-  distributionProgress.successPoolBalance = event.params.successBalance;
-  distributionProgress.reserveInit = event.params.config.reserveInit;
-  distributionProgress.initialValuation = event.params.config.initialValuation;
-  distributionProgress.finalValuation = event.params.config.finalValuation;
-  distributionProgress.minimumTradingDuration =
-    event.params.config.minimumTradingDuration;
-  distributionProgress.minimumCreatorRaise =
-    event.params.config.minimumCreatorRaise;
-  distributionProgress.redeemInit = event.params.config.redeemInit;
-  distributionProgress.minimumRaise = event.params.config.minimumCreatorRaise
-    .plus(event.params.config.redeemInit)
-    .plus(event.params.config.seederFee);
-  distributionProgress.finalWeight = valuationWeight(
-    event.params.config.reserveInit,
-    event.params.config.finalValuation
-  );
-  distributionProgress.save();
-
+  if (distributionProgress) {
+    distributionProgress.finalBalance = ZERO_BI;
+    distributionProgress.distributionStatus = DistributionStatus.Pending;
+    distributionProgress.successPoolBalance = event.params.successBalance;
+    distributionProgress.reserveInit = event.params.config.reserveInit;
+    distributionProgress.initialValuation =
+      event.params.config.initialValuation;
+    distributionProgress.finalValuation = event.params.config.finalValuation;
+    distributionProgress.minimumTradingDuration =
+      event.params.config.minimumTradingDuration;
+    distributionProgress.minimumCreatorRaise =
+      event.params.config.minimumCreatorRaise;
+    distributionProgress.redeemInit = event.params.config.redeemInit;
+    distributionProgress.minimumRaise = event.params.config.minimumCreatorRaise
+      .plus(event.params.config.redeemInit)
+      .plus(event.params.config.seederFee);
+    distributionProgress.finalWeight = valuationWeight(
+      event.params.config.reserveInit,
+      event.params.config.finalValuation
+    );
+    distributionProgress.amountRaised = ZERO_BI;
+    distributionProgress.save();
+  }
   // Add the Contract and DistributionProgress in to the Trust
-  trust.contracts = contracts.id;
-  trust.distributionProgress = distributionProgress.id;
-  trust.save();
+  if (trust && contracts && distributionProgress) {
+    trust.contracts = contracts.id;
+    trust.distributionProgress = distributionProgress.id;
+    trust.save();
+  }
 }
 
 export function handlePhaseScheduled(event: PhaseScheduled): void {
@@ -178,23 +193,29 @@ export function handleStartDutchAuction(event: StartDutchAuction): void {
   dutchAuction.save();
 
   // Add the DutchAuction to the Trust
-  trust.dutchAuction = dutchAuction.id;
-  trust.save();
+  if (trust) {
+    trust.dutchAuction = dutchAuction.id;
+    trust.save();
+  }
 
   // Update the DistributionProgress
   let distributionProgress = DistributionProgress.load(event.address.toHex());
-  distributionProgress.distributionStatus = DistributionStatus.Trading;
-  distributionProgress.distributionStartBlock = event.block.number;
-  distributionProgress.distributionEndBlock = event.params.finalAuctionBlock;
-  distributionProgress.save();
+  if (distributionProgress) {
+    distributionProgress.distributionStatus = DistributionStatus.Trading;
+    distributionProgress.distributionStartBlock = event.block.number;
+    distributionProgress.distributionEndBlock = event.params.finalAuctionBlock;
+    distributionProgress.save();
+  }
 
   // Update the Contracts
   let contracts = Contract.load(event.address.toHex());
 
   // StartDutchAuction event gives the address of pool.
   // Create Pool for contracts
-  contracts.pool = createPool(event);
-  contracts.save();
+  if (contracts) {
+    contracts.pool = createPool(event);
+    contracts.save();
+  }
 
   // Update the PoolReserveBalance and PoolRedemableBalance of Pool
   updatePoolBalance(contracts as Contract);
@@ -327,69 +348,71 @@ function createRedeemableERC20(event: Initialize): string {
 function createSeedERC20(event: Initialize): string {
   // Load the SeedERC20 entity
   let seedERC20 = SeedERC20.load(event.params.seeder.toHex());
-
+  let seedERC20Contract = ERC20Contract.bind(event.params.seeder);
   // Load the Trust Entity
   let trust = Trust.load(event.address.toHex());
-
   // Load the TrustFactory entity
-  let trustFactory = TrustFactory.load(trust.factory.toHex());
+  if (trust) {
+    let trustFactory = TrustFactory.load(trust.factory.toHex());
 
-  // Bind the RedeemableERC20 address to ERC20 abi to make readonly calls
-  let seedERC20Contract = ERC20Contract.bind(event.params.seeder);
+    // Bind the RedeemableERC20 address to ERC20 abi to make readonly calls
 
-  if (seedERC20 == null) {
-    seedERC20 = new SeedERC20(event.params.seeder.toHex());
-  } else return seedERC20.id;
-  seedERC20.deployBlock = event.block.number;
-  seedERC20.deployTimestamp = event.block.timestamp;
-  seedERC20.reserve = event.params.config.reserve;
-  seedERC20.factory = trustFactory.seedERC20Factory;
-  seedERC20.deployer = event.transaction.from;
-  seedERC20.seederFee = event.params.config.seederFee;
-  seedERC20.seederUnits = ONE_BI;
-  seedERC20.seedFeePerUnit = ONE_BI;
+    if (!seedERC20) {
+      seedERC20 = new SeedERC20(event.params.seeder.toHex());
+    } else return seedERC20.id;
+    seedERC20.deployBlock = event.block.number;
+    seedERC20.deployTimestamp = event.block.timestamp;
+    seedERC20.reserve = event.params.config.reserve;
+    if (trustFactory) seedERC20.factory = trustFactory.seedERC20Factory;
+    seedERC20.deployer = event.transaction.from;
+    seedERC20.seederFee = event.params.config.seederFee;
+    seedERC20.seederUnits = ONE_BI;
+    seedERC20.seedFeePerUnit = ONE_BI;
+    seedERC20.seededAmount = ZERO_BI;
+    seedERC20.seederUnitsAvail = ZERO_BI;
 
-  // Try to get token information with try_, if any non ERC20 address is passed the subgraph will not fail
-  let name = seedERC20Contract.try_name();
-  let symbol = seedERC20Contract.try_symbol();
-  let decimals = seedERC20Contract.try_decimals();
-  let totalSupply = seedERC20Contract.try_totalSupply();
-  if (
-    !(
-      name.reverted ||
-      symbol.reverted ||
-      decimals.reverted ||
-      totalSupply.reverted
-    )
-  ) {
-    seedERC20.name = name.value;
-    seedERC20.symbol = symbol.value;
-    seedERC20.decimals = decimals.value;
-    seedERC20.totalSupply = totalSupply.value;
-    seedERC20.seederUnits = totalSupply.value;
-    seedERC20.seederUnitsAvail = totalSupply.value;
-    seedERC20.seedFeePerUnit = event.params.config.seederFee.div(
-      totalSupply.value
-    );
+    // Try to get token information with try_, if any non ERC20 address is passed the subgraph will not fail
+    let name = seedERC20Contract.try_name();
+    let symbol = seedERC20Contract.try_symbol();
+    let decimals = seedERC20Contract.try_decimals();
+    let totalSupply = seedERC20Contract.try_totalSupply();
+    if (
+      !(
+        name.reverted ||
+        symbol.reverted ||
+        decimals.reverted ||
+        totalSupply.reverted
+      )
+    ) {
+      seedERC20.name = name.value;
+      seedERC20.symbol = symbol.value;
+      seedERC20.decimals = decimals.value;
+      seedERC20.totalSupply = totalSupply.value;
+      seedERC20.seederUnits = totalSupply.value;
+      seedERC20.seederUnitsAvail = totalSupply.value;
+      seedERC20.seedFeePerUnit = event.params.config.seederFee.div(
+        totalSupply.value
+      );
+    }
+
+    seedERC20.seeds = [];
+    seedERC20.unseeds = [];
+    seedERC20.holders = [];
+    seedERC20.redeemSeeds = [];
+
+    // set SeedAmount and PercentSeeded to ZERO
+    seedERC20.seededAmount = ZERO_BI;
+    seedERC20.percentSeeded = ZERO_BD;
+    seedERC20.save();
+
+    // Create a datasource with Trust Address
+    let context = new DataSourceContext();
+    context.setString("trust", event.address.toHex());
+
+    // Create a Dynamic Datasource RedeemableERC20Template with context to index its events
+    SeedERC20Template.createWithContext(event.params.seeder, context);
   }
-
-  seedERC20.seeds = [];
-  seedERC20.unseeds = [];
-  seedERC20.holders = [];
-  seedERC20.redeemSeeds = [];
-
-  // set SeedAmount and PercentSeeded to ZERO
-  seedERC20.seededAmount = ZERO_BI;
-  seedERC20.percentSeeded = ZERO_BD;
-  seedERC20.save();
-
-  // Create a datasource with Trust Address
-  let context = new DataSourceContext();
-  context.setString("trust", event.address.toHex());
-
-  // Create a Dynamic Datasource RedeemableERC20Template with context to index its events
-  SeedERC20Template.createWithContext(event.params.seeder, context);
-  return seedERC20.id;
+  return event.params.seeder.toHex();
 }
 
 /**
@@ -405,14 +428,14 @@ function createPool(event: StartDutchAuction): string {
   let pool = Pool.load(event.params.pool.toHex());
 
   // if Pool entity does not exists create a new
-  if (pool == null) {
+  if (!pool) {
     pool = new Pool(event.params.pool.toHex());
     pool.deployBlock = event.block.number;
     pool.deployTimestamp = event.block.timestamp;
     pool.trust = event.address.toHex();
     pool.numberOfSwaps = ZERO_BI;
-    pool.reserve = contracts.reserveERC20;
-    pool.redeemable = contracts.redeemableERC20;
+    if (contracts) pool.reserve = contracts.reserveERC20;
+    if (contracts) pool.redeemable = contracts.redeemableERC20;
     pool.swaps = [];
   } else {
     return pool.id;
@@ -420,9 +443,11 @@ function createPool(event: StartDutchAuction): string {
   pool.save();
 
   // Remove the holder from RedeemableERC20 if Pool is in holders
-  let id = contracts.redeemableERC20 + " - " + pool.id;
-  let holder = Holder.load(id);
-  if (holder != null) store.remove("Holder", id);
+  if (contracts) {
+    let id = contracts.redeemableERC20 + " - " + pool.id;
+    let holder = Holder.load(id);
+    if (holder != null) store.remove("Holder", id);
+  }
 
   // Create a DatasourceContext with Trust address
   let context = new DataSourceContext();
@@ -467,7 +492,7 @@ function updatePoolBalance(contracts: Contract): void {
   let pool = Pool.load(contracts.pool);
 
   // Check if redeemableTokenContract.try_balanceOf(contracts.pool) is not reverted and update the value
-  if (!poolRedeemableBalance.reverted) {
+  if (distributionProgress && !poolRedeemableBalance.reverted && pool) {
     distributionProgress.poolRedeemableBalance = poolRedeemableBalance.value;
     pool.poolRedeemableBalance = poolRedeemableBalance.value;
     distributionProgress.percentAvailable = poolRedeemableBalance.value
@@ -477,14 +502,14 @@ function updatePoolBalance(contracts: Contract): void {
   }
 
   // Check if reserveTokenContract.try_balanceOf(contracts.pool) is not reverted and update the value
-  if (!poolReserveBalance.reverted) {
+  if (distributionProgress && !poolReserveBalance.reverted && pool) {
     distributionProgress.poolReserveBalance = poolReserveBalance.value;
     pool.poolReserveBalance = poolReserveBalance.value;
 
     if (distributionProgress.minimumRaise == ZERO_BI) {
       // If minimumRaise is zero set percentRaised to 100%
       distributionProgress.percentRaised = HUNDRED_BD;
-    } else {
+    } else if (distributionProgress) {
       // Else apply  the formula percentReaise = amountRaised / minimumRaise * 100
       distributionProgress.percentRaised = distributionProgress.amountRaised
         .toBigDecimal()
@@ -493,26 +518,28 @@ function updatePoolBalance(contracts: Contract): void {
     }
 
     if (
-      distributionProgress.poolReserveBalance != null &&
-      distributionProgress.reserveInit != null
+      distributionProgress &&
+      distributionProgress.poolReserveBalance &&
+      distributionProgress.reserveInit
     ) {
       distributionProgress.amountRaised =
         distributionProgress.poolReserveBalance.minus(
           distributionProgress.reserveInit
         );
     }
+    pool.save();
   } else {
     log.info("Poola balance Failed. reserve, redeemable .", []);
   }
 
   // Update the Final weight
-  distributionProgress.finalWeight = valuationWeight(
-    distributionProgress.reserveInit,
-    distributionProgress.finalValuation
-  );
-
-  distributionProgress.save();
-  pool.save();
+  if (distributionProgress) {
+    distributionProgress.finalWeight = valuationWeight(
+      distributionProgress.reserveInit,
+      distributionProgress.finalValuation
+    );
+    distributionProgress.save();
+  }
 }
 
 /**
