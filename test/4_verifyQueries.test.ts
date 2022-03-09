@@ -1,18 +1,27 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import { FetchResult } from "apollo-fetch";
-import { ContractTransaction } from "ethers";
 import { hexlify } from "ethers/lib/utils";
 
 import * as Util from "./utils/utils";
 import {
   waitForSubgraphToBeSynced,
   getTxTimeblock,
-  verifyDeploy,
+  DEFAULT_ADMIN_ROLE,
+  APPROVER_ADMIN,
+  APPROVER,
+  REMOVER_ADMIN,
+  REMOVER,
+  BANNER_ADMIN,
+  BANNER,
+  RequestType,
+  RequestStatus,
+  VerifyStatus,
+  VerifyRole,
 } from "./utils/utils";
 
 // Types
-import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
+import type { FetchResult } from "apollo-fetch";
+import type { ContractTransaction } from "ethers";
+import type { Verify } from "../typechain/Verify";
 
 import {
   // Subgraph
@@ -27,36 +36,6 @@ import {
   noticeBoard,
 } from "./1_trustQueries.test";
 
-const enum RequestType {
-  APPROVE,
-  BAN,
-  REMOVE,
-}
-
-const enum RequestStatus {
-  NONE,
-  REQUEST_APPROVE,
-  REQUEST_BAN,
-  REQUEST_REMOVE,
-}
-
-const enum Status {
-  NONE,
-  APPROVED,
-  BANNED,
-  REMOVED,
-}
-
-const enum Role {
-  NONE,
-  APPROVER_ADMIN,
-  REMOVER_ADMIN,
-  BANNER_ADMIN,
-  APPROVER,
-  REMOVER,
-  BANNER,
-}
-
 let verify: Verify, transaction: ContractTransaction; // use to save/facilite a tx
 
 const evidenceEmpty = hexlify([...Buffer.from("")]);
@@ -65,34 +44,10 @@ const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
 const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
-// Roles
-const DEFAULT_ADMIN_ROLE = ethers.utils.hexZeroPad("0x00", 32);
-
-const APPROVER_ADMIN = ethers.utils.keccak256(
-  ethers.utils.toUtf8Bytes("APPROVER_ADMIN")
-);
-const APPROVER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("APPROVER"));
-
-const REMOVER_ADMIN = ethers.utils.keccak256(
-  ethers.utils.toUtf8Bytes("REMOVER_ADMIN")
-);
-const REMOVER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("REMOVER"));
-
-const BANNER_ADMIN = ethers.utils.keccak256(
-  ethers.utils.toUtf8Bytes("BANNER_ADMIN")
-);
-const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
-
 describe("Verify Factory - Queries", function () {
   it("should query VerifyFactory correctly after construction", async function () {
     // Get the verify implementation
-    const implementation = (
-      await Util.getEventArgs(
-        verifyFactory.deployTransaction,
-        "Implementation",
-        verifyFactory
-      )
-    ).implementation;
+    const implementation = await Util.getImplementation(verifyFactory);
 
     const query = `
         {
@@ -124,7 +79,7 @@ describe("Verify Factory - Queries", function () {
     let eventsSigner2 = 0;
     let eventsAdmin = 0;
     it("should query the Verify child from factory after creation", async function () {
-      verify = await verifyDeploy(verifyFactory, deployer, admin.address);
+      verify = await Util.verifyDeploy(verifyFactory, deployer, admin.address);
 
       // Admin grants all roles to himself. This is for testing purposes only, it SHOULD be avoided.
       await verify.connect(admin).grantRole(APPROVER, admin.address);
@@ -379,7 +334,7 @@ describe("Verify Factory - Queries", function () {
       expect(dataVerifyAddress.requestStatus).to.equals(
         RequestStatus.REQUEST_APPROVE
       );
-      expect(dataVerifyAddress.status).to.equals(Status.NONE);
+      expect(dataVerifyAddress.status).to.equals(VerifyStatus.NONE);
       expect(dataVerifyAddress.events).to.have.lengthOf(eventsSigner1);
       expect(dataVerifyAddress.events).to.deep.include({ id: verifyEventId });
     });
@@ -518,7 +473,7 @@ describe("Verify Factory - Queries", function () {
 
       // Expected VerifyAddress values
       expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(Status.APPROVED);
+      expect(data.status).to.equals(VerifyStatus.APPROVED);
 
       expect(data.events).to.have.lengthOf(eventsSigner1);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -547,7 +502,7 @@ describe("Verify Factory - Queries", function () {
 
       // Expected VerifyAddress values
       expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(Status.NONE);
+      expect(data.status).to.equals(VerifyStatus.NONE);
 
       expect(data.events).to.have.lengthOf(eventsAdmin);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -697,7 +652,7 @@ describe("Verify Factory - Queries", function () {
 
       // Expected VerifyAddress values
       expect(data.requestStatus).to.equals(RequestStatus.REQUEST_REMOVE);
-      expect(data.status).to.equals(Status.APPROVED);
+      expect(data.status).to.equals(VerifyStatus.APPROVED);
 
       expect(data.events).to.have.lengthOf(eventsSigner2); // requestApprove, Approve and requestRemove
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -853,7 +808,7 @@ describe("Verify Factory - Queries", function () {
       });
 
       expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(Status.REMOVED);
+      expect(data.status).to.equals(VerifyStatus.REMOVED);
 
       expect(data.events).to.have.lengthOf(eventsSigner2);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -882,7 +837,7 @@ describe("Verify Factory - Queries", function () {
 
       // Expected VerifyAddress values
       expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(Status.NONE);
+      expect(data.status).to.equals(VerifyStatus.NONE);
 
       expect(data.events).to.have.lengthOf(eventsAdmin);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -1015,7 +970,7 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       expect(data.requestStatus).to.equals(RequestStatus.REQUEST_BAN);
-      expect(data.status).to.equals(Status.APPROVED);
+      expect(data.status).to.equals(VerifyStatus.APPROVED);
 
       expect(data.events).to.have.lengthOf(eventsSigner2);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -1171,7 +1126,7 @@ describe("Verify Factory - Queries", function () {
       });
 
       expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(Status.BANNED);
+      expect(data.status).to.equals(VerifyStatus.BANNED);
 
       expect(data.events).to.have.lengthOf(eventsSigner2);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -1200,7 +1155,7 @@ describe("Verify Factory - Queries", function () {
 
       // Expected VerifyAddress values
       expect(data.requestStatus).to.equals(RequestStatus.NONE);
-      expect(data.status).to.equals(Status.NONE);
+      expect(data.status).to.equals(VerifyStatus.NONE);
 
       expect(data.events).to.have.lengthOf(eventsAdmin);
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -1213,7 +1168,7 @@ describe("Verify Factory - Queries", function () {
       signer2VerifyAddress: string;
 
     before("deplopy new verify", async function () {
-      verify = await verifyDeploy(verifyFactory, deployer, admin.address);
+      verify = await Util.verifyDeploy(verifyFactory, deployer, admin.address);
 
       adminVerifyAddress = admin.address.toLowerCase();
       signer1VerifyAddress = signer1.address.toLowerCase();
@@ -1273,9 +1228,9 @@ describe("Verify Factory - Queries", function () {
 
     it("should query admin VerifyAddress with the correct roles after Verify creation", async function () {
       const expectedRoles = [
-        Role.APPROVER_ADMIN,
-        Role.REMOVER_ADMIN,
-        Role.BANNER_ADMIN,
+        VerifyRole.APPROVER_ADMIN,
+        VerifyRole.REMOVER_ADMIN,
+        VerifyRole.BANNER_ADMIN,
       ];
 
       const query = `
@@ -1293,7 +1248,7 @@ describe("Verify Factory - Queries", function () {
       const data = response.data.verifyAddress;
 
       expect(data.status).to.equals(
-        Status.NONE,
+        VerifyStatus.NONE,
         `wrong status - admin verify adress does not have a status`
       );
 
@@ -1407,10 +1362,7 @@ describe("Verify Factory - Queries", function () {
     });
 
     it("should query admin VerifyAddress with the correct roles after Verify creation", async function () {
-      const expectedRoles: Role[] = [];
-
-      // Maybe we can use this when some address lost all posible role (?)
-      // const expectedRoles = [Role.NONE];
+      const expectedRoles: VerifyRole[] = [];
 
       const query = `
         {
@@ -1434,8 +1386,11 @@ describe("Verify Factory - Queries", function () {
 
     it("should add admin roles to VerifyAddress after grant role", async function () {
       // Expected roles
-      const signer1RolesExpected = [Role.APPROVER_ADMIN];
-      const signer2RolesExpected = [Role.REMOVER_ADMIN, Role.BANNER_ADMIN];
+      const signer1RolesExpected = [VerifyRole.APPROVER_ADMIN];
+      const signer2RolesExpected = [
+        VerifyRole.REMOVER_ADMIN,
+        VerifyRole.BANNER_ADMIN,
+      ];
 
       const query = `
         {

@@ -1,34 +1,40 @@
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
-import { ContractTransaction } from "ethers";
-import { FetchResult } from "apollo-fetch";
 import { concat } from "ethers/lib/utils";
 
 import * as Util from "./utils/utils";
 import {
   op,
-  deploy,
   waitForSubgraphToBeSynced,
+  afterBlockNumberConfig,
+  getEventArgs,
   Tier,
   LEVELS,
+  SaleStatus,
+  zeroAddress,
   OpcodeSale,
   VMState,
 } from "./utils/utils";
 
-import reserveTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import redeemableTokenJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
+// Typechain Factories
+import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
+import { RedeemableERC20__factory } from "../typechain/factories/RedeemableERC20__factory";
 
-import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
-import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
-import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
+// Types
+import type { FetchResult } from "apollo-fetch";
+import type { ContractTransaction } from "ethers";
+import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
+import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
 import type {
+  Sale,
   BuyEvent,
   RefundEvent,
-  Sale,
-} from "@beehiveinnovation/rain-protocol/typechain/Sale";
+  StartEvent,
+} from "../typechain/Sale";
 
 import {
-  // Subgraph fetch
+  // Subgraph
   subgraph,
   // Signers
   deployer,
@@ -43,43 +49,17 @@ import {
   noticeBoard,
 } from "./1_trustQueries.test";
 
-enum Status {
-  PENDING,
-  ACTIVE,
-  SUCCESS,
-  FAIL,
-}
-
-const afterBlockNumberConfig = (blockNumber: number) => {
-  return {
-    sources: [
-      concat([
-        // (BLOCK_NUMBER blockNumberSub1 gt)
-        op(OpcodeSale.BLOCK_NUMBER),
-        op(OpcodeSale.VAL, 0),
-        op(OpcodeSale.GREATER_THAN),
-      ]),
-    ],
-    constants: [blockNumber - 1],
-    stackLength: 3,
-    argumentsLength: 0,
-  };
-};
-
 let reserve: ReserveTokenTest,
   erc20BalanceTier: ERC20BalanceTier,
   sale: Sale,
   redeemableERC20Contract: RedeemableERC20,
-  transaction: ContractTransaction, // Use to save the tx between statements
+  transaction: ContractTransaction,
   transactionAux: ContractTransaction;
 
 describe("Sales queries test", function () {
-  before("getting the factory", async function () {
-    reserve = (await deploy(
-      reserveTokenJson,
-      deployer,
-      []
-    )) as ReserveTokenTest;
+  before("deploying fresh test contracts", async function () {
+    // Deploying new reserve to test
+    reserve = await new ReserveTokenTest__factory(deployer).deploy();
 
     // Deploying a new Tier Contract
     erc20BalanceTier = await Util.erc20BalanceTierDeploy(
@@ -94,13 +74,7 @@ describe("Sales queries test", function () {
 
   it("should query the saleFactory after construction correctly", async function () {
     // Get the Sale implementation
-    const implementation = (
-      await Util.getEventArgs(
-        saleFactory.deployTransaction,
-        "Implementation",
-        saleFactory
-      )
-    ).implementation;
+    const implementation = await Util.getImplementation(saleFactory);
 
     const query = `
       {
@@ -133,7 +107,7 @@ describe("Sales queries test", function () {
     const redeemableERC20Config = {
       name: "Token",
       symbol: "TKN",
-      distributor: Util.zeroAddress,
+      distributor: zeroAddress,
       initialSupply: totalTokenSupply,
     };
 
@@ -148,7 +122,7 @@ describe("Sales queries test", function () {
       canStartStateConfig: VMState,
       canEndStateConfig: VMState;
 
-    const calculatePriceStateConfig = {
+    const calculatePriceStateConfig: VMState = {
       sources,
       constants,
       stackLength: 1,
@@ -196,11 +170,13 @@ describe("Sales queries test", function () {
       );
 
       // Creating the instance for contracts
-      redeemableERC20Contract = (await Util.getContractChild(
-        sale.deployTransaction,
-        redeemableERC20Factory,
-        redeemableTokenJson
-      )) as RedeemableERC20;
+      redeemableERC20Contract = new RedeemableERC20__factory(deployer).attach(
+        await Util.getChild(redeemableERC20Factory, sale.deployTransaction)
+      );
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      redeemableERC20Contract.deployTransaction = sale.deployTransaction;
 
       await waitForSubgraphToBeSynced();
     });
@@ -334,7 +310,7 @@ describe("Sales queries test", function () {
       })) as FetchResult;
       const data = response.data.sale;
 
-      expect(data.saleStatus).to.equals(Status.PENDING);
+      expect(data.saleStatus).to.equals(SaleStatus.PENDING);
 
       expect(data.startEvent).to.be.null;
       expect(data.endEvent).to.be.null;
@@ -468,6 +444,7 @@ describe("Sales queries test", function () {
       const [deployBlock, deployTime] = await Util.getTxTimeblock(
         redeemableERC20Contract.deployTransaction
       );
+
       const query = `
         {
             redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
@@ -574,7 +551,7 @@ describe("Sales queries test", function () {
 
       const data = response.data.sale;
 
-      expect(data.saleStatus).to.equals(Status.ACTIVE);
+      expect(data.saleStatus).to.equals(SaleStatus.ACTIVE);
       expect(data.startEvent.id).to.equals(transaction.hash.toLowerCase());
     });
 
@@ -584,7 +561,11 @@ describe("Sales queries test", function () {
       const [deployBlock, deployTime] = await Util.getTxTimeblock(transaction);
 
       // Get the sender from event
-      const { sender } = await Util.getEventArgs(transaction, "Start", sale);
+      const { sender } = (await getEventArgs(
+        transaction,
+        "Start",
+        sale
+      )) as StartEvent["args"];
 
       const query = `
         {
@@ -632,16 +613,16 @@ describe("Sales queries test", function () {
 
       const buyConfig = {
         feeRecipient: feeRecipient.address,
-        fee,
+        fee: fee,
         minimumUnits: desiredUnits,
-        desiredUnits,
+        desiredUnits: desiredUnits,
         maximumPrice: staticPrice,
       };
 
       // Buying the half of units
       transaction = await sale.connect(signer1).buy(buyConfig);
 
-      const { receipt } = (await Util.getEventArgs(
+      const { receipt } = (await getEventArgs(
         transaction,
         "Buy",
         sale
@@ -700,7 +681,7 @@ describe("Sales queries test", function () {
       const saleBuyId = transaction.hash.toLowerCase();
       const feeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLowerCase()}`;
 
-      const { receipt, config } = (await Util.getEventArgs(
+      const { receipt, config } = (await getEventArgs(
         transaction,
         "Buy",
         sale
@@ -795,7 +776,7 @@ describe("Sales queries test", function () {
       const saleTransactionId = transaction.hash.toLowerCase();
       const feeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLowerCase()}`;
 
-      const { receipt } = (await Util.getEventArgs(
+      const { receipt } = (await getEventArgs(
         transaction,
         "Buy",
         sale
@@ -854,7 +835,7 @@ describe("Sales queries test", function () {
     });
 
     it("should query the SaleReceipt after a buy", async function () {
-      const { receipt } = (await Util.getEventArgs(
+      const { receipt } = (await getEventArgs(
         transaction,
         "Buy",
         sale
@@ -938,7 +919,7 @@ describe("Sales queries test", function () {
 
     it("should update the Sale after a refund", async function () {
       // Using the same receipt emitted on the last buy
-      const { receipt } = (await Util.getEventArgs(
+      const { receipt } = (await getEventArgs(
         transaction,
         "Buy",
         sale
@@ -1005,7 +986,7 @@ describe("Sales queries test", function () {
     it("should query the SaleRefund after refund", async function () {
       const [refundBlock, refundTime] = await Util.getTxTimeblock(transaction);
 
-      const { receipt } = (await Util.getEventArgs(
+      const { receipt } = (await getEventArgs(
         transaction,
         "Refund",
         sale
@@ -1108,7 +1089,7 @@ describe("Sales queries test", function () {
       const saleTransactionId = transaction.hash.toLowerCase();
       const feeRecipientId = `${sale.address.toLowerCase()} - ${feeRecipient.address.toLowerCase()}`;
 
-      const { receipt } = (await Util.getEventArgs(
+      const { receipt } = (await getEventArgs(
         transaction,
         "Refund",
         sale
@@ -1216,7 +1197,7 @@ describe("Sales queries test", function () {
 
       transaction = await sale.connect(signer1).buy(buyConfig);
 
-      const { receipt } = (await Util.getEventArgs(
+      const { receipt } = (await getEventArgs(
         transaction,
         "Buy",
         sale
@@ -1285,7 +1266,7 @@ describe("Sales queries test", function () {
 
       const data = response.data.sale;
 
-      expect(data.saleStatus).to.equals(Status.SUCCESS);
+      expect(data.saleStatus).to.equals(SaleStatus.SUCCESS);
       expect(data.endEvent.id).to.equals(transaction.hash.toLowerCase());
     });
 
@@ -1321,7 +1302,7 @@ describe("Sales queries test", function () {
       expect(data.timestamp).to.equals(endTime.toString());
 
       expect(data.saleContract.id).to.equals(sale.address.toLowerCase());
-      expect(data.saleStatus).to.equals(Status.SUCCESS);
+      expect(data.saleStatus).to.equals(SaleStatus.SUCCESS);
     });
   });
 
@@ -1336,7 +1317,7 @@ describe("Sales queries test", function () {
     let startBlock: number,
       canStartStateConfig: VMState,
       canEndStateConfig: VMState;
-    const calculatePriceStateConfig = {
+    const calculatePriceStateConfig: VMState = {
       sources,
       constants,
       stackLength: 1,
@@ -1351,11 +1332,11 @@ describe("Sales queries test", function () {
     const redeemableERC20Config = {
       name: "Token",
       symbol: "TKN",
-      distributor: Util.zeroAddress,
+      distributor: zeroAddress,
       initialSupply: ethers.BigNumber.from("2000").mul(Util.ONE),
     };
     const minimumTier = Tier.ZERO;
-    const distributionEndForwardingAddress = Util.zeroAddress;
+    const distributionEndForwardingAddress = zeroAddress;
 
     before("creating the sale child", async function () {
       // 5 blocks from now
@@ -1386,11 +1367,13 @@ describe("Sales queries test", function () {
       );
 
       // Creating the instance for contracts
-      redeemableERC20Contract = (await Util.getContractChild(
-        sale.deployTransaction,
-        redeemableERC20Factory,
-        redeemableTokenJson
-      )) as RedeemableERC20;
+      redeemableERC20Contract = new RedeemableERC20__factory(deployer).attach(
+        await Util.getChild(redeemableERC20Factory, sale.deployTransaction)
+      );
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      redeemableERC20Contract.deployTransaction = sale.deployTransaction;
 
       await waitForSubgraphToBeSynced();
     });
@@ -1411,7 +1394,7 @@ describe("Sales queries test", function () {
       await sale.start();
 
       const saleStatusActive = await sale.saleStatus();
-      assert(saleStatusActive === Status.ACTIVE);
+      assert(saleStatusActive === SaleStatus.ACTIVE);
 
       const cantEnd = await sale.canEnd();
       assert(!cantEnd);
@@ -1449,7 +1432,7 @@ describe("Sales queries test", function () {
 
       const data = response.data.sale;
 
-      expect(data.saleStatus).to.equals(Status.FAIL);
+      expect(data.saleStatus).to.equals(SaleStatus.FAIL);
       expect(data.endEvent.id).to.equals(saleEndId);
     });
 
@@ -1478,7 +1461,7 @@ describe("Sales queries test", function () {
       expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
       expect(data.sender).to.equals(signer1.address.toLowerCase());
       expect(data.saleContract.id).to.equals(sale.address.toLowerCase());
-      expect(data.saleStatus).to.equals(Status.FAIL);
+      expect(data.saleStatus).to.equals(SaleStatus.FAIL);
     });
   });
 
@@ -1493,7 +1476,7 @@ describe("Sales queries test", function () {
     let startBlock: number,
       canStartStateConfig: VMState,
       canEndStateConfig: VMState;
-    const calculatePriceStateConfig = {
+    const calculatePriceStateConfig: VMState = {
       sources,
       constants,
       stackLength: 1,
@@ -1508,7 +1491,7 @@ describe("Sales queries test", function () {
     const redeemableERC20Config = {
       name: "Token",
       symbol: "TKN",
-      distributor: Util.zeroAddress,
+      distributor: zeroAddress,
       initialSupply: ethers.BigNumber.from("2000").mul(Util.ONE),
     };
     const minimumTier = Tier.ZERO;
@@ -1546,11 +1529,13 @@ describe("Sales queries test", function () {
       );
 
       // Creating the instance for contracts
-      redeemableERC20Contract = (await Util.getContractChild(
-        sale.deployTransaction,
-        redeemableERC20Factory,
-        redeemableTokenJson
-      )) as RedeemableERC20;
+      redeemableERC20Contract = new RedeemableERC20__factory(deployer).attach(
+        await Util.getChild(redeemableERC20Factory, sale.deployTransaction)
+      );
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      redeemableERC20Contract.deployTransaction = sale.deployTransaction;
 
       await waitForSubgraphToBeSynced();
     });
@@ -1583,7 +1568,7 @@ describe("Sales queries test", function () {
       await sale.start();
 
       const saleStatusActive = await sale.saleStatus();
-      assert(saleStatusActive === Status.ACTIVE);
+      assert(saleStatusActive === SaleStatus.ACTIVE);
 
       // Buy the 50% of the units availables
       const desiredUnits = (
@@ -1642,7 +1627,7 @@ describe("Sales queries test", function () {
     let startBlock: number,
       canStartStateConfig: VMState,
       canEndStateConfig: VMState;
-    const calculatePriceStateConfig = {
+    const calculatePriceStateConfig: VMState = {
       sources,
       constants,
       stackLength: 1,
@@ -1657,11 +1642,11 @@ describe("Sales queries test", function () {
     const redeemableERC20Config = {
       name: "Token",
       symbol: "TKN",
-      distributor: Util.zeroAddress,
+      distributor: zeroAddress,
       initialSupply: ethers.BigNumber.from("2000").mul(Util.ONE),
     };
     const minimumTier = Tier.ZERO;
-    const distributionEndForwardingAddress = Util.zeroAddress;
+    const distributionEndForwardingAddress = zeroAddress;
 
     let nonErc20: string;
 
@@ -1697,11 +1682,13 @@ describe("Sales queries test", function () {
       );
 
       // Creating the instance for contracts
-      redeemableERC20Contract = (await Util.getContractChild(
-        sale.deployTransaction,
-        redeemableERC20Factory,
-        redeemableTokenJson
-      )) as RedeemableERC20;
+      redeemableERC20Contract = new RedeemableERC20__factory(deployer).attach(
+        await Util.getChild(redeemableERC20Factory, sale.deployTransaction)
+      );
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      redeemableERC20Contract.deployTransaction = sale.deployTransaction;
 
       await waitForSubgraphToBeSynced();
     });

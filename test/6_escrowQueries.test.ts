@@ -5,15 +5,26 @@ import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
 import { deploy, waitForSubgraphToBeSynced, Tier } from "./utils/utils";
 
-import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import readWriteTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ReadWriteTier.sol/ReadWriteTier.json";
+// Typechain Factories
+import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
+import { ReadWriteTier__factory } from "../typechain/factories/ReadWriteTier__factory";
 
-import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
-import { ReadWriteTier } from "@beehiveinnovation/rain-protocol/typechain/ReadWriteTier";
-import { Trust } from "@beehiveinnovation/rain-protocol/typechain/Trust";
-import { RedeemableERC20 } from "@beehiveinnovation/rain-protocol/typechain/RedeemableERC20";
-import { ConfigurableRightsPool } from "@beehiveinnovation/rain-protocol/typechain/ConfigurableRightsPool";
-import { BPool } from "@beehiveinnovation/rain-protocol/typechain/BPool";
+import reserveToken from "../artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
+
+import { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import { ReadWriteTier } from "../typechain/ReadWriteTier";
+import { Trust } from "../typechain/Trust";
+import { RedeemableERC20 } from "../typechain/RedeemableERC20";
+import { ConfigurableRightsPool } from "../typechain/ConfigurableRightsPool";
+import { BPool } from "../typechain/BPool";
+
+import {
+  DepositEvent,
+  PendingDepositEvent,
+  UndepositEvent,
+  WithdrawEvent,
+} from "../typechain/RedeemableERC20ClaimEscrow";
+
 import {
   // Subgraph
   subgraph,
@@ -60,7 +71,7 @@ let trustAddress: string,
 describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before(async function () {
     // Same tier for all
-    tier = (await deploy(readWriteTierJson, deployer, [])) as ReadWriteTier;
+    tier = await new ReadWriteTier__factory(deployer).deploy();
     await tier.setTier(signer1.address, Tier.FOUR, []);
     await tier.setTier(signer2.address, Tier.FOUR, []);
 
@@ -77,11 +88,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     before("deploy fresh test contracts", async function () {
       // New reserve token
-      claimableReserveToken = (await deploy(
-        reserveToken,
-        deployer,
-        []
-      )) as ReserveTokenTest;
+      claimableReserveToken = await new ReserveTokenTest__factory(
+        deployer
+      ).deploy();
 
       // Make a new ISale with a basic Setup
       ({
@@ -207,11 +216,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should query the RedeemableEscrowPendingDeposit after a PendingDeposit", async function () {
-      const { amount: deposited } = await Util.getEventArgs(
+      const { amount: deposited } = (await Util.getEventArgs(
         transaction,
         "PendingDeposit",
         claimEscrow
-      );
+      )) as PendingDepositEvent["args"];
 
       const pendingDepositId = transaction.hash.toLowerCase();
       const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
@@ -352,11 +361,12 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should query the RedeemableEscrowPendingDepositorToken after a PendingDeposit", async function () {
-      const { amount: deposited } = await Util.getEventArgs(
+      const { amount: deposited } = (await Util.getEventArgs(
         transaction,
         "PendingDeposit",
         claimEscrow
-      );
+      )) as PendingDepositEvent["args"];
+
       const pendingDepositId = transaction.hash.toLowerCase();
       const pendingDepositorTokenId = `${trustAddress} - ${claimEscrowAddress} - ${depositor1} - ${claimableTokenAddress}`;
       const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
@@ -475,16 +485,17 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       // create empty blocks to end of raise duration
       const beginEmptyBlocksBlock = await ethers.provider.getBlockNumber();
-      const emptyBlocks =
-        startBlock + minimumTradingDuration - beginEmptyBlocksBlock + 1;
-
-      await Util.createEmptyBlock(emptyBlocks);
+      await Util.createEmptyBlock(
+        startBlock + minimumTradingDuration - beginEmptyBlocksBlock + 1
+      );
 
       await trust.endDutchAuction();
 
       // Make a deposit with same signer1
       const depositAmount = ethers.BigNumber.from("100" + zeroDecimals);
+
       await claimableReserveToken.transfer(signer1.address, depositAmount);
+
       await claimableReserveToken
         .connect(signer1)
         .approve(claimEscrow.address, depositAmount);
@@ -494,15 +505,17 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         .connect(signer1)
         .deposit(trust.address, claimableReserveToken.address, depositAmount);
 
+      // adding to totalDeposited to manage globally on test
       totalDeposited = totalDeposited.add(depositAmount);
 
       await waitForSubgraphToBeSynced();
 
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
+
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
         `wrong total supply`
@@ -539,11 +552,12 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update the RedeemableEscrowDepositor after a Deposit", async function () {
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
+
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
         `wrong total supply`
@@ -590,7 +604,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     it("should query the RedeemableEscrowDeposit after a Deposit", async function () {
       const { amount: deposited, supply: redeemableSupply } =
-        await Util.getEventArgs(transaction, "Deposit", claimEscrow);
+        (await Util.getEventArgs(
+          transaction,
+          "Deposit",
+          claimEscrow
+        )) as DepositEvent["args"];
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -692,11 +710,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     it("should query the RedeemableEscrowSupplyTokenDeposit after a Deposit", async function () {
       const depositId = transaction.hash.toLowerCase();
 
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -820,12 +838,13 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           signer1.address
         );
 
-      const { amount: deposited } = await Util.getEventArgs(
+      const { amount: deposited } = (await Util.getEventArgs(
         transaction,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
 
+      // adding to totalDeposited to manage globally on test
       totalDeposited = totalDeposited.add(deposited);
 
       await waitForSubgraphToBeSynced();
@@ -871,11 +890,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update the RedeemableEscrowDepositor after a SweepPending", async function () {
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -916,7 +935,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     it("should query the RedeemableEscrowDeposit after a SweepPending", async function () {
       const { amount: deposited, supply: redeemableSupply } =
-        await Util.getEventArgs(transaction, "Deposit", claimEscrow);
+        (await Util.getEventArgs(
+          transaction,
+          "Deposit",
+          claimEscrow
+        )) as DepositEvent["args"];
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -1016,11 +1039,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update  the RedeemableEscrowSupplyTokenDeposit after a SweepPending", async function () {
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -1059,11 +1082,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update the RedeemableERC20ClaimEscrow entity after a Withdraw", async function () {
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -1078,12 +1101,13 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
           redeemableSupply
         );
 
-      const { amount: Withdrawn } = await Util.getEventArgs(
+      const { amount: Withdrawn } = (await Util.getEventArgs(
         transaction,
         "Withdraw",
         claimEscrow
-      );
+      )) as WithdrawEvent["args"];
 
+      // subtracting from totalDeposited to manage globally on test
       totalDeposited = totalDeposited.sub(Withdrawn);
 
       await waitForSubgraphToBeSynced();
@@ -1120,7 +1144,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     it("should query the RedeemableEscrowWithdraw after a Withdraw", async function () {
       const { amount: amountWithdrawn, supply: redeemableSupply } =
-        await Util.getEventArgs(transaction, "Withdraw", claimEscrow);
+        (await Util.getEventArgs(
+          transaction,
+          "Withdraw",
+          claimEscrow
+        )) as WithdrawEvent["args"];
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -1157,7 +1185,6 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const response = (await subgraph({
         query,
       })) as FetchResult;
-
       const data = response.data.redeemableEscrowWithdraw;
 
       expect(data.withdrawer).to.equals(
@@ -1268,11 +1295,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should decreased the totalDeposited in RedeemableEscrowSupplyTokenDeposit after a Withdraw", async function () {
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Withdraw",
         claimEscrow
-      );
+      )) as WithdrawEvent["args"];
 
       assert(
         (await redeemableERC20.totalSupply()).eq(redeemableSupply),
@@ -1303,11 +1330,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     it("should query different RedeemableEscrowSupplyTokenDeposits with different tokens and supplies", async function () {
       // New claimable reserve token
-      const claimableReserveToken2 = (await deploy(
-        reserveToken,
-        deployer,
-        []
-      )) as ReserveTokenTest;
+      const claimableReserveToken2 = await new ReserveTokenTest__factory(
+        deployer
+      ).deploy();
 
       // Providing some claimableReserveToken2 to signer2
       const depositAmount1 = ethers.BigNumber.from("100" + zeroDecimals);
@@ -1354,17 +1379,17 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const claimableToken2 = claimableReserveToken2.address.toLowerCase();
 
       // Using transactions to get the supply in that moment
-      const { supply: supply1 } = await Util.getEventArgs(
+      const { supply: supply1 } = (await Util.getEventArgs(
         transaction1,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
 
-      const { supply: supply2 } = await Util.getEventArgs(
+      const { supply: supply2 } = (await Util.getEventArgs(
         transaction2,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
 
       const escrowSupplyTokenDeposit_1 = `${trustAddress} - ${claimEscrowAddress} - ${supply1} - ${claimableToken2}`;
       const escrowSupplyTokenDeposit_2 = `${trustAddress} - ${claimEscrowAddress} - ${supply2} - ${claimableToken2}`;
@@ -1515,11 +1540,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     before("deploy fresh test contracts", async function () {
       // New reserve token
-      claimableReserveToken = (await deploy(
-        reserveToken,
-        deployer,
-        []
-      )) as ReserveTokenTest;
+      claimableReserveToken = await new ReserveTokenTest__factory(
+        deployer
+      ).deploy();
 
       // new basic Setup
       ({
@@ -1551,11 +1574,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     it("should query RedeemableEscrowSupplyTokenDeposit after deposit normally", async function () {
       // create empty blocks to force end of raise duration
       const beginEmptyBlocksBlock = await ethers.provider.getBlockNumber();
-      const emptyBlocks =
-        startBlock + minimumTradingDuration - beginEmptyBlocksBlock + 1;
-
-      // create empty blocks to end of raise duration
-      await Util.createEmptyBlock(emptyBlocks);
+      await Util.createEmptyBlock(
+        startBlock + minimumTradingDuration - beginEmptyBlocksBlock + 1
+      );
 
       // end now to make a status failed
       await trust.endDutchAuction();
@@ -1577,11 +1598,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       // Waiting for sync
       await waitForSubgraphToBeSynced();
 
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Deposit",
         claimEscrow
-      );
+      )) as DepositEvent["args"];
 
       const depositId = transaction.hash.toLowerCase();
 
@@ -1608,7 +1629,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     it("should update the RedeemableERC20ClaimEscrow entity after a Undeposit", async function () {
       const { amount: deposited, supply: redeemableSupply } =
-        await Util.getEventArgs(transaction, "Deposit", claimEscrow);
+        (await Util.getEventArgs(
+          transaction,
+          "Deposit",
+          claimEscrow
+        )) as DepositEvent["args"];
 
       const undepositAmount = ethers.BigNumber.from(deposited).div(2);
 
@@ -1647,11 +1672,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
 
     it("should update RedeemableEscrowSupplyTokenDeposit after undeposit", async function () {
-      const { supply: redeemableSupply } = await Util.getEventArgs(
+      const { supply: redeemableSupply } = (await Util.getEventArgs(
         transaction,
         "Undeposit",
         claimEscrow
-      );
+      )) as UndepositEvent["args"];
 
       const supplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
@@ -1702,7 +1727,11 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
     it("should query RedeemableEscrowUndeposit after undeposit", async function () {
       const { supply: redeemableSupply, amount: undepositAmount } =
-        await Util.getEventArgs(transaction, "Undeposit", claimEscrow);
+        (await Util.getEventArgs(
+          transaction,
+          "Undeposit",
+          claimEscrow
+        )) as UndepositEvent["args"];
 
       const undepositId = transaction.hash.toLowerCase();
 

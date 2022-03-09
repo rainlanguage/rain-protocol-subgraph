@@ -20,25 +20,28 @@ import {
   OpcodeSale,
 } from "./utils/utils";
 
-// Artifacts
-import reserveJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import reserveNFTJson from "@vishalkale15107/rain-protocol/artifacts/contracts/test/ReserveNFT.sol/ReserveNFT.json";
+// Typechain Factories
+import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
 
-import verifyJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/verify/Verify.sol/Verify.json";
-import erc20BalanceTierJson from "@beehiveinnovation/rain-protocol/artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
+// Artifacts
+import reserveJson from "../artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
+import reserveNFTJson from "../artifacts/contracts/test/ReserveNFT.sol/ReserveNFT.json";
+
+import verifyJson from "../artifacts/contracts/verify/Verify.sol/Verify.json";
+import erc20BalanceTierJson from "../artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
 
 // Types
-import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
-import { ReserveNFT } from "@vishalkale15107/rain-protocol/typechain/ReserveNFT";
+import { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import { ReserveNFT } from "../typechain/ReserveNFT";
 
-import { Verify } from "@beehiveinnovation/rain-protocol/typechain/Verify";
-import { VerifyTier } from "@beehiveinnovation/rain-protocol/typechain/VerifyTier";
-import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
-import { ERC20TransferTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20TransferTier";
-import { CombineTier } from "@beehiveinnovation/rain-protocol/typechain/CombineTier";
+import { Verify } from "../typechain/Verify";
+import { VerifyTier } from "../typechain/VerifyTier";
+import { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
+import { ERC20TransferTier } from "../typechain/ERC20TransferTier";
+import { CombineTier } from "../typechain/CombineTier";
 
 // Should update path after a new commit
-import { ERC721BalanceTier } from "@vishalkale15107/rain-protocol/typechain/ERC721BalanceTier";
+import { ERC721BalanceTier } from "../typechain/ERC721BalanceTier";
 
 import {
   // Subgraph
@@ -71,11 +74,9 @@ const enum RequestType {
 let reserve: ReserveTokenTest, transaction: ContractTransaction;
 
 describe("Subgraph Tier Test", function () {
-  // TODO: Add test to tier contracts that are not indexed by the subgraph but are present
-  // in other contracts like trusts or sales
-
-  before("Deploy fresh test contracts", async function () {
-    reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
+  before("deploy fresh test contracts", async function () {
+    // New reserve token
+    reserve = await new ReserveTokenTest__factory(deployer).deploy();
   });
 
   describe("VerifyTier Factory - Queries", function () {
@@ -1161,7 +1162,7 @@ describe("Subgraph Tier Test", function () {
       const query = `
         {
           tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${level}") {
-            memberCount 
+            memberCount
           }
         }
       `;
@@ -1227,10 +1228,10 @@ describe("Subgraph Tier Test", function () {
       const query = `
         {
           startLevel: tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${startLevel}") {
-            memberCount 
+            memberCount
           }
           endLevel: tierLevel (id: "${erc20TransferTier.address.toLowerCase()} - ${endLevel}") {
-            memberCount 
+            memberCount
           }
         }
       `;

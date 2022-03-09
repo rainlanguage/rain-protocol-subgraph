@@ -1,14 +1,16 @@
 import { expect } from "chai";
-import { ContractTransaction } from "ethers";
 import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
-import { deploy, waitForSubgraphToBeSynced, LEVELS } from "./utils/utils";
+import { waitForSubgraphToBeSynced } from "./utils/utils";
 
-import reserveToken from "@beehiveinnovation/rain-protocol/artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
+// Typechain Factories
+import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
 
-import { GatedNFT } from "@beehiveinnovation/rain-statusfi/typechain/GatedNFT";
-import { ReserveTokenTest } from "@beehiveinnovation/rain-protocol/typechain/ReserveTokenTest";
-import { ERC20BalanceTier } from "@beehiveinnovation/rain-protocol/typechain/ERC20BalanceTier";
+// Types
+import type { ContractTransaction } from "ethers";
+import type { GatedNFT } from "../typechain/GatedNFT";
+import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
 
 import {
   // Subgraph
@@ -53,32 +55,26 @@ describe("Subgraph GatedNFT test", function () {
   before("creating and connecting", async function () {
     royaltyRecipient = signer1.address;
 
-    reserve = (await deploy(reserveToken, deployer, [])) as ReserveTokenTest;
+    reserve = await new ReserveTokenTest__factory(deployer).deploy();
 
     erc20BalanceTier = await Util.erc20BalanceTierDeploy(
       erc20BalanceTierFactory,
       deployer,
       {
         erc20: reserve.address,
-        tierValues: LEVELS,
+        tierValues: Util.LEVELS,
       }
     );
 
     // Giving the necessary amount to signer1 for a level 2
-    const level2 = LEVELS[1];
-    await reserve.transfer(signer1.address, level2);
+    await reserve.transfer(signer1.address, Util.amountToLevel(Util.Tier.TWO));
+
+    // Wait for sync
+    await waitForSubgraphToBeSynced();
   });
 
   it("should query GatedNFTFactory correctly after construction", async function () {
-    await waitForSubgraphToBeSynced();
-
-    const implementation = (
-      await Util.getEventArgs(
-        gatedNFTFactory.deployTransaction,
-        "Implementation",
-        gatedNFTFactory
-      )
-    ).implementation;
+    const implementation = await Util.getImplementation(gatedNFTFactory);
 
     const query = `
       {
