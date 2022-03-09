@@ -213,6 +213,31 @@ dataSources:
           handler: handleImplementation
       file: ./src/sale/SaleFactory.ts
   - kind: ethereum/contract
+    name: EmissionsERC20Factory
+    network: {{ network }}
+    source:
+      address: "{{ saleFactory }}"
+      abi: EmissionsERC20Factory
+      startBlock: {{ blockSaleFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - EmissionsERC20Factory
+        - EmissionsERC20
+      abis:
+        - name: EmissionsERC20Factory
+          file: ./abis/emissionsERC20/EmissionsERC20Factory.json
+        - name: EmissionsERC20
+          file: ./abis/emissionsERC20/EmissionsERC20.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/emissionsERC20/emissionsERC20Factory.ts
+  - kind: ethereum/contract
     name: GatedNFTFactory
     network: {{ network }}
     source:
@@ -660,3 +685,28 @@ templates:
         - event: UpdatedRoyaltyRecipient(address)
           handler: handleUpdatedRoyaltyRecipient
       file: ./src/gatedNFT/GatedNFT.ts
+  - kind: ethereum/contract
+    name: EmissionsERC20Template
+    network: {{ network }}
+    source:
+      abi: EmissionsERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - EmissionsERC20
+        - EmissionERC20Claim
+      abis:
+        - name: EmissionsERC20
+          file: ./abis/emissionsERC20/EmissionsERC20.json
+      eventHandlers:
+        - event: Claim(address,address,bytes)
+          handler: handleClaim
+        - event: Initialize(address,bool,uint256)
+          handler: handleInitialize
+        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
+          handler: handleSnapshot
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/emissionsERC20/emissionsERC20.ts
