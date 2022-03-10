@@ -419,12 +419,14 @@ export const waitForSubgraphToBeSynced = async (
             } 
           `,
         });
-        const blocksSG = result.data.indexingStatusForCurrentVersion.chains[0];
+        const data = result.data.indexingStatusForCurrentVersion;
         if (
-          result.data.indexingStatusForCurrentVersion.synced === true &&
-          blocksSG.latestBlock.number == currentBlock
+          data.synced === true &&
+          data.chains[0].latestBlock.number == currentBlock
         ) {
           resolve({ synced: true });
+        } else if (data.health === "failed") {
+          reject(new Error(`Subgraph fatalError - ${data.fatalError.message}`));
         } else {
           throw new Error(`subgraph is not sync`);
         }
@@ -435,7 +437,7 @@ export const waitForSubgraphToBeSynced = async (
         }
 
         if (message == "Unknown Error") {
-          new Error(`${message} - ${e}`);
+          reject(new Error(`${message} - ${e}`));
         }
 
         if (!currentBlock) {
