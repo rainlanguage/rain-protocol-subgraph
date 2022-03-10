@@ -19,6 +19,7 @@ import { getFactories, QUERY } from "./utils/queries";
 
 // Typechain Factories
 import { NoticeBoard__factory } from "../typechain/factories/NoticeBoard__factory";
+import { EmissionsERC20Factory__factory } from "../typechain/factories/EmissionsERC20Factory__factory";
 import { VerifyFactory__factory } from "../typechain/factories/VerifyFactory__factory";
 import { ERC20BalanceTierFactory__factory } from "../typechain/factories/ERC20BalanceTierFactory__factory";
 import { ERC20TransferTierFactory__factory } from "../typechain/factories/ERC20TransferTierFactory__factory";
@@ -43,6 +44,7 @@ import type { BigNumber, ContractTransaction } from "ethers";
 
 // Typechain types
 import type { NoticeBoard } from "../typechain/NoticeBoard";
+import type { EmissionsERC20Factory } from "../typechain/EmissionsERC20Factory";
 import type { BFactory } from "../typechain/BFactory";
 import type { CRPFactory } from "../typechain/CRPFactory";
 import type { RedeemableERC20Factory } from "../typechain/RedeemableERC20Factory";
@@ -97,6 +99,7 @@ let minimumTier: Tier,
 // Export Factories
 export let subgraph: ApolloFetch,
   noticeBoard: NoticeBoard,
+  emissionsERC20Factory: EmissionsERC20Factory,
   seedERC20Factory: SeedERC20Factory,
   redeemableERC20Factory: RedeemableERC20Factory,
   trustFactory: TrustFactory,
@@ -139,6 +142,11 @@ before("Deployment contracts and subgraph", async function () {
 
   // Deploying NoticeBoard contract
   noticeBoard = await new NoticeBoard__factory(deployer).deploy();
+
+  // Deploying EmissionsERC20Factory contract
+  emissionsERC20Factory = await new EmissionsERC20Factory__factory(
+    deployer
+  ).deploy();
 
   // Deploying TrustFactory contract
   [crpFactory, bFactory] = (await Util.balancerDeploy(deployer)) as [
@@ -194,6 +202,10 @@ before("Deployment contracts and subgraph", async function () {
   // Saving addresses and individuals blocks to index
   config.noticeBoard = noticeBoard.address;
   config.noticeBoardBlock = noticeBoard.deployTransaction.blockNumber;
+
+  config.emissionsERC20Factory = emissionsERC20Factory.address;
+  config.emissionsERC20FactoryBlock =
+    emissionsERC20Factory.deployTransaction.blockNumber;
 
   config.factory = trustFactory.address;
   config.startBlock = trustFactory.deployTransaction.blockNumber;

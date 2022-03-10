@@ -216,9 +216,9 @@ dataSources:
     name: EmissionsERC20Factory
     network: {{ network }}
     source:
-      address: "{{ saleFactory }}"
+      address: "{{ emissionsERC20Factory }}"
       abi: EmissionsERC20Factory
-      startBlock: {{ blockSaleFactory }}
+      startBlock: {{ emissionsERC20FactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
