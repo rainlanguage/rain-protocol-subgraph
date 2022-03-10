@@ -30,17 +30,17 @@ export enum SaleStatus {
 // enum for RequestStatus on VerifyAddresses
 export enum RequestStatus {
   NONE,
-  REQUEST_APPROVE,
-  REQUEST_BAN,
-  REQUEST_REMOVE,
+  APPROVE,
+  BAN,
+  REMOVE,
 }
 
 // enum for Status on VerifyAddresses
 export enum Status {
-  NONE,
+  NIL,
+  ADDED,
   APPROVED,
   BANNED,
-  REMOVED,
 }
 
 export enum Transferrable {

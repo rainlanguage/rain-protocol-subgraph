@@ -1,5 +1,4 @@
-/* eslint-disable prefer-const */
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   Verify,
   VerifyAddress,
@@ -20,8 +19,9 @@ import {
   RoleAdminChanged,
   RoleGranted,
   RoleRevoked,
-  // Verify as VerifyContract,
-  // Verify__statusAtBlockInputState_Struct,
+  Verify__statusAtBlockInputState_Struct,
+  Verify as VerifyContract,
+  Verify__stateResultValue0Struct,
 } from "../../generated/templates/VerifyTemplate/Verify";
 import {
   APPROVER,
@@ -50,13 +50,11 @@ export function handleApprove(event: Approve): void {
     let verifyApprovals = verify.verifyApprovals;
     let count = verify.verifyEventCount.toString();
 
-    // let verifyContract = VerifyContract.bind(event.address);
+    let verifyContract = VerifyContract.bind(event.address);
 
-    // let state = verifyContract.state(
-    //   event.params.evidence.account
-    // ) as Verify__statusAtBlockInputState_Struct;
-
-    // let status = verifyContract.statusAtBlock(state, event.block.number);
+    let state = verifyContract.state(
+      event.params.evidence.account
+    );
 
     // Create a new VerifyApprove entity with "VerifyContract - transaction.hash - count" id
     let verifyApprove = new VerifyApprove(
@@ -88,7 +86,7 @@ export function handleApprove(event: Approve): void {
 
     if (verifyAddress) {
       verifyAddress.requestStatus = RequestStatus.NONE;
-      verifyAddress.status = Status.APPROVED;
+      verifyAddress.status = getstatus(state, event.block.number).toI32();
 
       // Add the event to VerifyAddress's events
       let events = verifyAddress.events;
@@ -126,6 +124,12 @@ export function handleBan(event: Ban): void {
     let verifyBans = verify.verifyBans;
     let count = verify.verifyEventCount.toString();
 
+    let verifyContract = VerifyContract.bind(event.address);
+
+    let state = verifyContract.state(
+      event.params.evidence.account
+    );
+
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let ban = new VerifyBan(
       event.address.toHex() +
@@ -156,7 +160,7 @@ export function handleBan(event: Ban): void {
 
     if (verifyAddress) {
       verifyAddress.requestStatus = RequestStatus.NONE;
-      verifyAddress.status = Status.BANNED;
+      verifyAddress.status = getstatus(state, event.block.number).toI32();
 
       // Add the event to VerifyAddress's events
       let events = verifyAddress.events;
@@ -195,6 +199,12 @@ export function handleRemove(event: Remove): void {
     let verifyRemovals = verify.verifyRemovals;
     let count = verify.verifyEventCount.toString();
 
+    let verifyContract = VerifyContract.bind(event.address);
+
+    let state = verifyContract.state(
+      event.params.evidence.account
+    );
+
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let verifyRemove = new VerifyRemove(
       event.address.toHex() +
@@ -226,7 +236,7 @@ export function handleRemove(event: Remove): void {
 
     if (verifyAddress) {
       verifyAddress.requestStatus = RequestStatus.NONE;
-      verifyAddress.status = Status.REMOVED;
+      verifyAddress.status = getstatus(state, event.block.number).toI32();
 
       // Add the event to VerifyAddress's events
       let events = verifyAddress.events;
@@ -265,6 +275,12 @@ export function handleRequestApprove(event: RequestApprove): void {
     let verifyRequestApprovals = verify.verifyRequestApprovals;
     let count = verify.verifyEventCount.toString();
 
+    let verifyContract = VerifyContract.bind(event.address);
+
+    let state = verifyContract.state(
+      event.params.evidence.account
+    );
+
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let verifyRequestApprove = new VerifyRequestApprove(
       event.address.toHex() +
@@ -296,7 +312,8 @@ export function handleRequestApprove(event: RequestApprove): void {
     );
 
     if (verifyAddress) {
-      verifyAddress.requestStatus = RequestStatus.REQUEST_APPROVE;
+      verifyAddress.requestStatus = RequestStatus.APPROVE;
+      verifyAddress.status = getstatus(state, event.block.number).toI32();
 
       // Add the event to VerifyAddress's events
       let events = verifyAddress.events;
@@ -317,6 +334,12 @@ export function handleRequestBan(event: RequestBan): void {
     verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
     let verifyRequestBans = verify.verifyRequestBans;
     let count = verify.verifyEventCount.toString();
+
+    let verifyContract = VerifyContract.bind(event.address);
+
+    let state = verifyContract.state(
+      event.params.evidence.account
+    );
 
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let verifyRequestBan = new VerifyRequestBan(
@@ -349,7 +372,9 @@ export function handleRequestBan(event: RequestBan): void {
 
     if (verifyAddress) {
       // Add the event to VerifyAddress's events
-      verifyAddress.requestStatus = RequestStatus.REQUEST_BAN;
+      verifyAddress.requestStatus = RequestStatus.BAN;
+      verifyAddress.status = getstatus(state, event.block.number).toI32();
+
       let events = verifyAddress.events;
       if (events) events.push(verifyRequestBan.id);
       verifyAddress.events = events;
@@ -381,6 +406,12 @@ export function handleRequestRemove(event: RequestRemove): void {
     verify.verifyEventCount = verify.verifyEventCount.plus(ONE_BI);
     let verifyRequestRemovals = verify.verifyRequestRemovals;
     let count = verify.verifyEventCount.toString();
+
+    let verifyContract = VerifyContract.bind(event.address);
+
+    let state = verifyContract.state(
+      event.params.evidence.account
+    );
 
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let verifyRequestRemove = new VerifyRequestRemove(
@@ -414,7 +445,9 @@ export function handleRequestRemove(event: RequestRemove): void {
 
     if (verifyAddress) {
       // Add the event to VerifyAddress's events
-      verifyAddress.requestStatus = RequestStatus.REQUEST_REMOVE;
+      verifyAddress.requestStatus = RequestStatus.REMOVE;
+      verifyAddress.status = getstatus(state, event.block.number).toI32();
+
       let events = verifyAddress.events;
       if (events) events.push(verifyRequestRemove.id);
       verifyAddress.events = events;
@@ -779,7 +812,7 @@ function getVerifyAddress(
     verifyAddress = new VerifyAddress(verifyContract + " - " + account);
     verifyAddress.verifyContract = verifyContract;
     verifyAddress.address = Address.fromString(account);
-    verifyAddress.status = Status.NONE;
+    verifyAddress.status = Status.NIL;
     verifyAddress.requestStatus = RequestStatus.NONE;
     verifyAddress.roles = [];
     verifyAddress.events = [];
@@ -794,4 +827,32 @@ function getVerifyAddress(
     }
   }
   return verifyAddress as VerifyAddress;
+}
+
+function getstatus(state_: Verify__stateResultValue0Struct, blockNumber_: BigInt): BigInt {
+  // The state hasn't even been added so is picking up block zero as the
+  // evm fallback value. In this case if we checked other blocks using
+  // a `<=` equality they would incorrectly return `true` always due to
+  // also having a `0` fallback value.
+  // Using `< 1` here to silence slither.
+  if (state_.addedSince < BigInt.fromI32(1)) {
+    return BigInt.fromI32(Status.NIL);
+  }
+  // Banned takes priority over everything.
+  else if (state_.bannedSince <= blockNumber_) {
+      return BigInt.fromI32(Status.BANNED);
+  }
+  // Approved takes priority over added.
+  else if (state_.approvedSince <= blockNumber_) {
+      return BigInt.fromI32(Status.APPROVED);
+  }
+  // Added is lowest priority.
+  else if (state_.addedSince <= blockNumber_) {
+      return BigInt.fromI32(Status.ADDED);
+  }
+  // The `addedSince` block is after `blockNumber_` so `Status` is nil
+  // relative to `blockNumber_`.
+  else {
+      return BigInt.fromI32(Status.NIL);
+  }
 }

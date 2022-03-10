@@ -1,5 +1,5 @@
 import { Initialize, Claim, Transfer, Snapshot, EmissionsERC20 as EmissionsERC20Contract} from "../../generated/templates/EmissionsERC20Template/EmissionsERC20"
-import {EmissionsERC20, EmissionsERC20Claim, State } from "../../generated/schema"
+import { EmissionsERC20, EmissionsERC20Claim, State } from "../../generated/schema"
 import { ZERO_ADDRESS } from "../utils"
 export function handleInitialize(event: Initialize): void {
     let emissionsERC20 = EmissionsERC20.load(event.address.toHex())

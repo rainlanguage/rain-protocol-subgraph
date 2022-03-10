@@ -1149,7 +1149,7 @@ describe("Verify Factory - Queries", function () {
     });
 
     it("should update the verifyAddress that has Banned the user", async function () {
-      const adminId = `${verify.address.toLowerCase()} - ${admin.address.toLocaleLowerCase()}`;
+      const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLocaleLowerCase()}`;
       const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
 
       const expectedVerifyAddr = {
@@ -1159,7 +1159,7 @@ describe("Verify Factory - Queries", function () {
 
       const query = `
         {
-          verifyAddress (id: "${adminId}") {
+          verifyAddress (id: "${signer2Id}") {
             requestStatus
             status
             events {
@@ -1178,7 +1178,7 @@ describe("Verify Factory - Queries", function () {
       expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
       expect(data.status).to.equals(expectedVerifyAddr.status);
 
-      expect(data.events).to.have.lengthOf(eventsAdmin);
+      expect(data.events).to.have.lengthOf(eventsSigner2);
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
 
