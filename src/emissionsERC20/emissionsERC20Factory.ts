@@ -2,7 +2,7 @@ import { NewChild, Implementation} from "../../generated/EmissionsERC20Factory/E
 import { EmissionsERC20 as EmissionsERC20Contract} from "../../generated/EmissionsERC20Factory/EmissionsERC20"
 import {EmissionsERC20, EmissionsERC20Factory} from "../../generated/schema"
 
-export function handelImplementation(event: Implementation): void {
+export function handleImplementation(event: Implementation): void {
     let emissionsERC20Factory = new EmissionsERC20Factory(event.address.toHex())
     emissionsERC20Factory.implementation = event.params.implementation
     emissionsERC20Factory.address = event.address
