@@ -156,7 +156,6 @@ export const BANNER = ethers.utils.keccak256(
   ethers.utils.toUtf8Bytes("BANNER")
 );
 
-// TODO: Check the all the status values
 export enum RequestType {
   APPROVE,
   BAN,
