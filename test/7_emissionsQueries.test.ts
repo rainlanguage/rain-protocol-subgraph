@@ -191,8 +191,6 @@ describe("EmissionsERC20 queries test", function () {
     })) as FetchResult;
     const data = response.data.emissionsERC20;
 
-    console.log(JSON.stringify(data, null, 2));
-
     expect(data.claims).to.be.empty;
     expect(data.allowDelegatedClaims).to.equals(allowDelegatedClaims);
     expect(data.calculateClaimStateConfig.id).to.equals(
@@ -232,12 +230,10 @@ describe("EmissionsERC20 queries test", function () {
     })) as FetchResult;
     const data = response.data.state;
 
-    console.log(JSON.stringify(data, null, 2));
-
     expect(data.stackIndex).to.equals(stackIndexExpected);
-    expect(data.stack).to.equals(stackExpected);
-    expect(data.sources).to.equals(sourcesExpected);
-    expect(data.constants).to.equals(constantsExpected);
-    expect(data.arguments).to.equals(argumentsExpected);
+    expect(data.stack).to.deep.equals(stackExpected);
+    expect(data.sources).to.deep.equals(sourcesExpected);
+    expect(data.constants).to.deep.equals(constantsExpected);
+    expect(data.arguments).to.deep.equals(argumentsExpected);
   });
 });

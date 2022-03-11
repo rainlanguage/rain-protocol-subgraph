@@ -1,6 +1,7 @@
 import { NewChild, Implementation} from "../../generated/EmissionsERC20Factory/EmissionsERC20Factory"
 import { EmissionsERC20 as EmissionsERC20Contract} from "../../generated/EmissionsERC20Factory/EmissionsERC20"
 import {EmissionsERC20, EmissionsERC20Factory} from "../../generated/schema"
+import { EmissionsERC20Template } from "../../generated/templates"
 
 export function handleImplementation(event: Implementation): void {
     let emissionsERC20Factory = new EmissionsERC20Factory(event.address.toHex())
@@ -33,4 +34,6 @@ export function handleNewChild(event: NewChild): void {
         emissionsERC20Factory.children = children
         emissionsERC20Factory.save()
     }
+
+    EmissionsERC20Template.create(event.params.child)
 }

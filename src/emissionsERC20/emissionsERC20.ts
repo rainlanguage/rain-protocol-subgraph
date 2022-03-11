@@ -34,6 +34,7 @@ export function handleSnapshot(event: Snapshot): void {
     calculateClaimStateConfig.constants = event.params.state.constants
     calculateClaimStateConfig.arguments = event.params.state.arguments
     calculateClaimStateConfig.stackIndex = event.params.state.stackIndex
+    calculateClaimStateConfig.stack = event.params.state.stack
     calculateClaimStateConfig.save()
 
     let emissionsERC20 = EmissionsERC20.load(event.address.toHex())

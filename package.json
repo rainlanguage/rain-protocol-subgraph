@@ -18,6 +18,7 @@
     "generate-schema": "cat schema/* > schema.graphql",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/rain-protocol",
     "deploy-rain": "graph deploy --node https://api.thegraph.com/deploy/ beehive-innovation/rain-protocol-v2-mumbai",
+    "deploy-rain-protocol-v2_1-mumbai": "graph deploy --node https://api.thegraph.com/deploy/ beehive-innovation/rain-protocol-v2_1-mumbai",
     "deploy-rain-polygon": "graph deploy --node https://api.thegraph.com/deploy/ beehive-innovation/rain-protocol-v2-polygon",
     "deploy:blocks": "graph deploy --node https://api.thegraph.com/deploy/ vishalkale151071/blocks",
     "create-local": "graph create --node http://localhost:8020/ vishalkale151071/rain-protocol",
