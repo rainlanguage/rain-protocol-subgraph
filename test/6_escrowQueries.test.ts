@@ -1,24 +1,22 @@
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
-import { ContractTransaction, BigNumber } from "ethers";
 import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
-import { deploy, waitForSubgraphToBeSynced, Tier } from "./utils/utils";
+import { waitForSubgraphToBeSynced, Tier, SaleStatus } from "./utils/utils";
 
 // Typechain Factories
 import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
 import { ReadWriteTier__factory } from "../typechain/factories/ReadWriteTier__factory";
 
-import reserveToken from "../artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-
-import { ReserveTokenTest } from "../typechain/ReserveTokenTest";
-import { ReadWriteTier } from "../typechain/ReadWriteTier";
-import { Trust } from "../typechain/Trust";
-import { RedeemableERC20 } from "../typechain/RedeemableERC20";
-import { ConfigurableRightsPool } from "../typechain/ConfigurableRightsPool";
-import { BPool } from "../typechain/BPool";
-
-import {
+// Types
+import type { ContractTransaction, BigNumber } from "ethers";
+import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import type { ReadWriteTier } from "../typechain/ReadWriteTier";
+import type { Trust } from "../typechain/Trust";
+import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
+import type { ConfigurableRightsPool } from "../typechain/ConfigurableRightsPool";
+import type { BPool } from "../typechain/BPool";
+import type {
   DepositEvent,
   PendingDepositEvent,
   UndepositEvent,
@@ -39,12 +37,6 @@ import {
   redeemableERC20ClaimEscrow as claimEscrow, // With a new name
   noticeBoard,
 } from "./1_trustQueries.test";
-const enum SaleStatus {
-  Pending,
-  Active,
-  Success,
-  Fail,
-}
 
 let claimableReserveToken: ReserveTokenTest,
   tier: ReadWriteTier,
@@ -278,7 +270,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       // Sale expected values
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Pending,
+        SaleStatus.PENDING,
         `wrong sale status in redeemableEscrowPendingDeposit`
       );
       expect(data.iSaleAddress).to.equals(
@@ -406,7 +398,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       // Sale expected response
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Pending,
+        SaleStatus.PENDING,
         `wrong sale status`
       );
       expect(data.iSaleAddress).to.equals(
@@ -673,9 +665,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
 
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Success,
+        SaleStatus.SUCCESS,
         `wrong sale status -  the Sale is succesful
-        expected  ${SaleStatus.Success}
+        expected  ${SaleStatus.SUCCESS}
         got       ${data.iSale.saleStatus}`
       );
       expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
@@ -757,9 +749,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const data = response.data.redeemableEscrowSupplyTokenDeposit;
 
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Success,
+        SaleStatus.SUCCESS,
         `wrong sale status -  the Sale is succesful
-        expected  ${SaleStatus.Success}
+        expected  ${SaleStatus.SUCCESS}
         got       ${data.iSale.saleStatus}`
       );
       expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
@@ -1004,9 +996,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
 
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Success,
+        SaleStatus.SUCCESS,
         `wrong sale status -  the Sale is succesful
-        expected  ${SaleStatus.Success}
+        expected  ${SaleStatus.SUCCESS}
         got       ${data.iSale.saleStatus}`
       );
       expect(data.iSaleAddress).to.equals(trustAddress, `wrong Sale address`);
@@ -1204,9 +1196,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       );
 
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Success,
+        SaleStatus.SUCCESS,
         `wrong sale status
-        expected  ${SaleStatus.Success}
+        expected  ${SaleStatus.SUCCESS}
         got       ${data.iSale.saleStatus}`
       );
       expect(data.iSaleAddress).to.equals(
@@ -1773,7 +1765,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       // Sale expected values
       expect(data.iSale.saleStatus).to.equals(
-        SaleStatus.Fail,
+        SaleStatus.FAIL,
         `wrong sale status in redeemableEscrowPendingDeposit`
       );
       expect(data.iSaleAddress).to.equals(

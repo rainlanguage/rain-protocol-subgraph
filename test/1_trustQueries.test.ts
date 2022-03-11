@@ -42,7 +42,6 @@ import type { ApolloFetch, FetchResult } from "apollo-fetch";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import type { BigNumber, ContractTransaction } from "ethers";
 
-// Typechain types
 import type { NoticeBoard } from "../typechain/NoticeBoard";
 import type { EmissionsERC20Factory } from "../typechain/EmissionsERC20Factory";
 import type { BFactory } from "../typechain/BFactory";

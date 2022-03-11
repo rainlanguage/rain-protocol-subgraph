@@ -39,6 +39,7 @@ import { Sale__factory } from "../../typechain/factories/Sale__factory";
 import { GatedNFT__factory } from "../../typechain/factories/GatedNFT__factory";
 import { Verify__factory } from "../../typechain/factories/Verify__factory";
 import { RedeemableERC20__factory } from "../../typechain/factories/RedeemableERC20__factory";
+import { EmissionsERC20__factory } from "../../typechain/factories/EmissionsERC20__factory";
 //
 import {
   Factory,
@@ -89,6 +90,10 @@ import {
   SaleRedeemableERC20ConfigStruct,
   StateConfigStruct,
 } from "../../typechain/SaleFactory";
+import {
+  EmissionsERC20Factory,
+  EmissionsERC20ConfigStruct,
+} from "../../typechain/EmissionsERC20Factory";
 import { GatedNFTFactory, ConfigStruct } from "../../typechain/GatedNFTFactory";
 
 import { ERC20BalanceTier } from "../../typechain/ERC20BalanceTier";
@@ -111,6 +116,7 @@ import type { BPool } from "../../typechain/BPool";
 import type { Trust } from "../../typechain/Trust";
 
 import type { Sale } from "../../typechain/Sale";
+import type { EmissionsERC20 } from "../../typechain/EmissionsERC20";
 
 import { StateStruct } from "../../typechain/VMState";
 
@@ -259,6 +265,39 @@ export enum OpcodeTier {
   ACCOUNT,
 }
 
+export enum OpcodeEmissionsERC20 {
+  SKIP,
+  VAL,
+  DUP,
+  ZIPMAP,
+  BLOCK_NUMBER,
+  BLOCK_TIMESTAMP,
+  THIS_ADDRESS,
+  REPORT,
+  NEVER,
+  ALWAYS,
+  SATURATING_DIFF,
+  UPDATE_BLOCKS_FOR_TIER_RANGE,
+  SELECT_LTE,
+  ADD,
+  SUB,
+  MUL,
+  DIV,
+  MOD,
+  POW,
+  MIN,
+  MAX,
+  SCALE18_MUL,
+  SCALE18_DIV,
+  SCALE18,
+  SCALEN,
+  SCALE_BY,
+  SCALE18_ONE,
+  SCALE18_DECIMALS,
+  CLAIMANT_ACCOUNT,
+  CONSTRUCTION_BLOCK_NUMBER,
+}
+
 export enum SaleStatus {
   PENDING,
   ACTIVE,
@@ -290,6 +329,16 @@ type levelsRange = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 export const LEVELS: string[] = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros).toString()
 ); // [1,2,3,4,5,6,7,8]
+
+/**
+ * Convert an array of BigNumberih to an array to string. This will facilitate the test.
+ * **NOTE:** This ONLY will convert the value to the expression in string.
+ * @param arr The array of the BigNumberish
+ * @returns New array of string with the respected value
+ */
+export const arrayToString = (arr: BigNumberish[]): string[] => {
+  return arr.map((x: BigNumberish) => x.toString());
+};
 
 /**
  * Calculate the amount necessary to send or refund for get a `desiredLevel` from `currentLevel` on a TierContract
@@ -452,7 +501,8 @@ export const waitForSubgraphToBeSynced = async (
     };
 
     // Periodically check whether the subgraph has synced
-    setTimeout(checkSubgraphSynced, timeDelay * 1000);
+    // setTimeout(checkSubgraphSynced, timeDelay * 1000);
+    checkSubgraphSynced();
   });
 
   return resp;
@@ -661,6 +711,30 @@ export const saleDeploy = async (
   sale.deployTransaction = txDeploy;
 
   return sale;
+};
+
+export const emissionsDeploy = async (
+  emissionsERC20Factory: EmissionsERC20Factory,
+  creator: SignerWithAddress,
+  config: EmissionsERC20ConfigStruct,
+  override: Overrides = {}
+): Promise<EmissionsERC20> => {
+  // Creating child
+  const txDeploy = await emissionsERC20Factory
+    .connect(creator)
+    .createChildTyped(config, override);
+
+  const emissionsERC20 = new EmissionsERC20__factory(creator).attach(
+    await getChild(emissionsERC20Factory, txDeploy)
+  );
+
+  await emissionsERC20.deployed();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  emissionsERC20.deployTransaction = txDeploy;
+
+  return emissionsERC20;
 };
 
 /**

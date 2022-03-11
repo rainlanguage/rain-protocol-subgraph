@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { FetchResult } from "apollo-fetch";
 import * as Util from "./utils/utils";
 import { waitForSubgraphToBeSynced } from "./utils/utils";
 
@@ -7,6 +6,7 @@ import { waitForSubgraphToBeSynced } from "./utils/utils";
 import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
 
 // Types
+import type { FetchResult } from "apollo-fetch";
 import type { ContractTransaction } from "ethers";
 import type { GatedNFT } from "../typechain/GatedNFT";
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
