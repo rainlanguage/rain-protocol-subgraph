@@ -1,4 +1,13 @@
-import {
+import { ethers } from "hardhat";
+import { Result, concat, hexlify, Hexable, zeroPad } from "ethers/lib/utils";
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
+
+import { createApolloFetch, ApolloFetch } from "apollo-fetch";
+import type { Artifact } from "hardhat/types";
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import type {
   Contract,
   Signer,
   BigNumberish,
@@ -8,131 +17,156 @@ import {
   BytesLike,
   Overrides,
 } from "ethers";
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Result, concat, hexlify, Hexable, zeroPad } from "ethers/lib/utils";
-import { createApolloFetch, ApolloFetch } from "apollo-fetch";
 
-import fs from "fs";
-import path from "path";
-import { execSync } from "child_process";
-import { ethers } from "hardhat";
-import { Artifact } from "hardhat/types";
+// Balancer contracts artifacts
+import bFactoryJson from "@beehiveinnovation/balancer-core/artifacts/BFactory.json";
+import smartPoolManagerJson from "@beehiveinnovation/configurable-rights-pool/artifacts/SmartPoolManager.json";
+import balancerSafeMathJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BalancerSafeMath.json";
+import rightsManagerJson from "@beehiveinnovation/configurable-rights-pool/artifacts/RightsManager.json";
+import crpFactoryJson from "@beehiveinnovation/configurable-rights-pool/artifacts/CRPFactory.json";
+import configurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
+import bPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
 
-// Balancer contracts
-import BFactory from "@beehiveinnovation/balancer-core/artifacts/BFactory.json";
-import SmartPoolManager from "@beehiveinnovation/configurable-rights-pool/artifacts/SmartPoolManager.json";
-import BalancerSafeMath from "@beehiveinnovation/configurable-rights-pool/artifacts/BalancerSafeMath.json";
-import RightsManager from "@beehiveinnovation/configurable-rights-pool/artifacts/RightsManager.json";
-import CRPFactory from "@beehiveinnovation/configurable-rights-pool/artifacts/CRPFactory.json";
-import ConfigurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
-import BPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
+// Balancer types
+import type { BFactory } from "../../typechain/BFactory";
+import type { BPool } from "../../typechain/BPool";
+import type { CRPFactory } from "../../typechain/CRPFactory";
+import type { ConfigurableRightsPool } from "../../typechain/ConfigurableRightsPool";
 
-// Typechain factories
+// Typechain rain factories
 import { ReserveTokenTest__factory } from "../../typechain/factories/ReserveTokenTest__factory";
 import { RedeemableERC20Factory__factory } from "../../typechain/factories/RedeemableERC20Factory__factory";
 import { SeedERC20Factory__factory } from "../../typechain/factories/SeedERC20Factory__factory";
 import { TrustFactory__factory } from "../../typechain/factories/TrustFactory__factory";
 
-import { ERC20BalanceTier__factory } from "../../typechain/factories/ERC20BalanceTier__factory";
 import { Trust__factory } from "../../typechain/factories/Trust__factory";
 import { Sale__factory } from "../../typechain/factories/Sale__factory";
-import { GatedNFT__factory } from "../../typechain/factories/GatedNFT__factory";
-import { Verify__factory } from "../../typechain/factories/Verify__factory";
 import { RedeemableERC20__factory } from "../../typechain/factories/RedeemableERC20__factory";
+import { GatedNFT__factory } from "../../typechain/factories/GatedNFT__factory";
 import { EmissionsERC20__factory } from "../../typechain/factories/EmissionsERC20__factory";
-//
-import {
+import { Verify__factory } from "../../typechain/factories/Verify__factory";
+import { VerifyTier__factory } from "../../typechain/factories/VerifyTier__factory";
+import { ERC20BalanceTier__factory } from "../../typechain/factories/ERC20BalanceTier__factory";
+import { ERC20TransferTier__factory } from "../../typechain/factories/ERC20TransferTier__factory";
+import { CombineTier__factory } from "../../typechain/factories/CombineTier__factory";
+import { ERC721BalanceTier__factory } from "../../typechain/factories/ERC721BalanceTier__factory";
+
+// Rain Types
+import type { ITier } from "../../typechain/ITier";
+import type { ReserveTokenTest } from "../../typechain/ReserveTokenTest";
+
+// A fixed range to Tier Levels
+type levelsRange = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+// Factory types
+import type {
   Factory,
   ImplementationEvent,
   NewChildEvent,
 } from "../../typechain/Factory";
 
-// Rain protocol contracts Artifacts
-import RedeemableERC20FactoryJson from "../../artifacts/contracts/redeemableERC20/RedeemableERC20Factory.sol/RedeemableERC20Factory.json";
-import SeedERC20FactoryJson from "../../artifacts/contracts/seed/SeedERC20Factory.sol/SeedERC20Factory.json";
-import TrustFactoryJson from "../../artifacts/contracts/trust/TrustFactory.sol/TrustFactory.json";
+// VMState types
+import type { StateStruct } from "../../typechain/VMState";
+export type VMState = StateConfigStruct;
+export type State = StateStruct;
 
-import TrustJson from "../../artifacts/contracts/trust/Trust.sol/Trust.json";
-import SaleJson from "../../artifacts/contracts/sale/Sale.sol/Sale.json";
-import gatedNFTJson from "../../artifacts/contracts/rain-statusfi/GatedNFT.sol/GatedNFT.json";
-import reserveToken from "../../artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-
-import verifyJson from "../../artifacts/contracts/verify/Verify.sol/Verify.json";
-import verifyTierJson from "../../artifacts/contracts/tier/VerifyTier.sol/VerifyTier.json";
-import redeemableTokenJson from "../../artifacts/contracts/redeemableERC20/RedeemableERC20.sol/RedeemableERC20.json";
-import erc20BalanceTierJson from "../../artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
-import erc20TransferTierJson from "../../artifacts/contracts/tier/ERC20TransferTier.sol/ERC20TransferTier.json";
-import combineTierJson from "../../artifacts/contracts/tier/CombineTier.sol/CombineTier.json";
-import erc721BalanceTierJson from "../../artifacts/contracts/tier/ERC721BalanceTier.sol/ERC721BalanceTier.json";
-
-// Types
-import {
-  ERC20BalanceTierFactory,
-  ERC20BalanceTierConfigStruct,
-} from "../../typechain/ERC20BalanceTierFactory";
-import { ERC20TransferTierFactory } from "../../typechain/ERC20TransferTierFactory";
-import { CombineTierFactory } from "../../typechain/CombineTierFactory";
-import { VerifyTierFactory } from "../../typechain/VerifyTierFactory";
-import { VerifyFactory } from "../../typechain/VerifyFactory";
-import { ERC721BalanceTierFactory } from "../../typechain/ERC721BalanceTierFactory";
-
-import { RedeemableERC20Factory } from "../../typechain/RedeemableERC20Factory";
-import { SeedERC20Factory } from "../../typechain/SeedERC20Factory";
-import {
+// TrustFactory types
+import type {
   TrustFactory,
   TrustConfigStruct,
   TrustRedeemableERC20ConfigStruct,
   TrustSeedERC20ConfigStruct,
 } from "../../typechain/TrustFactory";
-import {
+import type { Trust } from "../../typechain/Trust";
+import type { RedeemableERC20Factory } from "../../typechain/RedeemableERC20Factory";
+import type { RedeemableERC20 } from "../../typechain/RedeemableERC20";
+import type { SeedERC20Factory } from "../../typechain/SeedERC20Factory";
+
+// SaleFactory types
+import type {
   SaleFactory,
   SaleConfigStruct,
   SaleRedeemableERC20ConfigStruct,
-  StateConfigStruct,
 } from "../../typechain/SaleFactory";
-import {
+import type { Sale, StateConfigStruct } from "../../typechain/Sale";
+
+// EmissionsERC20Factory types
+import type {
   EmissionsERC20Factory,
   EmissionsERC20ConfigStruct,
 } from "../../typechain/EmissionsERC20Factory";
-import { GatedNFTFactory, ConfigStruct } from "../../typechain/GatedNFTFactory";
-
-import { ERC20BalanceTier } from "../../typechain/ERC20BalanceTier";
-
-import { ERC20TransferTier } from "../../typechain/ERC20TransferTier";
-
-import { CombineTier } from "../../typechain/CombineTier";
-
-import { ERC721BalanceTier } from "../../typechain/ERC721BalanceTier";
-
-import { GatedNFT } from "../../typechain/GatedNFT";
-import { VerifyTier } from "../../typechain/VerifyTier";
-import { Verify } from "../../typechain/Verify";
-import { ReadWriteTier } from "../../typechain/ReadWriteTier";
-import { RedeemableERC20 } from "../../typechain/RedeemableERC20";
-import { ReserveTokenTest } from "../../typechain/ReserveTokenTest";
-
-import type { ConfigurableRightsPool } from "../../typechain/ConfigurableRightsPool";
-import type { BPool } from "../../typechain/BPool";
-import type { Trust } from "../../typechain/Trust";
-
-import type { Sale } from "../../typechain/Sale";
 import type { EmissionsERC20 } from "../../typechain/EmissionsERC20";
 
-import { StateStruct } from "../../typechain/VMState";
+// GatedNFTFactory types
+import type {
+  GatedNFTFactory,
+  ConfigStruct,
+} from "../../typechain/GatedNFTFactory";
+import type { GatedNFT } from "../../typechain/GatedNFT";
 
+// VerifyFactory types
+import type { VerifyFactory } from "../../typechain/VerifyFactory";
+import type { Verify } from "../../typechain/Verify";
+
+// VerifyTierFactory types
+import type { VerifyTierFactory } from "../../typechain/VerifyTierFactory";
+import type { VerifyTier } from "../../typechain/VerifyTier";
+
+// ERC20BalanceTierFactory types
+import type {
+  ERC20BalanceTierFactory,
+  ERC20BalanceTierConfigStruct,
+} from "../../typechain/ERC20BalanceTierFactory";
+import type { ERC20BalanceTier } from "../../typechain/ERC20BalanceTier";
+
+// ERC20TransferTierFactory types
+import type {
+  ERC20TransferTierFactory,
+  ERC20TransferTierConfigStruct,
+} from "../../typechain/ERC20TransferTierFactory";
+import type { ERC20TransferTier } from "../../typechain/ERC20TransferTier";
+
+// CombineTierFactory types
+import type { CombineTierFactory } from "../../typechain/CombineTierFactory";
+import type { CombineTier } from "../../typechain/CombineTier";
+
+// ERC721BalanceTierFactory types
+import type {
+  ERC721BalanceTierFactory,
+  ERC721BalanceTierConfigStruct,
+} from "../../typechain/ERC721BalanceTierFactory";
+import type { ERC721BalanceTier } from "../../typechain/ERC721BalanceTier";
+
+// Interfaces
 interface SyncedSubgraphType {
   synced: boolean;
 }
 
+interface CRPLibraries {
+  [key: string]: string;
+  SmartPoolManager: string;
+  BalancerSafeMath: string;
+  RightsManager: string;
+}
+
+interface BasicArtifact {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  abi: any[];
+  bytecode: string;
+}
+
+// Helper values
 export const sixZeros = "000000";
 export const sixteenZeros = "0000000000000000";
 export const eighteenZeros = "000000000000000000";
 
 export const zeroAddress = ethers.constants.AddressZero;
 
+// BigNumbers
 export const ONE = ethers.BigNumber.from("1" + eighteenZeros);
 export const RESERVE_ONE = ethers.BigNumber.from("1" + sixZeros);
 
+// Fixed number (Decimal)
 export const oneHundredFN = ethers.FixedNumber.from(100, "fixed128x32");
 
 export const CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING = 100;
@@ -204,6 +238,7 @@ export enum Tier {
   EIGHT, // JAWAD
 }
 
+// Opcodes
 export enum OpcodeSale {
   SKIP,
   VAL,
@@ -298,6 +333,17 @@ export enum OpcodeEmissionsERC20 {
   CONSTRUCTION_BLOCK_NUMBER,
 }
 
+// Enum that represent the DistributionStatus (Trust)
+export enum DistributionStatus {
+  Pending,
+  Seeded,
+  Trading,
+  TradingCanEnd,
+  Success,
+  Fail,
+}
+
+// Enum that represent the SaleStatus (Sale)
 export enum SaleStatus {
   PENDING,
   ACTIVE,
@@ -305,27 +351,10 @@ export enum SaleStatus {
   FAIL,
 }
 
-export type VMState = StateConfigStruct;
-
-export type State = StateStruct;
-
-interface CRPLibraries {
-  [key: string]: string;
-  SmartPoolManager: string;
-  BalancerSafeMath: string;
-  RightsManager: string;
-}
-
-interface BasicArtifact {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  abi: any[];
-  bytecode: string;
-}
-
-// A fixed range to Tier Levels
-type levelsRange = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-
-// Use the correct type and LEVELS always will be an array with 8 elements
+/**
+ * Return the Levels tier used by default. LEVELS always will be an array with 8 elements to
+ * correspond to the 8 TierLevels
+ */
 export const LEVELS: string[] = Array.from(Array(8).keys()).map((value) =>
   ethers.BigNumber.from(++value + eighteenZeros).toString()
 ); // [1,2,3,4,5,6,7,8]
@@ -343,7 +372,7 @@ export const arrayToString = (arr: BigNumberish[]): string[] => {
 /**
  * Calculate the amount necessary to send or refund for get a `desiredLevel` from `currentLevel` on a TierContract
  * @param desiredLvl Desired TierLevel. Required to be between 0-8
- * @param currentLevel - (Optional) Current TierLevel, by default if Tier.Zero -  Required to be between 0-8
+ * @param currentLevel (Optional) Current TierLevel, by default if Tier.Zero -  Required to be between 0-8
  * @returns The difference of tokens between the acutal level and desired level
  */
 export const amountToLevel = (
@@ -371,8 +400,8 @@ export const amountToLevel = (
 /**
  * Create a fixed number with ethers. This intend to reduce the code and
  * manage the same format different to default one used by ethers
- * @param value - value to convert to fixed number
- * @param format - (optional) fixed number format. By default is fixed128x32
+ * @param value value to convert to fixed number
+ * @param format (optional) fixed number format. By default is fixed128x32
  * @returns a new fixedNumber object that represent the value
  */
 export const fixedNumber = (
@@ -442,7 +471,7 @@ export const waitForSubgraphToBeSynced = async (
   const currentBlock = await ethers.provider.getBlockNumber();
 
   const resp = new Promise<SyncedSubgraphType>((resolve, reject) => {
-    // Function to check if the subgraph is synced
+    // Function to check if the subgraph is synced asking to the GraphNode
     const checkSubgraphSynced = async () => {
       try {
         const result = await fetchSubgraphs({
@@ -500,20 +529,25 @@ export const waitForSubgraphToBeSynced = async (
       }
     };
 
-    // Periodically check whether the subgraph has synced
-    // setTimeout(checkSubgraphSynced, timeDelay * 1000);
     checkSubgraphSynced();
   });
 
   return resp;
 };
 
-// Contracts Management
+/**
+ * Deploy a contract with they artifact (JSON)
+ * @param artifact The artifact of the contract to deploy. It should contain the ABI and bytecode. The
+ * user should manage the type contract when returned.
+ * @param signer Signer that will deploy the contract
+ * @param argmts (Optional) Arguments to deploy the contract
+ * @returns A deployed contract instance
+ */
 export const deploy = async (
   artifact: Artifact | BasicArtifact,
   signer: SignerWithAddress,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  argmts: any[] | any
+  argmts: any[] = []
 ): Promise<Contract> => {
   const iface = new ethers.utils.Interface(artifact.abi);
   const factory = new ethers.ContractFactory(iface, artifact.bytecode, signer);
@@ -522,28 +556,41 @@ export const deploy = async (
   return contract;
 };
 
+/**
+ * Deploy and return the balancer contracts as BFactory and CRPFactory with his libraries.
+ * @param signer Signer that will deploy the contracts
+ * @returns CRPFactory and Bfactory contract instances
+ */
 export const balancerDeploy = async (
   signer: SignerWithAddress
-): Promise<[Contract, Contract]> => {
-  const bFactory: Contract = await deploy(BFactory, signer, []);
+): Promise<[CRPFactory, BFactory]> => {
+  const bFactory = (await deploy(bFactoryJson, signer, [])) as BFactory;
 
-  const smartPoolManager: Contract = await deploy(SmartPoolManager, signer, []);
-  const balancerSafeMath: Contract = await deploy(BalancerSafeMath, signer, []);
-  const rightsManager: Contract = await deploy(RightsManager, signer, []);
+  const smartPoolManager = await deploy(smartPoolManagerJson, signer, []);
+  const balancerSafeMath = await deploy(balancerSafeMathJson, signer, []);
+  const rightsManager = await deploy(rightsManagerJson, signer, []);
 
   const libs: CRPLibraries = {
     SmartPoolManager: smartPoolManager.address,
     BalancerSafeMath: balancerSafeMath.address,
     RightsManager: rightsManager.address,
   };
-  const crpFactory: Contract = await deploy(
-    linkBytecode(CRPFactory, libs),
+
+  const crpFactory = (await deploy(
+    linkBytecode(crpFactoryJson, libs),
     signer,
     []
-  );
+  )) as CRPFactory;
+
   return [crpFactory, bFactory];
 };
 
+/**
+ * Linking libraries to CRPFactory bytecode
+ * @param artifact CRPFactory artifacts that contain the bytecode to link
+ * @param links The libraries addresses to link
+ * @returns The artifacts with the bytecode linked with libraries
+ */
 const linkBytecode = (
   artifact: Artifact | BasicArtifact,
   links: CRPLibraries
@@ -559,9 +606,16 @@ const linkBytecode = (
   return artifact;
 };
 
-export const factoriesDeploy = async (
-  crpFactory: Contract,
-  balancerFactory: Contract,
+/**
+ * Deploy all the factories that corresponding to the TrustFactory with a default values as constructor
+ * @param crpFactory The CRPFactory contract instances to use in the TrustFactory. It should ensure that is a valid CRPFactory
+ * @param balancerFactory The BFactory contract instances to use in the TrustFactory. It should ensure that is a valid BFactory
+ * @param signer The signer that will deploy all the contracts
+ * @returns A RedeemableERC20Factory, SeedERC20Factory and TrustFactory contract instances
+ */
+export const trustFactoriesDeploy = async (
+  crpFactory: CRPFactory,
+  balancerFactory: BFactory,
   signer: SignerWithAddress
 ): Promise<{
   redeemableERC20Factory: RedeemableERC20Factory;
@@ -640,12 +694,12 @@ export const getChild = async (
 
 /**
  * Create a new Trust
- * @param trustFactory - the TrustFactory that will create the child.
- * @param creator - The signer that will create the child and will be connected to
- * @param trustConfig - the trust configuration
- * @param trustRedeemableERC20Config - the Redeemable configuration of this Trust
+ * @param trustFactory the TrustFactory that will create the child.
+ * @param creator The signer that will create the child and will be connected to
+ * @param trustConfig the trust configuration
+ * @param trustRedeemableERC20Config the Redeemable configuration of this Trust
  * @param trustSeedERC20Config -the Seed configuration of this Trust
- * @param override - (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
  * @returns The trust child
  */
 export const trustDeploy = async (
@@ -681,11 +735,11 @@ export const trustDeploy = async (
 
 /**
  * Create a new Sale
- * @param saleFactory - the SaleFactory that will create the child.
- * @param creator - The signer that will create the child and will be connected to
- * @param saleConfig - the sale configuration
- * @param saleRedeemableERC20Config - the Redeemable configuration of this Sale
- * @param override - (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @param saleFactory the SaleFactory that will create the child.
+ * @param creator The signer that will create the child and will be connected to
+ * @param saleConfig the sale configuration
+ * @param saleRedeemableERC20Config the Redeemable configuration of this Sale
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
  * @returns The sale child
  */
 export const saleDeploy = async (
@@ -713,6 +767,14 @@ export const saleDeploy = async (
   return sale;
 };
 
+/**
+ * Create a new EmissionsERC20 contract
+ * @param emissionsERC20Factory The EmissionsERC20Factory that will create the child.
+ * @param creator The signer that will create the child and will be connected to
+ * @param config the emissionsERC20 configuration
+ * @param override override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The EmissionsERC20 child
+ */
 export const emissionsDeploy = async (
   emissionsERC20Factory: EmissionsERC20Factory,
   creator: SignerWithAddress,
@@ -739,10 +801,10 @@ export const emissionsDeploy = async (
 
 /**
  * Create a new Verify contract
- * @param verifyFactory - The Verify Factory
- * @param creator - the signer that will create the Verify
- * @param adminAddress - the verify admin address
- * @param override - (optional) override transaction values as gasLimit
+ * @param verifyFactory The Verify Factory
+ * @param creator The signer that will create the child and will be connected to
+ * @param adminAddress The verify admin address
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
  * @returns The verify child
  */
 export const verifyDeploy = async (
@@ -769,6 +831,14 @@ export const verifyDeploy = async (
   return verify;
 };
 
+/**
+ * Create a new VerifyTier contract
+ * @param verifyTierFactory The VerifyTier Factory
+ * @param creator The signer that will create the child and will be connected to
+ * @param verifyAddress The verify address
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The verifyTier child
+ */
 export const verifyTierDeploy = async (
   verifyTierFactory: VerifyTierFactory,
   creator: SignerWithAddress,
@@ -776,16 +846,31 @@ export const verifyTierDeploy = async (
   override: Overrides = {}
 ): Promise<VerifyTier> => {
   // Creating child
-  const verifyTier = (await createChildTyped(
-    verifyTierFactory,
-    verifyTierJson,
-    [verifyAddress, override],
-    creator
-  )) as VerifyTier & Contract;
+  const txDeploy = await verifyTierFactory
+    .connect(creator)
+    .createChildTyped(verifyAddress, override);
+
+  const verifyTier = new VerifyTier__factory(creator).attach(
+    await getChild(verifyTierFactory, txDeploy)
+  );
+
+  await verifyTier.deployed();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  verifyTier.deployTransaction = txDeploy;
 
   return verifyTier;
 };
 
+/**
+ * Create a new ERC20BalanceTier contract
+ * @param erc20BalanceTierFactory The ERC20BalanceTier Factory
+ * @param creator The signer that will create the child and will be connected to
+ * @param erc20BalanceTierConfig The ERC20BalanceTier configuration
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The erc20BalanceTier child
+ */
 export const erc20BalanceTierDeploy = async (
   erc20BalanceTierFactory: ERC20BalanceTierFactory,
   creator: SignerWithAddress,
@@ -810,61 +895,117 @@ export const erc20BalanceTierDeploy = async (
   return erc20BalanceTier;
 };
 
+/**
+ * Create a new ERC20TransferTier contract
+ * @param erc20TransferTierFactory The ERC20TransferTier Factory
+ * @param creator The signer that will create the child and will be connected to
+ * @param erc20TransferTierConfigStruct The ERC20TransferTier configuration
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The erc20TransferTier child
+ */
 export const erc20TransferTierDeploy = async (
   erc20TransferTierFactory: ERC20TransferTierFactory,
   creator: SignerWithAddress,
-  erc20TransferTierConfigStruct: Parameters<
-    ERC20TransferTierFactory["createChildTyped"]
-  >[0],
+  erc20TransferTierConfigStruct: ERC20TransferTierConfigStruct,
   override: Overrides = {}
 ): Promise<ERC20TransferTier> => {
   // Creating child
-  const erc20TransferTier = (await createChildTyped(
-    erc20TransferTierFactory,
-    erc20TransferTierJson,
-    [erc20TransferTierConfigStruct, override],
-    creator
-  )) as ERC20TransferTier & Contract;
+  const txDeploy = await erc20TransferTierFactory
+    .connect(creator)
+    .createChildTyped(erc20TransferTierConfigStruct, override);
+
+  const erc20TransferTier = new ERC20TransferTier__factory(creator).attach(
+    await getChild(erc20TransferTierFactory, txDeploy)
+  );
+
+  await erc20TransferTier.deployed();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  erc20TransferTier.deployTransaction = txDeploy;
 
   return erc20TransferTier;
 };
 
+/**
+ * Create a new CombineTier contract
+ * @param combineTierFactory The CombineTier Factory
+ * @param creator The signer that will create the child and will be connected to
+ * @param stateConfigStruct The CombineTier configuration
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The combineTier child
+ */
 export const combineTierDeploy = async (
   combineTierFactory: CombineTierFactory,
   creator: SignerWithAddress,
-  stateConfigStruct: Parameters<CombineTierFactory["createChildTyped"]>[0],
+  stateConfigStruct: StateConfigStruct,
   override: Overrides = {}
 ): Promise<CombineTier> => {
   // Creating child
-  const combineTier = (await createChildTyped(
-    combineTierFactory,
-    combineTierJson,
-    [stateConfigStruct, override],
-    creator
-  )) as CombineTier & Contract;
+  const txDeploy = await combineTierFactory
+    .connect(creator)
+    .createChildTyped(stateConfigStruct, override);
+
+  const combineTier = new CombineTier__factory(creator).attach(
+    await getChild(combineTierFactory, txDeploy)
+  );
+
+  await combineTier.deployed();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  combineTier.deployTransaction = txDeploy;
 
   return combineTier;
 };
 
+/**
+ * Create a new ERC721BalanceTier contract
+ * @param erc721BalanceTierFactory The ERC721BalanceTier Factory
+ * @param creator The signer that will create the child and will be connected to
+ * @param erc721BalanceTierConfigStruct The ERC721BalanceTier configuration
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The erc721BalanceTier child
+ */
 export const erc721BalanceTierDeploy = async (
   erc721BalanceTierFactory: ERC721BalanceTierFactory,
   creator: SignerWithAddress,
-  erc721BalanceTierConfigStruct: Parameters<
-    ERC721BalanceTierFactory["createChildTyped"]
-  >[0],
+  erc721BalanceTierConfigStruct: ERC721BalanceTierConfigStruct,
   override: Overrides = {}
 ): Promise<ERC721BalanceTier> => {
   // Creating child
-  const erc721BalanceTier = (await createChildTyped(
-    erc721BalanceTierFactory,
-    erc721BalanceTierJson,
-    [erc721BalanceTierConfigStruct, override],
-    creator
-  )) as ERC721BalanceTier & Contract;
+  const txDeploy = await erc721BalanceTierFactory
+    .connect(creator)
+    .createChildTyped(erc721BalanceTierConfigStruct, override);
+
+  const erc721BalanceTier = new ERC721BalanceTier__factory(creator).attach(
+    await getChild(erc721BalanceTierFactory, txDeploy)
+  );
+
+  await erc721BalanceTier.deployed();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  erc721BalanceTier.deployTransaction = txDeploy;
 
   return erc721BalanceTier;
 };
 
+/**
+ * Create a new GatedNFT contract
+ * @param gatedNFTFactory The GatedNFT Factory
+ * @param creator The signer that will create the child and will be connected to
+ * @param config The ERC721BalanceTier configuratio
+ * @param tier The tier contract address
+ * @param minimumStatus The minimum TierLevel to mint
+ * @param maxPerAddress The max mint allowed per address
+ * @param transferrable Allow transfer the NFT
+ * @param maxMintable The total max allowed to mint
+ * @param royaltyRecipient The royalty recipient address
+ * @param royaltyBPS The royaltyBPS
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The gatedNFT child
+ */
 export const gatedNFTDeploy = async (
   gatedNFTFactory: GatedNFTFactory,
   creator: SignerWithAddress,
@@ -907,33 +1048,6 @@ export const gatedNFTDeploy = async (
 };
 
 /**
- * @param factory - the factory that contain the `createChildTyped()` function to create a child.
- * @param childtArtifact - the child artifact that will be created.
- * @param args - the arguments necessaries to create the child. Should be passed inside an array.
- * @param creator - (optional) the signer that will create the child and will be connected to. Same as contractFactory if not provided
- * @returns The child contract connected to the signer
- */
-export const createChildTyped = async (
-  factory: Contract,
-  childtArtifact: Artifact,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  args: any[],
-  creator: SignerWithAddress = null
-): Promise<Contract> => {
-  factory = creator === null ? factory : factory.connect(creator);
-  const txDeploy = await factory.createChildTyped(...args);
-
-  const child = (await getContractChild(
-    txDeploy,
-    factory,
-    childtArtifact,
-    creator
-  )) as Contract;
-
-  return child;
-};
-
-/**
  * Get the ConfigurableRightPool and BPool of the a `trust`.
  * - **NOTE:** It is absolutely responsability of the user manage if the DutchAuction already started.
  *   In case that DutchAuction has not started yet, the bPool contract will be connected to a ZeroAddress
@@ -951,14 +1065,14 @@ export const poolContracts = async (
 }> => {
   const crp = new ethers.Contract(
     await trust.crp(),
-    ConfigurableRightsPoolJson.abi,
-    signer
+    configurableRightsPoolJson.abi,
+    signer || trust.signer
   ) as ConfigurableRightsPool & Contract;
 
   const bPool = new ethers.Contract(
     await crp.bPool(),
-    BPoolJson.abi,
-    signer
+    bPoolJson.abi,
+    signer || trust.signer
   ) as BPool & Contract;
 
   // ** NOTE WARNING **
@@ -974,7 +1088,24 @@ export const poolContracts = async (
 };
 
 /**
- * Create empty transactions to get a specific blockNumber
+ * Send empty transactions to mine new blocks. Mainly used in HH network
+ * @param count (optional) amount of block to be mined. If not provided, will just mine one block
+ */
+export const createEmptyBlock = async (count?: number): Promise<void> => {
+  const signers = await ethers.getSigners();
+  const tx = { to: signers[1].address };
+  if (count > 0) {
+    for (let i = 0; i < count; i++) {
+      await signers[0].sendTransaction(tx);
+    }
+  } else {
+    await signers[0].sendTransaction(tx);
+  }
+};
+
+/**
+ * Wait until reach an specific blockNumber, useful to live networks. ** Note:** since HH network increase
+ * block when mined, try calling `createEmptyBlock` insted
  * @param blockNumber amount of block to wait
  */
 export const waitForBlock = async (blockNumber: number): Promise<void> => {
@@ -989,12 +1120,16 @@ export const waitForBlock = async (blockNumber: number): Promise<void> => {
     awaitingBlock: blockNumber,
   });
 
-  await timeout(2000);
+  await delay(2000);
 
   return await waitForBlock(blockNumber);
 };
 
-function timeout(ms: number) {
+/**
+ * Create a promise to wait a determinated `ms`
+ * @param ms Amount of time to wait in miliseconds
+ */
+export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -1028,10 +1163,10 @@ export const writeFile = (_path: string, file: any): void => {
 
 /**
  *
- * @param tx - transaction where event occurs
- * @param eventName - name of event
- * @param contract - contract object holding the address, filters, interface
- * @param contractAddressOverride - (optional) override the contract address which emits this event
+ * @param tx transaction where event occurs
+ * @param eventName name of event
+ * @param contract contract object holding the address, filters, interface
+ * @param contractAddressOverride (optional) override the contract address which emits this event
  * @returns Event arguments, can be deconstructed by array index or by object key
  */
 export const getEventArgs = async (
@@ -1058,78 +1193,13 @@ export const getEventArgs = async (
   );
 };
 
-export function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export const wait = 1000;
 
 /**
- * Send empty transactions to mine new blocks
- * @param count (optional) amount of block to be mined. If not provided, will just mine one block
- */
-export const createEmptyBlock = async (count?: number): Promise<void> => {
-  const signers = await ethers.getSigners();
-  const tx = { to: signers[1].address };
-  if (count > 0) {
-    for (let i = 0; i < count; i++) {
-      await signers[0].sendTransaction(tx);
-    }
-  } else {
-    await signers[0].sendTransaction(tx);
-  }
-};
-
-/**
- *
- * @param tx - transaction where the child was created
- * @param contractFactory - contract factory that create the child
- * @param contractArtifact - the artifact of the child contract
- * @param signer - (optional) the signer that will be connected the child contract. Same as contractFactory if not provided
- * @param eventName - (optional) the event where the address was emitted. By default "NewChild"
- * @param eventArg - (optional) the arg of the event that contain the address. By default "child"
- * @returns The child contract connected to the signer
- */
-export const getContractChild = async (
-  tx: ContractTransaction,
-  contractFactory: Contract,
-  contractArtifact: Artifact,
-  signer?: SignerWithAddress,
-  eventName = "NewChild",
-  eventArg = "child"
-): Promise<Contract> => {
-  const contractChild = new ethers.Contract(
-    ethers.utils.hexZeroPad(
-      ethers.utils.hexStripZeros(
-        (await getEventArgs(tx, eventName, contractFactory))[eventArg]
-      ),
-      20 // address bytes length
-    ),
-    contractArtifact.abi,
-    signer || contractFactory.signer
-  ) as Contract;
-
-  if (!ethers.utils.isAddress(contractChild.address)) {
-    throw new Error(
-      `invalid trust address: ${contractChild.address} (${contractChild.address.length} chars)`
-    );
-  }
-
-  await contractChild.deployed();
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  contractChild.deployTransaction = tx;
-
-  return contractChild;
-};
-
-/**
  * Converts a value to raw bytes representation. Assumes `value` is less than or equal to 1 byte, unless a desired `bytesLength` is specified.
- *
- * @param value - value to convert to raw bytes format
- * @param bytesLength - (defaults to 1) number of bytes to left pad if `value` doesn't completely fill the desired amount of memory. Will throw `InvalidArgument` error if value already exceeds bytes length.
- * @returns {Uint8Array} - raw bytes representation
+ * @param value value to convert to raw bytes format
+ * @param bytesLength (defaults to 1) number of bytes to left pad if `value` doesn't completely fill the desired amount of memory. Will throw `InvalidArgument` error if value already exceeds bytes length.
+ * @returns {Uint8Array} raw bytes representation
  */
 export function bytify(
   value: number | BytesLike | Hexable,
@@ -1140,13 +1210,18 @@ export function bytify(
 
 /**
  * Converts an opcode and operand to bytes, and returns their concatenation.
- * @param code - the opcode
- * @param erand - the operand, currently limited to 1 byte (defaults to 0)
+ * @param code the opcode
+ * @param erand the operand, currently limited to 1 byte (defaults to 0)
  */
 export function op(code: number, erand = 0): Uint8Array {
   return concat([bytify(code), bytify(erand)]);
 }
 
+/**
+ * Convert a VMState to an State. This replicate the creationg made it by VMState contract
+ * @param vmStateConfig The VMState configuration to convert
+ * @returns The new State created from the VMState configuration
+ */
 export function encodeStateExpected(vmStateConfig: VMState): State {
   const stackIndex = ethers.BigNumber.from(0);
   const stack = new Array(vmStateConfig.stackLength).fill(
@@ -1195,7 +1270,7 @@ export const basicSetup = async (
   creator: SignerWithAddress,
   seeder: SignerWithAddress,
   trustFactory: TrustFactory,
-  tier: ReadWriteTier
+  tier: ITier
 ): Promise<{
   reserve: ReserveTokenTest;
   trust: Trust;
@@ -1334,6 +1409,11 @@ export const swapReserveForTokens = async (
   );
 };
 
+/**
+ * Determine a reserve dust in a Balancer Pool
+ * @param bPoolReserveBalance The actual reserve balance in the Balancer Pool
+ * @returns The dust in the Balancer Pool
+ */
 export const determineReserveDust = (
   bPoolReserveBalance: BigNumber
 ): BigNumber => {
@@ -1345,6 +1425,11 @@ export const determineReserveDust = (
   return dust;
 };
 
+/**
+ * Create a VMState configuration from a specific block number
+ * @param blockNumber The block number to be use to create the VMState configuration
+ * @returns The VMState configuration
+ */
 export const afterBlockNumberConfig = (blockNumber: number): VMState => {
   return {
     sources: [
@@ -1362,8 +1447,7 @@ export const afterBlockNumberConfig = (blockNumber: number): VMState => {
 };
 
 /**
- * Auxiliar function that convert an config that is a VMState to get all their
- * components as string
+ * Convert an config that is a VMState to get all their components as string. Useful to testing
  * @param config Config on a VMState to convert
  * @returns the configuration with all the components as string
  */
