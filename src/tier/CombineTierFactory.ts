@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import {
   NewChild,
   Implementation,
@@ -18,7 +17,7 @@ export function handleNewChild(event: NewChild): void {
   combineTier.factory = event.address.toHex();
   combineTier.notices = [];
 
-  if (combineTierFactory){
+  if (combineTierFactory) {
     let children = combineTierFactory.children;
     if (children) children.push(combineTier.id);
     combineTierFactory.children = children;

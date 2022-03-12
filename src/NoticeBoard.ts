@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { NewNotice } from "../generated/NoticeBoard/NoticeBoard";
 import {
   UnknownTier,

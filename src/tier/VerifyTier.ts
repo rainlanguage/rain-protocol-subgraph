@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { Address } from "@graphprotocol/graph-ts";
 import { VerifyTier, Verify } from "../../generated/schema";
 import {

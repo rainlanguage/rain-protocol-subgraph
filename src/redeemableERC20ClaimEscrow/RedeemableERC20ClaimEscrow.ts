@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { Address, ethereum, BigInt, log } from "@graphprotocol/graph-ts";
 import {
   Deposit,

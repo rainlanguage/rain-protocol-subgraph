@@ -52,9 +52,7 @@ export function handleApprove(event: Approve): void {
 
     let verifyContract = VerifyContract.bind(event.address);
 
-    let state = verifyContract.state(
-      event.params.evidence.account
-    );
+    let state = verifyContract.state(event.params.evidence.account);
 
     // Create a new VerifyApprove entity with "VerifyContract - transaction.hash - count" id
     let verifyApprove = new VerifyApprove(
@@ -126,9 +124,7 @@ export function handleBan(event: Ban): void {
 
     let verifyContract = VerifyContract.bind(event.address);
 
-    let state = verifyContract.state(
-      event.params.evidence.account
-    );
+    let state = verifyContract.state(event.params.evidence.account);
 
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let ban = new VerifyBan(
@@ -201,9 +197,7 @@ export function handleRemove(event: Remove): void {
 
     let verifyContract = VerifyContract.bind(event.address);
 
-    let state = verifyContract.state(
-      event.params.evidence.account
-    );
+    let state = verifyContract.state(event.params.evidence.account);
 
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let verifyRemove = new VerifyRemove(
@@ -277,9 +271,7 @@ export function handleRequestApprove(event: RequestApprove): void {
 
     let verifyContract = VerifyContract.bind(event.address);
 
-    let state = verifyContract.state(
-      event.params.evidence.account
-    );
+    let state = verifyContract.state(event.params.evidence.account);
 
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let verifyRequestApprove = new VerifyRequestApprove(
@@ -337,9 +329,7 @@ export function handleRequestBan(event: RequestBan): void {
 
     let verifyContract = VerifyContract.bind(event.address);
 
-    let state = verifyContract.state(
-      event.params.evidence.account
-    );
+    let state = verifyContract.state(event.params.evidence.account);
 
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let verifyRequestBan = new VerifyRequestBan(
@@ -409,9 +399,7 @@ export function handleRequestRemove(event: RequestRemove): void {
 
     let verifyContract = VerifyContract.bind(event.address);
 
-    let state = verifyContract.state(
-      event.params.evidence.account
-    );
+    let state = verifyContract.state(event.params.evidence.account);
 
     // Create a new VerifyBan entity with "VerifyContract - transaction.hash - count" id
     let verifyRequestRemove = new VerifyRequestRemove(
@@ -829,7 +817,10 @@ function getVerifyAddress(
   return verifyAddress as VerifyAddress;
 }
 
-function getstatus(state_: Verify__stateResultValue0Struct, blockNumber_: BigInt): BigInt {
+function getstatus(
+  state_: Verify__stateResultValue0Struct,
+  blockNumber_: BigInt
+): BigInt {
   // The state hasn't even been added so is picking up block zero as the
   // evm fallback value. In this case if we checked other blocks using
   // a `<=` equality they would incorrectly return `true` always due to
@@ -840,19 +831,19 @@ function getstatus(state_: Verify__stateResultValue0Struct, blockNumber_: BigInt
   }
   // Banned takes priority over everything.
   else if (state_.bannedSince <= blockNumber_) {
-      return BigInt.fromI32(Status.BANNED);
+    return BigInt.fromI32(Status.BANNED);
   }
   // Approved takes priority over added.
   else if (state_.approvedSince <= blockNumber_) {
-      return BigInt.fromI32(Status.APPROVED);
+    return BigInt.fromI32(Status.APPROVED);
   }
   // Added is lowest priority.
   else if (state_.addedSince <= blockNumber_) {
-      return BigInt.fromI32(Status.ADDED);
+    return BigInt.fromI32(Status.ADDED);
   }
   // The `addedSince` block is after `blockNumber_` so `Status` is nil
   // relative to `blockNumber_`.
   else {
-      return BigInt.fromI32(Status.NIL);
+    return BigInt.fromI32(Status.NIL);
   }
 }

@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { Sale, SaleFactory } from "../../generated/schema";
 import {
   NewChild,

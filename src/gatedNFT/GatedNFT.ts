@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import {
   CreatedGatedNFT,
   OwnershipTransferred as OwnershipTransferredEvent,

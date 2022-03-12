@@ -1,5 +1,5 @@
 {
-  "name": "rain-protocol-subgraph",
+  "name": "@beehiveinnovation/rain-protocol-subgraph",
   "description": "Rain protocol subgraph",
   "version": "0.2.0",
   "author": "Beehive Innovation",

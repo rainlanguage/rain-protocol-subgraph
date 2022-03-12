@@ -1,6 +1,13 @@
+## Deps
 node_modules
-artifacts
+
+## Hardhat
 cache
-coverage
+artifacts
+contracts
 typechain
-src
+
+## Subgraph
+build
+generated
+docker/data

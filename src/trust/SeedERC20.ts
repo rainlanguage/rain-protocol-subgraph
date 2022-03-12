@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { Address, dataSource, BigInt } from "@graphprotocol/graph-ts";
 import {
   Seed,

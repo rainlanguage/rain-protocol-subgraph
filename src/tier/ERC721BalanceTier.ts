@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { ERC721, ERC721BalanceTier } from "../../generated/schema";
 import {
   Initialize,

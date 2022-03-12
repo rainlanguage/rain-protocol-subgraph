@@ -123,8 +123,6 @@ const linkBytecode = (artifact: any, links: any) => {
   return artifact;
 };
 
-
-
 export const factoriesDeploy = async (
   crpFactory: Contract,
   balancerFactory: Contract,
@@ -146,7 +144,7 @@ export const factoriesDeploy = async (
     crpFactory: crpFactory.address,
     balancerFactory: balancerFactory.address,
     creatorFundsReleaseTimeout: CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING,
-    maxRaiseDuration: MAX_RAISE_DURATION_TESTING
+    maxRaiseDuration: MAX_RAISE_DURATION_TESTING,
   };
   const trustFactory = await deploy(TrustFactory, signer, [TrustFactoryArgs]);
   await trustFactory.deployed();

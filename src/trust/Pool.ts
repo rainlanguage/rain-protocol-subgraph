@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { Address, dataSource, log, BigInt } from "@graphprotocol/graph-ts";
 import {
   Contract,

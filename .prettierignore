@@ -1,7 +1,16 @@
+## Deps
 node_modules
-artifacts
+
+## Hardhat
 cache
-coverage*
-gasReporterOutput.json
+artifacts
+contracts
 typechain
-src
+
+## Subgraph
+build
+generated
+docker
+/docker/**/*
+/docker/*
+/docker/data/postgres

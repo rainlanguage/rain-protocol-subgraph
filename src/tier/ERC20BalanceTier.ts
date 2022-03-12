@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { ERC20, ERC20BalanceTier } from "../../generated/schema";
 import {
   Initialize,

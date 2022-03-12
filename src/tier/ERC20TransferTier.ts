@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import {
   ERC20,
   ERC20TransferTier,

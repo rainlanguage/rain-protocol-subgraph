@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { CombineTier, State } from "../../generated/schema";
 import {
   Snapshot as SnapshotEvent,

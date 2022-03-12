@@ -12,4 +12,12 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended",
   ],
+  overrides: [
+    {
+      files: ["src/**/*.ts"],
+      rules: {
+        "prefer-const": "off",
+      },
+    },
+  ],
 };
