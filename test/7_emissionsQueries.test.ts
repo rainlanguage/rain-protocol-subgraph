@@ -1,37 +1,36 @@
-import { expect } from "chai";
-import { ethers } from "hardhat";
-import { waitForSubgraphToBeSynced } from "./utils/utils";
+import { expect, assert } from "chai";
+import { concat, hexlify } from "ethers/lib/utils";
 import * as Util from "./utils/utils";
-import { Tier, op, OpcodeEmissionsERC20 } from "./utils/utils";
-import { concat } from "ethers/lib/utils";
+import {
+  waitForSubgraphToBeSynced,
+  op,
+  OpcodeEmissionsERC20,
+} from "./utils/utils";
 
 import {
   subgraph,
-  deployer,
   creator,
   signer1,
+  signer2,
   emissionsERC20Factory,
 } from "./1_trustQueries.test";
-
-// Typechain factories
-import { ReadWriteTier__factory } from "../typechain/factories/ReadWriteTier__factory";
 
 // Types
 import type { FetchResult } from "apollo-fetch";
 import type { ContractTransaction } from "ethers";
-import type { ReadWriteTier } from "../typechain/ReadWriteTier";
 import type {
+  ClaimEvent,
   EmissionsERC20,
   SnapshotEvent,
+  TransferEvent,
 } from "../typechain/EmissionsERC20";
 
-let emissionsERC20: EmissionsERC20,
-  readWriteTier: ReadWriteTier,
-  transaction: ContractTransaction;
+let emissionsERC20: EmissionsERC20, transaction: ContractTransaction;
 
-describe("EmissionsERC20 queries test", function () {
+describe.only("EmissionsERC20 queries test", function () {
   const claimAmount = 123;
   const allowDelegatedClaims = true;
+  const claimMessage = hexlify([...Buffer.from("Custom claim message")]);
 
   const vmStateConfig = {
     sources: [concat([op(OpcodeEmissionsERC20.VAL)])],
@@ -39,10 +38,6 @@ describe("EmissionsERC20 queries test", function () {
     argumentsLength: 0,
     stackLength: 1,
   };
-
-  before("", async function () {
-    readWriteTier = await new ReadWriteTier__factory(deployer).deploy();
-  });
 
   it("should query the EmissionsERC20Factory after construction correctly", async function () {
     // Get the EmissionsERC20 implementation
@@ -72,7 +67,7 @@ describe("EmissionsERC20 queries test", function () {
     const erc20Config = {
       name: "Emissions",
       symbol: "EMS",
-      distributor: signer1.address,
+      distributor: creator.address,
       initialSupply: 0,
     };
 
@@ -99,7 +94,6 @@ describe("EmissionsERC20 queries test", function () {
         }
       }
     `;
-
     const response = (await subgraph({
       query,
     })) as FetchResult;
@@ -129,7 +123,6 @@ describe("EmissionsERC20 queries test", function () {
         }
       }
     `;
-
     const response = (await subgraph({
       query,
     })) as FetchResult;
@@ -159,7 +152,6 @@ describe("EmissionsERC20 queries test", function () {
         }
       }
     `;
-
     const response = (await subgraph({
       query,
     })) as FetchResult;
@@ -185,7 +177,6 @@ describe("EmissionsERC20 queries test", function () {
         }
       }
     `;
-
     const response = (await subgraph({
       query,
     })) as FetchResult;
@@ -224,7 +215,6 @@ describe("EmissionsERC20 queries test", function () {
         }
       }
     `;
-
     const response = (await subgraph({
       query,
     })) as FetchResult;
@@ -235,5 +225,89 @@ describe("EmissionsERC20 queries test", function () {
     expect(data.sources).to.deep.equals(sourcesExpected);
     expect(data.constants).to.deep.equals(constantsExpected);
     expect(data.arguments).to.deep.equals(argumentsExpected);
+  });
+
+  it("should update the EmissionsERC20 after a claim", async function () {
+    // Signer1 claim in name of the Signer2
+    transaction = await emissionsERC20
+      .connect(signer1)
+      .claim(signer2.address, claimMessage);
+
+    const expectedClaim = {
+      id: transaction.hash.toLowerCase(),
+    };
+
+    // Wait sync
+    await waitForSubgraphToBeSynced();
+
+    const query = `
+      {
+        emissionsERC20 (id: "${emissionsERC20.address.toLowerCase()}") {
+          totalSupply
+          claims {
+            id
+          }
+        }
+      }
+    `;
+    const response = (await subgraph({
+      query,
+    })) as FetchResult;
+    const data = response.data.emissionsERC20;
+
+    expect(data.totalSupply).to.equals(await emissionsERC20.totalSupply());
+    expect(data.claims).deep.include(expectedClaim);
+  });
+
+  it("should query EmissionsERC20Claim entity after a claim", async function () {
+    const [block, timestamp] = await Util.getTxTimeblock(transaction);
+
+    const { sender, claimant } = (await Util.getEventArgs(
+      transaction,
+      "Claim",
+      emissionsERC20
+    )) as ClaimEvent["args"];
+
+    const { from, value: claimedAmount } = (await Util.getEventArgs(
+      transaction,
+      "Transfer",
+      emissionsERC20
+    )) as TransferEvent["args"];
+
+    // Double check that it is the mint/claim
+    assert(from == Util.zeroAddress, `wrong transfer event. It is a not mint`);
+
+    const query = `
+      {
+        emissionsERC20Claim (id: "${transaction.hash.toLowerCase()}") {
+          block
+          timestamp
+          sender
+          claimant
+          data
+          amount
+          emissionsERC20 {
+            id
+          }
+        }
+      }
+    `;
+    const response = (await subgraph({
+      query,
+    })) as FetchResult;
+    const data = response.data.emissionsERC20Claim;
+
+    expect(data.block).to.equals(block.toString());
+    expect(data.timestamp).to.equals(timestamp.toString());
+
+    expect(data.sender).to.equals(sender.toLowerCase());
+    expect(data.claimant).to.equals(claimant.toLowerCase());
+
+    expect(data.data).to.equals(claimMessage.toLowerCase());
+    expect(data.amount).to.equals(claimedAmount.toString());
+
+    expect(data.emissionsERC20.id).to.equals(
+      emissionsERC20.address.toLowerCase()
+    );
   });
 });
