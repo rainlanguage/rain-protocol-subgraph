@@ -13,6 +13,7 @@ import {
   getEventArgs,
   zeroAddress,
   fixedNumber,
+  DistributionStatus,
 } from "./utils/utils";
 
 import { getFactories, QUERY } from "./utils/queries";
@@ -73,15 +74,6 @@ import type {
   StartDutchAuctionEvent,
   EndDutchAuctionEvent,
 } from "../typechain/Trust";
-
-enum DistributionStatus {
-  Pending,
-  Seeded,
-  Trading,
-  TradingCanEnd,
-  Success,
-  Fail,
-}
 
 const subgraphUser = "vishalkale151071";
 const subgraphName = "rain-protocol";
@@ -154,7 +146,7 @@ before("Deployment contracts and subgraph", async function () {
   ];
 
   ({ trustFactory, redeemableERC20Factory, seedERC20Factory } =
-    await Util.factoriesDeploy(crpFactory, bFactory, deployer));
+    await Util.trustFactoriesDeploy(crpFactory, bFactory, deployer));
 
   // Deploying VerifyFactory contract
   verifyFactory = await new VerifyFactory__factory(deployer).deploy();

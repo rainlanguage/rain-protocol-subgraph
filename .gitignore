@@ -17,5 +17,3 @@ config/localhost.json
 ## IDE
 .idea
 .vscode
-
-test/helper.txt

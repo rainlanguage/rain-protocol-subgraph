@@ -1,14 +1,12 @@
 import { expect, assert } from "chai";
 import { ethers } from "hardhat";
-import { FetchResult } from "apollo-fetch";
-import { BigNumber, ContractTransaction } from "ethers";
 import { concat } from "ethers/lib/utils";
-
 import * as Util from "./utils/utils";
 import {
   op,
-  deploy,
   getTxTimeblock,
+  getImplementation,
+  getEventArgs,
   waitForSubgraphToBeSynced,
   eighteenZeros,
   sixZeros,
@@ -22,26 +20,24 @@ import {
 
 // Typechain Factories
 import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
-
-// Artifacts
-import reserveJson from "../artifacts/contracts/test/ReserveTokenTest.sol/ReserveTokenTest.json";
-import reserveNFTJson from "../artifacts/contracts/test/ReserveNFT.sol/ReserveNFT.json";
-
-import verifyJson from "../artifacts/contracts/verify/Verify.sol/Verify.json";
-import erc20BalanceTierJson from "../artifacts/contracts/tier/ERC20BalanceTier.sol/ERC20BalanceTier.json";
+import { ReserveNFT__factory } from "../typechain/factories/ReserveNFT__factory";
+import { ERC20BalanceTier__factory } from "../typechain/factories/ERC20BalanceTier__factory";
+import { Verify__factory } from "../typechain/factories/Verify__factory";
 
 // Types
-import { ReserveTokenTest } from "../typechain/ReserveTokenTest";
-import { ReserveNFT } from "../typechain/ReserveNFT";
+import type { FetchResult } from "apollo-fetch";
+import type { BigNumber, ContractTransaction } from "ethers";
+import type { TierChangeEvent } from "../typechain/ITier";
+import type { SnapshotEvent } from "../typechain/VMState";
+import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import type { ReserveNFT } from "../typechain/ReserveNFT";
+import type { Verify } from "../typechain/Verify";
 
-import { Verify } from "../typechain/Verify";
-import { VerifyTier } from "../typechain/VerifyTier";
-import { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
-import { ERC20TransferTier } from "../typechain/ERC20TransferTier";
-import { CombineTier } from "../typechain/CombineTier";
-
-// Should update path after a new commit
-import { ERC721BalanceTier } from "../typechain/ERC721BalanceTier";
+import type { VerifyTier } from "../typechain/VerifyTier";
+import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
+import type { ERC20TransferTier } from "../typechain/ERC20TransferTier";
+import type { CombineTier } from "../typechain/CombineTier";
+import type { ERC721BalanceTier } from "../typechain/ERC721BalanceTier";
 
 import {
   // Subgraph
@@ -68,46 +64,34 @@ import {
 let reserve: ReserveTokenTest, transaction: ContractTransaction;
 
 describe("Subgraph Tier Test", function () {
-  before("deploy fresh test contracts", async function () {
-    // New reserve token
-    reserve = await new ReserveTokenTest__factory(deployer).deploy();
-  });
+  // before("deploy fresh test contracts", async function () {
+  //   // New reserve token
+  //   reserve = await new ReserveTokenTest__factory(deployer).deploy();
+  // });
 
   describe("VerifyTier Factory - Queries", function () {
     let verify: Verify, verifyTier: VerifyTier;
-
-    const APPROVER = ethers.utils.keccak256(
-      ethers.utils.toUtf8Bytes("APPROVER")
-    );
-    const REMOVER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("REMOVER"));
-    const BANNER = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("BANNER"));
 
     before("deploy fresh test contracts", async function () {
       // Creating a new Verify Child
       verify = await Util.verifyDeploy(verifyFactory, creator, admin.address);
 
-      // Admin grants all roles to himself. This is for testing purposes only, it SHOULD be avoided.
-      await verify.connect(admin).grantRole(APPROVER, admin.address);
-      await verify.connect(admin).grantRole(REMOVER, admin.address);
-      await verify.connect(admin).grantRole(BANNER, admin.address);
+      // Admin grants all roles to himself.
+      // ⚠️ NOTE: This is for testing purposes only ⚠️
+      await verify.connect(admin).grantRole(Util.APPROVER, admin.address);
+      await verify.connect(admin).grantRole(Util.REMOVER, admin.address);
+      await verify.connect(admin).grantRole(Util.BANNER, admin.address);
 
       await waitForSubgraphToBeSynced();
     });
 
     it("should query VerifyTierFactory correctly after construction", async function () {
       // Get the VerifyTier implementation
-      const implementation = (
-        await Util.getEventArgs(
-          verifyTierFactory.deployTransaction,
-          "Implementation",
-          verifyTierFactory
-        )
-      ).implementation;
+      const implementation = await getImplementation(verifyTierFactory);
 
       const query = `
         {
-          verifyTierFactories  {
-            id
+          verifyTierFactory (id: "${verifyTierFactory.address.toLowerCase()}") {
             address
             implementation
           }
@@ -117,9 +101,8 @@ describe("Subgraph Tier Test", function () {
         query,
       })) as FetchResult;
 
-      const data = response.data.verifyTierFactories[0];
+      const data = response.data.verifyTierFactory;
 
-      expect(data.id).to.equals(verifyTierFactory.address.toLowerCase());
       expect(data.address).to.equals(verifyTierFactory.address.toLowerCase());
       expect(data.implementation).to.equals(implementation.toLowerCase());
     });
@@ -150,7 +133,7 @@ describe("Subgraph Tier Test", function () {
 
       const data = response.data.verifyTierFactory;
 
-      expect(data.children).to.deep.include({
+      expect(data.children).deep.include({
         id: verifyTier.address.toLowerCase(),
       });
     });
@@ -235,7 +218,7 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should continue query if the Verify Address in VerifyTier is a non-Verify contract address", async function () {
-      const nonVerifyAddress = Util.zeroAddress;
+      const nonVerifyAddress = zeroAddress;
 
       // Creating the VerifyTier Contract with the non-Verify contract address
       verifyTier = await Util.verifyTierDeploy(
@@ -281,18 +264,14 @@ describe("Subgraph Tier Test", function () {
       expect(data.deployBlock).to.equals("0");
       expect(data.deployTimestamp).to.equals("0");
 
-      expect(data.deployer).to.equals(Util.zeroAddress.toLowerCase());
+      expect(data.deployer).to.equals(zeroAddress.toLowerCase());
       expect(data.factory).to.be.null;
       expect(data.verifyAddresses).to.be.empty;
     });
 
     it("should query a Verify that was deployed without the factory and it is in VerifyTier", async function () {
       // Verify deployed without factory
-      const verifyIndependent = (await deploy(
-        verifyJson,
-        deployer,
-        []
-      )) as Verify;
+      const verifyIndependent = await new Verify__factory(deployer).deploy();
 
       await verifyIndependent.initialize(admin.address);
 
@@ -341,7 +320,7 @@ describe("Subgraph Tier Test", function () {
       expect(data.deployBlock).to.equals("0");
       expect(data.deployTimestamp).to.equals("0");
 
-      expect(data.deployer).to.equals(Util.zeroAddress.toLowerCase());
+      expect(data.deployer).to.equals(zeroAddress.toLowerCase());
       expect(data.factory).to.null;
       expect(data.verifyAddresses).to.be.empty;
     });
@@ -352,18 +331,12 @@ describe("Subgraph Tier Test", function () {
 
     before("deploy fresh test contracts", async function () {
       // Creating a new reserve token
-      reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
+      reserve = await new ReserveTokenTest__factory(deployer).deploy();
     });
 
     it("should query ERC20BalanceTierFactory correctly after construction", async function () {
       // Get the ERC20BalanceTier implementation
-      const implementation = (
-        await Util.getEventArgs(
-          erc20BalanceTierFactory.deployTransaction,
-          "Implementation",
-          erc20BalanceTierFactory
-        )
-      ).implementation;
+      const implementation = await getImplementation(erc20BalanceTierFactory);
 
       const query = `
         {
@@ -421,7 +394,7 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should query the ERC20BalanceTier correctly", async function () {
-      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+      const [deployBlock, deployTimestamp] = await getTxTimeblock(
         erc20BalanceTier.deployTransaction
       );
 
@@ -544,18 +517,12 @@ describe("Subgraph Tier Test", function () {
 
     before("deploy fresh test contracts", async function () {
       // Creating a new reserve token
-      reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
+      reserve = await new ReserveTokenTest__factory(deployer).deploy();
     });
 
     it("should query ERC20TransferTierFactory correctly after construction", async function () {
       // Get the ERC20TransferTier implementation
-      const implementation = (
-        await Util.getEventArgs(
-          erc20TransferTierFactory.deployTransaction,
-          "Implementation",
-          erc20TransferTierFactory
-        )
-      ).implementation;
+      const implementation = await getImplementation(erc20TransferTierFactory);
 
       const query = `
         {
@@ -613,7 +580,7 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should query the ERC20TransferTier correctly", async function () {
-      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+      const [deployBlock, deployTimestamp] = await getTxTimeblock(
         erc20TransferTier.deployTransaction
       );
 
@@ -739,16 +706,16 @@ describe("Subgraph Tier Test", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const { startTier, endTier } = await Util.getEventArgs(
+      const { startTier, endTier } = (await getEventArgs(
         transaction,
         "TierChange",
         erc20TransferTier
-      );
+      )) as TierChangeEvent["args"];
 
-      assert(desiredLevel == endTier, `wrong endTier`);
+      assert(desiredLevel == endTier.toNumber(), `wrong endTier`);
 
       const tierChangeId = `${transaction.hash.toLowerCase()} - ${erc20TransferTier.address.toLowerCase()}`;
-      const [changeBlock, changeTime] = await Util.getTxTimeblock(transaction);
+      const [changeBlock, changeTime] = await getTxTimeblock(transaction);
 
       const query = `
         {
@@ -795,11 +762,14 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should query the TierLevel after upgrade with setTier correctly", async function () {
-      const { endTier: level } = await Util.getEventArgs(
+      const { endTier } = (await getEventArgs(
         transaction,
         "TierChange",
         erc20TransferTier
-      );
+      )) as TierChangeEvent["args"];
+
+      // Convert to number since it is necessary to index
+      const level = endTier.toNumber();
 
       const query = `
         {
@@ -828,17 +798,17 @@ describe("Subgraph Tier Test", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const { startTier, endTier } = await Util.getEventArgs(
+      const { startTier, endTier } = (await getEventArgs(
         transaction,
         "TierChange",
         erc20TransferTier
-      );
+      )) as TierChangeEvent["args"];
 
       // Fill the counter correcly
-      membersCount[endTier]++;
-      membersCount[startTier]--;
+      membersCount[endTier.toNumber()]++;
+      membersCount[startTier.toNumber()]--;
 
-      assert(desiredLevel == endTier, `wrong endTier`);
+      assert(desiredLevel == endTier.toNumber(), `wrong endTier`);
 
       const query = `
         {
@@ -864,8 +834,11 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should query the TierLevel after downgrade with setTier correctly", async function () {
-      const { startTier: startLevel, endTier: endLevel } =
-        await Util.getEventArgs(transaction, "TierChange", erc20TransferTier);
+      const { startTier: startLevel, endTier: endLevel } = (await getEventArgs(
+        transaction,
+        "TierChange",
+        erc20TransferTier
+      )) as TierChangeEvent["args"];
 
       const query = `
         {
@@ -885,10 +858,10 @@ describe("Subgraph Tier Test", function () {
       const data = response.data;
 
       expect(data.startLevel.memberCount).to.equals(
-        membersCount[startLevel].toString()
+        membersCount[startLevel.toNumber()].toString()
       );
       expect(data.endLevel.memberCount).to.equals(
-        membersCount[endLevel].toString()
+        membersCount[endLevel.toNumber()].toString()
       );
     });
 
@@ -955,13 +928,7 @@ describe("Subgraph Tier Test", function () {
 
     it("should query CombineTierFactory correctly", async function () {
       // Get the CombineTier implementation
-      const implementation = (
-        await Util.getEventArgs(
-          combineTierFactory.deployTransaction,
-          "Implementation",
-          combineTierFactory
-        )
-      ).implementation;
+      const implementation = await getImplementation(combineTierFactory);
 
       const query = `
         {
@@ -1013,11 +980,12 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should query the CombineTier correctly", async function () {
-      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+      const [deployBlock, deployTimestamp] = await getTxTimeblock(
         combineTier.deployTransaction
       );
 
       const stateId = combineTier.deployTransaction.hash.toLowerCase();
+
       const query = `
         {
           combineTier (id: "${combineTier.address.toLowerCase()}") {
@@ -1059,13 +1027,11 @@ describe("Subgraph Tier Test", function () {
     it("should query the State present on CombineTier correclty", async function () {
       const stateId = `${combineTier.deployTransaction.hash.toLowerCase()}`;
 
-      const stateExpected = (
-        await Util.getEventArgs(
-          combineTier.deployTransaction,
-          "Snapshot",
-          combineTier
-        )
-      ).state;
+      const { state: stateExpected } = (await getEventArgs(
+        combineTier.deployTransaction,
+        "Snapshot",
+        combineTier
+      )) as SnapshotEvent["args"];
 
       const arrayToString = (arr: BigNumber[]): string[] => {
         return arr.map((x: BigNumber) => x.toString());
@@ -1155,17 +1121,11 @@ describe("Subgraph Tier Test", function () {
 
     before("deploy fresh test contracts", async function () {
       // Creating a new reserve token
-      reserveNFT = (await deploy(reserveNFTJson, deployer, [])) as ReserveNFT;
+      reserveNFT = await new ReserveNFT__factory(deployer).deploy();
     });
 
     it("should query ERC721BalanceTierFactory correctly", async function () {
-      const implementation = (
-        await Util.getEventArgs(
-          erc721BalanceTierFactory.deployTransaction,
-          "Implementation",
-          erc721BalanceTierFactory
-        )
-      ).implementation;
+      const implementation = await getImplementation(erc721BalanceTierFactory);
 
       const query = `
         {
@@ -1222,7 +1182,7 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should query the ERC721BalanceTier correctly", async function () {
-      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+      const [deployBlock, deployTimestamp] = await getTxTimeblock(
         erc721BalanceTier.deployTransaction
       );
 
@@ -1268,7 +1228,7 @@ describe("Subgraph Tier Test", function () {
 
     it("should query the ERC721-NFT of the ERC721BalanceTier correctly", async function () {
       // On this TX is where the reference to the ERC721 token start
-      const [deployBlock, deployTimestamp] = await Util.getTxTimeblock(
+      const [deployBlock, deployTimestamp] = await getTxTimeblock(
         erc721BalanceTier.deployTransaction
       );
 
@@ -1354,14 +1314,10 @@ describe("Subgraph Tier Test", function () {
 
     before("deploy independent tier contract", async function () {
       // Creating a new reserve ERC20 token
-      reserve = (await deploy(reserveJson, deployer, [])) as ReserveTokenTest;
+      reserve = await new ReserveTokenTest__factory(deployer).deploy();
 
       // Deploy and initialize an Independent Tier
-      tierIndependent = (await deploy(
-        erc20BalanceTierJson,
-        deployer,
-        []
-      )) as ERC20BalanceTier;
+      tierIndependent = await new ERC20BalanceTier__factory(deployer).deploy();
 
       await tierIndependent.initialize({
         erc20: reserve.address,
@@ -1437,7 +1393,7 @@ describe("Subgraph Tier Test", function () {
       expect(data.notices).to.be.empty;
 
       expect(data.address).to.equals(tierIndependent.address.toLowerCase());
-      expect(data.deployer).to.equals(Util.zeroAddress);
+      expect(data.deployer).to.equals(zeroAddress);
       expect(data.deployBlock).to.equals("0");
       expect(data.deployTimestamp).to.equals("0");
     });
@@ -1587,7 +1543,7 @@ describe("Subgraph Tier Test", function () {
       const redeemableERC20Config = {
         name: "Token",
         symbol: "TKN",
-        distributor: Util.zeroAddress,
+        distributor: zeroAddress,
         initialSupply: ethers.BigNumber.from("2000").mul(Util.ONE),
       };
       const minimumTier = Tier.ZERO;

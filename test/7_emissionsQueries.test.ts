@@ -18,16 +18,16 @@ import {
 // Types
 import type { FetchResult } from "apollo-fetch";
 import type { ContractTransaction } from "ethers";
+import type { SnapshotEvent } from "../typechain/VMState";
 import type {
-  ClaimEvent,
   EmissionsERC20,
-  SnapshotEvent,
+  ClaimEvent,
   TransferEvent,
 } from "../typechain/EmissionsERC20";
 
 let emissionsERC20: EmissionsERC20, transaction: ContractTransaction;
 
-describe.only("EmissionsERC20 queries test", function () {
+describe("EmissionsERC20 queries test", function () {
   const claimAmount = 123;
   const allowDelegatedClaims = true;
   const claimMessage = hexlify([...Buffer.from("Custom claim message")]);
