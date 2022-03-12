@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
     localhost: createLocalHostConfig(),
   },
   mocha: {
-    timeout: 300000,
+    timeout: 600000,
   },
 };
 

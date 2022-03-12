@@ -1,40 +1,39 @@
-type Snapshot @entity{
-    id: ID!
-    sender: Bytes!
-    pointer: Bytes!
-    state: State!
+type Snapshot @entity {
+  id: ID!
+  sender: Bytes!
+  pointer: Bytes!
+  state: State!
 }
 
-type CanStartStateConfig @entity{
-    id: ID!
-    sources: [Bytes!]!
-    constants: [BigInt!]!
-    stackLength: BigInt!
-    argumentsLength: BigInt!
+type CanStartStateConfig @entity {
+  id: ID!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+  stackLength: BigInt!
+  argumentsLength: BigInt!
 }
 
-type CanEndStateConfig @entity{
-    id: ID!
-    sources: [Bytes!]!
-    constants: [BigInt!]!
-    stackLength: BigInt!
-    argumentsLength: BigInt!
+type CanEndStateConfig @entity {
+  id: ID!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+  stackLength: BigInt!
+  argumentsLength: BigInt!
 }
 
-type CalculatePriceStateConfig @entity{
-    id: ID!
-    sources: [Bytes!]!
-    constants: [BigInt!]!
-    stackLength: BigInt!
-    argumentsLength: BigInt!
+type CalculatePriceStateConfig @entity {
+  id: ID!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+  stackLength: BigInt!
+  argumentsLength: BigInt!
 }
 
-type State @entity{
-    id: ID!
-    stackIndex: BigInt!
-    stack: [BigInt!]!
-    sources: [Bytes!]!
-    constants: [BigInt!]!
-    arguments: [BigInt!]!
+type State @entity {
+  id: ID!
+  stackIndex: BigInt!
+  stack: [BigInt!]!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+  arguments: [BigInt!]!
 }
-

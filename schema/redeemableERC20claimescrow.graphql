@@ -1,140 +1,139 @@
 type RedeemableERC20ClaimEscrow implements INotice @entity {
-    id: ID! # address of the escrow contract
-    address: Bytes! #address of the escrow contract
-    pendingDeposits: [RedeemableEscrowPendingDeposit!]
-    deposits: [RedeemableEscrowDeposit!]
-    undeposits: [RedeemableEscrowUndeposit!]
-    withdraws: [RedeemableEscrowWithdraw!]
-    pendingDepositorTokens: [RedeemableEscrowPendingDepositorToken!]
-    supplyTokenDeposits: [RedeemableEscrowSupplyTokenDeposit!]
-    depositors: [RedeemableEscrowDepositor!]
-    withdrawers: [RedeemableEscrowWithdrawer!]
-    notices: [Notice!]
+  id: ID! # address of the escrow contract
+  address: Bytes! #address of the escrow contract
+  pendingDeposits: [RedeemableEscrowPendingDeposit!]
+  deposits: [RedeemableEscrowDeposit!]
+  undeposits: [RedeemableEscrowUndeposit!]
+  withdraws: [RedeemableEscrowWithdraw!]
+  pendingDepositorTokens: [RedeemableEscrowPendingDepositorToken!]
+  supplyTokenDeposits: [RedeemableEscrowSupplyTokenDeposit!]
+  depositors: [RedeemableEscrowDepositor!]
+  withdrawers: [RedeemableEscrowWithdrawer!]
+  notices: [Notice!]
 }
 
 # represents one depositor for one escrow
 type RedeemableEscrowDepositor @entity {
-    id: ID! # {escrow address}-{address}
-    address: Bytes!
-    pendingDepositorTokens: [RedeemableEscrowPendingDepositorToken!] #linked by entities with this depositor
-    supplyTokenDeposits: [RedeemableEscrowSupplyTokenDeposit!] # linked by entities with this depositor
-    pendingDeposits: [RedeemableEscrowPendingDeposit!] # linked by entities with this depositor
-    deposits: [RedeemableEscrowDeposit!] # linked by entities with this depositor
-    undeposits: [RedeemableEscrowUndeposit!] # linked by entities with this depositor
+  id: ID! # {escrow address}-{address}
+  address: Bytes!
+  pendingDepositorTokens: [RedeemableEscrowPendingDepositorToken!] #linked by entities with this depositor
+  supplyTokenDeposits: [RedeemableEscrowSupplyTokenDeposit!] # linked by entities with this depositor
+  pendingDeposits: [RedeemableEscrowPendingDeposit!] # linked by entities with this depositor
+  deposits: [RedeemableEscrowDeposit!] # linked by entities with this depositor
+  undeposits: [RedeemableEscrowUndeposit!] # linked by entities with this depositor
 }
 
 # represents one withdrawer, across all sales for the same escrow
 type RedeemableEscrowWithdrawer @entity {
-    id: ID! # {escrow address}-{wallet address}
-    address: Bytes!
-    escrow: RedeemableERC20ClaimEscrow!
-    escrowAddress: Bytes!
-    withdraws: [RedeemableEscrowWithdraw!]
+  id: ID! # {escrow address}-{wallet address}
+  address: Bytes!
+  escrow: RedeemableERC20ClaimEscrow!
+  escrowAddress: Bytes!
+  withdraws: [RedeemableEscrowWithdraw!]
 }
 
 # created on the first PendingDposit event that matches the id {sale}-{escrow}-{depositor}-{token}
 # represents all of the pending deposits for one escrow, one sale, one depositor
 # totalDeposited updated with every PendingDeposit event that matches the id
-# swept updated with every Deposit event that matches the id 
+# swept updated with every Deposit event that matches the id
 type RedeemableEscrowPendingDepositorToken @entity {
-    id: ID! #{sale}-{escrow}-{depositor}-{token}
-    iSale: Isale
-    iSaleAddress: Bytes! #sale from the id
-    escrow: RedeemableERC20ClaimEscrow!
-    escrowAddress: Bytes!
-    depositor: RedeemableEscrowDepositor!
-    depositorAddress: Bytes!
-    pendingDeposits: [RedeemableEscrowPendingDeposit!]
-    token: ERC20!
-    tokenAddress: Bytes!
-    totalDeposited: BigInt! #increased by PendingDeposit.amount every time there is a PendingDeposit that matches the id
-    swept: Boolean #Starts as False - on Sweep event with matching {sale}-{escrow}-{depositor}-{token}, changes to True.
+  id: ID! #{sale}-{escrow}-{depositor}-{token}
+  iSale: Isale
+  iSaleAddress: Bytes! #sale from the id
+  escrow: RedeemableERC20ClaimEscrow!
+  escrowAddress: Bytes!
+  depositor: RedeemableEscrowDepositor!
+  depositorAddress: Bytes!
+  pendingDeposits: [RedeemableEscrowPendingDeposit!]
+  token: ERC20!
+  tokenAddress: Bytes!
+  totalDeposited: BigInt! #increased by PendingDeposit.amount every time there is a PendingDeposit that matches the id
+  swept: Boolean #Starts as False - on Sweep event with matching {sale}-{escrow}-{depositor}-{token}, changes to True.
 }
 
 # created on the first Deposit event that matches the id
 # updated after every subsquent Deposit event that matches the id {sale}-{escrow}-{supply}-{token}
 # captures all of the deposits for the same escrow, same sale, same token at the same redeemable supply
 type RedeemableEscrowSupplyTokenDeposit @entity {
-    id: ID! #{sale}-{escrow}-{supply}-{token}
-    iSale: Isale
-    iSaleAddress: Bytes! #sale from the id
-    escrow: RedeemableERC20ClaimEscrow!
-    escrowAddress: Bytes!
-    deposits: [RedeemableEscrowDeposit!]
-    depositors: RedeemableEscrowDepositor! #change to Array of depositors
-    depositorAddress: Bytes! #Deposit.depositor #change to Array of depositorAddresses
-    token: ERC20!
-    tokenAddress: Bytes!
-    redeemableSupply: BigInt! #Deposit.supply
-    # INCREASED by Deposit.amount every time there is a Deposit that matches the id - {sale}-{escrow}-{supply}-{token}
-    # DESCREASED by Undeposit.amount every time there is an Undeposit that matches the id. - {sale}-{escrow}-{supply}-{token}
-    # DECREASED by Withdraw.amount every time there is a Withraw that matches the id. - {sale}-{escrow}-{supply}-{token}
-    totalDeposited: BigInt!
+  id: ID! #{sale}-{escrow}-{supply}-{token}
+  iSale: Isale
+  iSaleAddress: Bytes! #sale from the id
+  escrow: RedeemableERC20ClaimEscrow!
+  escrowAddress: Bytes!
+  deposits: [RedeemableEscrowDeposit!]
+  depositors: RedeemableEscrowDepositor! #change to Array of depositors
+  depositorAddress: Bytes! #Deposit.depositor #change to Array of depositorAddresses
+  token: ERC20!
+  tokenAddress: Bytes!
+  redeemableSupply: BigInt! #Deposit.supply
+  # INCREASED by Deposit.amount every time there is a Deposit that matches the id - {sale}-{escrow}-{supply}-{token}
+  # DESCREASED by Undeposit.amount every time there is an Undeposit that matches the id. - {sale}-{escrow}-{supply}-{token}
+  # DECREASED by Withdraw.amount every time there is a Withraw that matches the id. - {sale}-{escrow}-{supply}-{token}
+  totalDeposited: BigInt!
 }
 
 # created for each PendingDeposit event
 type RedeemableEscrowPendingDeposit @entity {
-    id: ID! #txHash
-    depositor: RedeemableEscrowDepositor
-    depositorAddress: Bytes!
-    escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
-    escrowAddress: Bytes! #escrow contract that emitted the event
-    iSale: Isale
-    iSaleAddress: Bytes! #from PendingDeposit.trust
-    redeemable: RedeemableERC20
-    token: ERC20
-    tokenAddress: Bytes!
-    amount: BigInt!
+  id: ID! #txHash
+  depositor: RedeemableEscrowDepositor
+  depositorAddress: Bytes!
+  escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
+  escrowAddress: Bytes! #escrow contract that emitted the event
+  iSale: Isale
+  iSaleAddress: Bytes! #from PendingDeposit.trust
+  redeemable: RedeemableERC20
+  token: ERC20
+  tokenAddress: Bytes!
+  amount: BigInt!
 }
 
 # created for Deposit event
 type RedeemableEscrowDeposit @entity {
-    id: ID! #txHash
-    depositor: RedeemableEscrowDepositor
-    depositorAddress: Bytes!
-    escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
-    escrowAddress: Bytes! #escrow contract that emitted the event
-    iSale: Isale
-    iSaleAddress: Bytes! #from Deposit.trust
-    redeemable: RedeemableERC20
-    token: ERC20!
-    tokenAddress: Bytes!
-    redeemableSupply: BigInt! #from Deposit.supply
-    tokenAmount: BigInt! #from Deposit.amount
+  id: ID! #txHash
+  depositor: RedeemableEscrowDepositor
+  depositorAddress: Bytes!
+  escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
+  escrowAddress: Bytes! #escrow contract that emitted the event
+  iSale: Isale
+  iSaleAddress: Bytes! #from Deposit.trust
+  redeemable: RedeemableERC20
+  token: ERC20!
+  tokenAddress: Bytes!
+  redeemableSupply: BigInt! #from Deposit.supply
+  tokenAmount: BigInt! #from Deposit.amount
 }
 
 # created for each Undeposit event
 type RedeemableEscrowUndeposit @entity {
-    id: ID! #txHash
-    sender: Bytes! #from Undeposit.sender
-    escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
-    escrowAddress: Bytes! #escrow contract that emitted the event
-    iSale: Isale
-    iSaleAddress: Bytes!
-    token: ERC20! #linked by Undeposit.token
-    tokenAddress: Bytes! #from Undeposit.token
-    redeemableSupply: BigInt! #from Undeposit.supply
-    tokenAmount: BigInt! #from Undeposit.amount
+  id: ID! #txHash
+  sender: Bytes! #from Undeposit.sender
+  escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
+  escrowAddress: Bytes! #escrow contract that emitted the event
+  iSale: Isale
+  iSaleAddress: Bytes!
+  token: ERC20! #linked by Undeposit.token
+  tokenAddress: Bytes! #from Undeposit.token
+  redeemableSupply: BigInt! #from Undeposit.supply
+  tokenAmount: BigInt! #from Undeposit.amount
 }
 
 # created for each Withdraw event
 type RedeemableEscrowWithdraw @entity {
-    id: ID! #txHash
-    withdrawer: Bytes! #from Withdraw.withdrawer
-    escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
-    escrowAddress: Bytes! #escrow contract that emitted the event
-    iSale: Isale
-    iSaleAddress: Bytes!
-    redeemable: RedeemableERC20! #linked by Withdraw.redeemable
-    token: ERC20! #Linked by Withdraw.token
-    tokenAddress: Bytes! #from Withdraw.token
-    redeemableSupply: BigInt! #from Withdraw.supply
-    tokenAmount: BigInt! #from Withdraw.amount
+  id: ID! #txHash
+  withdrawer: Bytes! #from Withdraw.withdrawer
+  escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
+  escrowAddress: Bytes! #escrow contract that emitted the event
+  iSale: Isale
+  iSaleAddress: Bytes!
+  redeemable: RedeemableERC20! #linked by Withdraw.redeemable
+  token: ERC20! #Linked by Withdraw.token
+  tokenAddress: Bytes! #from Withdraw.token
+  redeemableSupply: BigInt! #from Withdraw.supply
+  tokenAmount: BigInt! #from Withdraw.amount
 }
 
 type UnknownSale implements Isale @entity {
-    id: ID!
-    address: Bytes
-    saleStatus: Int
+  id: ID!
+  address: Bytes
+  saleStatus: Int
 }
-

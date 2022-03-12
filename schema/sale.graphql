@@ -1,152 +1,150 @@
-type SaleFactory @entity{
-    id: ID! #factory address
-    address: Bytes! #factory address
-    implementation: Bytes! #implementation address from Implementation event
-    children: [Sale!] #all the children that were deployed by this factory
-    redeemableERC20Factory: Bytes #from Contract.config.redeemableERC20Factory on first child's Construct event
+type SaleFactory @entity {
+  id: ID! #factory address
+  address: Bytes! #factory address
+  implementation: Bytes! #implementation address from Implementation event
+  children: [Sale!] #all the children that were deployed by this factory
+  redeemableERC20Factory: Bytes #from Contract.config.redeemableERC20Factory on first child's Construct event
 }
 
-type Sale implements Isale & INotice @entity{
-    id: ID! #Sale contract address
-    address: Bytes! #Sale contract address
-    deployBlock: BigInt! #the block the contract was deployed
-    deployTimestamp: BigInt! #the timestamp the contract was deployed
-    deployer: Bytes! #address of the deployer - get from event Initialize.sender
-    factory: SaleFactory! #the factory that deployed this contract
-    token: RedeemableERC20! #from Intialize.token
-    reserve: ERC20 #from Initialize.config.reserve
-    canStartStateConfig: CanStartStateConfig #from Initialize.config.canStartStateConfig
-    canEndStateConfig: CanEndStateConfig #from Initialize.config.canEndStateConfig
-    calculatePriceStateConfig: CalculatePriceStateConfig #from Initialize.config.calculatePriceStateConfig
-    recipient: Bytes #from Initialize.config.recipient
-    cooldownDuration: BigInt #from Initialize.config.cooldownDuration
-    minimumRaise: BigInt! #from Initialize.config.minimumRaise
-    dustSize: BigInt #from Intialize.config.dustSize
-    startEvent: SaleStart #from Start event on Sale
-    endEvent: SaleEnd #from End event on Sale
-    buys: [SaleBuy!] #all buy events
-    refunds: [SaleRefund!] #all refund events
-    saleTransactions: [SaleTransaction!] #all SaleBuys and SaleRefunds
-    # extra calculated fields
-    unitsAvailable: BigInt # token.balanceOf(Sale.address) - initially set on the Initialize event, then updates after every Buy/Refund event.
-    totalRaised: BigInt! # get this by adding totalIn from all SaleBuy entities, and subtracting totalOut from all SaleRefund entities - the totalFees
-    percentRaised: BigDecimal #totalRaised / minimumRaise
-    totalFees: BigInt # get by adding all SaleBuy.fee and subtracting all SaleRefund.fee
-    saleStatus: Int #starts at SaleStatus.Pending, Start event moves it to Active, End event provides the last saleStatus (will be Success/Fail)
-    notices: [Notice!]
-    saleFeeRecipients: [SaleFeeRecipient!]
+type Sale implements Isale & INotice @entity {
+  id: ID! #Sale contract address
+  address: Bytes! #Sale contract address
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+  deployer: Bytes! #address of the deployer - get from event Initialize.sender
+  factory: SaleFactory! #the factory that deployed this contract
+  token: RedeemableERC20! #from Intialize.token
+  reserve: ERC20 #from Initialize.config.reserve
+  canStartStateConfig: CanStartStateConfig #from Initialize.config.canStartStateConfig
+  canEndStateConfig: CanEndStateConfig #from Initialize.config.canEndStateConfig
+  calculatePriceStateConfig: CalculatePriceStateConfig #from Initialize.config.calculatePriceStateConfig
+  recipient: Bytes #from Initialize.config.recipient
+  cooldownDuration: BigInt #from Initialize.config.cooldownDuration
+  minimumRaise: BigInt! #from Initialize.config.minimumRaise
+  dustSize: BigInt #from Intialize.config.dustSize
+  startEvent: SaleStart #from Start event on Sale
+  endEvent: SaleEnd #from End event on Sale
+  buys: [SaleBuy!] #all buy events
+  refunds: [SaleRefund!] #all refund events
+  saleTransactions: [SaleTransaction!] #all SaleBuys and SaleRefunds
+  # extra calculated fields
+  unitsAvailable: BigInt # token.balanceOf(Sale.address) - initially set on the Initialize event, then updates after every Buy/Refund event.
+  totalRaised: BigInt! # get this by adding totalIn from all SaleBuy entities, and subtracting totalOut from all SaleRefund entities - the totalFees
+  percentRaised: BigDecimal #totalRaised / minimumRaise
+  totalFees: BigInt # get by adding all SaleBuy.fee and subtracting all SaleRefund.fee
+  saleStatus: Int #starts at SaleStatus.Pending, Start event moves it to Active, End event provides the last saleStatus (will be Success/Fail)
+  notices: [Notice!]
+  saleFeeRecipients: [SaleFeeRecipient!]
 }
 
-type SaleRedeemableERC20 @entity{
-    id: ID! #address of token
-    deployBlock: BigInt! #the block the contract was deployed
-    deployTimestamp: BigInt! #the timestamp the contract was deployed
-    symbol: String
-    totalSupply: BigInt!
-    decimals: Int
-    name: String
-    tier: TierContract!
-    minimumTier: BigInt!
+type SaleRedeemableERC20 @entity {
+  id: ID! #address of token
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+  symbol: String
+  totalSupply: BigInt!
+  decimals: Int
+  name: String
+  tier: TierContract!
+  minimumTier: BigInt!
 }
 
 # from Start event on Sale
-type SaleStart @entity{
-    id: ID! #txHash
-    block: BigInt! #block of the event
-    transactionHash: Bytes! #txHash of the event
-    timestamp: BigInt! #timestamp of event
-    saleContract: Sale! #Sale that emitted the event
-    sender: Bytes!
+type SaleStart @entity {
+  id: ID! #txHash
+  block: BigInt! #block of the event
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  saleContract: Sale! #Sale that emitted the event
+  sender: Bytes!
 }
 
 # from End event on Sale
-type SaleEnd @entity{
-    id: ID! #txHash
-    block: BigInt! #block of the event
-    transactionHash: Bytes! #txHash of the event
-    timestamp: BigInt! #timestamp of event
-    saleContract: Sale! #Sale that emitted the event
-    sender: Bytes!
-    saleStatus: Int! #get from event End.saleStatus
+type SaleEnd @entity {
+  id: ID! #txHash
+  block: BigInt! #block of the event
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  saleContract: Sale! #Sale that emitted the event
+  sender: Bytes!
+  saleStatus: Int! #get from event End.saleStatus
 }
 
 interface SaleTransaction {
-    id: ID! #txHash
-    block: BigInt! #block of the event
-    transactionHash: Bytes! #txHash of the event
-    timestamp: BigInt! #timestamp of event
-    sender: Bytes!
-    saleContract: Sale! #Sale that emitted the event
-    saleContractAddress: Bytes! #address of the sale contract
-    feeRecipient: SaleFeeRecipient!
-    feeRecipientAddress: Bytes!
-    receipt: SaleReceipt!
+  id: ID! #txHash
+  block: BigInt! #block of the event
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  sender: Bytes!
+  saleContract: Sale! #Sale that emitted the event
+  saleContractAddress: Bytes! #address of the sale contract
+  feeRecipient: SaleFeeRecipient!
+  feeRecipientAddress: Bytes!
+  receipt: SaleReceipt!
 }
 
-
 # from the Buy event on Sale
-type SaleBuy implements SaleTransaction @entity{
-    id: ID! #txHash
-    block: BigInt! #block of the event
-    transactionHash: Bytes! #txHash of the event
-    timestamp: BigInt! #timestamp of event
-    sender: Bytes! #Buy.sender
-    saleContract: Sale! #Sale that emitted the event
-    saleContractAddress: Bytes! #address of the sale contract
-    feeRecipient: SaleFeeRecipient! # created/referenced by id {Sale.address}+{Buy.feeRecipient}
-    feeRecipientAddress: Bytes! #from Buy.feeRecipient
-    fee: BigInt! #from Buy.fee
-    minimumUnits: BigInt! #from Buy.minimumUnits
-    desiredUnits: BigInt! #from Buy.desiredUnits
-    maximumPrice: BigInt! #from Buy.maximumPrice
-    receipt: SaleReceipt! #from Buy.receipt
-    totalIn: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18) + Buy.receipt.fee
-    refunded: Boolean! #false at first, becomes true when the corresponding receipt is emitted in a Refund event
-    refundEvent: SaleRefund # pointing to SaleRefund Entity that match the same receipt
+type SaleBuy implements SaleTransaction @entity {
+  id: ID! #txHash
+  block: BigInt! #block of the event
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  sender: Bytes! #Buy.sender
+  saleContract: Sale! #Sale that emitted the event
+  saleContractAddress: Bytes! #address of the sale contract
+  feeRecipient: SaleFeeRecipient! # created/referenced by id {Sale.address}+{Buy.feeRecipient}
+  feeRecipientAddress: Bytes! #from Buy.feeRecipient
+  fee: BigInt! #from Buy.fee
+  minimumUnits: BigInt! #from Buy.minimumUnits
+  desiredUnits: BigInt! #from Buy.desiredUnits
+  maximumPrice: BigInt! #from Buy.maximumPrice
+  receipt: SaleReceipt! #from Buy.receipt
+  totalIn: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18) + Buy.receipt.fee
+  refunded: Boolean! #false at first, becomes true when the corresponding receipt is emitted in a Refund event
+  refundEvent: SaleRefund # pointing to SaleRefund Entity that match the same receipt
 }
 
 # from the Refund event on Sale
-type SaleRefund implements SaleTransaction @entity{
-    id: ID! #txHash
-    block: BigInt! #block of the event
-    transactionHash: Bytes! #txHash of the event
-    timestamp: BigInt! #timestamp of event
-    sender: Bytes! #Buy.sender
-    saleContract: Sale! #Sale that emitted the event
-    saleContractAddress: Bytes! #address of the sale contract
-    fee: BigInt! #from refunds.fee
-    feeRecipient: SaleFeeRecipient! # created/referenced by id {Sale.address}+{Refund.feeRecipient}
-    feeRecipientAddress: Bytes! #from Buy.feeRecipient
-    receipt: SaleReceipt! #from {Sale.address}+{receipt.id}
-    totalOut: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18) + Buy.receipt.fee
+type SaleRefund implements SaleTransaction @entity {
+  id: ID! #txHash
+  block: BigInt! #block of the event
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  sender: Bytes! #Buy.sender
+  saleContract: Sale! #Sale that emitted the event
+  saleContractAddress: Bytes! #address of the sale contract
+  fee: BigInt! #from refunds.fee
+  feeRecipient: SaleFeeRecipient! # created/referenced by id {Sale.address}+{Refund.feeRecipient}
+  feeRecipientAddress: Bytes! #from Buy.feeRecipient
+  receipt: SaleReceipt! #from {Sale.address}+{receipt.id}
+  totalOut: BigInt! #from Buy.receipt.units * Buy.receipt.price / (1 * 10e18) + Buy.receipt.fee
 }
 
-type SaleReceipt @entity{ 
-    id: ID! #{Sale.address}+{receipt.id}
-    receiptId: BigInt! #from receipt.id
-    feeRecipient: Bytes! #receipt.feeRecipient
-    fee: BigInt! #receipt.fee
-    units: BigInt! #receipt.units
-    price: BigInt! #receipt.price
-    saleTransaction: String!
+type SaleReceipt @entity {
+  id: ID! #{Sale.address}+{receipt.id}
+  receiptId: BigInt! #from receipt.id
+  feeRecipient: Bytes! #receipt.feeRecipient
+  fee: BigInt! #receipt.fee
+  units: BigInt! #receipt.units
+  price: BigInt! #receipt.price
+  saleTransaction: String!
 }
 
-# An entity to represent one feeRecipient for one Sale. 
+# An entity to represent one feeRecipient for one Sale.
 # Gets created upon the first Buy event that references a new feeRecipient.
 # Gets updated after every Buy or Refund that references an existing feeRecipient.
-type SaleFeeRecipient @entity{
-    id: ID! #{Sale.address}+{feeRecipient}
-    address: Bytes! 
-    totalFees: BigInt! #total fees for this recipient for this Sale. Get by adding all SaleFeeRecipient.buys.fee and subtracting all SaleFeeRecipient.refunds.fee
-    buys: [SaleBuy!]! #all buys that reference this feeRecipient
-    refunds: [SaleRefund!]! #all refunds that reference this feeRcipient
-    sale: Sale!
+type SaleFeeRecipient @entity {
+  id: ID! #{Sale.address}+{feeRecipient}
+  address: Bytes!
+  totalFees: BigInt! #total fees for this recipient for this Sale. Get by adding all SaleFeeRecipient.buys.fee and subtracting all SaleFeeRecipient.refunds.fee
+  buys: [SaleBuy!]! #all buys that reference this feeRecipient
+  refunds: [SaleRefund!]! #all refunds that reference this feeRcipient
+  sale: Sale!
 }
 
 enum SaleStatus {
-    Pending
-    Active
-    Success
-    Fail
+  Pending
+  Active
+  Success
+  Fail
 }
-
