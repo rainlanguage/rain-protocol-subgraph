@@ -36,7 +36,7 @@
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "prettier": "prettier . '!./docker' --check",
-    "prettier-fix": "prettier . '!./docker' --check"
+    "prettier-write": "prettier . '!./docker' --write"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.26.0",
