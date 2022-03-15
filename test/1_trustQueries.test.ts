@@ -190,6 +190,8 @@ before("Deployment contracts and subgraph", async function () {
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   const config = JSON.parse(Util.fetchFile(pathConfigLocal));
 
+  config.network = "localhost";
+
   // Saving addresses and individuals blocks to index
   config.noticeBoard = noticeBoard.address;
   config.noticeBoardBlock = noticeBoard.deployTransaction.blockNumber;
