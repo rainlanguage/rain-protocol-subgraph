@@ -73,12 +73,13 @@ export function handleUpdatedRoyaltyRecipient(
   event: UpdatedRoyaltyRecipientEvent
 ): void {
   let gatedNFT = GatedNFT.load(event.address.toHex());
-  let updatedRoyaltyRecipient = new UpdatedRoyaltyRecipient(
-    event.transaction.hash.toHex()
-  );
 
   if (gatedNFT) {
     gatedNFT.royaltyRecipient = event.params.royaltyRecipient;
+
+    let updatedRoyaltyRecipient = new UpdatedRoyaltyRecipient(
+      event.transaction.hash.toHex()
+    );
 
     updatedRoyaltyRecipient.nftContract = gatedNFT.id;
     updatedRoyaltyRecipient.origin = event.transaction.from;

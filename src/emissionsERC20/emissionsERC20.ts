@@ -20,23 +20,26 @@ export function handleInitialize(event: Initialize): void {
 }
 
 export function handleClaim(event: Claim): void {
-  let emissionsERC20Claim = new EmissionsERC20Claim(
+  let emissionsERC20Claim = EmissionsERC20Claim.load(
     event.transaction.hash.toHex()
   );
-  emissionsERC20Claim.block = event.block.number;
-  emissionsERC20Claim.timestamp = event.block.timestamp;
-  emissionsERC20Claim.sender = event.params.sender;
-  emissionsERC20Claim.claimant = event.params.claimant;
-  emissionsERC20Claim.data = event.params.data;
-  emissionsERC20Claim.emissionsERC20 = event.address.toHex();
-  emissionsERC20Claim.save();
 
-  let emissionsERC20 = EmissionsERC20.load(event.address.toHex());
-  if (emissionsERC20) {
-    let claims = emissionsERC20.claims;
-    if (claims) claims.push(emissionsERC20Claim.id);
-    emissionsERC20.claims = claims;
-    emissionsERC20.save();
+  if (emissionsERC20Claim) {
+    emissionsERC20Claim.block = event.block.number;
+    emissionsERC20Claim.timestamp = event.block.timestamp;
+    emissionsERC20Claim.sender = event.params.sender;
+    emissionsERC20Claim.claimant = event.params.claimant;
+    emissionsERC20Claim.data = event.params.data;
+    emissionsERC20Claim.emissionsERC20 = event.address.toHex();
+    emissionsERC20Claim.save();
+
+    let emissionsERC20 = EmissionsERC20.load(event.address.toHex());
+    if (emissionsERC20) {
+      let claims = emissionsERC20.claims;
+      if (claims) claims.push(emissionsERC20Claim.id);
+      emissionsERC20.claims = claims;
+      emissionsERC20.save();
+    }
   }
 }
 
@@ -57,13 +60,12 @@ export function handleSnapshot(event: Snapshot): void {
 }
 
 export function handleTransfer(event: Transfer): void {
-  let emissionsERC20Claim = EmissionsERC20Claim.load(
+  let emissionsERC20Claim = new EmissionsERC20Claim(
     event.transaction.hash.toHex()
   );
-  if (emissionsERC20Claim) {
-    emissionsERC20Claim.amount = event.params.value;
-    emissionsERC20Claim.save();
-  }
+
+  emissionsERC20Claim.amount = event.params.value;
+  emissionsERC20Claim.save();
 
   if (event.params.from.toHex() == ZERO_ADDRESS) {
     let emissionsERC20Contract = EmissionsERC20Contract.bind(event.address);

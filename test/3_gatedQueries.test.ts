@@ -151,10 +151,13 @@ describe("Subgraph GatedNFT test", function () {
     const query = `
       {
         gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
+          id
           address
           creator
           owner
-          royaltyRecipientHistory
+          royaltyRecipientHistory{
+            id
+          }
           deployBlock
           deployTimestamp
         }
@@ -164,7 +167,6 @@ describe("Subgraph GatedNFT test", function () {
     const queryResponse = (await subgraph({
       query,
     })) as FetchResult;
-
     const data = queryResponse.data.gatedNFT;
 
     expect(data.royaltyRecipientHistory).to.be.empty;

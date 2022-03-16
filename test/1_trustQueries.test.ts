@@ -259,8 +259,8 @@ before("Deployment contracts and subgraph", async function () {
   );
   Util.writeFile(deployConfigPath, JSON.stringify(deployConfig, null, 2));
 
-  Util.exec(`npm run deploy-subgraph`);
-  // Util.exec(`npm run deploy-build:localhost`);
+  // Util.exec(`npm run deploy-subgraph`);
+  Util.exec(`npm run deploy-build:localhost`);
 
   subgraph = Util.fetchSubgraph(subgraphName);
 
