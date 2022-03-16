@@ -47,10 +47,6 @@ const evidenceApprove = hexlify([...Buffer.from("Evidence for approve")]);
 const evidenceBan = hexlify([...Buffer.from("Evidence for ban")]);
 const evidenceRemove = hexlify([...Buffer.from("Evidence for remove")]);
 
-// TODO Add more test queries when:
-// - Approve, remove and ban are made in group
-// - Request of add and msg.sender != account do not should change the state
-
 describe("Verify Factory - Queries", function () {
   it("should query VerifyFactory correctly after construction", async function () {
     // Get the verify implementation

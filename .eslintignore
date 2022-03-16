@@ -11,3 +11,4 @@ typechain
 build
 generated
 docker/data
+scripts/**/*.js

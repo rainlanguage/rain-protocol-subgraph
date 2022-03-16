@@ -1,3 +1,4 @@
+// TODO Improve this documentation
 ## Development setup (for contributors)
 
 ### Nix Shell

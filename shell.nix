@@ -25,6 +25,10 @@ let
     npx hardhat test
   '';
 
+  deploy-subgraph = pkgs.writeShellScriptBin "deploy-subgraph" ''
+    ts-node scripts/index.ts
+  '';
+
   init = pkgs.writeShellScriptBin "init" ''
     mkdir -p contracts && cp -r node_modules/@beehiveinnovation/rain-protocol/contracts .
     mkdir -p contracts/rain-statusfi && cp node_modules/@beehiveinnovation/rain-statusfi/contracts/*.sol contracts/rain-statusfi
@@ -44,6 +48,7 @@ pkgs.stdenv.mkDerivation {
   hardhat-node
   graph-node
   graph-test
+  deploy-subgraph
   init
  ];
 
