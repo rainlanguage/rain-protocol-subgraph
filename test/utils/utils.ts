@@ -432,16 +432,12 @@ export const fetchSubgraphs = createApolloFetch({
 
 /**
  * Connect to an existing subgraph deployed in localhost
- * @param subgraphUser Assigned user that deployed the Subgraph
  * @param subgraphName Name of the subgraph
  * @returns connection to subgraph
  */
-export const fetchSubgraph = (
-  subgraphUser: string,
-  subgraphName: string
-): ApolloFetch => {
+export const fetchSubgraph = (subgraphName: string): ApolloFetch => {
   return createApolloFetch({
-    uri: `http://localhost:8000/subgraphs/name/${subgraphUser}/${subgraphName}`,
+    uri: `http://localhost:8000/subgraphs/name/${subgraphName}`,
   });
 };
 
@@ -456,7 +452,8 @@ export const fetchSubgraph = (
 export const waitForSubgraphToBeSynced = async (
   wait = 0,
   timeDelay = 1,
-  seconds = 60
+  seconds = 60,
+  subgraphName = "beehive-innovation/rain-protocol"
 ): Promise<SyncedSubgraphType> => {
   if (wait > 0) {
     await delay(wait);
@@ -477,7 +474,7 @@ export const waitForSubgraphToBeSynced = async (
         const result = await fetchSubgraphs({
           query: `
             {
-              indexingStatusForCurrentVersion(subgraphName: "vishalkale151071/rain-protocol") {
+              indexingStatusForCurrentVersion(subgraphName: "${subgraphName}") {
                 synced
                 health
                 fatalError{
@@ -519,6 +516,14 @@ export const waitForSubgraphToBeSynced = async (
 
         if (!currentBlock) {
           reject(new Error(`current block is undefined`));
+        }
+
+        if (e instanceof TypeError) {
+          reject(
+            new Error(
+              `${e.message} - Check that the subgraphName provided is correct.`
+            )
+          );
         }
 
         if (Date.now() > deadline) {

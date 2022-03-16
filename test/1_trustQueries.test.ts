@@ -75,8 +75,7 @@ import type {
   EndDutchAuctionEvent,
 } from "../typechain/Trust";
 
-const subgraphUser = "vishalkale151071";
-const subgraphName = "rain-protocol";
+const subgraphName = "beehive-innovation/rain-protocol";
 let minimumTier: Tier,
   seedContract: SeedERC20,
   redeemableERC20Contract: RedeemableERC20,
@@ -190,6 +189,8 @@ before("Deployment contracts and subgraph", async function () {
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   const config = JSON.parse(Util.fetchFile(pathConfigLocal));
 
+  config.network = "localhost";
+
   // Saving addresses and individuals blocks to index
   config.noticeBoard = noticeBoard.address;
   config.noticeBoardBlock = noticeBoard.deployTransaction.blockNumber;
@@ -234,11 +235,34 @@ before("Deployment contracts and subgraph", async function () {
   config.blockRedeemableERC20ClaimEscrow =
     redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
 
-  Util.writeFile(pathConfigLocal, JSON.stringify(config, null, 4));
+  // Write address and block to configuration contracts file
+  Util.writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-  Util.exec(`npm run deploy-build:localhost`);
+  // Read deploy configuration example and create subgraph deployment configuration
+  const deployConfigExPath = path.resolve(
+    __dirname,
+    "../scripts/deployConfig.example.json"
+  );
+  const deployConfig = JSON.parse(Util.fetchFile(deployConfigExPath));
 
-  subgraph = Util.fetchSubgraph(subgraphUser, subgraphName);
+  // Setting all to localhost to test locally
+  deployConfig.subgraphName = subgraphName;
+  deployConfig.configPath = "config/localhost.json";
+  deployConfig.endpoint = "http://localhost:8020/";
+  deployConfig.ipfsEndpoint = "http://localhost:5001";
+  deployConfig.versionLabel = "test-v2.0.0";
+
+  // Write to the deployment configuration
+  const deployConfigPath = path.resolve(
+    __dirname,
+    "../scripts/deployConfig.json"
+  );
+  Util.writeFile(deployConfigPath, JSON.stringify(deployConfig, null, 2));
+
+  Util.exec(`npm run deploy-subgraph`);
+  // Util.exec(`npm run deploy-build:localhost`);
+
+  subgraph = Util.fetchSubgraph(subgraphName);
 
   // Wait for sync
   await waitForSubgraphToBeSynced(1000);

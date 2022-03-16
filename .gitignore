@@ -19,3 +19,4 @@ subgraph.yaml
 schema.graphql
 docker/data
 config/localhost.json
+scripts/deployConfig.json
