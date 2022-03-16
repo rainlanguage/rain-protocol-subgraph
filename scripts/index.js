@@ -130,16 +130,15 @@ var getDeployConfig = function (config) {
     };
 };
 var main = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, subgraphName, configPath, endpoint, ipfsEndpoint, versionLabel, prepareCommand;
+    var _a, subgraphName, configPath, endpoint, ipfsEndpoint, versionLabel;
     return __generator(this, function (_b) {
         _a = getDeployConfig(deployConfig), subgraphName = _a.subgraphName, configPath = _a.configPath, endpoint = _a.endpoint, ipfsEndpoint = _a.ipfsEndpoint, versionLabel = _a.versionLabel;
-        prepareCommand = "npx mustache ".concat(configPath, " subgraph.template.yaml subgraph.yaml");
-        exec(prepareCommand);
+        // const prepareCommand = `npx mustache ${configPath} subgraph.template.yaml subgraph.yaml`;
+        // exec(prepareCommand);
+        exec("npx mustache ".concat(configPath, " subgraph.template.yaml subgraph.yaml"));
         exec("npm run generate-schema && npm run codegen && npm run build");
         // This create the graph node with the endpoint and subgraph name
         if (endpoint.includes("localhost") || endpoint.includes("127.0.0.1")) {
-            console.log("endpoint", endpoint);
-            console.log("subgraphName", subgraphName);
             exec("npx graph create ".concat(endpoint, " ").concat(subgraphName));
         }
         exec("npx graph deploy ".concat(endpoint, " ").concat(ipfsEndpoint, " ").concat(subgraphName, " ").concat(versionLabel));
