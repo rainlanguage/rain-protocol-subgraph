@@ -1,14 +1,15 @@
 specVersion: 0.0.4
 schema:
   file: ./schema.graphql
+   
 dataSources:
   - kind: ethereum/contract
     name: TrustFactory
     network: {{ network }}
     source:
-      address: "{{ factory }}"
+      address: "{{ trustFactory }}"
       abi: TrustFactory
-      startBlock: {{ startBlock }}
+      startBlock: {{ trustFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6

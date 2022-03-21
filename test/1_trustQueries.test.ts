@@ -199,8 +199,8 @@ before("Deployment contracts and subgraph", async function () {
   config.emissionsERC20FactoryBlock =
     emissionsERC20Factory.deployTransaction.blockNumber;
 
-  config.factory = trustFactory.address;
-  config.startBlock = trustFactory.deployTransaction.blockNumber;
+  config.trustFactory = trustFactory.address;
+  config.trustFactoryBlock = trustFactory.deployTransaction.blockNumber;
 
   config.verifyFactory = verifyFactory.address;
   config.blockVerifyFactory = verifyFactory.deployTransaction.blockNumber;
