@@ -199,8 +199,8 @@ before("Deployment contracts and subgraph", async function () {
   config.emissionsERC20FactoryBlock =
     emissionsERC20Factory.deployTransaction.blockNumber;
 
-  config.factory = trustFactory.address;
-  config.startBlock = trustFactory.deployTransaction.blockNumber;
+  config.trustFactory = trustFactory.address;
+  config.trustFactoryBlock = trustFactory.deployTransaction.blockNumber;
 
   config.verifyFactory = verifyFactory.address;
   config.blockVerifyFactory = verifyFactory.deployTransaction.blockNumber;
@@ -259,8 +259,7 @@ before("Deployment contracts and subgraph", async function () {
   );
   Util.writeFile(deployConfigPath, JSON.stringify(deployConfig, null, 2));
 
-  // Util.exec(`npm run deploy-subgraph`);
-  Util.exec(`npm run deploy-build:localhost`);
+  Util.exec(`npm run deploy-subgraph`);
 
   subgraph = Util.fetchSubgraph(subgraphName);
 
