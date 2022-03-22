@@ -779,6 +779,8 @@ describe("Verify Factory - Queries", function () {
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
+      console.log(JSON.stringify(data))
+
       // Expected VerifyAddress values
       expect(data.events).to.have.lengthOf(eventsSigner1); // requestApprove, Approve and requestRemove
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -1103,6 +1105,8 @@ describe("Verify Factory - Queries", function () {
         query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
+
+      console.log(JSON.stringify(data))
 
       // Expected VerifyAddress values
       expect(data.events).to.have.lengthOf(eventsSigner1);

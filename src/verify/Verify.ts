@@ -19,7 +19,6 @@ import {
   RoleAdminChanged,
   RoleGranted,
   RoleRevoked,
-  Verify__statusAtBlockInputState_Struct,
   Verify as VerifyContract,
   Verify__stateResultValue0Struct,
 } from "../../generated/templates/VerifyTemplate/Verify";
@@ -300,7 +299,7 @@ export function handleRequestApprove(event: RequestApprove): void {
     // Get VerifyAddress entity
     let verifyAddress = getVerifyAddress(
       event.address.toHex(),
-      event.params.sender.toHex()
+      event.params.evidence.account.toHex()
     );
 
     if (verifyAddress) {
