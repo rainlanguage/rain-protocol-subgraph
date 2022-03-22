@@ -17,7 +17,7 @@ services:
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: 'ipfs:5001'
-      ethereum: 'localhost:http://host.docker.internal:8545'
+      ethereum: 'mainnet:https://polygon-mainnet.infura.io/v3/0f270373e0934beda174c537257386b0'
       GRAPH_LOG: info
   ipfs:
     image: ipfs/go-ipfs:v0.4.23

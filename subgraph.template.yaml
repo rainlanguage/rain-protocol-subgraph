@@ -617,6 +617,8 @@ templates:
           handler: handleInitialize
         - event: Refund(address,(uint256,address,uint256,uint256,uint256))
           handler: handleRefund
+        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
+          handler: handleSnapshot
         - event: Start(address)
           handler: handleStart
       file: ./src/sale/Sale.ts

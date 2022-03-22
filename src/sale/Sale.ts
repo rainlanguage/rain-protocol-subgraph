@@ -12,6 +12,7 @@ import {
   End,
   Initialize,
   Refund,
+  Snapshot,
   Start,
 } from "../../generated/SaleFactory/Sale";
 import {
@@ -130,7 +131,9 @@ export function handleCooldownInitialize(event: CooldownInitialize): void {
   }
 }
 
-export function handleCooldownTriggered(event: CooldownTriggered): void {}
+export function handleCooldownTriggered(event: CooldownTriggered): void {
+  // EMPTY Block
+}
 
 export function handleEnd(event: End): void {
   let sale = Sale.load(event.address.toHex());
@@ -461,4 +464,8 @@ function updateSale(sale: Sale): void {
         .times(HUNDRED_BD);
     sale.save();
   }
+}
+
+export function handleSnapshot(event: Snapshot): void {
+  //Empty BLOCK
 }
