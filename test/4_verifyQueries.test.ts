@@ -533,12 +533,6 @@ describe("Verify Factory - Queries", function () {
       const verifyRequestApproveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
-      await verify.connect(admin).approve([infoApprove]);
-      // Increase again by new events in transaction
-      eventCounter++;
-      eventsAdmin++;
-      eventsSigner2++;
-
       // Wait for synced
       await waitForSubgraphToBeSynced();
 
@@ -571,7 +565,64 @@ describe("Verify Factory - Queries", function () {
       expect(data.data).to.equals(evidenceApprove);
     });
 
+    it("should add the verifyAddress that has a RequestApprove when delegated", async function () {
+      const signer2Id = `${verify.address.toLowerCase()} - ${signer2.address.toLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
+
+      const expectedVerifyAddr = {
+        id: signer2Id,
+        requestStatus: RequestStatus.APPROVE,
+        status: VerifyStatus.NIL,
+      };
+
+      const query = `
+        {
+          verify (id: "${verify.address.toLowerCase()}") {
+            verifyAddresses {
+              id
+              requestStatus
+              status
+            }
+          }
+          verifyAddress (id: "${signer2Id}") {
+            requestStatus
+            status
+            events {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const dataVerifyContract = response.data.verify.verifyAddresses;
+      const data = response.data.verifyAddress;
+
+      // Expected Verify contract values
+      expect(dataVerifyContract).to.deep.include(expectedVerifyAddr);
+
+      // Expected VerifyAddress values
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
+
+      expect(data.events).to.have.lengthOf(eventsSigner2);
+      expect(data.events).to.deep.include({ id: verifyEventId });
+    });
+
     it("should query the VerifyRequestRemove after a RequestRemove", async function () {
+      // Admin approve the signer2
+      const infoApprove = {
+        account: signer2.address,
+        data: evidenceApprove,
+      };
+      await verify.connect(admin).approve([infoApprove]);
+      // Increase again by new events in transaction
+      eventCounter++;
+      eventsAdmin++;
+      eventsSigner2++;
+
       // signer1 requests that signer2 be removed
       const infoRemove = {
         account: signer2.address,
@@ -580,9 +631,9 @@ describe("Verify Factory - Queries", function () {
       transaction = await verify
         .connect(signer1)
         .request(RequestType.REMOVE, [infoRemove]);
+
       // Increase the counter by 1
       eventCounter++;
-
       // Both are involved
       eventsSigner1++;
       eventsSigner2++;
