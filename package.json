@@ -27,7 +27,7 @@
     "prepare:mumbai": "npx mustache config/mumbai.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:mumbai": "npm run prepare:mumbai && npm run generate-schema && npm run codegen && npm run build && npm run deploy",
     "prepare:matic": "npx mustache config/polygon.json subgraph.template.yaml subgraph.yaml",
-    "deploy-build:matic": "npm run prepare:matic && npm run generate-schema && npm run codegen && npm run build && npm run deploy",
+    "deploy-build:matic": "npm run prepare:matic && npm run generate-schema && npm run codegen && npm run build && npm run deploy-rain-polygon",
     "prepare:localhost": "npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:localhost": "npm run prepare:localhost && npm run generate-schema && npm run codegen && npm run build && npm run create-local && npm run deploy-local",
     "hardhat-node": "hardhat node",

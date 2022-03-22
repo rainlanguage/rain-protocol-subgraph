@@ -287,7 +287,7 @@ export function handleRequestApprove(event: RequestApprove): void {
     verifyRequestApprove.transactionHash = event.transaction.hash;
     verifyRequestApprove.verifyContract = event.address;
     verifyRequestApprove.sender = event.params.sender;
-    verifyRequestApprove.account = event.params.sender;
+    verifyRequestApprove.account = event.params.evidence.account;
     verifyRequestApprove.data = event.params.evidence.data;
     verifyRequestApprove.save();
 
