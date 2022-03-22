@@ -1,4 +1,4 @@
-import { expect, assert } from "chai";
+import { expect } from "chai";
 import { hexlify } from "ethers/lib/utils";
 
 import * as Util from "./utils/utils";
@@ -37,7 +37,6 @@ import {
   verifyFactory,
   noticeBoard,
 } from "./1_trustQueries.test";
-import { ethers } from "hardhat";
 
 let verify: Verify, transaction: ContractTransaction; // use to save/facilite a tx
 
@@ -76,7 +75,7 @@ describe("Verify Factory - Queries", function () {
     expect(data.implementation).to.equals(implementation.toLocaleLowerCase());
   });
 
-  describe("Verify contract -  Verification process", function () {
+  describe.only("Verify contract -  Verification process", function () {
     let eventCounter = 0;
     let eventsSigner1 = 0;
     let eventsSigner2 = 0;
@@ -516,21 +515,63 @@ describe("Verify Factory - Queries", function () {
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
 
-    it("should query the VerifyRequestRemove after a RequestRemove", async function () {
-      // signer2 requestAdd and admin approve
+    it("should query the correct data when RequestApprove is delegated", async function () {
+      // signer1 request to add and admin approve
       const infoApprove = {
         account: signer2.address,
         data: evidenceApprove,
       };
-      await verify.connect(signer2).add(evidenceEmpty);
+      transaction = await verify
+        .connect(signer1)
+        .request(RequestType.APPROVE, [infoApprove]);
+
+      // Counter for this transaction, those signers are involved
+      eventCounter++;
+      eventsSigner1++;
+      eventsSigner2++;
+
+      const verifyRequestApproveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
+      const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
+
       await verify.connect(admin).approve([infoApprove]);
-
-      // This create 2 new verifyEvents that were already called
-      // Then, increase the counter by 2
-      eventCounter += 2;
+      // Increase again by new events in transaction
+      eventCounter++;
       eventsAdmin++;
-      eventsSigner2 += 2;
+      eventsSigner2++;
 
+      // Wait for synced
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          verifyRequestApprove (id: "${verifyRequestApproveId}") {
+            block
+            timestamp
+            transactionHash
+            verifyContract
+            sender
+            account
+            data
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const data = response.data.verifyRequestApprove;
+
+      expect(data.block).to.equals(eventBlock.toString());
+      expect(data.timestamp).to.equals(eventTimestamp.toString());
+      expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
+
+      expect(data.verifyContract).to.equals(verify.address.toLowerCase());
+      expect(data.sender).to.equals(signer1.address.toLowerCase());
+      expect(data.account).to.equals(signer2.address.toLowerCase());
+      expect(data.data).to.equals(evidenceApprove);
+    });
+
+    it("should query the VerifyRequestRemove after a RequestRemove", async function () {
       // signer1 requests that signer2 be removed
       const infoRemove = {
         account: signer2.address,
@@ -664,7 +705,7 @@ describe("Verify Factory - Queries", function () {
       expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
       expect(data.status).to.equals(expectedVerifyAddr.status);
 
-      expect(data.events).to.have.lengthOf(eventsSigner2); // requestApprove, Approve and requestRemove
+      expect(data.events).to.have.lengthOf(eventsSigner2);
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
 

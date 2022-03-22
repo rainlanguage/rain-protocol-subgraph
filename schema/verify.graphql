@@ -48,7 +48,7 @@ interface VerifyEvent {
 
 # created from RequestApprove event
 type VerifyRequestApprove implements VerifyEvent @entity {
-  id: ID! #Concat {Verify.address}+{txHash}
+  id: ID! #Concat {Verify.address}+{txHash}+{index}
   block: BigInt! #block of the vent
   transactionHash: Bytes! #txHash of the event
   timestamp: BigInt! #timestamp of event
