@@ -313,6 +313,20 @@ export function handleRequestApprove(event: RequestApprove): void {
     }
 
     verifyAddress.save();
+
+    // Get VerifyAddress entity of Requester
+    let verifyAddressRequester = getVerifyAddress(
+      event.address.toHex(),
+      event.params.sender.toHex()
+    );
+
+    if (verifyAddressRequester) {
+      // Add the RequestBan event to Requester
+      let eventsRequester = verifyAddressRequester.events;
+      if (eventsRequester) eventsRequester.push(verifyRequestApprove.id);
+      verifyAddressRequester.events = eventsRequester;
+      verifyAddressRequester.save();
+    }
   }
 }
 

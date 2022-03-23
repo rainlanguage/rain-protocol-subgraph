@@ -75,7 +75,7 @@ describe("Verify Factory - Queries", function () {
     expect(data.implementation).to.equals(implementation.toLocaleLowerCase());
   });
 
-  describe.only("Verify contract -  Verification process", function () {
+  describe("Verify contract -  Verification process", function () {
     let eventCounter = 0;
     let eventsSigner1 = 0;
     let eventsSigner2 = 0;
@@ -779,8 +779,6 @@ describe("Verify Factory - Queries", function () {
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
-      console.log(JSON.stringify(data))
-
       // Expected VerifyAddress values
       expect(data.events).to.have.lengthOf(eventsSigner1); // requestApprove, Approve and requestRemove
       expect(data.events).to.deep.include({ id: verifyEventId });
@@ -1105,8 +1103,6 @@ describe("Verify Factory - Queries", function () {
         query,
       })) as FetchResult;
       const data = response.data.verifyAddress;
-
-      console.log(JSON.stringify(data))
 
       // Expected VerifyAddress values
       expect(data.events).to.have.lengthOf(eventsSigner1);
