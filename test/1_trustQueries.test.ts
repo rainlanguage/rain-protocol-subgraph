@@ -186,8 +186,8 @@ before("Deployment contracts and subgraph", async function () {
   ).deploy();
 
   // Saving data in JSON
-  const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
-  const config = JSON.parse(Util.fetchFile(pathConfigLocal));
+  const pathExampleConfig = path.resolve(__dirname, "../config/example.json");
+  const config = JSON.parse(Util.fetchFile(pathExampleConfig));
 
   config.network = "localhost";
 
@@ -236,6 +236,7 @@ before("Deployment contracts and subgraph", async function () {
     redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
 
   // Write address and block to configuration contracts file
+  const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   Util.writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
   // Read deploy configuration example and create subgraph deployment configuration
