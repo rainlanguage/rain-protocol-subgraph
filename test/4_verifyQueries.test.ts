@@ -533,6 +533,8 @@ describe("Verify Factory - Queries", function () {
       const verifyRequestApproveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
+      console.log("verifyRequestApproveId: ", verifyRequestApproveId);
+
       // Wait for synced
       await waitForSubgraphToBeSynced();
 
@@ -608,6 +610,41 @@ describe("Verify Factory - Queries", function () {
       expect(data.status).to.equals(expectedVerifyAddr.status);
 
       expect(data.events).to.have.lengthOf(eventsSigner2);
+      expect(data.events).to.deep.include({ id: verifyEventId });
+    });
+
+    it("should update the verifyAddress that call RequestApprove when delegated", async function () {
+      const signer1Id = `${verify.address.toLowerCase()} - ${signer1.address.toLocaleLowerCase()}`;
+      const verifyEventId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
+
+      const expectedVerifyAddr = {
+        id: signer1Id,
+        requestStatus: RequestStatus.NONE,
+        status: VerifyStatus.APPROVED,
+      };
+
+      const query = `
+        {
+          verifyAddress (id: "${signer1Id}") {
+            requestStatus
+            status
+            events {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const data = response.data.verifyAddress;
+
+      // Expected VerifyAddress values
+      expect(data.requestStatus).to.equals(expectedVerifyAddr.requestStatus);
+      expect(data.status).to.equals(expectedVerifyAddr.status);
+
+      expect(data.events).to.have.lengthOf(eventsSigner1);
       expect(data.events).to.deep.include({ id: verifyEventId });
     });
 
@@ -779,7 +816,7 @@ describe("Verify Factory - Queries", function () {
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
-      console.log(JSON.stringify(data))
+      console.log(JSON.stringify(data, null, 2));
 
       // Expected VerifyAddress values
       expect(data.events).to.have.lengthOf(eventsSigner1); // requestApprove, Approve and requestRemove
@@ -1106,7 +1143,7 @@ describe("Verify Factory - Queries", function () {
       })) as FetchResult;
       const data = response.data.verifyAddress;
 
-      console.log(JSON.stringify(data))
+      console.log(JSON.stringify(data, null, 2));
 
       // Expected VerifyAddress values
       expect(data.events).to.have.lengthOf(eventsSigner1);
