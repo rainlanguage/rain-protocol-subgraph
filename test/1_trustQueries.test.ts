@@ -62,7 +62,11 @@ import type { RedeemableERC20ClaimEscrow } from "../typechain/RedeemableERC20Cla
 
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
 import type { SeedERC20, SeedEvent, UnseedEvent } from "../typechain/SeedERC20";
-import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
+import type {
+  RedeemableERC20,
+  ReceiverEvent,
+  SenderEvent,
+} from "../typechain/RedeemableERC20";
 import type { ConfigurableRightsPool } from "../typechain/ConfigurableRightsPool";
 import type { BPool, LOG_SWAPEvent } from "../typechain/BPool";
 import type { BPoolFeeEscrow } from "../typechain/BPoolFeeEscrow";
@@ -173,6 +177,7 @@ before("Deployment contracts and subgraph", async function () {
 
   // Deploying SaleFactory contract
   saleFactory = await new SaleFactory__factory(deployer).deploy({
+    maximumSaleTimeout: 10000,
     maximumCooldownDuration: 1000,
     redeemableERC20Factory: redeemableERC20Factory.address,
   });
@@ -901,6 +906,14 @@ describe("Subgraph Trusts Test", function () {
     });
 
     it("should query the grantSender from RedeemableERC20 after creation", async function () {
+      const grantSenderEvents = (await Util.getAllEmitedEvent(
+        redeemableERC20Contract.deployTransaction,
+        "Sender",
+        redeemableERC20Contract
+      )) as SenderEvent["args"][];
+
+      const eventsLength = grantSenderEvents.length;
+
       const query = `
         {
           redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
@@ -914,11 +927,25 @@ describe("Subgraph Trusts Test", function () {
       });
       const gSendersData = queryResponse.data.redeemableERC20.grantedSenders;
 
-      expect(gSendersData).to.have.lengthOf(1);
-      expect(gSendersData[0]).to.equals(crpContract.address.toLowerCase());
+      expect(gSendersData).to.have.lengthOf(eventsLength);
+
+      // Check that all Senders are indexed
+      for (let i = 0; i < eventsLength; i++) {
+        expect(gSendersData).to.include(
+          grantSenderEvents[i].grantedSender.toLowerCase()
+        );
+      }
     });
 
     it("should query the grantReceivers from RedeemableERC20 after creation", async function () {
+      const grantReceiverEvents = (await Util.getAllEmitedEvent(
+        redeemableERC20Contract.deployTransaction,
+        "Receiver",
+        redeemableERC20Contract
+      )) as ReceiverEvent["args"][];
+
+      const grantReceiverLength = grantReceiverEvents.length;
+
       const query = `
         {
           redeemableERC20 (id: "${redeemableERC20Contract.address.toLowerCase()}") {
@@ -933,11 +960,14 @@ describe("Subgraph Trusts Test", function () {
       const gReceiversData =
         queryResponse.data.redeemableERC20.grantedReceivers;
 
-      expect(gReceiversData).to.have.lengthOf(3);
+      expect(gReceiversData).to.have.lengthOf(grantReceiverLength);
 
-      expect(gReceiversData).to.include(bPoolFeeEscrow.address.toLowerCase());
-      expect(gReceiversData).to.include(bFactory.address.toLowerCase());
-      expect(gReceiversData).to.include(trust.address.toLowerCase());
+      // Check that all Receivers are indexed
+      for (let i = 0; i < grantReceiverLength; i++) {
+        expect(gReceiversData).to.include(
+          grantReceiverEvents[i].grantedReceiver.toLowerCase()
+        );
+      }
     });
 
     it("should query the Seed of the trust correctly", async function () {
