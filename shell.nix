@@ -29,7 +29,7 @@ let
     ts-node scripts/index.ts
   '';
 
-  init = pkgs.writeShellScriptBin "init" ''
+  get-contracts = pkgs.writeShellScriptBin "get-contracts" ''
     mkdir -p contracts && cp -r node_modules/@beehiveinnovation/rain-protocol/contracts .
     mkdir -p contracts/rain-statusfi && cp node_modules/@beehiveinnovation/rain-statusfi/contracts/*.sol contracts/rain-statusfi
     mkdir -p contracts/tier && cp node_modules/@vishalkale15107/rain-protocol/contracts/tier/ERC721BalanceTier*.sol contracts/tier
@@ -49,7 +49,7 @@ pkgs.stdenv.mkDerivation {
   graph-node
   graph-test
   deploy-subgraph
-  init
+  get-contracts
  ];
 
  shellHook = ''
@@ -57,6 +57,6 @@ pkgs.stdenv.mkDerivation {
   export PATH=$( npm bin ):$PATH
   # keep it fresh
   npm install --verbose --fetch-timeout 3000000
-  init
+  get-contracts
  '';
 }

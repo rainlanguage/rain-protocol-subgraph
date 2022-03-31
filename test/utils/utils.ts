@@ -306,38 +306,10 @@ export const OpsCombineTier = {
   ACCOUNT: 0 + AllStandardOps.length,
 };
 
-export enum OpcodeEmissionsERC20 {
-  SKIP,
-  VAL,
-  DUP,
-  ZIPMAP,
-  BLOCK_NUMBER,
-  BLOCK_TIMESTAMP,
-  THIS_ADDRESS,
-  REPORT,
-  NEVER,
-  ALWAYS,
-  SATURATING_DIFF,
-  UPDATE_BLOCKS_FOR_TIER_RANGE,
-  SELECT_LTE,
-  ADD,
-  SUB,
-  MUL,
-  DIV,
-  MOD,
-  POW,
-  MIN,
-  MAX,
-  SCALE18_MUL,
-  SCALE18_DIV,
-  SCALE18,
-  SCALEN,
-  SCALE_BY,
-  SCALE18_ONE,
-  SCALE18_DECIMALS,
-  CLAIMANT_ACCOUNT,
-  CONSTRUCTION_BLOCK_NUMBER,
-}
+export const OpcodeEmissionsERC20 = {
+  ...AllStandardOps,
+  CLAIMANT_ACCOUNT: 0 + AllStandardOps.length,
+};
 
 // Enum that represent the DistributionStatus (Trust)
 export enum DistributionStatus {
