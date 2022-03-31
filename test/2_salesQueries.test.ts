@@ -100,7 +100,7 @@ describe("Sales queries test", function () {
   });
 
   describe("Success sale", function () {
-    const saleTimeout = 30;
+    const saleDuration = 30;
     const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
 
     const totalTokenSupply = ethers.BigNumber.from("2000").mul(Util.ONE);
@@ -128,6 +128,7 @@ describe("Sales queries test", function () {
       stackLength: 1,
       argumentsLength: 0,
     };
+    const saleTimeout = 100;
     const cooldownDuration = 1;
     const dustSize = 0;
 
@@ -146,7 +147,7 @@ describe("Sales queries test", function () {
       startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
       canStartStateConfig = afterBlockNumberConfig(startBlock);
-      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
+      canEndStateConfig = afterBlockNumberConfig(startBlock + saleDuration);
 
       sale = await Util.saleDeploy(
         saleFactory,
@@ -157,8 +158,9 @@ describe("Sales queries test", function () {
           calculatePriceStateConfig: calculatePriceStateConfig,
           recipient: recipient.address,
           reserve: reserve.address,
+          saleTimeout: saleTimeout,
           cooldownDuration: cooldownDuration,
-          minimumRaise,
+          minimumRaise: minimumRaise,
           dustSize: dustSize,
         },
         {
@@ -1307,6 +1309,7 @@ describe("Sales queries test", function () {
   });
 
   describe("Failed sale", function () {
+    let sale: Sale;
     // SaleRefund
     const vBasePrice = op(OpcodeSale.VAL, 0);
     const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
@@ -1323,11 +1326,12 @@ describe("Sales queries test", function () {
       stackLength: 1,
       argumentsLength: 0,
     };
+    const saleTimeout = 100;
     const cooldownDuration = 1;
     const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
     const dustSize = 0;
 
-    const saleTimeout = 30;
+    const saleDuration = 30;
 
     const redeemableERC20Config = {
       name: "Token",
@@ -1343,7 +1347,7 @@ describe("Sales queries test", function () {
       startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
       canStartStateConfig = afterBlockNumberConfig(startBlock);
-      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
+      canEndStateConfig = afterBlockNumberConfig(startBlock + saleDuration);
 
       sale = await Util.saleDeploy(
         saleFactory,
@@ -1354,8 +1358,9 @@ describe("Sales queries test", function () {
           calculatePriceStateConfig: calculatePriceStateConfig,
           recipient: recipient.address,
           reserve: reserve.address,
+          saleTimeout: saleTimeout,
           cooldownDuration: cooldownDuration,
-          minimumRaise,
+          minimumRaise: minimumRaise,
           dustSize: dustSize,
         },
         {
@@ -1380,7 +1385,8 @@ describe("Sales queries test", function () {
 
     it("should query the Sale as failed correctly", async function () {
       const cantStart = await sale.canStart();
-      assert(!cantStart);
+      const status = await sale.saleStatus();
+      assert(!cantStart, "Can not start before time");
 
       // wait until sale can start
       await Util.createEmptyBlock(
@@ -1388,20 +1394,20 @@ describe("Sales queries test", function () {
       );
 
       const canStart = await sale.canStart();
-      assert(canStart);
+      assert(canStart, "Can not start after correct ime");
 
       // Sale started
       await sale.start();
 
       const saleStatusActive = await sale.saleStatus();
-      assert(saleStatusActive === SaleStatus.ACTIVE);
+      assert(saleStatusActive === SaleStatus.ACTIVE, "Wrong status");
 
       const cantEnd = await sale.canEnd();
-      assert(!cantEnd);
+      assert(!cantEnd, "Can end before time");
 
       // wait until sale can end
       await Util.createEmptyBlock(
-        saleTimeout + startBlock - (await ethers.provider.getBlockNumber())
+        saleDuration + startBlock - (await ethers.provider.getBlockNumber())
       );
 
       const canEnd = await sale.canEnd();
@@ -1465,157 +1471,6 @@ describe("Sales queries test", function () {
     });
   });
 
-  describe("Sale with zero minimumRaise ", function () {
-    // distributionEndForwardingAddress need to be non zero address
-    const vBasePrice = op(OpcodeSale.VAL, 0);
-    const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
-
-    const sources = [concat([vBasePrice])];
-    const constants = [staticPrice];
-
-    let startBlock: number,
-      canStartStateConfig: VMState,
-      canEndStateConfig: VMState;
-    const calculatePriceStateConfig: VMState = {
-      sources,
-      constants,
-      stackLength: 1,
-      argumentsLength: 0,
-    };
-    const cooldownDuration = 1;
-    const minimumRaise = ethers.BigNumber.from("0");
-    const dustSize = 0;
-
-    const saleTimeout = 30;
-
-    const redeemableERC20Config = {
-      name: "Token",
-      symbol: "TKN",
-      distributor: zeroAddress,
-      initialSupply: ethers.BigNumber.from("2000").mul(Util.ONE),
-    };
-    const minimumTier = Tier.ZERO;
-    let distributionEndForwardingAddress: string;
-
-    before("creating the sale child", async function () {
-      // 5 blocks from now
-      startBlock = (await ethers.provider.getBlockNumber()) + 5;
-
-      canStartStateConfig = afterBlockNumberConfig(startBlock);
-      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
-
-      // Arbitrary distributionEndForwardingAddress to get the zero minimumRaise
-      distributionEndForwardingAddress = signer1.address;
-
-      sale = await Util.saleDeploy(
-        saleFactory,
-        creator,
-        {
-          canStartStateConfig: canStartStateConfig,
-          canEndStateConfig: canEndStateConfig,
-          calculatePriceStateConfig: calculatePriceStateConfig,
-          recipient: recipient.address,
-          reserve: reserve.address,
-          cooldownDuration: cooldownDuration,
-          minimumRaise,
-          dustSize: dustSize,
-        },
-        {
-          erc20Config: redeemableERC20Config,
-          tier: erc20BalanceTier.address,
-          minimumTier: minimumTier,
-          distributionEndForwardingAddress: distributionEndForwardingAddress,
-        }
-      );
-
-      // Creating the instance for contracts
-      redeemableERC20Contract = new RedeemableERC20__factory(deployer).attach(
-        await Util.getChild(redeemableERC20Factory, sale.deployTransaction)
-      );
-
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      redeemableERC20Contract.deployTransaction = sale.deployTransaction;
-
-      await waitForSubgraphToBeSynced();
-    });
-
-    it("should query as full percent raised a Sale with zero minimumRaise", async function () {
-      const query = `
-        {
-          sale (id: "${sale.address.toLowerCase()}") {
-            percentRaised
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query,
-      })) as FetchResult;
-
-      const data = response.data.sale;
-
-      expect(data.percentRaised).to.equals("100");
-    });
-
-    it("should query as full percent raised a Sale with zero minimumRaise after a buy", async function () {
-      // wait until sale can start
-      await Util.createEmptyBlock(
-        startBlock - (await ethers.provider.getBlockNumber())
-      );
-
-      // Sale started
-      await sale.start();
-
-      const saleStatusActive = await sale.saleStatus();
-      assert(saleStatusActive === SaleStatus.ACTIVE);
-
-      // Buy the 50% of the units availables
-      const desiredUnits = (
-        await redeemableERC20Contract.balanceOf(sale.address)
-      ).div(2);
-
-      const cost = staticPrice.mul(desiredUnits).div(Util.ONE);
-      const fee = ethers.BigNumber.from("1").mul(Util.RESERVE_ONE);
-
-      // give signer1 reserve to cover cost + fee
-      await reserve.transfer(signer1.address, cost.add(fee));
-      const signer1ReserveBalance = await reserve.balanceOf(signer1.address);
-
-      await reserve
-        .connect(signer1)
-        .approve(sale.address, signer1ReserveBalance);
-
-      const buyConfig = {
-        feeRecipient: feeRecipient.address,
-        fee,
-        minimumUnits: desiredUnits,
-        desiredUnits,
-        maximumPrice: staticPrice,
-      };
-
-      // Buying the half of units
-      transaction = await sale.connect(signer1).buy(buyConfig);
-
-      await waitForSubgraphToBeSynced();
-
-      const query = `
-        {
-          sale (id: "${sale.address.toLowerCase()}") {
-            percentRaised
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query,
-      })) as FetchResult;
-      const data = response.data.sale;
-
-      expect(data.percentRaised).to.equals("100");
-    });
-  });
-
   describe("Sale with a non-ERC20 token as reserve", function () {
     // The subgraph must not crash with non-ERC20 token / address as reserve
     const vBasePrice = op(OpcodeSale.VAL, 0);
@@ -1633,11 +1488,12 @@ describe("Sales queries test", function () {
       stackLength: 1,
       argumentsLength: 0,
     };
+    const saleTimeout = 100;
     const cooldownDuration = 1;
     const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
     const dustSize = 0;
 
-    const saleTimeout = 30;
+    const saleDuration = 30;
 
     const redeemableERC20Config = {
       name: "Token",
@@ -1655,7 +1511,7 @@ describe("Sales queries test", function () {
       startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
       canStartStateConfig = afterBlockNumberConfig(startBlock);
-      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
+      canEndStateConfig = afterBlockNumberConfig(startBlock + saleDuration);
 
       // It could be an non-ERC20 address
       nonErc20 = signer1.address;
@@ -1669,8 +1525,9 @@ describe("Sales queries test", function () {
           calculatePriceStateConfig: calculatePriceStateConfig,
           recipient: recipient.address,
           reserve: nonErc20,
+          saleTimeout: saleTimeout,
           cooldownDuration: cooldownDuration,
-          minimumRaise,
+          minimumRaise: minimumRaise,
           dustSize: dustSize,
         },
         {
