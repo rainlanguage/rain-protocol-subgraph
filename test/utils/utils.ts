@@ -105,7 +105,10 @@ import type {
 import type { GatedNFT } from "../../typechain/GatedNFT";
 
 // VerifyFactory types
-import type { VerifyFactory } from "../../typechain/VerifyFactory";
+import type {
+  VerifyFactory,
+  VerifyConfigStruct,
+} from "../../typechain/VerifyFactory";
 import type { Verify } from "../../typechain/Verify";
 
 // VerifyTierFactory types
@@ -239,66 +242,69 @@ export enum Tier {
 }
 
 // Opcodes
-export enum OpcodeSale {
+export enum AllStandardOps {
   SKIP,
   VAL,
   DUP,
   ZIPMAP,
+  DEBUG,
   BLOCK_NUMBER,
   BLOCK_TIMESTAMP,
   SENDER,
-  IS_ZERO,
+  THIS_ADDRESS,
+  SCALE18_MUL,
+  SCALE18_DIV,
+  SCALE18,
+  SCALEN,
+  SCALE_BY,
+  SCALE18_ONE,
+  SCALE18_DECIMALS,
+  ADD,
+  SATURATING_ADD,
+  SUB,
+  SATURATING_SUB,
+  MUL,
+  SATURATING_MUL,
+  DIV,
+  MOD,
+  EXP,
+  MIN,
+  MAX,
+  ISZERO,
   EAGER_IF,
   EQUAL_TO,
   LESS_THAN,
   GREATER_THAN,
   EVERY,
   ANY,
-  ADD,
-  SUB,
-  MUL,
-  DIV,
-  MOD,
-  POW,
-  MIN,
-  MAX,
   REPORT,
   NEVER,
   ALWAYS,
   SATURATING_DIFF,
   UPDATE_BLOCKS_FOR_TIER_RANGE,
   SELECT_LTE,
-  ERC20_BALANCE_OF,
-  ERC20_TOTAL_SUPPLY,
-  ERC721_BALANCE_OF,
-  ERC721_OWNER_OF,
-  ERC1155_BALANCE_OF,
-  ERC1155_BALANCE_OF_BATCH,
-  REMAINING_UNITS,
-  TOTAL_RESERVE_IN,
-  LAST_BUY_BLOCK,
-  LAST_BUY_UNITS,
-  LAST_BUY_PRICE,
-  CURRENT_BUY_UNITS,
-  TOKEN_ADDRESS,
-  RESERVE_ADDRESS,
+  IERC20_BALANCE_OF,
+  IERC20_TOTAL_SUPPLY,
+  IERC721_BALANCE_OF,
+  IERC721_OWNER_OF,
+  IERC1155_BALANCE_OF,
+  IERC1155_BALANCE_OF_BATCH,
+  length,
 }
 
-export enum OpcodeTier {
-  END,
-  VAL,
-  DUP,
-  ZIPMAP,
-  BLOCK_NUMBER,
-  BLOCK_TIMESTAMP,
-  REPORT,
-  NEVER,
-  ALWAYS,
-  DIFF,
-  UPDATE_BLOCKS_FOR_TIER_RANGE,
-  SELECT_LTE,
-  ACCOUNT,
-}
+export const OpcodeSale = {
+  ...AllStandardOps,
+  REMAINING_UNITS: 0 + AllStandardOps.length,
+  TOTAL_RESERVE_IN: 1 + AllStandardOps.length,
+  CURRENT_BUY_UNITS: 2 + AllStandardOps.length,
+  TOKEN_ADDRESS: 3 + AllStandardOps.length,
+  RESERVE_ADDRESS: 4 + AllStandardOps.length,
+};
+
+export const OpsCombineTier = {
+  ...AllStandardOps,
+  ACCOUNT: 0 + AllStandardOps.length,
+};
 
 export enum OpcodeEmissionsERC20 {
   SKIP,
@@ -808,20 +814,20 @@ export const emissionsDeploy = async (
  * Create a new Verify contract
  * @param verifyFactory The Verify Factory
  * @param creator The signer that will create the child and will be connected to
- * @param adminAddress The verify admin address
+ * @param verifyConfig The verify configuration that contain the admin address and callback address
  * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
  * @returns The verify child
  */
 export const verifyDeploy = async (
   verifyFactory: VerifyFactory,
   creator: SignerWithAddress,
-  adminAddress: string,
+  verifyConfig: VerifyConfigStruct,
   override: Overrides = {}
 ): Promise<Verify> => {
   // Creating child
   const txDeploy = await verifyFactory
     .connect(creator)
-    .createChildTyped(adminAddress, override);
+    .createChildTyped(verifyConfig, override);
 
   const verify = new Verify__factory(creator).attach(
     await getChild(verifyFactory, txDeploy)
@@ -1195,6 +1201,32 @@ export const getEventArgs = async (
     eventName,
     eventObj.data,
     eventObj.topics
+  );
+};
+
+/**
+ * Get all the occurrences of an event in a Transaction. Search inside a treansaction
+ * and get all the event emitted and filter by a specific `eventName`. If no events are
+ * found, will return an empty array
+ * @param tx transaction where events occurs
+ * @param eventName name of event to filter
+ * @param contract contract object holding the address, filters, interface
+ * @returns Array that contain all the event ocurrencies filtered by the eventName or an
+ * empty array if not found events
+ */
+export const getAllEmitedEvent = async (
+  tx: ContractTransaction,
+  eventName: string = null,
+  contract: Contract = null
+): Promise<Result[]> => {
+  const eventsObj = (await tx.wait()).events.filter(
+    (x) =>
+      x.topics[0] === contract.filters[eventName]().topics[0] &&
+      x.address === contract.address
+  );
+
+  return eventsObj.map((element) =>
+    contract.interface.decodeEventLog(eventName, element.data, element.topics)
   );
 };
 
