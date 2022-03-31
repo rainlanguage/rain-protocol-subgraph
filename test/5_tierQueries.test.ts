@@ -14,7 +14,7 @@ import {
   Tier,
   VMState,
   LEVELS,
-  OpcodeTier,
+  OpsCombineTier,
   OpcodeSale,
 } from "./utils/utils";
 
@@ -64,17 +64,15 @@ import {
 let reserve: ReserveTokenTest, transaction: ContractTransaction;
 
 describe("Subgraph Tier Test", function () {
-  // before("deploy fresh test contracts", async function () {
-  //   // New reserve token
-  //   reserve = await new ReserveTokenTest__factory(deployer).deploy();
-  // });
-
   describe("VerifyTier Factory - Queries", function () {
     let verify: Verify, verifyTier: VerifyTier;
 
     before("deploy fresh test contracts", async function () {
       // Creating a new Verify Child
-      verify = await Util.verifyDeploy(verifyFactory, creator, admin.address);
+      verify = await Util.verifyDeploy(verifyFactory, creator, {
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       // Admin grants all roles to himself.
       // ⚠️ NOTE: This is for testing purposes only ⚠️
@@ -273,7 +271,10 @@ describe("Subgraph Tier Test", function () {
       // Verify deployed without factory
       const verifyIndependent = await new Verify__factory(deployer).deploy();
 
-      await verifyIndependent.initialize(admin.address);
+      await verifyIndependent.initialize({
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       // Creating the VerifyTier Contract with the Verify
       verifyTier = await Util.verifyTierDeploy(
@@ -917,7 +918,7 @@ describe("Subgraph Tier Test", function () {
   describe("CombineTier Factory - Queries", function () {
     let combineTier: CombineTier;
 
-    const sourceAlways = concat([op(OpcodeTier.ALWAYS)]);
+    const sourceAlways = concat([op(OpsCombineTier.ALWAYS)]);
 
     const stateConfigAlways: VMState = {
       sources: [sourceAlways],
@@ -1514,7 +1515,7 @@ describe("Subgraph Tier Test", function () {
         };
       };
 
-      const saleTimeout = 30;
+      const saleDuration = 30;
       const startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
       const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
@@ -1525,7 +1526,7 @@ describe("Subgraph Tier Test", function () {
       // SaleConfig
       const canStartStateConfig = afterBlockNumberConfig(startBlock);
       const canEndStateConfig = afterBlockNumberConfig(
-        startBlock + saleTimeout
+        startBlock + saleDuration
       );
       const calculatePriceStateConfig = {
         sources,
@@ -1533,6 +1534,7 @@ describe("Subgraph Tier Test", function () {
         stackLength: 1,
         argumentsLength: 0,
       };
+      const saleTimeout = 100;
       const cooldownDuration = 1;
       const minimumRaise = ethers.BigNumber.from("150000").mul(
         Util.RESERVE_ONE
@@ -1558,9 +1560,10 @@ describe("Subgraph Tier Test", function () {
           calculatePriceStateConfig,
           recipient: signer1.address,
           reserve: reserve.address,
-          cooldownDuration,
-          minimumRaise,
-          dustSize,
+          saleTimeout: saleTimeout,
+          cooldownDuration: cooldownDuration,
+          minimumRaise: minimumRaise,
+          dustSize: dustSize,
         },
         {
           erc20Config: redeemableERC20Config,
