@@ -8,7 +8,10 @@ contracts
 typechain
 
 ## Subgraph
+subgraph.template.yaml
 build
 generated
-docker/data
-scripts/**/*.js
+./docker
+/docker/**/*
+/docker/*
+/docker/data/postgres

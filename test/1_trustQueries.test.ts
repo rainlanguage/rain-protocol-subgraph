@@ -197,47 +197,47 @@ before("Deployment contracts and subgraph", async function () {
   config.network = "localhost";
 
   // Saving addresses and individuals blocks to index
-  config.noticeBoard = noticeBoard.address;
-  config.noticeBoardBlock = noticeBoard.deployTransaction.blockNumber;
+  config.NoticeBoard = noticeBoard.address;
+  config.NoticeBoardBlock = noticeBoard.deployTransaction.blockNumber;
 
-  config.emissionsERC20Factory = emissionsERC20Factory.address;
-  config.emissionsERC20FactoryBlock =
+  config.EmissionsERC20Factory = emissionsERC20Factory.address;
+  config.EmissionsERC20FactoryBlock =
     emissionsERC20Factory.deployTransaction.blockNumber;
 
-  config.trustFactory = trustFactory.address;
-  config.trustFactoryBlock = trustFactory.deployTransaction.blockNumber;
+  config.TrustFactory = trustFactory.address;
+  config.TrustFactoryBlock = trustFactory.deployTransaction.blockNumber;
 
-  config.verifyFactory = verifyFactory.address;
-  config.blockVerifyFactory = verifyFactory.deployTransaction.blockNumber;
+  config.VerifyFactory = verifyFactory.address;
+  config.VerifyFactoryBlock = verifyFactory.deployTransaction.blockNumber;
 
-  config.erc20BalanceTierFactory = erc20BalanceTierFactory.address;
-  config.blockErc20BalanceTierFactory =
+  config.ERC20BalanceTierFactory = erc20BalanceTierFactory.address;
+  config.ERC20BalanceTierFactoryBlock =
     erc20BalanceTierFactory.deployTransaction.blockNumber;
 
-  config.erc20TransferTierFactory = erc20TransferTierFactory.address;
-  config.blockErc20TransferTierFactory =
+  config.ERC20TransferTierFactory = erc20TransferTierFactory.address;
+  config.ERC20TransferTierFactoryBlock =
     erc20TransferTierFactory.deployTransaction.blockNumber;
 
-  config.combineTierFactory = combineTierFactory.address;
-  config.blockCombineTierFactory =
+  config.CombineTierFactory = combineTierFactory.address;
+  config.CombineTierFactoryBlock =
     combineTierFactory.deployTransaction.blockNumber;
 
-  config.verifyTierFactory = verifyTierFactory.address;
-  config.blockVerifyTierFactory =
+  config.VerifyTierFactory = verifyTierFactory.address;
+  config.VerifyTierFactoryBlock =
     verifyTierFactory.deployTransaction.blockNumber;
 
-  config.erc721BalanceTierFactory = erc721BalanceTierFactory.address;
-  config.blockErc721BalanceTierFactory =
+  config.ERC721BalanceTierFactory = erc721BalanceTierFactory.address;
+  config.ERC721BalanceTierFactoryBlock =
     erc721BalanceTierFactory.deployTransaction.blockNumber;
 
-  config.saleFactory = saleFactory.address;
-  config.blockSaleFactory = saleFactory.deployTransaction.blockNumber;
+  config.SaleFactory = saleFactory.address;
+  config.SaleFactoryBlock = saleFactory.deployTransaction.blockNumber;
 
-  config.gatedNFTFactory = gatedNFTFactory.address;
-  config.blockGatedNFTFactory = gatedNFTFactory.deployTransaction.blockNumber;
+  config.GatedNFTFactory = gatedNFTFactory.address;
+  config.GatedNFTFactoryBlock = gatedNFTFactory.deployTransaction.blockNumber;
 
-  config.redeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
-  config.blockRedeemableERC20ClaimEscrow =
+  config.RedeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
+  config.RedeemableERC20ClaimEscrowBlock =
     redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
 
   // Write address and block to configuration contracts file
