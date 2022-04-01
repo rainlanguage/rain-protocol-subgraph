@@ -477,7 +477,7 @@ templates:
           handler: handleInitialize
         - event: InitializeValueTier(address,address)
           handler: handleInitializeValueTier
-        - event: TierChange(address,address,uint256,uint256)
+        - event: TierChange(address,address,uint256,uint256,bytes)
           handler: handleTierChange
       file: ./src/tier/ERC20BalanceTier.ts
   - kind: ethereum/contract
@@ -502,7 +502,7 @@ templates:
           handler: handleInitialize
         - event: InitializeValueTier(address,address)
           handler: handleInitializeValueTier
-        - event: TierChange(address,address,uint256,uint256)
+        - event: TierChange(address,address,uint256,uint256,bytes)
           handler: handleTierChange
       file: ./src/tier/ERC721BalanceTier.ts
   - kind: ethereum/contract
@@ -529,7 +529,7 @@ templates:
           handler: handleInitialize
         - event: InitializeValueTier(address,address)
           handler: handleInitializeValueTier
-        - event: TierChange(address,address,uint256,uint256)
+        - event: TierChange(address,address,uint256,uint256,bytes)
           handler: handleTierChange
       file: ./src/tier/ERC20TransferTier.ts
   - kind: ethereum/contract
@@ -549,7 +549,7 @@ templates:
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:
-        - event: TierChange(address,address,uint256,uint256)
+        - event: TierChange(address,address,uint256,uint256,bytes)
           handler: handleTierChange
         - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
           handler: handleSnapshot
@@ -573,7 +573,7 @@ templates:
       eventHandlers:
         - event: Initialize(address,address)
           handler: handleInitialize
-        - event: TierChange(address,address,uint256,uint256)
+        - event: TierChange(address,address,uint256,uint256,bytes)
           handler: handleTierChange
       file: ./src/tier/VerifyTier.ts
   - kind: ethereum/contract
@@ -606,7 +606,7 @@ templates:
       eventHandlers:
         - event: Buy(address,(address,uint256,uint256,uint256,uint256),(uint256,address,uint256,uint256,uint256))
           handler: handleBuy
-        - event: Construct(address,(uint256,address))
+        - event: Construct(address,(uint256,uint256,address))
           handler: handleConstruct
         - event: CooldownInitialize(address,uint256)
           handler: handleCooldownInitialize
@@ -614,7 +614,7 @@ templates:
           handler: handleCooldownTriggered
         - event: End(address,uint8)
           handler: handleEnd
-        - event: Initialize(address,((bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),address,address,uint256,uint256,uint256),address)
+        - event: Initialize(address,((bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),address,address,uint256,uint256,uint256,uint256),address)
           handler: handleInitialize
         - event: Refund(address,(uint256,address,uint256,uint256,uint256))
           handler: handleRefund
@@ -706,7 +706,7 @@ templates:
       eventHandlers:
         - event: Claim(address,address,bytes)
           handler: handleClaim
-        - event: Initialize(address,bool,uint256)
+        - event: Initialize(address,bool)
           handler: handleInitialize
         - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
           handler: handleSnapshot
