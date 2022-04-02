@@ -20,7 +20,7 @@
   "GatedNFTFactoryBlock": 25436991,
   "RedeemableERC20ClaimEscrow": "0xbBEB09Fe86536d66C43f76BFdc30e8802Fb7e6C5",
   "RedeemableERC20ClaimEscrowBlock": 25436994,
-  "noticeBoard": "0xd1db393d3dEdE96ECF48CFED9De5f5ebE2df7d6F",
+  "NoticeBoard": "0xd1db393d3dEdE96ECF48CFED9De5f5ebE2df7d6F",
   "NoticeBoardBlock": 25437004,
   "EmissionsERC20Factory": "0xeA4faDB2edcC7e362C7dbCdC1A83e44E1009661A",
   "EmissionsERC20FactoryBlock": 25946315

@@ -1385,7 +1385,6 @@ describe("Sales queries test", function () {
 
     it("should query the Sale as failed correctly", async function () {
       const cantStart = await sale.canStart();
-      const status = await sale.saleStatus();
       assert(!cantStart, "Can not start before time");
 
       // wait until sale can start

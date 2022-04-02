@@ -1,6 +1,6 @@
 {
   "network": "matic",
-  "noticeBoard": "0xd1db393d3dEdE96ECF48CFED9De5f5ebE2df7d6F",
+  "NoticeBoard": "0xd1db393d3dEdE96ECF48CFED9De5f5ebE2df7d6F",
   "NoticeBoardBlock": 25437000,
   "EmissionsERC20Factory": "0xeA4faDB2edcC7e362C7dbCdC1A83e44E1009661A",
   "EmissionsERC20FactoryBlock": 25946300,

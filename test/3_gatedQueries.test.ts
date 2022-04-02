@@ -8,7 +8,7 @@ import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTe
 // Types
 import type { FetchResult } from "apollo-fetch";
 import type { ContractTransaction } from "ethers";
-import type { GatedNFT } from "../typechain/GatedNFT";
+import type { GatedNFT, TransferEvent } from "../typechain/GatedNFT";
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
 import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
 
@@ -66,11 +66,12 @@ describe("Subgraph GatedNFT test", function () {
       }
     );
 
-    // Giving the necessary amount to signer1 for a level 2
+    // Giving the necessary amount to signer1 and signer2 for a level 2
     await reserve.transfer(signer1.address, Util.amountToLevel(Util.Tier.TWO));
+    await reserve.transfer(signer2.address, Util.amountToLevel(Util.Tier.TWO));
 
     // Wait for sync
-    await waitForSubgraphToBeSynced();
+    // await waitForSubgraphToBeSynced();
   });
 
   it("should query GatedNFTFactory correctly after construction", async function () {
@@ -155,7 +156,14 @@ describe("Subgraph GatedNFT test", function () {
           address
           creator
           owner
+          tokensMinted
           royaltyRecipientHistory{
+            id
+          }
+          gatedTokens {
+            id
+          }
+          gatedTokenOwners {
             id
           }
           deployBlock
@@ -170,6 +178,10 @@ describe("Subgraph GatedNFT test", function () {
     const data = queryResponse.data.gatedNFT;
 
     expect(data.royaltyRecipientHistory).to.be.empty;
+    expect(data.gatedTokens).to.be.empty;
+    expect(data.gatedTokenOwners).to.be.empty;
+
+    expect(data.tokensMinted).to.equals(await gatedNFT.totalSupply());
     expect(data.address).to.equals(gatedNFT.address.toLowerCase());
     expect(data.creator).to.equals(creatorExpected.toLowerCase());
     expect(data.owner).to.equals(ownerExpected.toLowerCase());
@@ -511,5 +523,255 @@ describe("Subgraph GatedNFT test", function () {
     expect(dataNotice.sender).to.equals(signer1.address.toLowerCase());
     expect(dataNotice.subject.id).to.equals(gatedNFT.address.toLowerCase());
     expect(dataNotice.data).to.equals("0x01");
+  });
+
+  it("should update the GatedNFT after mint", async function () {
+    transaction = await gatedNFT.connect(signer1).mint(signer1.address);
+
+    const { to, tokenId } = (await Util.getEventArgs(
+      transaction,
+      "Transfer",
+      gatedNFT
+    )) as TransferEvent["args"];
+
+    const gatedTokenId = `${gatedNFT.address.toLowerCase()} - ${tokenId.toString()}`;
+    const gatedTokenOwnerId = `${gatedNFT.address.toLowerCase()} - ${to.toLowerCase()}`;
+
+    await waitForSubgraphToBeSynced();
+
+    const query = `
+      {
+        gatedNFT (id: "${gatedNFT.address.toLowerCase()}") {
+          tokensMinted
+          gatedTokens {
+            id
+          }
+          gatedTokenOwners {
+            id
+          }
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query,
+    })) as FetchResult;
+    const data = queryResponse.data.gatedNFT;
+
+    expect(data.tokensMinted).to.equals(await gatedNFT.totalSupply());
+
+    expect(data.gatedTokens).to.deep.include({ id: gatedTokenId });
+    expect(data.gatedTokenOwners).to.deep.include({ id: gatedTokenOwnerId });
+  });
+
+  it("should query the GatedToken correctly after mint", async function () {
+    const [mintBlock, mintTimestamp] = await Util.getTxTimeblock(transaction);
+
+    const { to: owner, tokenId } = (await Util.getEventArgs(
+      transaction,
+      "Transfer",
+      gatedNFT
+    )) as TransferEvent["args"];
+
+    const gatedTokenId = `${gatedNFT.address.toLowerCase()} - ${tokenId.toString()}`;
+
+    const query = `
+      {
+        gatedToken (id: "${gatedTokenId}") {
+          tokenId
+          ownerAddress
+          gatedNFTAddress
+          transferHistory {
+            id
+          }
+          mintBlock
+          mintTimestamp
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query,
+    })) as FetchResult;
+    const data = queryResponse.data.gatedToken;
+
+    expect(data.tokenId).to.equals(tokenId.toString());
+    expect(data.ownerAddress).to.equals(owner.toLowerCase());
+    expect(data.gatedNFTAddress).to.equals(gatedNFT.address.toLowerCase());
+    expect(data.transferHistory).to.be.empty;
+
+    expect(data.mintBlock).to.equals(mintBlock.toString());
+    expect(data.mintTimestamp).to.equals(mintTimestamp.toString());
+  });
+
+  it("should query the GatedTokenOwner correctly after mint", async function () {
+    const { to: owner, tokenId } = (await Util.getEventArgs(
+      transaction,
+      "Transfer",
+      gatedNFT
+    )) as TransferEvent["args"];
+
+    const gatedTokenId = `${gatedNFT.address.toLowerCase()} - ${tokenId.toString()}`;
+    const gatedTokenOwnerId = `${gatedNFT.address.toLowerCase()} - ${owner.toLowerCase()}`;
+
+    const query = `
+      {
+        gatedTokenOwner (id: "${gatedTokenOwnerId}") {
+          address
+          tokenCount
+          gatedNFTAddress
+          tokens {
+            id
+          }
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query,
+    })) as FetchResult;
+    const data = queryResponse.data.gatedTokenOwner;
+
+    expect(data.address).to.equals(owner.toLowerCase());
+    expect(data.tokenCount).to.equals(
+      (await gatedNFT.balanceOf(owner)).toString()
+    );
+
+    expect(data.gatedNFTAddress).to.equals(gatedNFT.address.toLowerCase());
+    expect(data.gatedNFTAddress).to.deep.include({ id: gatedTokenId });
+  });
+
+  it("should update the GatedTokenOwner after a transfer", async function () {
+    const { tokenId: idToTransfer } = (await Util.getEventArgs(
+      transaction,
+      "Transfer",
+      gatedNFT
+    )) as TransferEvent["args"];
+
+    transaction = await gatedNFT
+      .connect(signer1)
+      .transferFrom(signer1.address, signer2.address, idToTransfer);
+
+    const {
+      from: oldOwner,
+      to: newOwner,
+      tokenId,
+    } = (await Util.getEventArgs(
+      transaction,
+      "Transfer",
+      gatedNFT
+    )) as TransferEvent["args"];
+
+    const gatedTokenId = `${gatedNFT.address.toLowerCase()} - ${tokenId.toString()}`;
+    const oldTokenOwnerId = `${gatedNFT.address.toLowerCase()} - ${oldOwner.toLowerCase()}`;
+    const newTokenOwnerId = `${gatedNFT.address.toLowerCase()} - ${newOwner.toLowerCase()}`;
+
+    await waitForSubgraphToBeSynced();
+
+    const query = `
+      {
+        oldOwner: gatedTokenOwner (id: "${oldTokenOwnerId}") {
+          tokenCount
+          tokens {
+            id
+          }
+        }
+        newOwner: gatedTokenOwner (id: "${newTokenOwnerId}") {
+          tokenCount
+          tokens {
+            id
+          }
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query,
+    })) as FetchResult;
+    const dataOldOwner = queryResponse.data.oldOwner;
+    const dataNewOwner = queryResponse.data.newOwner;
+
+    // Should NOT have the token
+    expect(dataOldOwner.tokens).to.not.deep.include({ id: gatedTokenId });
+    expect(dataOldOwner.tokenCount).to.equals(
+      (await gatedNFT.balanceOf(oldOwner)).toString()
+    );
+
+    // Should have the token
+    expect(dataNewOwner.tokens).to.deep.include({ id: gatedTokenId });
+    expect(dataNewOwner.tokenCount).to.equals(
+      (await gatedNFT.balanceOf(newOwner)).toString()
+    );
+  });
+
+  it("should update the GatedToken after a transfer", async function () {
+    const { to: newOwner, tokenId } = (await Util.getEventArgs(
+      transaction,
+      "Transfer",
+      gatedNFT
+    )) as TransferEvent["args"];
+
+    const gatedTokenId = `${gatedNFT.address.toLowerCase()} - ${tokenId.toString()}`;
+    const transferHistoryId = `${transaction.hash.toLowerCase()}`;
+
+    await waitForSubgraphToBeSynced();
+
+    const query = `
+      {
+        gatedToken (id: "${gatedTokenId}") {
+          ownerAddress
+          transferHistory {
+            id
+          }
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query,
+    })) as FetchResult;
+    const data = queryResponse.data.gatedToken;
+
+    expect(data.ownerAddress).to.equals(newOwner.toLowerCase());
+    expect(data.transferHistory).to.deep.include({ id: transferHistoryId });
+  });
+
+  it("should query the HistoricalTransfer after a transfer", async function () {
+    const [eventBlock, eventTimestamp] = await Util.getTxTimeblock(transaction);
+    const { from, to, tokenId } = (await Util.getEventArgs(
+      transaction,
+      "Transfer",
+      gatedNFT
+    )) as TransferEvent["args"];
+
+    const transferHistoryId = `${transaction.hash.toLowerCase()}`;
+
+    await waitForSubgraphToBeSynced();
+
+    const query = `
+      {
+        historicalTransfer (id: "${transferHistoryId}") {
+          transactionHash
+          from
+          to
+          tokenId
+          eventBlock
+          eventTimestamp
+        }
+      }
+    `;
+
+    const queryResponse = (await subgraph({
+      query,
+    })) as FetchResult;
+    const data = queryResponse.data.historicalTransfer;
+
+    expect(data.transactionHash).to.equals(transaction.hash.toLowerCase());
+    expect(data.from).to.equals(from.toLowerCase());
+    expect(data.to).to.equals(to.toLowerCase());
+    expect(data.tokenId).to.equals(tokenId.toString());
+
+    expect(data.eventBlock).to.equals(eventBlock.toString());
+    expect(data.eventTimestamp).to.equals(eventTimestamp.toString());
   });
 });

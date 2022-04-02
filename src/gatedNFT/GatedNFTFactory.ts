@@ -23,6 +23,7 @@ export function handleNewChild(event: NewChild): void {
   gatedNFT.royaltyRecipientHistory = [];
   gatedNFT.ownershipHistory = [];
   gatedNFT.notices = [];
+  gatedNFT.gatedTokens = [];
   gatedNFT.deployBlock = event.block.number;
   gatedNFT.deployTimestamp = event.block.timestamp;
 

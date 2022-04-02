@@ -2,11 +2,15 @@ import {
   CreatedGatedNFT,
   OwnershipTransferred as OwnershipTransferredEvent,
   UpdatedRoyaltyRecipient as UpdatedRoyaltyRecipientEvent,
+  Transfer as TransferEvent,
 } from "../../generated/templates/GatedNFTTemplate/GatedNFT";
 import {
   GatedNFT,
   UpdatedRoyaltyRecipient,
   OwnershipTransferred,
+  GatedToken,
+  GatedTokenOwner,
+  HistoricalTransfer,
   ERC20BalanceTier,
   ERC20TransferTier,
   ERC721BalanceTier,
@@ -24,6 +28,7 @@ export function handleCreatedGatedNFT(event: CreatedGatedNFT): void {
     gatedNFT.symbol = event.params.config.symbol;
     gatedNFT.creator = event.params.creator;
     gatedNFT.minimumStatus = event.params.minimumStatus;
+    gatedNFT.tokensMinted = ZERO_BI;
     gatedNFT.maxMintable = event.params.maxMintable;
     gatedNFT.maxPerAddress = event.params.maxPerAddress;
     gatedNFT.transferrable = event.params.transferrable;
@@ -95,6 +100,42 @@ export function handleUpdatedRoyaltyRecipient(
     gatedNFT.royaltyRecipientHistory = royaltyRecipientHistory;
     gatedNFT.save();
   }
+}
+
+export function handleTransfer(event: TransferEvent): void {
+  let historicalTransfer = new HistoricalTransfer(
+    event.transaction.hash.toHex()
+  );
+  historicalTransfer.transactionHash = event.transaction.hash;
+  historicalTransfer.from = event.params.from;
+  historicalTransfer.to = event.params.to;
+  historicalTransfer.tokenId = event.params.tokenId;
+  historicalTransfer.eventBlock = event.block.number;
+  historicalTransfer.eventTimestamp = event.block.timestamp;
+
+  let gatedToken = GatedToken.load(event.address.toHex());
+  if (gatedToken == null) {
+    gatedToken = new GatedToken(
+      event.address.toHex() + " - " + event.params.tokenId.toString()
+    );
+
+    gatedToken.tokenId = event.params.tokenId;
+    gatedToken.ownerAddress = event.params.to;
+    gatedToken.gatedNFTAddress = event.address;
+    gatedToken.mintBlock = event.block.number;
+    gatedToken.mintTimestamp = event.block.timestamp;
+    gatedToken.transferHistory = [];
+  }
+  gatedToken.ownerAddress = event.params.to;
+
+  if (event.params.to.toHex() != ZERO_ADDRESS) {
+    let history = gatedToken.transferHistory;
+    if (history) history.push(historicalTransfer.id);
+    gatedToken.transferHistory = history;
+  }
+
+  historicalTransfer.save();
+  gatedToken.save();
 }
 
 function getTier(tierAddress: string): string {

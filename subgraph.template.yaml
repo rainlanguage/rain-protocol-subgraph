@@ -676,6 +676,9 @@ templates:
         - GatedNFT
         - UpdatedRoyaltyRecipient
         - OwnershipTransferred
+        - GatedToken
+        - GatedTokenOwner
+        - HistoricalTransfer
       abis:
         - name: GatedNFT
           file: ./abis/gatedNFT/GatedNFT.json
@@ -686,6 +689,8 @@ templates:
           handler: handleOwnershipTransferred
         - event: UpdatedRoyaltyRecipient(address)
           handler: handleUpdatedRoyaltyRecipient
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
       file: ./src/gatedNFT/GatedNFT.ts
   - kind: ethereum/contract
     name: EmissionsERC20Template
