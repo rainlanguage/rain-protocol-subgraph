@@ -2,11 +2,15 @@ import {
   CreatedGatedNFT,
   OwnershipTransferred as OwnershipTransferredEvent,
   UpdatedRoyaltyRecipient as UpdatedRoyaltyRecipientEvent,
+  Transfer as TransferEvent,
 } from "../../generated/templates/GatedNFTTemplate/GatedNFT";
 import {
   GatedNFT,
   UpdatedRoyaltyRecipient,
   OwnershipTransferred,
+  GatedToken,
+  GatedTokenOwner,
+  HistoricalTransfer,
   ERC20BalanceTier,
   ERC20TransferTier,
   ERC721BalanceTier,
@@ -14,7 +18,7 @@ import {
   VerifyTier,
   UnknownTier,
 } from "../../generated/schema";
-import { HUNDRED_BD, ZERO_ADDRESS, ZERO_BI } from "../utils";
+import { HUNDRED_BD, ONE_BI, ZERO_ADDRESS, ZERO_BI } from "../utils";
 import { Address } from "@graphprotocol/graph-ts";
 
 export function handleCreatedGatedNFT(event: CreatedGatedNFT): void {
@@ -24,6 +28,7 @@ export function handleCreatedGatedNFT(event: CreatedGatedNFT): void {
     gatedNFT.symbol = event.params.config.symbol;
     gatedNFT.creator = event.params.creator;
     gatedNFT.minimumStatus = event.params.minimumStatus;
+    gatedNFT.tokensMinted = ZERO_BI;
     gatedNFT.maxMintable = event.params.maxMintable;
     gatedNFT.maxPerAddress = event.params.maxPerAddress;
     gatedNFT.transferrable = event.params.transferrable;
@@ -97,6 +102,83 @@ export function handleUpdatedRoyaltyRecipient(
   }
 }
 
+export function handleTransfer(event: TransferEvent): void {
+  let historicalTransfer = new HistoricalTransfer(
+    event.transaction.hash.toHex()
+  );
+  historicalTransfer.transactionHash = event.transaction.hash;
+  historicalTransfer.from = event.params.from;
+  historicalTransfer.to = event.params.to;
+  historicalTransfer.tokenId = event.params.tokenId;
+  historicalTransfer.eventBlock = event.block.number;
+  historicalTransfer.eventTimestamp = event.block.timestamp;
+
+  let gatedToken = GatedToken.load(
+    event.address.toHex() + " - " + event.params.tokenId.toString()
+  );
+  if (!gatedToken) {
+    gatedToken = new GatedToken(
+      event.address.toHex() + " - " + event.params.tokenId.toString()
+    );
+
+    gatedToken.tokenId = event.params.tokenId;
+    gatedToken.ownerAddress = event.params.to;
+    gatedToken.gatedNFTAddress = event.address;
+    gatedToken.mintBlock = event.block.number;
+    gatedToken.mintTimestamp = event.block.timestamp;
+    gatedToken.transferHistory = [];
+  }
+  gatedToken.ownerAddress = event.params.to;
+
+  if (event.params.from.toHex() != ZERO_ADDRESS) {
+    let history = gatedToken.transferHistory;
+    if (history) history.push(historicalTransfer.id);
+    gatedToken.transferHistory = history;
+
+    let sender = getTokenOwner(event.params.from, event.address);
+
+    let tokens = sender.tokens;
+    let new_tokens: string[] = [];
+    for (let i = ZERO_BI; i < sender.tokenCount; i = i.plus(ONE_BI)) {
+      if (tokens) {
+        let token = GatedToken.load(tokens.pop());
+        if (token && token.tokenId != event.params.tokenId)
+          new_tokens.push(token.id);
+      }
+    }
+    if (sender) {
+      sender.tokens = new_tokens;
+      sender.tokenCount = sender.tokenCount.minus(ONE_BI);
+      sender.save();
+    }
+  }
+
+  let receiver = getTokenOwner(event.params.to, event.address);
+  receiver.tokenCount = receiver.tokenCount.plus(ONE_BI);
+  let tokens = receiver.tokens;
+  if (tokens) tokens.push(gatedToken.id);
+  receiver.tokens = tokens;
+  receiver.save();
+
+  historicalTransfer.save();
+  gatedToken.save();
+
+  let gatedNFT = GatedNFT.load(event.address.toHex());
+  if (gatedNFT) {
+    gatedNFT.tokensMinted = gatedNFT.tokensMinted.plus(ONE_BI);
+
+    let gatedTokens = gatedNFT.gatedTokens;
+    if (gatedTokens) gatedTokens.push(gatedToken.id);
+    gatedNFT.gatedTokens = gatedTokens;
+
+    let gatedTokenOwners = gatedNFT.gatedTokenOwners;
+    if (gatedTokenOwners) gatedTokenOwners.push(receiver.id);
+    gatedNFT.gatedTokenOwners = gatedTokenOwners;
+
+    gatedNFT.save();
+  }
+}
+
 function getTier(tierAddress: string): string {
   let eRC20BalanceTier = ERC20BalanceTier.load(tierAddress);
   if (eRC20BalanceTier) return eRC20BalanceTier.id;
@@ -118,4 +200,21 @@ function getTier(tierAddress: string): string {
     uknownTier.save();
   }
   return uknownTier.id;
+}
+
+function getTokenOwner(address: Address, contract: Address): GatedTokenOwner {
+  let gatedTokenOwner = GatedTokenOwner.load(
+    contract.toHex() + " - " + address.toHex()
+  );
+  if (!gatedTokenOwner) {
+    gatedTokenOwner = new GatedTokenOwner(
+      contract.toHex() + " - " + address.toHex()
+    );
+    gatedTokenOwner.address = address;
+    gatedTokenOwner.gatedNFTAddress = contract;
+    gatedTokenOwner.tokenCount = ZERO_BI;
+    gatedTokenOwner.tokens = [];
+  }
+
+  return gatedTokenOwner as GatedTokenOwner;
 }

@@ -533,8 +533,6 @@ describe("Verify Factory - Queries", function () {
       const verifyRequestApproveId = `${verify.address.toLowerCase()} - ${transaction.hash.toLowerCase()} - ${eventCounter}`;
       const [eventBlock, eventTimestamp] = await getTxTimeblock(transaction);
 
-      console.log("verifyRequestApproveId: ", verifyRequestApproveId);
-
       // Wait for synced
       await waitForSubgraphToBeSynced();
 

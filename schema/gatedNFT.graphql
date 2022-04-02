@@ -30,6 +30,9 @@ type GatedNFT implements INotice @entity {
   royaltyRecipientHistory: [UpdatedRoyaltyRecipient!]
   ownershipHistory: [OwnershipTransferred!]
   notices: [Notice!]
+  tokensMinted: BigInt! #contract.totalSupply()
+  gatedTokens: [GatedToken!]
+  gatedTokenOwners: [GatedTokenOwner!]
 }
 
 type UpdatedRoyaltyRecipient @entity {
@@ -49,4 +52,35 @@ type OwnershipTransferred @entity {
   sender: Bytes! #sender of the tx
   oldOwner: Bytes! #from event.oldOwner
   newOwner: Bytes! #from event.newOwner
+}
+
+## Created when someone mint and event "Transfer" is emitted and "from" is zeroAddress.
+type GatedToken @entity {
+  id: ID! #{GatedNFT address} - {event.tokenId}
+  tokenId: BigInt! # Token ID obtained when minted
+  ownerAddress: Bytes! #owner address - set when minted and updated after "Transfer" with "to" address
+  gatedNFTAddress: Bytes! #GatedNFT address
+  transferHistory: [HistoricalTransfer!] # Contain all HistoricalTransfers but should NOT add the mint (when "from" is zeroAddress)
+  mintBlock: BigInt
+  mintTimestamp: BigInt
+}
+
+## Created when mint and event "Transfer" is emitted and "from" is zeroAddress.
+type GatedTokenOwner @entity {
+  id: ID! #{GatedNFT address} - {transfer.to}
+  address: Bytes! #the account address
+  gatedNFTAddress: Bytes! #GatedNFT address
+  tokenCount: BigInt! #amount of token in the GatedNFT that this address have - contract.balanceOf(address)
+  tokens: [GatedToken!]
+}
+
+## Created after event "Transfer" is emitted and "from" is NOT zeroAddress.
+type HistoricalTransfer @entity {
+  id: ID! #transaction.hash
+  transactionHash: Bytes!
+  from: Bytes! #the account address
+  to: Bytes! #the from address
+  tokenId: BigInt! #the Token ID
+  eventBlock: BigInt
+  eventTimestamp: BigInt
 }
