@@ -5,6 +5,7 @@ import {
 import { GatedNFT, GatedNFTFactory } from "../../generated/schema";
 import { GatedNFT as GatedNFTContract } from "../../generated/GatedNFTFactory/GatedNFT";
 import { GatedNFTTemplate } from "../../generated/templates";
+import { ZERO_BI } from "../utils";
 export function handleImplementation(event: Implementation): void {
   let gatedNFTFactory = new GatedNFTFactory(event.address.toHex());
   gatedNFTFactory.address = event.address;
@@ -24,8 +25,10 @@ export function handleNewChild(event: NewChild): void {
   gatedNFT.ownershipHistory = [];
   gatedNFT.notices = [];
   gatedNFT.gatedTokens = [];
+  gatedNFT.gatedTokenOwners = [];
   gatedNFT.deployBlock = event.block.number;
   gatedNFT.deployTimestamp = event.block.timestamp;
+  gatedNFT.tokensMinted = ZERO_BI;
 
   gatedNFT.save();
 

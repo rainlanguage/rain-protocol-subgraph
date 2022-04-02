@@ -18,7 +18,7 @@ import {
   VerifyTier,
   UnknownTier,
 } from "../../generated/schema";
-import { HUNDRED_BD, ZERO_ADDRESS, ZERO_BI } from "../utils";
+import { HUNDRED_BD, ONE_BI, ZERO_ADDRESS, ZERO_BI } from "../utils";
 import { Address } from "@graphprotocol/graph-ts";
 
 export function handleCreatedGatedNFT(event: CreatedGatedNFT): void {
@@ -113,8 +113,10 @@ export function handleTransfer(event: TransferEvent): void {
   historicalTransfer.eventBlock = event.block.number;
   historicalTransfer.eventTimestamp = event.block.timestamp;
 
-  let gatedToken = GatedToken.load(event.address.toHex());
-  if (gatedToken == null) {
+  let gatedToken = GatedToken.load(
+    event.address.toHex() + " - " + event.params.tokenId.toString()
+  );
+  if (!gatedToken) {
     gatedToken = new GatedToken(
       event.address.toHex() + " - " + event.params.tokenId.toString()
     );
@@ -128,14 +130,53 @@ export function handleTransfer(event: TransferEvent): void {
   }
   gatedToken.ownerAddress = event.params.to;
 
-  if (event.params.to.toHex() != ZERO_ADDRESS) {
+  if (event.params.from.toHex() != ZERO_ADDRESS) {
     let history = gatedToken.transferHistory;
     if (history) history.push(historicalTransfer.id);
     gatedToken.transferHistory = history;
+
+    let sender = getTokenOwner(event.params.from, event.address);
+
+    let tokens = sender.tokens;
+    let new_tokens: string[] = [];
+    for (let i = ZERO_BI; i < sender.tokenCount; i = i.plus(ONE_BI)) {
+      if (tokens) {
+        let token = GatedToken.load(tokens.pop());
+        if (token && token.tokenId != event.params.tokenId)
+          new_tokens.push(token.id);
+      }
+    }
+    if (sender) {
+      sender.tokens = new_tokens;
+      sender.tokenCount = sender.tokenCount.minus(ONE_BI);
+      sender.save();
+    }
   }
+
+  let receiver = getTokenOwner(event.params.to, event.address);
+  receiver.tokenCount = receiver.tokenCount.plus(ONE_BI);
+  let tokens = receiver.tokens;
+  if (tokens) tokens.push(gatedToken.id);
+  receiver.tokens = tokens;
+  receiver.save();
 
   historicalTransfer.save();
   gatedToken.save();
+
+  let gatedNFT = GatedNFT.load(event.address.toHex());
+  if (gatedNFT) {
+    gatedNFT.tokensMinted = gatedNFT.tokensMinted.plus(ONE_BI);
+
+    let gatedTokens = gatedNFT.gatedTokens;
+    if (gatedTokens) gatedTokens.push(gatedToken.id);
+    gatedNFT.gatedTokens = gatedTokens;
+
+    let gatedTokenOwners = gatedNFT.gatedTokenOwners;
+    if (gatedTokenOwners) gatedTokenOwners.push(receiver.id);
+    gatedNFT.gatedTokenOwners = gatedTokenOwners;
+
+    gatedNFT.save();
+  }
 }
 
 function getTier(tierAddress: string): string {
@@ -159,4 +200,21 @@ function getTier(tierAddress: string): string {
     uknownTier.save();
   }
   return uknownTier.id;
+}
+
+function getTokenOwner(address: Address, contract: Address): GatedTokenOwner {
+  let gatedTokenOwner = GatedTokenOwner.load(
+    contract.toHex() + " - " + address.toHex()
+  );
+  if (!gatedTokenOwner) {
+    gatedTokenOwner = new GatedTokenOwner(
+      contract.toHex() + " - " + address.toHex()
+    );
+    gatedTokenOwner.address = address;
+    gatedTokenOwner.gatedNFTAddress = contract;
+    gatedTokenOwner.tokenCount = ZERO_BI;
+    gatedTokenOwner.tokens = [];
+  }
+
+  return gatedTokenOwner as GatedTokenOwner;
 }

@@ -22,3 +22,4 @@ schema.graphql
 /scripts/deployConfig.json
 
 /graph-node/
+package-lock.json

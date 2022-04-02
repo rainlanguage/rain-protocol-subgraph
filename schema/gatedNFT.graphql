@@ -70,7 +70,7 @@ type GatedTokenOwner @entity {
   id: ID! #{GatedNFT address} - {transfer.to}
   address: Bytes! #the account address
   gatedNFTAddress: Bytes! #GatedNFT address
-  tokenCount: Int! #amount of token in the GatedNFT that this address have - contract.balanceOf(address)
+  tokenCount: BigInt! #amount of token in the GatedNFT that this address have - contract.balanceOf(address)
   tokens: [GatedToken!]
 }
 

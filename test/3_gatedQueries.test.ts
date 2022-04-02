@@ -638,7 +638,7 @@ describe("Subgraph GatedNFT test", function () {
     );
 
     expect(data.gatedNFTAddress).to.equals(gatedNFT.address.toLowerCase());
-    expect(data.gatedNFTAddress).to.deep.include({ id: gatedTokenId });
+    expect(data.tokens).to.deep.include({ id: gatedTokenId });
   });
 
   it("should update the GatedTokenOwner after a transfer", async function () {
