@@ -24,7 +24,7 @@
     "create-local": "graph create --node http://localhost:8020/ beehive-innovation/rain-protocol",
     "remove-local": "graph remove --node http://localhost:8020/ beehive-innovation/rain-protocol",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 beehive-innovation/rain-protocol  --version-label 1",
-    "prepare:mumbai": "npx mustache config/mumbai.json subgraph.template.yaml subgraph.yaml",
+    "prepare:mumbai": "npx mustache config/mumbai_1.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:mumbai": "npm run prepare:mumbai && npm run generate-schema && npm run codegen && npm run build && npm run deploy",
     "prepare:matic": "npx mustache config/polygon.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:matic": "npm run prepare:matic && npm run generate-schema && npm run codegen && npm run build && npm run deploy-rain-polygon",

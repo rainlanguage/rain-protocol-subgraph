@@ -60,7 +60,7 @@ let trustAddress: string,
   depositor2: string,
   zeroDecimals: string;
 
-describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
+describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before(async function () {
     // Same tier for all
     tier = await new ReadWriteTier__factory(deployer).deploy();

@@ -7,6 +7,8 @@ type RedeemableERC20ClaimEscrow implements INotice @entity {
   withdraws: [RedeemableEscrowWithdraw!]
   pendingDepositorTokens: [RedeemableEscrowPendingDepositorToken!]
   supplyTokenDeposits: [RedeemableEscrowSupplyTokenDeposit!]
+  supplyTokenDepositors: [RedeemableEscrowSupplyTokenDepositor!]
+  supplyTokenWithdrawers: [RedeemableEscrowSupplyTokenWithdrawer!]
   depositors: [RedeemableEscrowDepositor!]
   withdrawers: [RedeemableEscrowWithdrawer!]
   notices: [Notice!]
@@ -61,8 +63,8 @@ type RedeemableEscrowSupplyTokenDeposit @entity {
   escrow: RedeemableERC20ClaimEscrow!
   escrowAddress: Bytes!
   deposits: [RedeemableEscrowDeposit!]
-  depositors: RedeemableEscrowDepositor! #change to Array of depositors
-  depositorAddress: Bytes! #Deposit.depositor #change to Array of depositorAddresses
+  depositors: [RedeemableEscrowDepositor!] #change to Array of depositors
+  depositorAddress: [Bytes!] #Deposit.depositor #change to Array of depositorAddresses
   token: ERC20!
   tokenAddress: Bytes!
   redeemableSupply: BigInt! #Deposit.supply
@@ -70,6 +72,36 @@ type RedeemableEscrowSupplyTokenDeposit @entity {
   # DESCREASED by Undeposit.amount every time there is an Undeposit that matches the id. - {sale}-{escrow}-{supply}-{token}
   # DECREASED by Withdraw.amount every time there is a Withraw that matches the id. - {sale}-{escrow}-{supply}-{token}
   totalDeposited: BigInt!
+  totalRemaining: BigInt!
+  perRedeemable: BigInt!
+}
+
+type RedeemableEscrowSupplyTokenDepositor @entity {
+    id: ID! #{sale}-{escrow}-{supply}-{token}-{depositor}
+    iSale: Isale
+    iSaleAddress: Bytes! #sale from the id
+    escrow: RedeemableERC20ClaimEscrow!
+    escrowAddress: Bytes!
+    deposits: [RedeemableEscrowDeposit!]
+    despositor: RedeemableEscrowDepositor!
+    depositorAddress: Bytes! #Deposit.depositor
+    undeposits: [RedeemableEscrowUndeposit!] # all undeposits for this {sale}-{escrow}-{supply}-{token}-{depositor}
+    token: ERC20!
+    tokenAddress: Bytes!
+    redeemableSupply: BigInt! #Deposit.supply
+    # INCREASED by Deposit.amount every time there is a Deposit that matches the id - {sale}-{escrow}-{supply}-{token}-{depositor}
+    totalDeposited: BigInt!
+    # INCREASED by Deposit.amount every time there is a Deposit that matches the id - {sale}-{escrow}-{supply}-{token}-{depositor}
+    # DECREASED by Undeposit.amount every time there is an Undeposit that matches the id. - {sale}-{escrow}-{supply}-{token}-{depositor}
+    totalRemaining: BigInt!
+}
+
+type RedeemableEscrowSupplyTokenWithdrawer @entity {
+    id: ID! #{sale}-{escrow}-{supply}-{token}-{withdrawer}
+    deposit: RedeemableEscrowSupplyTokenDeposit #the {sale}-{escrow}-{supply}-{token} that this withdrawer has been withdrawing
+    withdrawer: Bytes! # Withdraw.withdrawer
+    withdraws: [RedeemableEscrowWithdraw!] #all Withdraw events for this withdrawer
+    totalWithdrawn: BigInt! #increased by Withdraw.amount with every Withdraw event that matches the id {sale}-{escrow}-{supply}-{token}-{withdrawer}
 }
 
 # created for each PendingDeposit event
