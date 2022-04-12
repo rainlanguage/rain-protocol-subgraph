@@ -176,7 +176,9 @@ export function handleInitialize(event: Initialize): void {
     if (sale.minimumRaise == ZERO_BI) sale.percentRaised = HUNDRED_BD;
     sale.dustSize = event.params.config.dustSize;
     sale.saleStatus = SaleStatus.Pending;
-    sale.unitsAvailable = tokenContrct.balanceOf(event.address);
+
+    let balance = tokenContrct.try_balanceOf(event.address);
+    if (!balance.reverted) sale.unitsAvailable = balance.value;
 
     let canStartStateConfig = new CanStartStateConfig(
       event.transaction.hash.toHex()
@@ -419,7 +421,8 @@ function updateSale(sale: Sale): void {
   if (sale) {
     let erc20 = ERC20Contract.bind(Address.fromString(sale.token));
 
-    sale.unitsAvailable = erc20.balanceOf(Address.fromString(sale.id));
+    let balance = erc20.try_balanceOf(Address.fromString(sale.id));
+    if (!balance.reverted) sale.unitsAvailable = balance.value;
 
     let saleBuys = sale.buys;
     let saleRefunds = sale.refunds;
