@@ -62,7 +62,7 @@ let trustAddress: string,
 
 // TODO: fix test that are failing
 
-describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
+describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before(async function () {
     // Same tier for all
     tier = await new ReadWriteTier__factory(deployer).deploy();
@@ -648,11 +648,19 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
               id
             }
             escrowAddress
-            deposits
-            despositor
+            deposits{
+              id
+            }
+            despositor{
+              id
+            }
             depositorAddress
-            undeposits
-            token
+            undeposits{
+              id
+            }
+            token{
+              id
+            }
             tokenAddress
             redeemableSupply
             totalDeposited
@@ -663,7 +671,7 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const response = (await subgraph({
         query,
       })) as FetchResult;
-      console.log(JSON.stringify(response, null, 2));
+
       const data = response.data.redeemableEscrowSupplyTokenDepositor;
 
       expect(data.iSale.saleStatus).to.equals(await trust.saleStatus());
@@ -672,8 +680,8 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.escrow.id).to.equals(claimEscrowAddress);
       expect(data.escrowAddress).to.equals(claimEscrowAddress);
 
-      expect(data.deposits).to.deep.include(depositId);
-      expect(data.despositor).to.equals(escrowDepositorId);
+      expect(data.deposits).to.deep.include({ id: depositId });
+      expect(data.despositor).to.deep.equals({ id: escrowDepositorId });
       expect(data.depositorAddress).to.equals(depositor1);
 
       expect(data.undeposits).to.be.empty;
@@ -985,8 +993,12 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const query = `
         {
           redeemableEscrowSupplyTokenDepositor (id: "${redeemableEscrowSupplyTokenDepositorId}") {
-            undeposits
-            deposits
+            undeposits{
+              id
+            }
+            deposits{
+              id
+            }
             redeemableSupply
             totalDeposited
             totalRemaining
@@ -996,11 +1008,11 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const response = (await subgraph({
         query,
       })) as FetchResult;
-      console.log(JSON.stringify(response, null, 2));
+
       const data = response.data.redeemableEscrowSupplyTokenDepositor;
 
       expect(data.undeposits).to.be.empty;
-      expect(data.deposits).to.deep.include(depositId);
+      expect(data.deposits).to.deep.include({ id: depositId });
       expect(data.redeemableSupply).to.equals(redeemableSupply.toString());
 
       expect(data.totalDeposited).to.equals(
@@ -1601,13 +1613,14 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const response = (await subgraph({
         query,
       })) as FetchResult;
+
       const data = response.data.redeemableEscrowSupplyTokenWithdrawer;
 
       expect(data.deposit.id).to.equals(escrowSupplyTokenDepositId);
       expect(data.withdrawer).to.equals(withdrawerAddress);
 
       expect(data.withdraws).deep.include(
-        escrowWithdrawId,
+        { id: escrowWithdrawId },
         `does not include the withdrawId: ${escrowWithdrawId}
         in: ${data.withdraws}`
       );
@@ -2002,8 +2015,8 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const supplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
       const perRedeemableExpected = redeemableSupply.isZero()
-        ? totalRemaining
-        : ethers.constants.Zero;
+        ? ethers.constants.Zero
+        : totalRemaining.div(redeemableSupply);
 
       const query = `
         {

@@ -68,7 +68,12 @@ export function handleDeposit(event: Deposit): void {
     event.params.supply,
     event.params.token
   );
+
   resdt.totalDeposited = resdt.totalDeposited.plus(event.params.amount);
+
+  if (resdt.totalRemaining == ZERO_BI)
+    resdt.totalRemaining = resdt.totalDeposited;
+  else resdt.totalRemaining = resdt.totalRemaining.plus(event.params.amount);
 
   let resdtDepositors = resdt.depositors;
   if (resdtDepositors) resdtDepositors.push(depositor.id);
@@ -137,6 +142,17 @@ export function handleDeposit(event: Deposit): void {
     redeemableEscrowSupplyTokenDepositor.totalDeposited.plus(
       event.params.amount
     );
+
+  if (redeemableEscrowSupplyTokenDepositor.totalRemaining == ZERO_BI)
+    redeemableEscrowSupplyTokenDepositor.totalRemaining =
+      redeemableEscrowSupplyTokenDepositor.totalDeposited;
+  else
+    redeemableEscrowSupplyTokenDepositor.totalRemaining =
+      redeemableEscrowSupplyTokenDepositor.totalRemaining.plus(
+        event.params.amount
+      );
+
+  redeemableEscrowSupplyTokenDepositor.redeemableSupply = event.params.supply;
 
   redeemableEscrowSupplyTokenDepositor.save();
 
