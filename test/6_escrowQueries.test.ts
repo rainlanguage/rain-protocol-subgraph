@@ -1602,7 +1602,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             deposit {
               id
             }
-            withdrawer
+            withdrawerAddress
             withdraws {
               id
             }
@@ -1617,7 +1617,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const data = response.data.redeemableEscrowSupplyTokenWithdrawer;
 
       expect(data.deposit.id).to.equals(escrowSupplyTokenDepositId);
-      expect(data.withdrawer).to.equals(withdrawerAddress);
+      expect(data.withdrawerAddress).to.equals(withdrawerAddress);
 
       expect(data.withdraws).deep.include(
         { id: escrowWithdrawId },

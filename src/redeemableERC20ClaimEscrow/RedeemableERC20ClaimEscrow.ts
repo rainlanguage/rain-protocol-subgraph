@@ -8,6 +8,7 @@ import {
 } from "../../generated/RedeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow";
 import {
   ERC20,
+  Holder,
   RedeemableERC20,
   RedeemableERC20ClaimEscrow,
   RedeemableEscrowDeposit,
@@ -406,14 +407,21 @@ export function handleWithdraw(event: Withdraw): void {
       )
     );
 
-  let rSWithdraws = redeemableEscrowSupplyTokenWithdrawer.withdraws;
-  if (rSWithdraws) rSWithdraws.push(redeemableEscrowWithdraw.id);
-  redeemableEscrowSupplyTokenWithdrawer.withdraws = rSWithdraws;
+  redeemableEscrowSupplyTokenWithdrawer.deposit = resdt.id;
 
   redeemableEscrowSupplyTokenWithdrawer.totalWithdrawn =
     redeemableEscrowSupplyTokenWithdrawer.totalWithdrawn.plus(
       event.params.amount
     );
+
+  redeemableEscrowSupplyTokenWithdrawer.claimable =
+    redeemableEscrowSupplyTokenWithdrawer.redeemableBalance
+      .times(resdt.perRedeemable)
+      .minus(redeemableEscrowSupplyTokenWithdrawer.totalWithdrawn);
+
+  let rSWithdraws = redeemableEscrowSupplyTokenWithdrawer.withdraws;
+  if (rSWithdraws) rSWithdraws.push(redeemableEscrowWithdraw.id);
+  redeemableEscrowSupplyTokenWithdrawer.withdraws = rSWithdraws;
 
   redeemableEscrowSupplyTokenWithdrawer.deposit = resdt.id;
 
@@ -715,10 +723,15 @@ function getRedeemableEscrowSupplyTokenWithdrawer(
         withdrawer.toHex()
     );
 
-    RESTW.withdrawer = withdrawer;
+    RESTW.withdrawerAddress = withdrawer;
     RESTW.withdraws = [];
     RESTW.totalWithdrawn = ZERO_BI;
+    RESTW.claimable = ZERO_BI;
+    RESTW.redeemableBalance = ZERO_BI;
   }
+
+  let holder = Holder.load(token.toHex() + " - " + withdrawer.toHex());
+  if (holder) RESTW.redeemableBalance = holder.balance;
 
   return RESTW as RedeemableEscrowSupplyTokenWithdrawer;
 }

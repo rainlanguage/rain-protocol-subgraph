@@ -98,10 +98,12 @@ type RedeemableEscrowSupplyTokenDepositor @entity {
 
 type RedeemableEscrowSupplyTokenWithdrawer @entity {
   id: ID! #{sale}-{escrow}-{supply}-{token}-{withdrawer}
-  deposit: RedeemableEscrowSupplyTokenDeposit #the {sale}-{escrow}-{supply}-{token} that this withdrawer has been withdrawing
-  withdrawer: Bytes! # Withdraw.withdrawer
-  withdraws: [RedeemableEscrowWithdraw!] #all Withdraw events for this withdrawer
-  totalWithdrawn: BigInt! #increased by Withdraw.amount with every Withdraw event that matches the id {sale}-{escrow}-{supply}-{token}-{withdrawer}
+    deposit: RedeemableEscrowSupplyTokenDeposit #the {sale}-{escrow}-{supply}-{token} that this withdrawer is linked to
+    withdrawerAddress: Bytes! # Withdraw.withdrawer
+    redeemableBalance: BigInt! #redeeamble.balanceOf(withdrawerAddress). should already be on the Holder
+    withdraws: [RedeemableEscrowWithdraw!] #all Withdraw events for this withdrawer, for the linked RedeemableEscrowSupplyTokenDeposit
+    totalWithdrawn: BigInt! #increased by Withdraw.amount with every Withdraw event that matches the id {sale}-{escrow}-{supply}-{token}-{withdrawer}
+    claimable: BigInt! # (redeemable.balanceOf(withdrawer) * RedeemableEscrowSupplyTokenDeposit.perRedeemable) - totalWithdrawn
 }
 
 # created for each PendingDeposit event
