@@ -62,7 +62,7 @@ let trustAddress: string,
 
 // TODO: fix test that are failing
 
-describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
+describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before(async function () {
     // Same tier for all
     tier = await new ReadWriteTier__factory(deployer).deploy();
@@ -1256,7 +1256,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const depositId = transaction.hash.toLowerCase();
       const escrowSupplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
-      const perRedeemableExpected = totalRemaining.div(redeemableSupply);
+      const perRedeemableExpected = totalDeposited.div(redeemableSupply);
 
       const query = `
         {
