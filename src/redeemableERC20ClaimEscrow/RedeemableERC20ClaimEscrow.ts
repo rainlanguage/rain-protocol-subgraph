@@ -75,8 +75,7 @@ export function handleDeposit(event: Deposit): void {
     redeemableEscrowSupplyTokenDeposit.totalDeposited.plus(event.params.amount);
 
   if (redeemableEscrowSupplyTokenDeposit.totalRemaining == ZERO_BI)
-    redeemableEscrowSupplyTokenDeposit.totalRemaining =
-    event.params.amount;
+    redeemableEscrowSupplyTokenDeposit.totalRemaining = event.params.amount;
   else
     redeemableEscrowSupplyTokenDeposit.totalRemaining =
       redeemableEscrowSupplyTokenDeposit.totalRemaining.plus(
@@ -172,8 +171,7 @@ export function handleDeposit(event: Deposit): void {
     );
 
   if (redeemableEscrowSupplyTokenDepositor.totalRemaining == ZERO_BI)
-    redeemableEscrowSupplyTokenDepositor.totalRemaining =
-    event.params.amount;
+    redeemableEscrowSupplyTokenDepositor.totalRemaining = event.params.amount;
   else
     redeemableEscrowSupplyTokenDepositor.totalRemaining =
       redeemableEscrowSupplyTokenDepositor.totalRemaining.plus(
@@ -237,7 +235,7 @@ export function handlePendingDeposit(event: PendingDeposit): void {
   repdt.totalDeposited = repdt.totalDeposited.plus(event.params.amount);
 
   let repdtPendingDeposits = repdt.pendingDeposits;
-  
+
   if (repdtPendingDeposits)
     repdtPendingDeposits.push(redeemableEscrowPendingDeposit.id);
   repdt.pendingDeposits = repdtPendingDeposits;
@@ -355,7 +353,6 @@ export function handleUndeposit(event: Undeposit): void {
       event.params.token
     );
 
-
   redeemableEscrowSupplyTokenDeposit.totalRemaining =
     redeemableEscrowSupplyTokenDeposit.totalRemaining.minus(
       event.params.amount
@@ -429,11 +426,11 @@ export function handleWithdraw(event: Withdraw): void {
       event.params.amount
     );
 
-  if (redeemableEscrowSupplyTokenDeposit.redeemableSupply != ZERO_BI)
-    redeemableEscrowSupplyTokenDeposit.perRedeemable =
-      redeemableEscrowSupplyTokenDeposit.totalDeposited
-        // .times(BigInt.fromString((10 ** 18).toString()))
-        .div(redeemableEscrowSupplyTokenDeposit.redeemableSupply);
+  // if (redeemableEscrowSupplyTokenDeposit.redeemableSupply != ZERO_BI)
+  //   redeemableEscrowSupplyTokenDeposit.perRedeemable =
+  //     redeemableEscrowSupplyTokenDeposit.totalDeposited
+  //       // .times(BigInt.fromString((10 ** 18).toString()))
+  //       .div(redeemableEscrowSupplyTokenDeposit.redeemableSupply);
   redeemableEscrowSupplyTokenDeposit.save();
 
   let redeemableEscrowSupplyTokenWithdrawer =
@@ -466,10 +463,10 @@ export function handleWithdraw(event: Withdraw): void {
   let holder = Holder.load(
     event.params.redeemable.toHex() + " - " + event.params.withdrawer.toHex()
   );
-  if(holder){
-    redeemableEscrowSupplyTokenWithdrawer.claimable = (holder.balance.times(
-      redeemableEscrowSupplyTokenDeposit.perRedeemable
-    )).minus(redeemableEscrowSupplyTokenWithdrawer.totalWithdrawn);
+  if (holder) {
+    redeemableEscrowSupplyTokenWithdrawer.claimable = holder.balance
+      .times(redeemableEscrowSupplyTokenDeposit.perRedeemable)
+      .minus(redeemableEscrowSupplyTokenWithdrawer.totalWithdrawn);
   }
 
   redeemableEscrowSupplyTokenWithdrawer.save();
