@@ -1,4 +1,4 @@
-import { Address, ethereum, BigInt } from "@graphprotocol/graph-ts";
+import { Address, ethereum, BigInt, BigDecimal } from "@graphprotocol/graph-ts";
 import {
   Deposit,
   PendingDeposit,
@@ -26,7 +26,7 @@ import {
   UnknownSale,
 } from "../../generated/schema";
 import { ERC20 as ERC20Contract } from "../../generated/RedeemableERC20ClaimEscrow/ERC20";
-import { SaleStatus, ZERO_BI } from "../utils";
+import { SaleStatus, ZERO_BD, ZERO_BI } from "../utils";
 import { Trust as TrustContract } from "../../generated/RedeemableERC20ClaimEscrow/Trust";
 
 export function handleDeposit(event: Deposit): void {
@@ -99,11 +99,6 @@ export function handleDeposit(event: Deposit): void {
     redeemableEscrowSupplyTokenDepositdepositorAddress;
 
   redeemableEscrowSupplyTokenDeposit.redeemableSupply = event.params.supply;
-  if (redeemableEscrowSupplyTokenDeposit.redeemableSupply != ZERO_BI)
-    redeemableEscrowSupplyTokenDeposit.perRedeemable =
-      redeemableEscrowSupplyTokenDeposit.totalDeposited
-        // .times(BigInt.fromString((10 ** 18).toString()))
-        .div(redeemableEscrowSupplyTokenDeposit.redeemableSupply);
 
   let redeemableEscrowSupplyTokenDepositDeposits =
     redeemableEscrowSupplyTokenDeposit.deposits;
@@ -358,12 +353,6 @@ export function handleUndeposit(event: Undeposit): void {
       event.params.amount
     );
 
-  if (redeemableEscrowSupplyTokenDeposit.redeemableSupply != ZERO_BI)
-    redeemableEscrowSupplyTokenDeposit.perRedeemable =
-      redeemableEscrowSupplyTokenDeposit.totalDeposited
-        // .times(BigInt.fromString((10 ** 18).toString()))
-        .div(redeemableEscrowSupplyTokenDeposit.redeemableSupply);
-
   redeemableEscrowSupplyTokenDeposit.save();
 }
 
@@ -426,11 +415,6 @@ export function handleWithdraw(event: Withdraw): void {
       event.params.amount
     );
 
-  // if (redeemableEscrowSupplyTokenDeposit.redeemableSupply != ZERO_BI)
-  //   redeemableEscrowSupplyTokenDeposit.perRedeemable =
-  //     redeemableEscrowSupplyTokenDeposit.totalDeposited
-  //       // .times(BigInt.fromString((10 ** 18).toString()))
-  //       .div(redeemableEscrowSupplyTokenDeposit.redeemableSupply);
   redeemableEscrowSupplyTokenDeposit.save();
 
   let redeemableEscrowSupplyTokenWithdrawer =
@@ -453,6 +437,9 @@ export function handleWithdraw(event: Withdraw): void {
       event.params.amount
     );
 
+  redeemableEscrowSupplyTokenWithdrawer.totalWithdrawnAgainst =
+    redeemableEscrowSupplyTokenDeposit.totalDeposited;
+
   let rSWithdraws = redeemableEscrowSupplyTokenWithdrawer.withdraws;
   if (rSWithdraws) rSWithdraws.push(redeemableEscrowWithdraw.id);
   redeemableEscrowSupplyTokenWithdrawer.withdraws = rSWithdraws;
@@ -464,9 +451,11 @@ export function handleWithdraw(event: Withdraw): void {
     event.params.redeemable.toHex() + " - " + event.params.withdrawer.toHex()
   );
   if (holder) {
-    redeemableEscrowSupplyTokenWithdrawer.claimable = holder.balance
-      .times(redeemableEscrowSupplyTokenDeposit.perRedeemable)
-      .minus(redeemableEscrowSupplyTokenWithdrawer.totalWithdrawn);
+    redeemableEscrowSupplyTokenWithdrawer.claimable =
+      redeemableEscrowSupplyTokenDeposit.totalDeposited
+        .minus(redeemableEscrowSupplyTokenWithdrawer.totalWithdrawnAgainst)
+        .times(holder.balance)
+        .div(redeemableEscrowSupplyTokenDeposit.redeemableSupply);
   }
 
   redeemableEscrowSupplyTokenWithdrawer.save();
@@ -658,11 +647,6 @@ function getRedeemableEscrowSupplyTokenDeposit(
     redeemableEscrowSupplyTokenDeposit.tokenAddress = token;
     redeemableEscrowSupplyTokenDeposit.totalDeposited = ZERO_BI;
     redeemableEscrowSupplyTokenDeposit.totalRemaining = ZERO_BI;
-    if (redeemableEscrowSupplyTokenDeposit.redeemableSupply != ZERO_BI)
-      redeemableEscrowSupplyTokenDeposit.perRedeemable =
-        redeemableEscrowSupplyTokenDeposit.totalDeposited
-          // .times(BigInt.fromString((10 ** 18).toString()))
-          .div(redeemableEscrowSupplyTokenDeposit.redeemableSupply);
   }
   return redeemableEscrowSupplyTokenDeposit as RedeemableEscrowSupplyTokenDeposit;
 }
@@ -776,6 +760,7 @@ function getRedeemableEscrowSupplyTokenWithdrawer(
     RESTW.totalWithdrawn = ZERO_BI;
     RESTW.claimable = ZERO_BI;
     RESTW.redeemableBalance = ZERO_BI;
+    RESTW.totalWithdrawnAgainst = ZERO_BI;
   }
 
   return RESTW as RedeemableEscrowSupplyTokenWithdrawer;

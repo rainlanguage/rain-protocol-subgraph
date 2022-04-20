@@ -820,8 +820,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const escrowDepositorId = `${claimEscrowAddress} - ${depositor1}`;
       const escrowSupplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
-      const perRedeemableExpected = totalRemaining.div(redeemableSupply);
-
       const query = `
         {
           redeemableEscrowSupplyTokenDeposit (id: "${escrowSupplyTokenDepositId}") {
@@ -847,7 +845,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
             redeemableSupply
             totalDeposited
             totalRemaining
-            perRedeemable
           }
         }
       `;
@@ -915,13 +912,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
         `wrong totalRemaining amount
         expected  ${totalRemaining}
         got       ${data.totalRemaining}`
-      );
-
-      expect(data.perRedeemable).to.equals(
-        perRedeemableExpected.toString(),
-        `wrong perRedeemable amount
-        expected  ${perRedeemableExpected}
-        got       ${data.perRedeemable}`
       );
     });
 
@@ -1256,8 +1246,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const depositId = transaction.hash.toLowerCase();
       const escrowSupplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
-      const perRedeemableExpected = totalDeposited.div(redeemableSupply);
-
       const query = `
         {
           redeemableEscrowSupplyTokenDeposit (id: "${escrowSupplyTokenDepositId}") {
@@ -1266,7 +1254,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
             }
             totalDeposited
             totalRemaining
-            perRedeemable
           }
         }
       `;
@@ -1292,13 +1279,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
         `wrong totalRemaining amount
         expected  ${totalRemaining}
         got       ${data.totalRemaining}`
-      );
-
-      expect(data.perRedeemable).to.equals(
-        perRedeemableExpected.toString(),
-        `wrong perRedeemable amount
-        expected  ${perRedeemableExpected}
-        got       ${data.perRedeemable}`
       );
     });
 
@@ -1542,14 +1522,11 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       const escrowSupplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
-      const perRedeemableExpected = totalRemaining.div(redeemableSupply);
-
       const query = `
         {
           redeemableEscrowSupplyTokenDeposit (id: "${escrowSupplyTokenDepositId}") {
             totalDeposited
             totalRemaining
-            perRedeemable
           }
         }
       `;
@@ -1570,13 +1547,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
         `wrong totalRemaining amount
         expected  ${totalRemaining}
         got       ${data.totalRemaining}`
-      );
-
-      expect(data.perRedeemable).to.equals(
-        perRedeemableExpected.toString(),
-        `wrong perRedeemable amount
-        expected  ${perRedeemableExpected}
-        got       ${data.perRedeemable}`
       );
     });
 
@@ -1929,10 +1899,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       const supplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
-      const perRedeemableExpected = redeemableSupply.isZero()
-        ? totalRemaining
-        : ethers.constants.Zero;
-
       const query = `
         {
           redeemableEscrowSupplyTokenDeposit (id: "${supplyTokenDepositId}"){
@@ -1941,7 +1907,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
             }
             totalDeposited
             totalRemaining
-            perRedeemable
           }
         }
       `;
@@ -1953,7 +1918,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.deposits).deep.include({ id: depositId });
       expect(data.totalDeposited).to.equals(totalDeposited.toString());
       expect(data.totalRemaining).to.equals(totalRemaining.toString());
-      expect(data.totalDeposited).to.equals(perRedeemableExpected.toString());
     });
 
     it("should update the RedeemableERC20ClaimEscrow entity after a Undeposit", async function () {
@@ -2014,16 +1978,11 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
 
       const supplyTokenDepositId = `${trustAddress} - ${claimEscrowAddress} - ${redeemableSupply} - ${claimableTokenAddress}`;
 
-      const perRedeemableExpected = redeemableSupply.isZero()
-        ? ethers.constants.Zero
-        : totalRemaining.div(redeemableSupply);
-
       const query = `
         {
           redeemableEscrowSupplyTokenDeposit (id: "${supplyTokenDepositId}") {
             totalDeposited
             totalRemaining
-            perRedeemable
           }
         }
       `;
@@ -2044,13 +2003,6 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
         `wrong totalRemaining. Should be updated after undeposit
         expected  ${totalRemaining}
         got       ${data.totalRemaining}`
-      );
-
-      expect(data.perRedeemable).to.equals(
-        perRedeemableExpected.toString(),
-        `wrong perRedeemable
-        expected  ${perRedeemableExpected}
-        got       ${data.perRedeemable}`
       );
     });
 
