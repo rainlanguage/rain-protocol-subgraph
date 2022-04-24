@@ -62,7 +62,7 @@ let trustAddress: string,
 
 // TODO: fix test that are failing
 
-describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
+describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before(async function () {
     // Same tier for all
     tier = await new ReadWriteTier__factory(deployer).deploy();

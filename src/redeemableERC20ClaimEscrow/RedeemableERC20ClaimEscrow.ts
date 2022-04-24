@@ -26,7 +26,7 @@ import {
   UnknownSale,
 } from "../../generated/schema";
 import { ERC20 as ERC20Contract } from "../../generated/RedeemableERC20ClaimEscrow/ERC20";
-import { SaleStatus, ZERO_BD, ZERO_BI } from "../utils";
+import { SaleStatus, ZERO_BI } from "../utils";
 import { Trust as TrustContract } from "../../generated/RedeemableERC20ClaimEscrow/Trust";
 
 export function handleDeposit(event: Deposit): void {
@@ -182,6 +182,30 @@ export function handleDeposit(event: Deposit): void {
     supplyTokenDepositors.push(redeemableEscrowSupplyTokenDepositor.id);
 
   redeemableERC20ClaimEscrow.supplyTokenDepositors = supplyTokenDepositors;
+
+  let redeemableEscrowSupplyTokenWithdrawer =
+    getRedeemableEscrowSupplyTokenWithdrawer(
+      Address.fromString(iSale),
+      event.address,
+      event.params.supply,
+      event.params.token,
+      Address.fromBytes(
+        getRedeemableEscrowWithdrawer(event.address, event.params.depositor)
+          .address
+      )
+    );
+
+  redeemableEscrowSupplyTokenWithdrawer.deposit =
+    redeemableEscrowSupplyTokenDeposit.id;
+
+  redeemableEscrowSupplyTokenWithdrawer.save();
+
+  let supplyTokenWithdrawers =
+    redeemableERC20ClaimEscrow.supplyTokenWithdrawers;
+  if (supplyTokenWithdrawers)
+    supplyTokenWithdrawers.push(redeemableEscrowSupplyTokenWithdrawer.id);
+
+  redeemableERC20ClaimEscrow.supplyTokenWithdrawers = supplyTokenWithdrawers;
 
   redeemableERC20ClaimEscrow.save();
 }
