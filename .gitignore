@@ -22,3 +22,5 @@ config/localhost.json
 scripts/deployConfig.json
 
 graph-node
+
+test/notes2.txt
