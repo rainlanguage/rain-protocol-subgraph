@@ -104,8 +104,8 @@ type RedeemableEscrowSupplyTokenDeposit @entity {
   deposits: [RedeemableEscrowDeposit!]
   "List of RedeemableEscrowDepositor entities"
   depositors: [RedeemableEscrowDepositor!] #change to Array of depositors
-  "List od addresse of depositors"
-  depositorAddress: [Bytes!] #Deposit.depositor #change to Array of depositorAddresses
+  "List of addresses of depositors"
+  depositorAddress: [Bytes!] #Deposit.depositor
   "ERC20 token entity"
   token: ERC20!
   "Erc20 token address"
@@ -167,7 +167,7 @@ type RedeemableEscrowSupplyTokenWithdrawer @entity {
   "Total amount withdrawn by withdrawer"
   totalWithdrawn: BigInt! #increased by Withdraw.amount with every Withdraw event that matches the id {sale}-{escrow}-{supply}-{token}-{withdrawer}
   "Amount against which RedeemableEscrowWithdraw emits"
-  totalWithdrawnAgainst: BigInt!
+  totalWithdrawnAgainst: BigInt! # update with the totalDeposited of the linked SupplyTokenDeopsit every time there is a withdraw that matches {sale}-{escrow}-{supply}-{token}-{withdrawer}
   "Amount claimable by withdrawer"
   claimable: BigInt! # (redeemable.balanceOf(withdrawer) * RedeemableEscrowSupplyTokenDeposit.perRedeemable) - totalWithdrawn
 }

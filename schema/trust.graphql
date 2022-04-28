@@ -209,7 +209,7 @@ type SeedERC20 @entity {
 }
 
 type Holder @entity {
-  id: ID!
+  id: ID! # {tokenAddress} - {holderAddress}
 
   address: Bytes!
 
