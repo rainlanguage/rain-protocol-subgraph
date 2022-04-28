@@ -1,4 +1,4 @@
-import { Address, ethereum, BigInt, BigDecimal } from "@graphprotocol/graph-ts";
+import { Address, ethereum, BigInt } from "@graphprotocol/graph-ts";
 import {
   Deposit,
   PendingDeposit,
@@ -44,8 +44,7 @@ export function handleDeposit(event: Deposit): void {
   redeemableEscrowDeposit.tokenAmount = event.params.amount;
 
   let redeemableERC20 = RedeemableERC20.load(event.params.redeemable.toHex());
-  if (redeemableERC20 != null)
-    redeemableEscrowDeposit.redeemable = redeemableERC20.id;
+  if (redeemableERC20) redeemableEscrowDeposit.redeemable = redeemableERC20.id;
 
   let token = getERC20(event.params.token, event.block);
   redeemableEscrowDeposit.token = token.id;
@@ -71,8 +70,16 @@ export function handleDeposit(event: Deposit): void {
       event.params.token
     );
 
-  redeemableEscrowSupplyTokenDeposit.totalDeposited =
-    redeemableEscrowSupplyTokenDeposit.totalDeposited.plus(event.params.amount);
+  let allDeposits = redeemableEscrowSupplyTokenDeposit.deposits;
+  let totalDeposit = event.params.amount;
+  let i = 0;
+  while (allDeposits && i < allDeposits.length) {
+    let dp = RedeemableEscrowDeposit.load(allDeposits.pop());
+    if (dp) totalDeposit = totalDeposit.plus(dp.tokenAmount);
+    i++;
+  }
+
+  redeemableEscrowSupplyTokenDeposit.totalDeposited = totalDeposit;
 
   if (redeemableEscrowSupplyTokenDeposit.totalRemaining == ZERO_BI)
     redeemableEscrowSupplyTokenDeposit.totalRemaining = event.params.amount;
@@ -198,6 +205,18 @@ export function handleDeposit(event: Deposit): void {
   redeemableEscrowSupplyTokenWithdrawer.deposit =
     redeemableEscrowSupplyTokenDeposit.id;
 
+  let holder = Holder.load(
+    event.params.redeemable.toHex() + " - " + event.params.depositor.toHex()
+  );
+
+  if (holder) {
+    redeemableEscrowSupplyTokenWithdrawer.redeemableBalance = holder.balance;
+    redeemableEscrowSupplyTokenWithdrawer.claimable =
+      redeemableEscrowSupplyTokenDeposit.totalDeposited
+        .minus(redeemableEscrowSupplyTokenWithdrawer.totalWithdrawnAgainst)
+        .times(holder.balance)
+        .div(event.params.supply);
+  }
   redeemableEscrowSupplyTokenWithdrawer.save();
 
   let supplyTokenWithdrawers =
@@ -345,6 +364,7 @@ export function handleUndeposit(event: Undeposit): void {
   redeemableEscrowUndeposit.token = token.id;
   redeemableEscrowUndeposit.tokenAddress = event.params.token;
   redeemableEscrowUndeposit.tokenAmount = event.params.amount;
+  redeemableEscrowUndeposit.redeemableSupply = event.params.supply;
 
   redeemableEscrowUndeposit.save();
 
@@ -439,8 +459,6 @@ export function handleWithdraw(event: Withdraw): void {
       event.params.amount
     );
 
-  redeemableEscrowSupplyTokenDeposit.save();
-
   let redeemableEscrowSupplyTokenWithdrawer =
     getRedeemableEscrowSupplyTokenWithdrawer(
       Address.fromString(iSale),
@@ -471,18 +489,45 @@ export function handleWithdraw(event: Withdraw): void {
   redeemableEscrowSupplyTokenWithdrawer.deposit =
     redeemableEscrowSupplyTokenDeposit.id;
 
-  let holder = Holder.load(
-    event.params.redeemable.toHex() + " - " + event.params.withdrawer.toHex()
-  );
-  if (holder) {
-    redeemableEscrowSupplyTokenWithdrawer.claimable =
-      redeemableEscrowSupplyTokenDeposit.totalDeposited
-        .minus(redeemableEscrowSupplyTokenWithdrawer.totalWithdrawnAgainst)
-        .times(holder.balance)
-        .div(redeemableEscrowSupplyTokenDeposit.redeemableSupply);
-  }
+  let RSDTWithdraws = redeemableEscrowSupplyTokenDeposit.withdraws;
 
-  redeemableEscrowSupplyTokenWithdrawer.save();
+  if (RSDTWithdraws)
+    RSDTWithdraws.push(redeemableEscrowSupplyTokenWithdrawer.id);
+
+  redeemableEscrowSupplyTokenDeposit.withdraws = RSDTWithdraws;
+
+  redeemableEscrowSupplyTokenDeposit.save();
+
+  RSDTWithdraws = redeemableEscrowSupplyTokenDeposit.withdraws;
+  if (RSDTWithdraws) {
+    let len = RSDTWithdraws.length;
+    while (len >= 0) {
+      len--;
+      let RSDTWithdrawer = RedeemableEscrowSupplyTokenWithdrawer.load(
+        RSDTWithdraws.pop()
+      );
+      if (RSDTWithdrawer) {
+        let holder = Holder.load(
+          event.params.redeemable.toHex() +
+            " - " +
+            RSDTWithdrawer.withdrawerAddress.toHex()
+        );
+
+        if (holder) {
+          redeemableEscrowSupplyTokenWithdrawer.redeemableBalance =
+            holder.balance;
+          redeemableEscrowSupplyTokenWithdrawer.claimable =
+            redeemableEscrowSupplyTokenDeposit.totalDeposited
+              .minus(
+                redeemableEscrowSupplyTokenWithdrawer.totalWithdrawnAgainst
+              )
+              .times(holder.balance)
+              .div(event.params.supply);
+          redeemableEscrowSupplyTokenWithdrawer.save();
+        }
+      }
+    }
+  }
 
   let supplyTokenWithdrawers =
     redeemableERC20ClaimEscrow.supplyTokenWithdrawers;
@@ -665,6 +710,7 @@ function getRedeemableEscrowSupplyTokenDeposit(
     redeemableEscrowSupplyTokenDeposit.escrowAddress = escrow;
     redeemableEscrowSupplyTokenDeposit.deposits = [];
     redeemableEscrowSupplyTokenDeposit.depositors = [];
+    redeemableEscrowSupplyTokenDeposit.withdraws = [];
     redeemableEscrowSupplyTokenDeposit.depositorAddress = [];
     redeemableEscrowSupplyTokenDeposit.redeemableSupply = supply;
     redeemableEscrowSupplyTokenDeposit.token = token.toHex();
@@ -783,7 +829,6 @@ function getRedeemableEscrowSupplyTokenWithdrawer(
     RESTW.withdraws = [];
     RESTW.totalWithdrawn = ZERO_BI;
     RESTW.claimable = ZERO_BI;
-    RESTW.redeemableBalance = ZERO_BI;
     RESTW.totalWithdrawnAgainst = ZERO_BI;
   }
 

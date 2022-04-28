@@ -106,6 +106,8 @@ type RedeemableEscrowSupplyTokenDeposit @entity {
   depositors: [RedeemableEscrowDepositor!] #change to Array of depositors
   "List of addresses of depositors"
   depositorAddress: [Bytes!] #Deposit.depositor
+  "List of RedeemableEscrowSupplyTokenWithdrawer entities"
+  withdraws: [RedeemableEscrowSupplyTokenWithdrawer!]
   "ERC20 token entity"
   token: ERC20!
   "Erc20 token address"

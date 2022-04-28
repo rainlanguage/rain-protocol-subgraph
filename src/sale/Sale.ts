@@ -316,7 +316,7 @@ export function handleStart(event: Start): void {
 function getERC20(token: Address, block: ethereum.Block): ERC20 {
   let erc20 = ERC20.load(token.toHex());
   let erc20Contract = ERC20Contract.bind(token);
-  if (erc20 == null) {
+  if (!erc20) {
     erc20 = new ERC20(token.toHex());
     erc20.deployBlock = block.number;
     erc20.deployTimestamp = block.timestamp;
@@ -349,7 +349,7 @@ function getRedeemableERC20(
 ): RedeemableERC20 {
   let redeemableERC20 = RedeemableERC20.load(token.toHex());
   let erc20Contract = ERC20Contract.bind(token);
-  if (redeemableERC20 == null) {
+  if (!redeemableERC20) {
     redeemableERC20 = new RedeemableERC20(token.toHex());
     redeemableERC20.deployBlock = block.number;
     redeemableERC20.deployTimestamp = block.timestamp;
@@ -381,7 +381,7 @@ function getRedeemableERC20(
     redeemableERC20.save();
 
     let contracts = Contract.load(ZERO_ADDRESS);
-    if (contracts == null) {
+    if (!contracts) {
       contracts = new Contract(ZERO_ADDRESS);
       contracts.save();
     }

@@ -128,14 +128,10 @@ export function handleTransfer(event: Transfer): void {
           sender = new Holder(
             event.address.toHex() + " - " + event.params.from.toHex()
           );
-          // Set the sender's balance
-          sender.balance = redeemabaleERC20Contract.balanceOf(
-            event.params.from
-          );
         }
 
-        // Update the sender's balancer
-        sender.balance = sender.balance.minus(event.params.value);
+        // Set the sender's balance
+        sender.balance = redeemabaleERC20Contract.balanceOf(event.params.from);
       }
 
       // Check if Receiver is not any contract address or Zero address
@@ -155,7 +151,8 @@ export function handleTransfer(event: Transfer): void {
         }
 
         // Update the Receiver balance
-        receiver.balance = receiver.balance.plus(event.params.value);
+        // Set the sender's balance
+        receiver.balance = redeemabaleERC20Contract.balanceOf(event.params.to);
         receiver.address = event.params.to;
         receiver.save();
 
