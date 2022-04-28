@@ -1905,9 +1905,9 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.claimable).to.be.equals(claimable);
     });
 
-    xit("should query RedeemableEscrowSupplyTokenWithdrawer after a withdraw", async function () {
-      // Make a buy of all Redeemable
-      const desiredUnits = await redeemableERC20.totalSupply();
+    xit("should update RedeemableEscrowSupplyTokenWithdrawer after a withdraw", async function () {
+      // Buy all between 2 users
+      const desiredUnits = (await redeemableERC20.totalSupply()).div(2);
       const fee = 10;
       const buyConfig = {
         feeRecipient: feeRecipient.address,
@@ -1917,29 +1917,44 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
         maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
       };
 
+      // Make a buy to have Redeemable with signers
       await buySale(sale, signer1, buyConfig);
+      await buySale(sale, signer2, buyConfig);
 
-      // Finish the sale as failed since does not reach the minimum raise
+      // Finish the sale as succesfull
       await finishSale(sale);
       expect(await sale.saleStatus()).to.be.equals(SaleStatus.SUCCESS);
 
-      // Make deposit
-      const txDeposit = await escrow
+      // Make deposits with signers
+      const txDeposit1 = await escrow
         .connect(signer1)
-        .deposit(saleAddress, claimableReserveAddress, 2000);
+        .deposit(sale.address, claimableReserve.address, 1000);
 
-      const { supply } = (await getEventArgs(
-        txDeposit,
+      const txDeposit2 = await escrow
+        .connect(signer2)
+        .deposit(sale.address, claimableReserve.address, 2500);
+
+      const { supply: supply1, amount: amountDeposited1 } = (await getEventArgs(
+        txDeposit1,
         "Deposit",
         escrow
       )) as DepositEvent["args"];
 
-      const txWithdraw = await escrow
-        .connect(signer1)
-        .withdraw(saleAddress, claimableReserveAddress, supply);
+      const { supply: supply2, amount: amountDeposited2 } = (await getEventArgs(
+        txDeposit2,
+        "Deposit",
+        escrow
+      )) as DepositEvent["args"];
 
-      const { amount: amountWithdrawn } = (await getEventArgs(
-        txDeposit,
+      expect(supply1).to.be.equals(supply2);
+
+      // Signer1 withdraw
+      const txWithdraw1 = await escrow
+        .connect(signer1)
+        .withdraw(saleAddress, claimableReserveAddress, supply1);
+
+      const { amount: amountWithdrawn1 } = (await getEventArgs(
+        txWithdraw1,
         "Withdraw",
         escrow
       )) as WithdrawEvent["args"];
@@ -1947,30 +1962,135 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       await waitForSubgraphToBeSynced();
 
       // IDs
-      const escrowSupplyTokenWithdrawerId = `${saleAddress} - ${escrowAddress} - ${supply} - ${claimableReserveAddress} - ${signer1Address}`;
-      const escrowSupplyTokenDepositId = `${saleAddress} - ${escrowAddress} - ${supply} - ${claimableReserveAddress}`;
-      const escrowWithdrawId = txWithdraw.hash.toLowerCase();
-      const redeemBalanceSigner1 = await redeemableERC20.balanceOf(
+      const escrowSupplyTokenWithdrawerId = `${saleAddress} - ${escrowAddress} - ${supply1} - ${claimableReserveAddress} - ${signer1Address}`;
+      const escrowWithdrawId = txWithdraw1.hash.toLowerCase();
+      const totalDeposited = amountDeposited1.add(amountDeposited2);
+      const totalWithdrawnAgainst = totalDeposited;
+      const totalWithdrawn = amountWithdrawn1;
+      const redeemableBalanceSigner1 = await redeemableERC20.balanceOf(
         signer1Address
       );
-      const totalWithdrawn = amountWithdrawn;
+      const claimable = totalDeposited
+        .sub(totalWithdrawnAgainst)
+        .mul(redeemableBalanceSigner1)
+        .div(supply1);
+
+      // ((RedeemableEscrowSupplyTokenDeposit.totalDeposited - totalWithdrawnAgainst) * (redeemable.balanceOf(withdrawer)) / supply
 
       const query = `
         {
-          redeemableEscrowSupplyTokenWithdrawer (id: "${escrowSupplyTokenWithdrawerId}") {
-            deposit {
-              id
-            }
-            withdrawerAddress
-            redeemableBalance
+          redeemableEscrowSupplyTokenWithdrawer (id: "${escrowSupplyTokenWithdrawerId}") {          
             withdraws {
               id
             }
+            redeemableBalance
             totalWithdrawn
-            "Amount against which RedeemableEscrowWithdraw emits"
-            totalWithdrawnAgainst: BigInt! # update with the totalDeposited of the linked SupplyTokenDeposit every time there is a withdraw that matches {sale}-{escrow}-{supply}-{token}-{withdrawer}
-            "Amount claimable by withdrawer"
-            claimable: BigInt! # ((RedeemableEscrowSupplyTokenDeposit.totalDeposited - totalWithdrawnAgainst) * (redeemable.balanceOf(withdrawer)) / supply
+            totalWithdrawnAgainst
+            claimable
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const data = response.data.redeemableEscrowSupplyTokenWithdrawer;
+
+      expect(data.withdraws).to.deep.include({ id: escrowWithdrawId });
+
+      expect(data.totalWithdrawn).to.be.equals(totalWithdrawn);
+      expect(data.totalWithdrawnAgainst).to.be.equals(totalWithdrawnAgainst);
+
+      expect(data.claimable).to.be.equals(claimable);
+
+      expect(data.redeemableBalance).to.be.equals(redeemableBalanceSigner1);
+    });
+
+    xit("should update RedeemableEscrowSupplyTokenWithdrawer after multiple withdraws", async function () {
+      // Buy all between 2 users
+      const desiredUnits = (await redeemableERC20.totalSupply()).div(2);
+      const fee = 10;
+      const buyConfig = {
+        feeRecipient: feeRecipient.address,
+        fee: fee,
+        minimumUnits: desiredUnits,
+        desiredUnits: desiredUnits,
+        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+      };
+
+      // Make a buy to have Redeemable with signers
+      await buySale(sale, signer1, buyConfig);
+      await buySale(sale, signer2, buyConfig);
+
+      // Finish the sale as succesfull
+      await finishSale(sale);
+      expect(await sale.saleStatus()).to.be.equals(SaleStatus.SUCCESS);
+
+      // Make deposits with signers
+      const txDeposit1 = await escrow
+        .connect(signer1)
+        .deposit(sale.address, claimableReserve.address, 1000);
+
+      const txDeposit2 = await escrow
+        .connect(signer2)
+        .deposit(sale.address, claimableReserve.address, 2500);
+
+      const { supply: supply1, amount: amountDeposited1 } = (await getEventArgs(
+        txDeposit1,
+        "Deposit",
+        escrow
+      )) as DepositEvent["args"];
+
+      const { supply: supply2, amount: amountDeposited2 } = (await getEventArgs(
+        txDeposit2,
+        "Deposit",
+        escrow
+      )) as DepositEvent["args"];
+
+      expect(supply1).to.be.equals(supply2);
+
+      // Signer1 withdraw
+      const txWithdraw1 = await escrow
+        .connect(signer1)
+        .withdraw(saleAddress, claimableReserveAddress, supply1);
+
+      // signer2 withdraw
+      const txWithdraw2 = await escrow
+        .connect(signer2)
+        .withdraw(saleAddress, claimableReserveAddress, supply1);
+
+      const { amount: amountWithdrawn1 } = (await getEventArgs(
+        txWithdraw1,
+        "Withdraw",
+        escrow
+      )) as WithdrawEvent["args"];
+
+      const { amount: amountWithdrawn2 } = (await getEventArgs(
+        txWithdraw2,
+        "Withdraw",
+        escrow
+      )) as WithdrawEvent["args"];
+
+      await waitForSubgraphToBeSynced();
+
+      // IDs
+      const escrowSupplyTokenWithdrawerId = `${saleAddress} - ${escrowAddress} - ${supply1} - ${claimableReserveAddress} - ${signer1Address}`;
+      const escrowWithdrawId = txWithdraw1.hash.toLowerCase();
+      const totalDeposited = amountDeposited1.add(amountDeposited2);
+      const totalWithdrawn1 = amountWithdrawn1;
+      const redeemableBalanceSigner1 = await redeemableERC20.balanceOf(
+        signer1Address
+      );
+
+      const query = `
+        {
+          redeemableEscrowSupplyTokenWithdrawer (id: "${escrowSupplyTokenWithdrawerId}") {          
+            withdraws {
+              id
+            }
+            redeemableBalance
+            totalWithdrawn
+            totalWithdrawnAgainst
+            claimable
           }
         }
       `;
