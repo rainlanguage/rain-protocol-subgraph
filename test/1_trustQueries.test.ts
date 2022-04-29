@@ -75,7 +75,7 @@ import type {
   EndDutchAuctionEvent,
 } from "../typechain/Trust";
 
-const subgraphName = "beehive-innovation/rain-protocol";
+const subgraphName = "beehive-innovation/rain-protocol-test";
 let minimumTier: Tier,
   seedContract: SeedERC20,
   redeemableERC20Contract: RedeemableERC20,

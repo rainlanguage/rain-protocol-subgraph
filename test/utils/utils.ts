@@ -453,7 +453,7 @@ export const waitForSubgraphToBeSynced = async (
   wait = 0,
   timeDelay = 1,
   seconds = 60,
-  subgraphName = "beehive-innovation/rain-protocol"
+  subgraphName = "beehive-innovation/rain-protocol-test"
 ): Promise<SyncedSubgraphType> => {
   if (wait > 0) {
     await delay(wait);
