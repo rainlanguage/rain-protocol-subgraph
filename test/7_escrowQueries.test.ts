@@ -50,7 +50,6 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction, Signer } from "ethers";
 
 let claimableReserve: ReserveTokenTest,
-  saleReserve: ReserveTokenTest,
   reserveTier: ReserveTokenTest,
   sale: Sale,
   tier: ERC20BalanceTier,
@@ -75,7 +74,6 @@ const deploySale = async (
 ): Promise<{
   sale: Sale;
   redeemableERC20: RedeemableERC20;
-  saleReserve: ReserveTokenTest;
 }> => {
   const saleReserve = await new ReserveTokenTest__factory(deployer).deploy();
 
@@ -147,7 +145,7 @@ const deploySale = async (
     await saleReserve.connect(tokenReceivers).approve(sale.address, amount);
   }
 
-  return { sale, redeemableERC20, saleReserve };
+  return { sale, redeemableERC20 };
 };
 
 /**
@@ -188,7 +186,7 @@ const buySale = async (
   return await _sale.connect(buyer).buy(buyConfig);
 };
 
-describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
+describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before("deploy general contracts", async function () {
     // Deploying tokens
     claimableReserve = await new ReserveTokenTest__factory(deployer).deploy();
@@ -1142,6 +1140,8 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       const depositId = txDeposit.hash.toLowerCase();
       const depositorId = `${escrowAddress} - ${signer1Address}`;
       const escrowSupplyTokenDepositId = `${saleAddress} - ${escrowAddress} - ${supply} - ${claimableReserveAddress}`;
+      const escrowSupplyTokenWithdrawerId = `${saleAddress} - ${escrowAddress} - ${supply} - ${claimableReserveAddress} - ${signer1Address}`;
+
       // Since any withdraw or undeposit was made, remaining is the same that total
       const remainingExpected = amountDeposited;
 
@@ -1163,6 +1163,9 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
               id
             }
             depositorAddress
+            withdraws {
+              id
+            }
             token {
               id
             }
@@ -1187,6 +1190,10 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.deposits).to.deep.include({ id: depositId });
       expect(data.depositors).to.deep.include({ id: depositorId });
       expect(data.depositorAddress).to.deep.include(signer1Address);
+
+      expect(data.withdraws).to.deep.include({
+        id: escrowSupplyTokenWithdrawerId,
+      });
 
       expect(data.token.id).to.be.equals(claimableReserveAddress);
       expect(data.tokenAddress).to.be.equals(claimableReserveAddress);
@@ -1849,7 +1856,7 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.redeemableBalance).to.be.equals(redeemableBalanceSigner1);
     });
 
-    it("should update RedeemableEscrowSupplyTokenWithdrawer after a change in the withdrawe Redeemable balance", async function () {
+    it("should update RedeemableEscrowSupplyTokenWithdrawer after a change in the withdrawer Redeemable balance", async function () {
       // Make buys
       await buySale(sale, signer1);
       await buySale(sale, signer2);
@@ -1868,13 +1875,10 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
         escrow
       )) as DepositEvent["args"];
 
-      // Transferthe 25% of the Redeemable token to another wallet
-      redeemableERC20
+      // Burning 25% of the Redeemable token
+      await redeemableERC20
         .connect(signer1)
-        .transfer(
-          signer2Address,
-          (await redeemableERC20.balanceOf(signer1Address)).div(4)
-        );
+        .burn((await redeemableERC20.balanceOf(signer1Address)).div(4));
 
       await waitForSubgraphToBeSynced();
 
@@ -1905,7 +1909,7 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.claimable).to.be.equals(claimable);
     });
 
-    xit("should update RedeemableEscrowSupplyTokenWithdrawer after a withdraw", async function () {
+    it("should update RedeemableEscrowSupplyTokenWithdrawer after a withdraw", async function () {
       // Buy all between 2 users
       const desiredUnits = (await redeemableERC20.totalSupply()).div(2);
       const fee = 10;
@@ -2005,7 +2009,7 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.redeemableBalance).to.be.equals(redeemableBalanceSigner1);
     });
 
-    xit("should update RedeemableEscrowSupplyTokenWithdrawer after multiple withdraws", async function () {
+    it("should update the claimable when a deposit is made after a withdraw", async function () {
       // Buy all between 2 users
       const desiredUnits = (await redeemableERC20.totalSupply()).div(2);
       const fee = 10;
@@ -2053,37 +2057,46 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
         .connect(signer1)
         .withdraw(saleAddress, claimableReserveAddress, supply1);
 
-      // signer2 withdraw
-      const txWithdraw2 = await escrow
-        .connect(signer2)
-        .withdraw(saleAddress, claimableReserveAddress, supply1);
-
       const { amount: amountWithdrawn1 } = (await getEventArgs(
         txWithdraw1,
         "Withdraw",
         escrow
       )) as WithdrawEvent["args"];
 
-      const { amount: amountWithdrawn2 } = (await getEventArgs(
-        txWithdraw2,
-        "Withdraw",
+      // Make a new deposit after a withdraw
+      const txDeposit3 = await escrow
+        .connect(signer2)
+        .deposit(sale.address, claimableReserve.address, 3000);
+
+      const { supply: supply3, amount: amountDeposited3 } = (await getEventArgs(
+        txDeposit3,
+        "Deposit",
         escrow
-      )) as WithdrawEvent["args"];
+      )) as DepositEvent["args"];
+
+      expect(supply1).to.be.equals(supply3);
 
       await waitForSubgraphToBeSynced();
 
       // IDs
       const escrowSupplyTokenWithdrawerId = `${saleAddress} - ${escrowAddress} - ${supply1} - ${claimableReserveAddress} - ${signer1Address}`;
       const escrowWithdrawId = txWithdraw1.hash.toLowerCase();
-      const totalDeposited = amountDeposited1.add(amountDeposited2);
-      const totalWithdrawn1 = amountWithdrawn1;
+      const totalDeposited = amountDeposited1
+        .add(amountDeposited2)
+        .add(amountDeposited3);
+      const totalWithdrawnAgainst = amountDeposited1.add(amountDeposited2);
+      const totalWithdrawn = amountWithdrawn1;
       const redeemableBalanceSigner1 = await redeemableERC20.balanceOf(
         signer1Address
       );
+      const claimable = totalDeposited
+        .sub(totalWithdrawnAgainst)
+        .mul(redeemableBalanceSigner1)
+        .div(supply1);
 
       const query = `
         {
-          redeemableEscrowSupplyTokenWithdrawer (id: "${escrowSupplyTokenWithdrawerId}") {          
+          redeemableEscrowSupplyTokenWithdrawer (id: "${escrowSupplyTokenWithdrawerId}") {
             withdraws {
               id
             }
@@ -2098,6 +2111,163 @@ describe.only("Subgraph RedeemableERC20ClaimEscrow test", function () {
         query,
       })) as FetchResult;
       const data = response.data.redeemableEscrowSupplyTokenWithdrawer;
+
+      expect(data.withdraws).to.deep.include({ id: escrowWithdrawId });
+      expect(data.redeemableBalance).to.be.equals(redeemableBalanceSigner1);
+
+      expect(data.totalWithdrawn).to.be.equals(totalWithdrawn);
+      expect(data.totalWithdrawnAgainst).to.be.equals(totalWithdrawnAgainst);
+
+      expect(data.claimable).to.be.equals(claimable);
+
+      // Signer1 withdraw again with the expected claimable
+      const txWithdraw2 = await escrow
+        .connect(signer1)
+        .withdraw(saleAddress, claimableReserveAddress, supply1);
+
+      const { amount: amountWithdrawn2 } = (await getEventArgs(
+        txWithdraw2,
+        "Withdraw",
+        escrow
+      )) as WithdrawEvent["args"];
+
+      expect(data.claimable).to.be.equals(
+        amountWithdrawn2,
+        "the amount claimed is not the expected by the subgraph"
+      );
+    });
+
+    it("should update the claimable after a change in the withdrawer Redeemable balance, when a deposit is made after a withdraw", async function () {
+      // Buy all between 2 users
+      const desiredUnits = (await redeemableERC20.totalSupply()).div(2);
+      const fee = 10;
+      const buyConfig = {
+        feeRecipient: feeRecipient.address,
+        fee: fee,
+        minimumUnits: desiredUnits,
+        desiredUnits: desiredUnits,
+        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+      };
+
+      // Make a buy to have Redeemable with signers
+      await buySale(sale, signer1, buyConfig);
+      await buySale(sale, signer2, buyConfig);
+
+      // Finish the sale as succesfull
+      await finishSale(sale);
+      expect(await sale.saleStatus()).to.be.equals(SaleStatus.SUCCESS);
+
+      // Make deposits with signers
+      const txDeposit1 = await escrow
+        .connect(signer1)
+        .deposit(sale.address, claimableReserve.address, 1000);
+
+      const txDeposit2 = await escrow
+        .connect(signer2)
+        .deposit(sale.address, claimableReserve.address, 2500);
+
+      const { supply: supply1, amount: amountDeposited1 } = (await getEventArgs(
+        txDeposit1,
+        "Deposit",
+        escrow
+      )) as DepositEvent["args"];
+
+      const { supply: supply2, amount: amountDeposited2 } = (await getEventArgs(
+        txDeposit2,
+        "Deposit",
+        escrow
+      )) as DepositEvent["args"];
+
+      expect(supply1).to.be.equals(supply2);
+
+      // Signer1 withdraw
+      const txWithdraw1 = await escrow
+        .connect(signer1)
+        .withdraw(saleAddress, claimableReserveAddress, supply1);
+
+      const { amount: amountWithdrawn1 } = (await getEventArgs(
+        txWithdraw1,
+        "Withdraw",
+        escrow
+      )) as WithdrawEvent["args"];
+
+      // Make a new deposit after a withdraw
+      const txDeposit3 = await escrow
+        .connect(signer2)
+        .deposit(sale.address, claimableReserve.address, 3000);
+
+      const { supply: supply3, amount: amountDeposited3 } = (await getEventArgs(
+        txDeposit3,
+        "Deposit",
+        escrow
+      )) as DepositEvent["args"];
+
+      expect(supply1).to.be.equals(supply3);
+
+      // Burning 25% of the Redeemable token
+      await redeemableERC20
+        .connect(signer1)
+        .burn((await redeemableERC20.balanceOf(signer1Address)).div(4));
+
+      await waitForSubgraphToBeSynced();
+
+      // IDs
+      const escrowSupplyTokenWithdrawerId = `${saleAddress} - ${escrowAddress} - ${supply1} - ${claimableReserveAddress} - ${signer1Address}`;
+      const escrowWithdrawId = txWithdraw1.hash.toLowerCase();
+      const totalDeposited = amountDeposited1
+        .add(amountDeposited2)
+        .add(amountDeposited3);
+      const totalWithdrawnAgainst = amountDeposited1.add(amountDeposited2);
+      const totalWithdrawn = amountWithdrawn1;
+      const redeemableBalanceSigner1 = await redeemableERC20.balanceOf(
+        signer1Address
+      );
+      const claimable = totalDeposited
+        .sub(totalWithdrawnAgainst)
+        .mul(redeemableBalanceSigner1)
+        .div(supply1);
+
+      const query = `
+        {
+          redeemableEscrowSupplyTokenWithdrawer (id: "${escrowSupplyTokenWithdrawerId}") {
+            withdraws {
+              id
+            }
+            redeemableBalance
+            totalWithdrawn
+            totalWithdrawnAgainst
+            claimable
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const data = response.data.redeemableEscrowSupplyTokenWithdrawer;
+
+      expect(data.withdraws).to.deep.include({ id: escrowWithdrawId });
+      expect(data.redeemableBalance).to.be.equals(redeemableBalanceSigner1);
+
+      expect(data.totalWithdrawn).to.be.equals(totalWithdrawn);
+      expect(data.totalWithdrawnAgainst).to.be.equals(totalWithdrawnAgainst);
+
+      expect(data.claimable).to.be.equals(claimable);
+
+      // Signer1 withdraw again with the expected claimable
+      const txWithdraw2 = await escrow
+        .connect(signer1)
+        .withdraw(saleAddress, claimableReserveAddress, supply1);
+
+      const { amount: amountWithdrawn2 } = (await getEventArgs(
+        txWithdraw2,
+        "Withdraw",
+        escrow
+      )) as WithdrawEvent["args"];
+
+      expect(data.claimable).to.be.equals(
+        amountWithdrawn2,
+        "the amount claimed is not the expected by the subgraph"
+      );
     });
   });
 });

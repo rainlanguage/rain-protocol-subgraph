@@ -171,7 +171,7 @@ type RedeemableEscrowSupplyTokenWithdrawer @entity {
   "Amount against which RedeemableEscrowWithdraw emits"
   totalWithdrawnAgainst: BigInt! # update with the totalDeposited of the linked SupplyTokenDeopsit every time there is a withdraw that matches {sale}-{escrow}-{supply}-{token}-{withdrawer}
   "Amount claimable by withdrawer"
-  claimable: BigInt! # (redeemable.balanceOf(withdrawer) * RedeemableEscrowSupplyTokenDeposit.perRedeemable) - totalWithdrawn
+  claimable: BigInt! # ((RedeemableEscrowSupplyTokenDeposit.totalDeposited - totalWithdrawnAgainst) * (redeemable.balanceOf(withdrawer)) / supply
 }
 
 # created for each PendingDeposit event
