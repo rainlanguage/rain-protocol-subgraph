@@ -160,6 +160,7 @@ describe("Sales queries test", function () {
           cooldownDuration: cooldownDuration,
           minimumRaise,
           dustSize: dustSize,
+          saleTimeout: 100,
         },
         {
           erc20Config: redeemableERC20Config,
@@ -1357,6 +1358,7 @@ describe("Sales queries test", function () {
           cooldownDuration: cooldownDuration,
           minimumRaise,
           dustSize: dustSize,
+          saleTimeout: 100,
         },
         {
           erc20Config: redeemableERC20Config,
@@ -1519,6 +1521,7 @@ describe("Sales queries test", function () {
           cooldownDuration: cooldownDuration,
           minimumRaise,
           dustSize: dustSize,
+          saleTimeout: 100,
         },
         {
           erc20Config: redeemableERC20Config,
@@ -1672,6 +1675,7 @@ describe("Sales queries test", function () {
           cooldownDuration: cooldownDuration,
           minimumRaise,
           dustSize: dustSize,
+          saleTimeout: 100,
         },
         {
           erc20Config: redeemableERC20Config,

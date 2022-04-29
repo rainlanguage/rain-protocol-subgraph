@@ -173,6 +173,7 @@ before("Deployment contracts and subgraph", async function () {
 
   // Deploying SaleFactory contract
   saleFactory = await new SaleFactory__factory(deployer).deploy({
+    maximumSaleTimeout: 10000,
     maximumCooldownDuration: 1000,
     redeemableERC20Factory: redeemableERC20Factory.address,
   });

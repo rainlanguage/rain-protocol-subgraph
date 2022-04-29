@@ -74,7 +74,10 @@ describe("Subgraph Tier Test", function () {
 
     before("deploy fresh test contracts", async function () {
       // Creating a new Verify Child
-      verify = await Util.verifyDeploy(verifyFactory, creator, admin.address);
+      verify = await Util.verifyDeploy(verifyFactory, creator, {
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       // Admin grants all roles to himself.
       // ⚠️ NOTE: This is for testing purposes only ⚠️
@@ -273,7 +276,10 @@ describe("Subgraph Tier Test", function () {
       // Verify deployed without factory
       const verifyIndependent = await new Verify__factory(deployer).deploy();
 
-      await verifyIndependent.initialize(admin.address);
+      await verifyIndependent.initialize({
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       // Creating the VerifyTier Contract with the Verify
       verifyTier = await Util.verifyTierDeploy(
@@ -1561,6 +1567,7 @@ describe("Subgraph Tier Test", function () {
           cooldownDuration,
           minimumRaise,
           dustSize,
+          saleTimeout: 100,
         },
         {
           erc20Config: redeemableERC20Config,

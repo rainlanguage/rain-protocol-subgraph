@@ -112,6 +112,7 @@ const deploySale = async (
       cooldownDuration: 1,
       minimumRaise: minimumRaise,
       dustSize: 0,
+      saleTimeout: 100,
     },
     {
       erc20Config: redeemableERC20Config,

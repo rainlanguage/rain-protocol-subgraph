@@ -105,7 +105,10 @@ import type {
 import type { GatedNFT } from "../../typechain/GatedNFT";
 
 // VerifyFactory types
-import type { VerifyFactory } from "../../typechain/VerifyFactory";
+import type {
+  VerifyFactory,
+  VerifyConfigStruct,
+} from "../../typechain/VerifyFactory";
 import type { Verify } from "../../typechain/Verify";
 
 // VerifyTierFactory types
@@ -815,13 +818,13 @@ export const emissionsDeploy = async (
 export const verifyDeploy = async (
   verifyFactory: VerifyFactory,
   creator: SignerWithAddress | Signer,
-  adminAddress: string,
+  verifyConfig: VerifyConfigStruct,
   override: Overrides = {}
 ): Promise<Verify> => {
   // Creating child
   const txDeploy = await verifyFactory
     .connect(creator)
-    .createChildTyped(adminAddress, override);
+    .createChildTyped(verifyConfig, override);
 
   const verify = new Verify__factory(creator).attach(
     await getChild(verifyFactory, txDeploy)
