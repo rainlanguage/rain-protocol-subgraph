@@ -72,11 +72,9 @@ export function handleDeposit(event: Deposit): void {
 
   let allDeposits = redeemableEscrowSupplyTokenDeposit.deposits;
   let totalDeposit = event.params.amount;
-  let i = 0;
-  while (allDeposits && i < allDeposits.length) {
-    let dp = RedeemableEscrowDeposit.load(allDeposits.pop());
-    if (dp) totalDeposit = totalDeposit.plus(dp.tokenAmount);
-    i++;
+  while (allDeposits && allDeposits.length > 0) {
+    let deposit = RedeemableEscrowDeposit.load(allDeposits.pop());
+    if (deposit) totalDeposit = totalDeposit.plus(deposit.tokenAmount);
   }
 
   redeemableEscrowSupplyTokenDeposit.totalDeposited = totalDeposit;
@@ -384,6 +382,27 @@ export function handleUndeposit(event: Undeposit): void {
 
   depositor.save();
 
+  let redeemableEscrowSupplyTokenDepositor =
+    getRedeemableEscrowSupplyTokenDepositor(
+      event.params.sale,
+      event.address,
+      event.params.supply,
+      event.params.token,
+      event.params.sender
+    );
+
+  let STDundeposits = redeemableEscrowSupplyTokenDepositor.undeposits;
+  if (STDundeposits) STDundeposits.push(redeemableEscrowUndeposit.id);
+  redeemableEscrowSupplyTokenDepositor.undeposits = STDundeposits;
+
+  if (redeemableEscrowSupplyTokenDepositor.totalRemaining != ZERO_BI)
+    redeemableEscrowSupplyTokenDepositor.totalRemaining =
+      redeemableEscrowSupplyTokenDepositor.totalRemaining.minus(
+        event.params.amount
+      );
+
+  redeemableEscrowSupplyTokenDepositor.save();
+
   let redeemableEscrowSupplyTokenDeposit =
     getRedeemableEscrowSupplyTokenDeposit(
       Address.fromString(iSale),
@@ -501,7 +520,7 @@ export function handleWithdraw(event: Withdraw): void {
   RSDTWithdraws = redeemableEscrowSupplyTokenDeposit.withdraws;
   if (RSDTWithdraws) {
     let len = RSDTWithdraws.length;
-    while (len >= 0) {
+    while (len > 0) {
       len--;
       let RSDTWithdrawer = RedeemableEscrowSupplyTokenWithdrawer.load(
         RSDTWithdraws.pop()
