@@ -43,9 +43,6 @@ export function handleDeposit(event: Deposit): void {
   redeemableEscrowDeposit.redeemableSupply = event.params.supply;
   redeemableEscrowDeposit.tokenAmount = event.params.amount;
 
-  let redeemableERC20 = RedeemableERC20.load(event.params.redeemable.toHex());
-  if (redeemableERC20) redeemableEscrowDeposit.redeemable = redeemableERC20.id;
-
   let token = getERC20(event.params.token, event.block);
   redeemableEscrowDeposit.token = token.id;
   redeemableEscrowDeposit.tokenAddress = event.params.token;
@@ -162,6 +159,26 @@ export function handleDeposit(event: Deposit): void {
   redeemableEscrowSupplyTokenDeposit.withdraws = RESTDWithdraws;
 
   redeemableEscrowSupplyTokenDeposit.save();
+
+  // Load the RedeemableERC20 entity
+  let redeemableERC20 = RedeemableERC20.load(event.params.redeemable.toHex());
+  if (redeemableERC20) {
+    // Save the redeemable into the RedeemableEscrowDeposit
+    redeemableEscrowDeposit.redeemable = redeemableERC20.id;
+
+    // Save EscrowSupplyTokenWithdrawers into the Redeemable
+    let redeemEscrowSTW = redeemableERC20.escrowSupplyTokenWithdrawers;
+    if (
+      redeemEscrowSTW &&
+      !redeemEscrowSTW.includes(redeemableEscrowSupplyTokenWithdrawer.id)
+    ) {
+      // Save all the redeemableEscrowSupplyTokenWithdrawer since all use the same RedeemableERC20
+      redeemEscrowSTW.push(redeemableEscrowSupplyTokenWithdrawer.id);
+      redeemableERC20.escrowSupplyTokenWithdrawers = redeemEscrowSTW;
+    }
+
+    redeemableERC20.save();
+  }
 
   let DsupplyTokenDeposits = depositor.supplyTokenDeposits;
   if (

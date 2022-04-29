@@ -159,6 +159,7 @@ export function handleInitialize(event: Initialize): void {
 
   if (sale) {
     let token = getRedeemableERC20(
+      event.address,
       event.transaction.from,
       event.params.token,
       event.block
@@ -343,6 +344,7 @@ function getERC20(token: Address, block: ethereum.Block): ERC20 {
 }
 
 function getRedeemableERC20(
+  sale: Address,
   deployer: Address,
   token: Address,
   block: ethereum.Block
@@ -353,6 +355,9 @@ function getRedeemableERC20(
     redeemableERC20 = new RedeemableERC20(token.toHex());
     redeemableERC20.deployBlock = block.number;
     redeemableERC20.deployTimestamp = block.timestamp;
+
+    redeemableERC20.saleAddress = sale;
+    redeemableERC20.escrowSupplyTokenWithdrawers = [];
 
     let name = erc20Contract.try_name();
     let symbol = erc20Contract.try_symbol();

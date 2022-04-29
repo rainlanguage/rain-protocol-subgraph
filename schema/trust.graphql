@@ -163,6 +163,8 @@ type RedeemableERC20 @entity {
   deployTimestamp: BigInt #the timestamp the contract was deployed
   erc20Pull: ERC20Pull
   tier: TierContract
+  saleAddress: Bytes
+  escrowSupplyTokenWithdrawers: [RedeemableEscrowSupplyTokenWithdrawer!]
 }
 
 type Redeem @entity {
@@ -210,7 +212,6 @@ type SeedERC20 @entity {
 
 type Holder @entity {
   id: ID! # {tokenAddress} - {holderAddress}
-
   address: Bytes!
 
   balance: BigInt!

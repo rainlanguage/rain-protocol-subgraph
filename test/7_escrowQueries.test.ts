@@ -1711,7 +1711,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
   });
 
-  describe.only("RedeemableEscrowSupplyTokenWithdrawer entity", function () {
+  describe("RedeemableEscrowSupplyTokenWithdrawer entity", function () {
     beforeEach("deploying fresh sale", async function () {
       // In each `it` statement will have a fresh sale, redeemable and saleReserve
       ({ sale, redeemableERC20 } = await deploySale([signer1, signer2]));

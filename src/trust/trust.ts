@@ -301,6 +301,10 @@ function createRedeemableERC20(event: Initialize): string {
   else return redeemableERC20.id;
   redeemableERC20.deployBlock = event.block.number;
   redeemableERC20.deployTimestamp = event.block.timestamp;
+
+  redeemableERC20.saleAddress = event.address;
+  redeemableERC20.escrowSupplyTokenWithdrawers = [];
+
   // Try to get token information with try_, if any non ERC20 address is passed the subgraph will not fail
   let name = redeemableERC20Contract.try_name();
   let symbol = redeemableERC20Contract.try_symbol();

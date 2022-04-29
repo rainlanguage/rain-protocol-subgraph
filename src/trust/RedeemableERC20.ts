@@ -12,6 +12,8 @@ import {
   VerifyTier,
   CombineTier,
   UnknownTier,
+  RedeemableEscrowSupplyTokenWithdrawer,
+  RedeemableEscrowSupplyTokenDeposit,
 } from "../../generated/schema";
 import {
   Initialize,
@@ -22,6 +24,7 @@ import {
   Redeem as RedeemEvent,
   TreasuryAsset as TreasuryAssetEvent,
 } from "../../generated/templates/RedeemableERC20Template/RedeemableERC20";
+import { ERC20 as ERC20Contract } from "../../generated/templates/SaleTemplate/ERC20";
 import {
   getTrustParticipent,
   notAContract,
@@ -114,10 +117,21 @@ export function handleTransfer(event: Transfer): void {
 
     // Get all the Holders of RedeemableERC20
     if (redeemabaleERC20) {
+      // Update totalSupply
+      let redeemContract = ERC20Contract.bind(event.address);
+      let newTotalSupply = redeemContract.try_totalSupply();
+
+      if (!newTotalSupply.reverted) {
+        redeemabaleERC20.totalSupply = newTotalSupply.value;
+      }
+
       let holders = redeemabaleERC20.holders;
 
-      // Check if Sender is not any contract address or Zero address
-      if (notAContract(event.params.from.toHex(), context.getString("trust"))) {
+      // Check if Sender is not any contract address or Zero address. Does not take as holder when contract mint
+      if (
+        notAContract(event.params.from.toHex(), context.getString("trust")) &&
+        event.params.from.toHex() != ZERO_ADDRESS
+      ) {
         // Load the Sender's Holder entity
         let sender = Holder.load(
           event.address.toHex() + " - " + event.params.from.toHex()
@@ -128,13 +142,24 @@ export function handleTransfer(event: Transfer): void {
           sender = new Holder(
             event.address.toHex() + " - " + event.params.from.toHex()
           );
+          // Set the Sender's balance
+          sender.balance = ZERO_BI;
         }
 
+        // Update the sender's balance
         // Set the sender's balance
         sender.balance = redeemabaleERC20Contract.balanceOf(event.params.from);
+        sender.address = event.params.from;
+        sender.save();
+
+        // Add the sender in Holders if not already exists
+        if (holders && !holders.includes(sender.id)) {
+          holders.push(sender.id);
+          redeemabaleERC20.holders = holders;
+        }
       }
 
-      // Check if Receiver is not any contract address or Zero address
+      // Check if Receiver is not any contract address.
       if (notAContract(event.params.to.toHex(), context.getString("trust"))) {
         // Load the Receiver's Holder entity
         let receiver = Holder.load(
@@ -151,7 +176,7 @@ export function handleTransfer(event: Transfer): void {
         }
 
         // Update the Receiver balance
-        // Set the sender's balance
+        // Set the Receiver's balance
         receiver.balance = redeemabaleERC20Contract.balanceOf(event.params.to);
         receiver.address = event.params.to;
         receiver.save();
@@ -160,9 +185,41 @@ export function handleTransfer(event: Transfer): void {
         if (holders && !holders.includes(receiver.id)) {
           holders.push(receiver.id);
           redeemabaleERC20.holders = holders;
-          redeemabaleERC20.save();
         }
       }
+
+      // Update the RedeemableEscrowSupplyTokenWithdrawers if withdrawerAddress match with `to` or `from`
+      let RESTDDWithdrawers = redeemabaleERC20.escrowSupplyTokenWithdrawers;
+
+      if (RESTDDWithdrawers) {
+        for (let i = 0; i < RESTDDWithdrawers.length; i++) {
+          let withdrawer = RedeemableEscrowSupplyTokenWithdrawer.load(
+            RESTDDWithdrawers[i]
+          );
+
+          if (withdrawer) {
+            let withdrawerAddress = withdrawer.withdrawerAddress.toHex();
+
+            if (withdrawerAddress == event.params.from.toHex()) {
+              updateWithdrawer(
+                withdrawer,
+                redeemabaleERC20Contract,
+                event.params.from
+              );
+            }
+
+            if (withdrawerAddress == event.params.to.toHex()) {
+              updateWithdrawer(
+                withdrawer,
+                redeemabaleERC20Contract,
+                event.params.to
+              );
+            }
+          }
+        }
+      }
+
+      redeemabaleERC20.save();
     }
   }
 }
@@ -378,4 +435,30 @@ function getTier(tierAddress: string): string {
     uknownTier.save();
   }
   return uknownTier.id;
+}
+
+function updateWithdrawer(
+  withdrawer: RedeemableEscrowSupplyTokenWithdrawer,
+  redeemContract: RedeemabaleERC20Contract,
+  address: Address
+): void {
+  let _currentBalance = redeemContract.balanceOf(address);
+  withdrawer.redeemableBalance = _currentBalance;
+
+  let RESTDeposit_string = withdrawer.deposit;
+  if (RESTDeposit_string) {
+    let _RESTDeposit =
+      RedeemableEscrowSupplyTokenDeposit.load(RESTDeposit_string);
+
+    if (_RESTDeposit) {
+      let _totalDeposited = _RESTDeposit.totalDeposited;
+
+      withdrawer.claimable = _totalDeposited
+        .minus(withdrawer.totalWithdrawnAgainst)
+        .times(_currentBalance)
+        .div(_RESTDeposit.redeemableSupply);
+    }
+  }
+
+  withdrawer.save();
 }
