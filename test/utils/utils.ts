@@ -105,7 +105,10 @@ import type {
 import type { GatedNFT } from "../../typechain/GatedNFT";
 
 // VerifyFactory types
-import type { VerifyFactory } from "../../typechain/VerifyFactory";
+import type {
+  VerifyFactory,
+  VerifyConfigStruct,
+} from "../../typechain/VerifyFactory";
 import type { Verify } from "../../typechain/Verify";
 
 // VerifyTierFactory types
@@ -453,7 +456,7 @@ export const waitForSubgraphToBeSynced = async (
   wait = 0,
   timeDelay = 1,
   seconds = 60,
-  subgraphName = "beehive-innovation/rain-protocol"
+  subgraphName = "beehive-innovation/rain-protocol-test"
 ): Promise<SyncedSubgraphType> => {
   if (wait > 0) {
     await delay(wait);
@@ -550,7 +553,7 @@ export const waitForSubgraphToBeSynced = async (
  */
 export const deploy = async (
   artifact: Artifact | BasicArtifact,
-  signer: SignerWithAddress,
+  signer: SignerWithAddress | Signer,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   argmts: any[] = []
 ): Promise<Contract> => {
@@ -567,7 +570,7 @@ export const deploy = async (
  * @returns CRPFactory and Bfactory contract instances
  */
 export const balancerDeploy = async (
-  signer: SignerWithAddress
+  signer: SignerWithAddress | Signer
 ): Promise<[CRPFactory, BFactory]> => {
   const bFactory = (await deploy(bFactoryJson, signer, [])) as BFactory;
 
@@ -621,7 +624,7 @@ const linkBytecode = (
 export const trustFactoriesDeploy = async (
   crpFactory: CRPFactory,
   balancerFactory: BFactory,
-  signer: SignerWithAddress
+  signer: SignerWithAddress | Signer
 ): Promise<{
   redeemableERC20Factory: RedeemableERC20Factory;
   seedERC20Factory: SeedERC20Factory;
@@ -709,7 +712,7 @@ export const getChild = async (
  */
 export const trustDeploy = async (
   trustFactory: TrustFactory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   trustConfig: TrustConfigStruct,
   trustRedeemableERC20Config: TrustRedeemableERC20ConfigStruct,
   trustSeedERC20Config: TrustSeedERC20ConfigStruct,
@@ -749,7 +752,7 @@ export const trustDeploy = async (
  */
 export const saleDeploy = async (
   saleFactory: SaleFactory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   saleConfig: SaleConfigStruct,
   saleRedeemableERC20Config: SaleRedeemableERC20ConfigStruct,
   override: Overrides = {}
@@ -782,7 +785,7 @@ export const saleDeploy = async (
  */
 export const emissionsDeploy = async (
   emissionsERC20Factory: EmissionsERC20Factory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   config: EmissionsERC20ConfigStruct,
   override: Overrides = {}
 ): Promise<EmissionsERC20> => {
@@ -814,14 +817,14 @@ export const emissionsDeploy = async (
  */
 export const verifyDeploy = async (
   verifyFactory: VerifyFactory,
-  creator: SignerWithAddress,
-  adminAddress: string,
+  creator: SignerWithAddress | Signer,
+  verifyConfig: VerifyConfigStruct,
   override: Overrides = {}
 ): Promise<Verify> => {
   // Creating child
   const txDeploy = await verifyFactory
     .connect(creator)
-    .createChildTyped(adminAddress, override);
+    .createChildTyped(verifyConfig, override);
 
   const verify = new Verify__factory(creator).attach(
     await getChild(verifyFactory, txDeploy)
@@ -846,7 +849,7 @@ export const verifyDeploy = async (
  */
 export const verifyTierDeploy = async (
   verifyTierFactory: VerifyTierFactory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   verifyAddress: string,
   override: Overrides = {}
 ): Promise<VerifyTier> => {
@@ -878,7 +881,7 @@ export const verifyTierDeploy = async (
  */
 export const erc20BalanceTierDeploy = async (
   erc20BalanceTierFactory: ERC20BalanceTierFactory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   erc20BalanceTierConfig: ERC20BalanceTierConfigStruct,
   override: Overrides = {}
 ): Promise<ERC20BalanceTier> => {
@@ -910,7 +913,7 @@ export const erc20BalanceTierDeploy = async (
  */
 export const erc20TransferTierDeploy = async (
   erc20TransferTierFactory: ERC20TransferTierFactory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   erc20TransferTierConfigStruct: ERC20TransferTierConfigStruct,
   override: Overrides = {}
 ): Promise<ERC20TransferTier> => {
@@ -942,7 +945,7 @@ export const erc20TransferTierDeploy = async (
  */
 export const combineTierDeploy = async (
   combineTierFactory: CombineTierFactory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   stateConfigStruct: StateConfigStruct,
   override: Overrides = {}
 ): Promise<CombineTier> => {
@@ -974,7 +977,7 @@ export const combineTierDeploy = async (
  */
 export const erc721BalanceTierDeploy = async (
   erc721BalanceTierFactory: ERC721BalanceTierFactory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   erc721BalanceTierConfigStruct: ERC721BalanceTierConfigStruct,
   override: Overrides = {}
 ): Promise<ERC721BalanceTier> => {
@@ -1013,7 +1016,7 @@ export const erc721BalanceTierDeploy = async (
  */
 export const gatedNFTDeploy = async (
   gatedNFTFactory: GatedNFTFactory,
-  creator: SignerWithAddress,
+  creator: SignerWithAddress | Signer,
   config: ConfigStruct,
   tier: string,
   minimumStatus: BigNumberish,
@@ -1271,9 +1274,9 @@ export const getTxTimeblock = async (
  * @returns
  */
 export const basicSetup = async (
-  deployer: SignerWithAddress,
-  creator: SignerWithAddress,
-  seeder: SignerWithAddress,
+  deployer: SignerWithAddress | Signer,
+  creator: SignerWithAddress | Signer,
+  seeder: SignerWithAddress | Signer,
   trustFactory: TrustFactory,
   tier: ITier
 ): Promise<{
@@ -1324,7 +1327,7 @@ export const basicSetup = async (
     trustFactory,
     creator,
     {
-      creator: creator.address,
+      creator: await creator.getAddress(),
       minimumCreatorRaise,
       seederFee,
       redeemInit,
@@ -1340,7 +1343,7 @@ export const basicSetup = async (
       minimumTier,
     },
     {
-      seeder: seeder.address,
+      seeder: await seeder.getAddress(),
       cooldownDuration: seederCooldownDuration,
       erc20Config: seedERC20Config,
     },
@@ -1350,7 +1353,7 @@ export const basicSetup = async (
   await trust.deployed();
 
   // seeder needs some cash, give enough to seeder
-  await reserve.transfer(seeder.address, reserveInit);
+  await reserve.transfer(await seeder.getAddress(), reserveInit);
 
   const reserveSeeder = reserve.connect(seeder);
 
@@ -1394,11 +1397,11 @@ export const swapReserveForTokens = async (
   bPool: BPool,
   tokenIn: Contract,
   tokenOut: RedeemableERC20, // Token Address to out
-  signer: SignerWithAddress,
+  signer: SignerWithAddress | Signer,
   spend: BigNumber
 ): Promise<void> => {
   // give to signer some reserve
-  await tokenIn.transfer(signer.address, spend);
+  await tokenIn.transfer(await signer.getAddress(), spend);
   await tokenIn.connect(signer).approve(bPool.address, spend);
 
   const crpSigner = crp.connect(signer);

@@ -5,7 +5,13 @@ import {
   ByteArray,
   crypto,
 } from "@graphprotocol/graph-ts";
-import { Contract, Pool, Trust, TrustParticipant } from "../generated/schema";
+import {
+  Contract,
+  Pool,
+  Trust,
+  TrustParticipant,
+  Sale,
+} from "../generated/schema";
 import { SeedERC20 } from "../generated/TrustFactory/SeedERC20";
 import { RedeemableERC20 } from "../generated/TrustFactory/RedeemableERC20";
 
@@ -181,7 +187,6 @@ export function getTrustParticipent(
 */
 export function notAContract(address: string, trust: string): boolean {
   let contracts = Contract.load(trust);
-  if (address == ZERO_ADDRESS) return false;
   if (trust == address) return false;
   if (contracts) {
     if (contracts.seeder == address) return false;
@@ -191,6 +196,10 @@ export function notAContract(address: string, trust: string): boolean {
     if (contracts.pool == address) return false;
     if (contracts.tier == address) return false;
   }
+
+  let sale = Sale.load(address);
+  if (sale) return false;
+
   return true;
 }
 

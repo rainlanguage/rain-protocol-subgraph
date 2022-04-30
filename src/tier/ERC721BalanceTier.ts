@@ -16,9 +16,13 @@ export function handleInitialize(event: Initialize): void {
     erc721BalanceTier.save();
   }
 }
-export function handleInitializeValueTier(event: InitializeValueTier): void {}
+export function handleInitializeValueTier(event: InitializeValueTier): void {
+  //
+}
 
-export function handleTierChange(event: TierChange): void {}
+export function handleTierChange(event: TierChange): void {
+  //
+}
 
 function getERC721(event: Initialize): ERC721 {
   let erc721 = ERC721.load(event.params.erc721.toHex());

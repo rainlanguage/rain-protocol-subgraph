@@ -71,7 +71,7 @@ describe("Subgraph GatedNFT test", function () {
     await reserve.transfer(signer2.address, Util.amountToLevel(Util.Tier.TWO));
 
     // Wait for sync
-    // await waitForSubgraphToBeSynced();
+    await waitForSubgraphToBeSynced();
   });
 
   it("should query GatedNFTFactory correctly after construction", async function () {

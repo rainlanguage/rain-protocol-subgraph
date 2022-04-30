@@ -159,6 +159,7 @@ export function handleInitialize(event: Initialize): void {
 
   if (sale) {
     let token = getRedeemableERC20(
+      event.address,
       event.transaction.from,
       event.params.token,
       event.block
@@ -176,7 +177,9 @@ export function handleInitialize(event: Initialize): void {
     if (sale.minimumRaise == ZERO_BI) sale.percentRaised = HUNDRED_BD;
     sale.dustSize = event.params.config.dustSize;
     sale.saleStatus = SaleStatus.Pending;
-    sale.unitsAvailable = tokenContrct.balanceOf(event.address);
+
+    let balance = tokenContrct.try_balanceOf(event.address);
+    if (!balance.reverted) sale.unitsAvailable = balance.value;
 
     let canStartStateConfig = new CanStartStateConfig(
       event.transaction.hash.toHex()
@@ -314,7 +317,7 @@ export function handleStart(event: Start): void {
 function getERC20(token: Address, block: ethereum.Block): ERC20 {
   let erc20 = ERC20.load(token.toHex());
   let erc20Contract = ERC20Contract.bind(token);
-  if (erc20 == null) {
+  if (!erc20) {
     erc20 = new ERC20(token.toHex());
     erc20.deployBlock = block.number;
     erc20.deployTimestamp = block.timestamp;
@@ -341,16 +344,20 @@ function getERC20(token: Address, block: ethereum.Block): ERC20 {
 }
 
 function getRedeemableERC20(
+  sale: Address,
   deployer: Address,
   token: Address,
   block: ethereum.Block
 ): RedeemableERC20 {
   let redeemableERC20 = RedeemableERC20.load(token.toHex());
   let erc20Contract = ERC20Contract.bind(token);
-  if (redeemableERC20 == null) {
+  if (!redeemableERC20) {
     redeemableERC20 = new RedeemableERC20(token.toHex());
     redeemableERC20.deployBlock = block.number;
     redeemableERC20.deployTimestamp = block.timestamp;
+
+    redeemableERC20.saleAddress = sale;
+    redeemableERC20.escrowSupplyTokenWithdrawers = [];
 
     let name = erc20Contract.try_name();
     let symbol = erc20Contract.try_symbol();
@@ -379,7 +386,7 @@ function getRedeemableERC20(
     redeemableERC20.save();
 
     let contracts = Contract.load(ZERO_ADDRESS);
-    if (contracts == null) {
+    if (!contracts) {
       contracts = new Contract(ZERO_ADDRESS);
       contracts.save();
     }
@@ -419,7 +426,8 @@ function updateSale(sale: Sale): void {
   if (sale) {
     let erc20 = ERC20Contract.bind(Address.fromString(sale.token));
 
-    sale.unitsAvailable = erc20.balanceOf(Address.fromString(sale.id));
+    let balance = erc20.try_balanceOf(Address.fromString(sale.id));
+    if (!balance.reverted) sale.unitsAvailable = balance.value;
 
     let saleBuys = sale.buys;
     let saleRefunds = sale.refunds;

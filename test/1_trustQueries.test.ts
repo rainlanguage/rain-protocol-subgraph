@@ -75,7 +75,7 @@ import type {
   EndDutchAuctionEvent,
 } from "../typechain/Trust";
 
-const subgraphName = "beehive-innovation/rain-protocol";
+const subgraphName = "beehive-innovation/rain-protocol-test";
 let minimumTier: Tier,
   seedContract: SeedERC20,
   redeemableERC20Contract: RedeemableERC20,
@@ -173,6 +173,7 @@ before("Deployment contracts and subgraph", async function () {
 
   // Deploying SaleFactory contract
   saleFactory = await new SaleFactory__factory(deployer).deploy({
+    maximumSaleTimeout: 10000,
     maximumCooldownDuration: 1000,
     redeemableERC20Factory: redeemableERC20Factory.address,
   });
@@ -914,8 +915,7 @@ describe("Subgraph Trusts Test", function () {
       });
       const gSendersData = queryResponse.data.redeemableERC20.grantedSenders;
 
-      expect(gSendersData).to.have.lengthOf(1);
-      expect(gSendersData[0]).to.equals(crpContract.address.toLowerCase());
+      expect(gSendersData).to.include(crpContract.address.toLowerCase());
     });
 
     it("should query the grantReceivers from RedeemableERC20 after creation", async function () {
@@ -933,11 +933,10 @@ describe("Subgraph Trusts Test", function () {
       const gReceiversData =
         queryResponse.data.redeemableERC20.grantedReceivers;
 
-      expect(gReceiversData).to.have.lengthOf(3);
-
       expect(gReceiversData).to.include(bPoolFeeEscrow.address.toLowerCase());
       expect(gReceiversData).to.include(bFactory.address.toLowerCase());
       expect(gReceiversData).to.include(trust.address.toLowerCase());
+      expect(gReceiversData).to.include(crpContract.address.toLowerCase());
     });
 
     it("should query the Seed of the trust correctly", async function () {
