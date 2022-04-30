@@ -1308,16 +1308,28 @@ describe("Sales queries test", function () {
   });
 
   describe("Failed sale", function () {
-    // SaleRefund
-    const vBasePrice = op(OpcodeSale.VAL, 0);
+    const saleTimeout = 30;
+    const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
+
+    const totalTokenSupply = ethers.BigNumber.from("2000").mul(Util.ONE);
+    const redeemableERC20Config = {
+      name: "Token",
+      symbol: "TKN",
+      distributor: zeroAddress,
+      initialSupply: totalTokenSupply,
+    };
+
     const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
 
-    const sources = [concat([vBasePrice])];
     const constants = [staticPrice];
+    const vBasePrice = op(OpcodeSale.VAL, 0);
+
+    const sources = [concat([vBasePrice])];
 
     let startBlock: number,
       canStartStateConfig: VMState,
       canEndStateConfig: VMState;
+
     const calculatePriceStateConfig: VMState = {
       sources,
       constants,
@@ -1325,19 +1337,10 @@ describe("Sales queries test", function () {
       argumentsLength: 0,
     };
     const cooldownDuration = 1;
-    const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
     const dustSize = 0;
 
-    const saleTimeout = 30;
-
-    const redeemableERC20Config = {
-      name: "Token",
-      symbol: "TKN",
-      distributor: zeroAddress,
-      initialSupply: ethers.BigNumber.from("2000").mul(Util.ONE),
-    };
     const minimumTier = Tier.ZERO;
-    const distributionEndForwardingAddress = zeroAddress;
+    const distributionEndForwardingAddress = ethers.constants.AddressZero;
 
     before("creating the sale child", async function () {
       // 5 blocks from now
@@ -1377,20 +1380,19 @@ describe("Sales queries test", function () {
       // @ts-ignore
       redeemableERC20Contract.deployTransaction = sale.deployTransaction;
 
-      await waitForSubgraphToBeSynced();
+      // await waitForSubgraphToBeSynced();
     });
 
     it("should query the Sale as failed correctly", async function () {
-      const cantStart = await sale.canStart();
-      assert(!cantStart);
-
       // wait until sale can start
-      await Util.createEmptyBlock(
-        startBlock - (await ethers.provider.getBlockNumber())
-      );
+      while (
+        !(await sale.canStart()) &&
+        (await sale.saleStatus()) == SaleStatus.PENDING
+      ) {
+        await Util.createEmptyBlock();
+      }
 
-      const canStart = await sale.canStart();
-      assert(canStart);
+      assert(await sale.canStart(), "sale should be able to start");
 
       // Sale started
       await sale.start();
@@ -1398,19 +1400,19 @@ describe("Sales queries test", function () {
       const saleStatusActive = await sale.saleStatus();
       assert(saleStatusActive === SaleStatus.ACTIVE);
 
-      const cantEnd = await sale.canEnd();
-      assert(!cantEnd);
-
       // wait until sale can end
-      await Util.createEmptyBlock(
-        saleTimeout + startBlock - (await ethers.provider.getBlockNumber())
-      );
+      while (
+        !(await sale.canEnd()) &&
+        (await sale.saleStatus()) == SaleStatus.ACTIVE
+      ) {
+        await Util.createEmptyBlock();
+      }
 
-      const canEnd = await sale.canEnd();
-      assert(canEnd);
+      assert(await sale.canEnd(), "sale should be able to end");
 
-      // Sale ended
+      // Sale ended as failed
       transaction = await sale.connect(signer1).end();
+      expect(await sale.saleStatus()).to.be.equals(SaleStatus.FAIL);
 
       // wait for sync
       await waitForSubgraphToBeSynced();
@@ -1439,6 +1441,11 @@ describe("Sales queries test", function () {
     });
 
     it("should query the SaleEnd after a sale failing", async function () {
+      expect(await sale.saleStatus()).to.be.equals(
+        SaleStatus.FAIL,
+        "sale is not failed"
+      );
+
       const saleEndId = transaction.hash.toLowerCase();
 
       const query = `

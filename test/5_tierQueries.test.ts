@@ -221,7 +221,7 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should continue query if the Verify Address in VerifyTier is a non-Verify contract address", async function () {
-      const nonVerifyAddress = zeroAddress;
+      const nonVerifyAddress = signer2.address;
 
       // Creating the VerifyTier Contract with the non-Verify contract address
       verifyTier = await Util.verifyTierDeploy(

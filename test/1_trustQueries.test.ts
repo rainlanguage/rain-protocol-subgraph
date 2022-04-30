@@ -915,8 +915,7 @@ describe("Subgraph Trusts Test", function () {
       });
       const gSendersData = queryResponse.data.redeemableERC20.grantedSenders;
 
-      expect(gSendersData).to.have.lengthOf(1);
-      expect(gSendersData[0]).to.equals(crpContract.address.toLowerCase());
+      expect(gSendersData).to.include(crpContract.address.toLowerCase());
     });
 
     it("should query the grantReceivers from RedeemableERC20 after creation", async function () {
@@ -934,11 +933,10 @@ describe("Subgraph Trusts Test", function () {
       const gReceiversData =
         queryResponse.data.redeemableERC20.grantedReceivers;
 
-      expect(gReceiversData).to.have.lengthOf(3);
-
       expect(gReceiversData).to.include(bPoolFeeEscrow.address.toLowerCase());
       expect(gReceiversData).to.include(bFactory.address.toLowerCase());
       expect(gReceiversData).to.include(trust.address.toLowerCase());
+      expect(gReceiversData).to.include(crpContract.address.toLowerCase());
     });
 
     it("should query the Seed of the trust correctly", async function () {
