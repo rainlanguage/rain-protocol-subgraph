@@ -128,7 +128,7 @@ export function handleDeposit(event: Deposit): void {
     event.params.redeemable.toHex() + " - " + event.params.depositor.toHex()
   );
 
-  if (holder) {
+  if (holder && event.params.supply != ZERO_BI) {
     redeemableEscrowSupplyTokenWithdrawer.redeemableBalance = holder.balance;
     redeemableEscrowSupplyTokenWithdrawer.claimable =
       redeemableEscrowSupplyTokenDeposit.totalDeposited
@@ -139,7 +139,7 @@ export function handleDeposit(event: Deposit): void {
   redeemableEscrowSupplyTokenWithdrawer.save();
 
   let RESTDWithdraws = redeemableEscrowSupplyTokenDeposit.withdraws;
-  if (RESTDWithdraws) {
+  if (RESTDWithdraws && event.params.supply != ZERO_BI) {
     for (let i = 0; i < RESTDWithdraws.length; i++) {
       let withdrawer = RedeemableEscrowSupplyTokenWithdrawer.load(
         RESTDWithdraws[i]
@@ -550,7 +550,7 @@ export function handleWithdraw(event: Withdraw): void {
       redeemableEscrowSupplyTokenWithdrawer.withdrawerAddress.toHex()
   );
 
-  if (holder) {
+  if (holder && event.params.supply != ZERO_BI) {
     redeemableEscrowSupplyTokenWithdrawer.redeemableBalance = holder.balance;
     redeemableEscrowSupplyTokenWithdrawer.claimable =
       redeemableEscrowSupplyTokenDeposit.totalDeposited
@@ -576,7 +576,7 @@ export function handleWithdraw(event: Withdraw): void {
             RSDTWithdrawer.withdrawerAddress.toHex()
         );
 
-        if (holder) {
+        if (holder && event.params.supply != ZERO_BI) {
           redeemableEscrowSupplyTokenWithdrawer.redeemableBalance =
             holder.balance;
           redeemableEscrowSupplyTokenWithdrawer.claimable =
