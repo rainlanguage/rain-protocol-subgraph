@@ -41,14 +41,14 @@
     "deploy-subgraph": "ts-node scripts/index.ts"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "^0.26.0",
+    "@graphprotocol/graph-cli": "0.26.1",
     "@graphprotocol/graph-ts": "^0.25.0",
     "mustache": "^3.2.1"
   },
   "devDependencies": {
     "@beehiveinnovation/balancer-core": "^0.0.7",
     "@beehiveinnovation/configurable-rights-pool": "^0.0.1",
-    "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#2dd7102e9addf0662bc0aef2a6aacb8b82edf089",
+    "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#e590ce7ef673224afba04c43384a278a9500500d",
     "@beehiveinnovation/rain-statusfi": "git+https://github.com/beehive-innovation/rain-statusfi.git#288e082ae81ca796b0732619a9631db24beb7a7a",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.0",

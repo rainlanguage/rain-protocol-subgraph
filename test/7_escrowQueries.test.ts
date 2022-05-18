@@ -742,8 +742,12 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         escrow
       )) as PendingDepositEvent["args"];
 
-      // Finishing the sale
       await sale.start();
+
+      // Make a buy to have zero redeemable supply
+      await buySale(sale, signer1);
+
+      // Finishing the sale
       await finishSale(sale);
 
       // Call sweepPending
@@ -1768,6 +1772,10 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
             totalWithdrawn
             totalWithdrawnAgainst
             claimable
+            iSale {
+              saleStatus
+            }
+            iSaleAddress
           }
         }
       `;
@@ -1785,6 +1793,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
       expect(data.totalWithdrawn).to.be.equals(totalWithdrawn);
       expect(data.totalWithdrawnAgainst).to.be.equals(totalWithdrawnAgainst);
       expect(data.claimable).to.be.equals(claimable);
+
+      expect(data.iSale.saleStatus).to.be.equals(await sale.saleStatus());
+      expect(data.iSaleAddress).to.be.equals(saleAddress);
     });
 
     it("should query RedeemableEscrowSupplyTokenWithdrawer after multiple Deposits", async function () {
