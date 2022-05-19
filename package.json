@@ -24,9 +24,9 @@
     "create-local": "graph create --node http://localhost:8020/ beehive-innovation/rain-protocol",
     "remove-local": "graph remove --node http://localhost:8020/ beehive-innovation/rain-protocol",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 beehive-innovation/rain-protocol  --version-label 1",
-    "prepare:mumbai": "npx mustache config/mumbai_1.json subgraph.template.yaml subgraph.yaml",
+    "prepare:mumbai": "npx mustache config/mumbai/mumbai_1.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:mumbai": "npm run prepare:mumbai && npm run generate-schema && npm run codegen && npm run build && npm run deploy",
-    "prepare:matic": "npx mustache config/polygon.json subgraph.template.yaml subgraph.yaml",
+    "prepare:matic": "npx mustache config/polygon/polygon.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:matic": "npm run prepare:matic && npm run generate-schema && npm run codegen && npm run build && npm run deploy-rain-polygon",
     "prepare:localhost": "npx mustache config/localhost.json subgraph.template.yaml subgraph.yaml",
     "deploy-build:localhost": "npm run prepare:localhost && npm run generate-schema && npm run codegen && npm run build && npm run create-local && npm run deploy-local",
@@ -41,7 +41,7 @@
     "deploy-subgraph": "ts-node scripts/index.ts"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.26.1",
+    "@graphprotocol/graph-cli": "0.26.0",
     "@graphprotocol/graph-ts": "^0.25.0",
     "mustache": "^3.2.1"
   },

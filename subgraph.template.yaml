@@ -7,9 +7,9 @@ dataSources:
     name: TrustFactory
     network: {{ network }}
     source:
-      address: "{{ trustFactory }}"
+      address: "{{ TrustFactory }}"
       abi: TrustFactory
-      startBlock: {{ trustFactoryBlock }}
+      startBlock: {{ TrustFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -40,9 +40,9 @@ dataSources:
     name: VerifyFactory
     network: {{ network }}
     source:
-      address: "{{ verifyFactory }}"
+      address: "{{ VerifyFactory }}"
       abi: VerifyFactory
-      startBlock: {{ blockVerifyFactory }}
+      startBlock: {{ VerifyFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -63,9 +63,9 @@ dataSources:
     name: ERC20BalanceTierFactory
     network: {{ network }}
     source:
-      address: "{{ erc20BalanceTierFactory }}"
+      address: "{{ ERC20BalanceTierFactory }}"
       abi: ERC20BalanceTierFactory
-      startBlock: {{ blockErc20BalanceTierFactory }}
+      startBlock: {{ ERC20BalanceTierFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -90,9 +90,9 @@ dataSources:
     name: ERC721BalanceTierFactory
     network: {{ network }}
     source:
-      address: "{{ erc721BalanceTierFactory }}"
+      address: "{{ ERC721BalanceTierFactory }}"
       abi: ERC721BalanceTierFactory
-      startBlock: {{ blockErc721BalanceTierFactory }}
+      startBlock: {{ ERC721BalanceTierFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -117,9 +117,9 @@ dataSources:
     name: ERC20TransferTierFactory
     network: {{ network }}
     source:
-      address: "{{ erc20TransferTierFactory }}"
+      address: "{{ ERC20TransferTierFactory }}"
       abi: ERC20TransferTierFactory
-      startBlock: {{ blockErc20TransferTierFactory }}
+      startBlock: {{ ERC20TransferTierFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -142,9 +142,9 @@ dataSources:
     name: CombineTierFactory
     network: {{ network }}
     source:
-      address: "{{ combineTierFactory }}"
+      address: "{{ CombineTierFactory }}"
       abi: CombineTierFactory
-      startBlock: {{ blockCombineTierFactory }}
+      startBlock: {{ CombineTierFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -167,9 +167,9 @@ dataSources:
     name: VerifyTierFactory
     network: {{ network }}
     source:
-      address: "{{ verifyTierFactory }}"
+      address: "{{ VerifyTierFactory }}"
       abi: VerifyTierFactory
-      startBlock: {{ blockVerifyTierFactory }}
+      startBlock: {{ VerifyTierFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -192,9 +192,9 @@ dataSources:
     name: SaleFactory
     network: {{ network }}
     source:
-      address: "{{ saleFactory }}"
+      address: "{{ SaleFactory }}"
       abi: SaleFactory
-      startBlock: {{ blockSaleFactory }}
+      startBlock: {{ SaleFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -217,9 +217,9 @@ dataSources:
     name: EmissionsERC20Factory
     network: {{ network }}
     source:
-      address: "{{ emissionsERC20Factory }}"
+      address: "{{ EmissionsERC20Factory }}"
       abi: EmissionsERC20Factory
-      startBlock: {{ emissionsERC20FactoryBlock }}
+      startBlock: {{ EmissionsERC20FactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -242,9 +242,9 @@ dataSources:
     name: GatedNFTFactory
     network: {{ network }}
     source:
-      address: "{{ gatedNFTFactory }}"
+      address: "{{ GatedNFTFactory }}"
       abi: GatedNFTFactory
-      startBlock: {{ blockGatedNFTFactory }}
+      startBlock: {{ GatedNFTFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -267,9 +267,9 @@ dataSources:
     name: RedeemableERC20ClaimEscrow
     network: {{ network }}
     source:
-      address: "{{ redeemableERC20ClaimEscrow }}"
+      address: "{{ RedeemableERC20ClaimEscrow }}"
       abi: RedeemableERC20ClaimEscrow
-      startBlock: {{ blockRedeemableERC20ClaimEscrow }}
+      startBlock: {{ RedeemableERC20ClaimEscrowBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -299,9 +299,9 @@ dataSources:
     name: NoticeBoard
     network: {{ network }}
     source:
-      address: "{{ noticeBoard }}"
+      address: "{{ NoticeBoard }}"
       abi: NoticeBoard
-      startBlock: {{ noticeBoardBlock }}
+      startBlock: {{ NoticeBoardBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
