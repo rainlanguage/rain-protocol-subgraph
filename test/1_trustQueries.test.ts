@@ -270,7 +270,7 @@ before("Deployment contracts and subgraph", async function () {
 });
 
 // TODO: Move Redeemable Test
-describe.only("Subgraph Trusts Test", function () {
+describe.skip("Subgraph Trusts Test", function () {
   let bPoolFeeEscrow: BPoolFeeEscrow;
 
   before(async function () {
