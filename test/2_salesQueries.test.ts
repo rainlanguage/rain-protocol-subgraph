@@ -47,7 +47,7 @@ import {
   erc20BalanceTierFactory,
   redeemableERC20Factory,
   noticeBoard,
-} from "./1_trustQueries.test";
+} from "./1_initQueries.test.";
 
 let reserve: ReserveTokenTest,
   erc20BalanceTier: ERC20BalanceTier,

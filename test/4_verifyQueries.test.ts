@@ -36,7 +36,7 @@ import {
   // Contracts factory
   verifyFactory,
   noticeBoard,
-} from "./1_trustQueries.test";
+} from "./1_initQueries.test.";
 
 let verify: Verify, transaction: ContractTransaction; // use to save/facilite a tx
 

@@ -1,5 +1,5 @@
-// commit contracts: e590ce7ef673224afba04c43384a278a9500500d
 {
+  "commit": "e590ce7ef673224afba04c43384a278a9500500d",
   "network": "matic",
   "CombineTierFactory": "0xaB9D00F59A8C45b8b20F060D5F7d97FdDbA2De19",
   "CombineTierFactoryBlock": 28479202,

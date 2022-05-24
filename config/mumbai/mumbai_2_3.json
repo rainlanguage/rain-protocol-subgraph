@@ -1,5 +1,5 @@
-// commit contracts: e590ce7ef673224afba04c43384a278a9500500d
 {
+  "commit": "e590ce7ef673224afba04c43384a278a9500500d",
   "network": "mumbai",
   "CombineTierFactory": "0x21fC48631F0efA5EFe790b5c05929cEdc271dB43",
   "CombineTierFactoryBlock": 26367704,

@@ -13,7 +13,7 @@ import {
   signer1,
   signer2,
   emissionsERC20Factory,
-} from "./1_trustQueries.test";
+} from "./1_initQueries.test.";
 
 // Types
 import type { FetchResult } from "apollo-fetch";

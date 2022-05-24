@@ -1,5 +1,5 @@
-// commit contracts: e590ce7ef673224afba04c43384a278a9500500d
 {
+  "commit": "e590ce7ef673224afba04c43384a278a9500500d",
   "network": "goerli",
   "CombineTierFactory": "0x34A0946CEAD3417E629B2679D05C0A24d49a1eB4",
   "CombineTierFactoryBlock": 6908435,

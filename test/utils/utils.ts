@@ -336,16 +336,6 @@ export enum OpcodeEmissionsERC20 {
   CONSTRUCTION_BLOCK_NUMBER,
 }
 
-// Enum that represent the DistributionStatus (Trust)
-export enum DistributionStatus {
-  Pending,
-  Seeded,
-  Trading,
-  TradingCanEnd,
-  Success,
-  Fail,
-}
-
 // Enum that represent the SaleStatus (Sale)
 export enum SaleStatus {
   PENDING,
