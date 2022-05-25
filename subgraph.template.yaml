@@ -283,80 +283,7 @@ dataSources:
           handler: handleNewNotice
       file: ./src/NoticeBoard.ts
 templates:
-  - kind: ethereum/contract
-    name: TrustTemplate
-    network: {{ network }}
-    source:
-      abi: Trust
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Trust
-        - Contract
-        - DistributionProgress
-        - ERC20
-        - RedeemableERC20
-        - SeedERC20
-        - Pool
-        - CRP
-      abis:
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-      eventHandlers:
-        - event: Construction(address,address,address,address,address,address,uint256,uint256)
-          handler: handleConstruction
-        - event: CreatorFundsRelease(address,address,uint256)
-          handler: handleCreatorFundsRelease
-        - event: EndDutchAuction(address,uint256,uint256,uint256,uint256,uint256)
-          handler: handleEndDutchAuction
-        - event: Initialize(address,(address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256),address,address,address,uint256)
-          handler: handleInitialize
-        - event: PhaseScheduled(address,uint256,uint256)
-          handler: handlePhaseScheduled
-        - event: StartDutchAuction(address,address,uint256)
-          handler: handleStartDutchAuction
-      file: ./src/trust/trust.ts
-  - kind: ethereum/contract
-    name: SeedERC20Template
-    network: {{ network }}
-    source:
-      abi: SeedERC20
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Seed
-        - Unseed
-        - SeedERC20
-        - Holder
-      abis:
-        - name: SeedERC20
-          file: ./abis/SeedERC20.json
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-      eventHandlers:
-        - event: CooldownInitialize(address,uint256)
-          handler: handleCooldownInitialize
-        - event: Seed(address,uint256,uint256)
-          handler: handleSeed
-        - event: Redeem(address,address,uint256,uint256)
-          handler: handleRedeem
-        - event: Initialize(address,address,address,uint256)
-          handler: handleInitialize
-        - event: Unseed(address,uint256,uint256)
-          handler: handleUnseed
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-      file: ./src/trust/SeedERC20.ts
+
   - kind: ethereum/contract
     name: RedeemableERC20Template
     network: {{ network }}
@@ -395,33 +322,7 @@ templates:
           handler: handleRedeem
         - event: TreasuryAsset(address,address)
           handler: handleTreasuryAsset
-      file: ./src/trust/RedeemableERC20.ts
-  - kind: ethereum/contract
-    name: PoolTemplate
-    network: {{ network }}
-    source:
-      abi: Pool
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Pool
-        - Swap
-        - Trust
-      abis:
-        - name: Pool
-          file: ./abis/Pool.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-        - name: SeedERC20
-          file: ./abis/SeedERC20.json
-      eventHandlers:
-        - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
-          handler: handleLOG_SWAP
-      file: ./src/trust/Pool.ts
+      file: ./src/RedeemableERC20.ts
   - kind: ethereum/contract
     name: ERC20BalanceTierTemplate
     network: {{ network }}

@@ -14,7 +14,7 @@ import {
   UnknownTier,
   RedeemableEscrowSupplyTokenWithdrawer,
   RedeemableEscrowSupplyTokenDeposit,
-} from "../../generated/schema";
+} from "../generated/schema";
 import {
   Initialize,
   Receiver,
@@ -23,16 +23,16 @@ import {
   ERC20PullInitialize,
   Redeem as RedeemEvent,
   TreasuryAsset as TreasuryAssetEvent,
-} from "../../generated/templates/RedeemableERC20Template/RedeemableERC20";
-import { ERC20 as ERC20Contract } from "../../generated/templates/SaleTemplate/ERC20";
+} from "../generated/templates/RedeemableERC20Template/RedeemableERC20";
+import { ERC20 as ERC20Contract } from "../generated/templates/SaleTemplate/ERC20";
 import {
   getTrustParticipent,
   notAContract,
   ZERO_ADDRESS,
   ZERO_BI,
-} from "../utils";
-import { RedeemableERC20 as RedeemabaleERC20Contract } from "../../generated/TrustFactory/RedeemableERC20";
-import { ERC20 } from "../../generated/TrustFactory/ERC20";
+} from "./utils";
+import { RedeemableERC20 as RedeemabaleERC20Contract } from "../generated/templates/RedeemableERC20Template/RedeemableERC20";
+import { ERC20 } from "../generated/templates/RedeemableERC20Template/ERC20";
 import { Address, dataSource } from "@graphprotocol/graph-ts";
 
 /**
