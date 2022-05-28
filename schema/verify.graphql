@@ -1,0 +1,134 @@
+type VerifyFactory @entity {
+  id: ID! #factory address
+  address: Bytes! #factory address
+  implementation: Bytes! #implementation address from Implementation event
+  children: [Verify!]! #all the children that were deployed by this factory
+}
+
+type Verify implements INotice @entity {
+  id: ID! #Verify contract address
+  address: Bytes! #Verify contract address
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+  deployer: Bytes! #address of the deployer - get from event Initialize.sender
+  factory: VerifyFactory #the factory that deployed this contract
+  #contruct and update by listening to the RequestApprove, Approve, RequestBan, Ban, RequestRemove, Remove events
+  verifyAddresses: [VerifyAddress!]
+
+  verifyRequestApprovals: [VerifyRequestApprove!]
+  verifyRequestRemovals: [VerifyRequestRemove!]
+  verifyRequestBans: [VerifyRequestBan!]
+  verifyApprovals: [VerifyApprove!]
+  verifyRemovals: [VerifyRemove!]
+  verifyBans: [VerifyBan!]
+
+  verifyEventCount: BigInt!
+
+  approvers: [VerifyAddress!]
+  removers: [VerifyAddress!]
+  banners: [VerifyAddress!]
+
+  approverAdmins: [VerifyAddress!]
+  bannerAdmins: [VerifyAddress!]
+  removerAdmins: [VerifyAddress!]
+
+  notices: [Notice!]
+}
+
+interface VerifyEvent {
+  id: ID! #Concat {Verify.address}+{txHash}
+  block: BigInt! #block of the vent
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  verifyContract: Bytes!
+  sender: Bytes!
+  account: Bytes!
+  data: Bytes!
+}
+
+# created from RequestApprove event
+type VerifyRequestApprove implements VerifyEvent @entity {
+  id: ID! #Concat {Verify.address}+{txHash}+{index}
+  block: BigInt! #block of the vent
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  verifyContract: Bytes! #the contract that emited the event
+  sender: Bytes! #event RequestApprove.sender
+  account: Bytes! #event RequestApprove.sender
+  data: Bytes! #event RequestApprove.data
+}
+
+# created from Approve event
+type VerifyApprove implements VerifyEvent @entity {
+  id: ID! #Concat {Verify.address}+{txHash}
+  block: BigInt! #block of the vent
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  verifyContract: Bytes! #the contract that emited the event
+  sender: Bytes! #event Approve.sender
+  account: Bytes! #event Approve.account
+  data: Bytes! #event Approve.data
+}
+
+# created from RequestBan event
+type VerifyRequestBan implements VerifyEvent @entity {
+  id: ID! #Concat {Verify.address}+{txHash}
+  block: BigInt! #block of the vent
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  verifyContract: Bytes! #the contract that emited the event
+  sender: Bytes! #event RequestBan.sender
+  account: Bytes! #event RequestBan.account
+  data: Bytes! #event RequestBan.data
+}
+
+# created from Ban event
+type VerifyBan implements VerifyEvent @entity {
+  id: ID! #Concat {Verify.address}+{txHash}
+  block: BigInt! #block of the vent
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  verifyContract: Bytes! #the contract that emited the event
+  sender: Bytes! #event Ban.sender
+  account: Bytes! #event Ban.account
+  data: Bytes! #event Ban.data
+}
+
+# created from RequestRemove event
+type VerifyRequestRemove implements VerifyEvent @entity {
+  id: ID! #Concat {Verify.address}+{txHash}
+  block: BigInt! #block of the vent
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  verifyContract: Bytes! #the contract that emited the event
+  sender: Bytes! #event RequestRemove.sender
+  account: Bytes! #event RequestRemove.account
+  data: Bytes! #event RequestRemove.data
+}
+
+# created from Remove event
+type VerifyRemove implements VerifyEvent @entity {
+  id: ID! #Concat {Verify.address}+{txHash}
+  block: BigInt! #block of the vent
+  transactionHash: Bytes! #txHash of the event
+  timestamp: BigInt! #timestamp of event
+  verifyContract: Bytes! #the contract that emited the event
+  sender: Bytes! #event Remove.sender
+  account: Bytes! #event Remove.account
+  data: Bytes! #event Remove.data
+}
+
+# Created after the first RequestApprove event for an address or first role granted
+type VerifyAddress @entity {
+  id: ID! #concat {Verify.address}+{VerifyAddress.address}
+  verifyContract: Verify!
+  address: Bytes! #the account address
+  # Get from the last RequestApprove, RequestBan, RequestRemove events for this address.
+  # After a Approve, Ban or Remove event, RequestStatus should move back to 'NONE'.
+  requestStatus: Int!
+  # Get from the last Approve, Ban, Remove events.
+  # After the RequestApprove event and before Approve, status should be 'NONE'.
+  status: Int!
+  events: [VerifyEvent!] #all the event entities associated with this address for this Verify
+  roles: [BigInt!]
+}

@@ -1,39 +1,320 @@
-specVersion: 0.0.2
+specVersion: 0.0.4
 schema:
   file: ./schema.graphql
+   
 dataSources:
   - kind: ethereum/contract
-    name: RainProtocol
+    name: TrustFactory
     network: {{ network }}
     source:
-      address: "{{ factory }}"
-      abi: RainProtocol
-      startBlock: {{ startBlock }}
+      address: "{{ trustFactory }}"
+      abi: TrustFactory
+      startBlock: {{ trustFactoryBlock }}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - NewContract
+        - TrustFactory
+        - Trust
       abis:
-        - name: RainProtocol
-          file: ./abis/RainProtocol.json
+        - name: TrustFactory
+          file: ./abis/TrustFactory.json
         - name: Trust
           file: ./abis/Trust.json
-        - name: BPool
-          file: ./abis/BPool.json
+        - name: Pool
+          file: ./abis/Pool.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
         - name: SeedERC20
           file: ./abis/SeedERC20.json
       eventHandlers:
-        - event: NewContract(indexed address)
-          handler: handleNewContract
-      file: ./src/mapping.ts
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/trust/trustFactory.ts
+  - kind: ethereum/contract
+    name: VerifyFactory
+    network: {{ network }}
+    source:
+      address: "{{ verifyFactory }}"
+      abi: VerifyFactory
+      startBlock: {{ blockVerifyFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - VerifyFactory
+        - Verify
+      abis:
+        - name: VerifyFactory
+          file: ./abis/verify/VerifyFactory.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/verify/VerifyFactory.ts
+  - kind: ethereum/contract
+    name: ERC20BalanceTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ erc20BalanceTierFactory }}"
+      abi: ERC20BalanceTierFactory
+      startBlock: {{ blockErc20BalanceTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - ERC20BalanceTierFactory
+        - ERC20BalanceTier
+      abis:
+        - name: ERC20BalanceTierFactory
+          file: ./abis/tier/ERC20BalanceTierFactory.json
+        - name: ERC20BalanceTier
+          file: ./abis/tier/ERC20BalanceTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/ERC20BalanceTierFactory.ts
+  - kind: ethereum/contract
+    name: ERC721BalanceTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ erc721BalanceTierFactory }}"
+      abi: ERC721BalanceTierFactory
+      startBlock: {{ blockErc721BalanceTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - ERC721BalanceTierFactory
+        - ERC20BalanceTier
+      abis:
+        - name: ERC721BalanceTierFactory
+          file: ./abis/tier/ERC721BalanceTierFactory.json
+        - name: ERC721BalanceTier
+          file: ./abis/tier/ERC721BalanceTier.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/ERC721BalanceTierFactory.ts
+  - kind: ethereum/contract
+    name: ERC20TransferTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ erc20TransferTierFactory }}"
+      abi: ERC20TransferTierFactory
+      startBlock: {{ blockErc20TransferTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - ERC20TransferTierFactory
+        - ERC20TransferTier
+      abis:
+        - name: ERC20TransferTierFactory
+          file: ./abis/tier/ERC20TransferTierFactory.json
+        - name: ERC20TransferTier
+          file: ./abis/tier/ERC20TransferTier.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/ERC20TransferTierFactory.ts
+  - kind: ethereum/contract
+    name: CombineTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ combineTierFactory }}"
+      abi: CombineTierFactory
+      startBlock: {{ blockCombineTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - CombineTierFactory
+        - CombineTier
+      abis:
+        - name: CombineTierFactory
+          file: ./abis/tier/CombineTierFactory.json
+        - name: CombineTier
+          file: ./abis/tier/CombineTier.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/CombineTierFactory.ts
+  - kind: ethereum/contract
+    name: VerifyTierFactory
+    network: {{ network }}
+    source:
+      address: "{{ verifyTierFactory }}"
+      abi: VerifyTierFactory
+      startBlock: {{ blockVerifyTierFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - VerifyTierFactory
+        - VerifyTier
+      abis:
+        - name: VerifyTierFactory
+          file: ./abis/tier/VerifyTierFactory.json
+        - name: VerifyTier
+          file: ./abis/tier/VerifyTier.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/tier/VerifyTierFactory.ts
+  - kind: ethereum/contract
+    name: SaleFactory
+    network: {{ network }}
+    source:
+      address: "{{ saleFactory }}"
+      abi: SaleFactory
+      startBlock: {{ blockSaleFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - SaleFactory
+        - Sale
+      abis:
+        - name: SaleFactory
+          file: ./abis/sale/SaleFactory.json
+        - name: Sale
+          file: ./abis/sale/Sale.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/sale/SaleFactory.ts
+  - kind: ethereum/contract
+    name: EmissionsERC20Factory
+    network: {{ network }}
+    source:
+      address: "{{ emissionsERC20Factory }}"
+      abi: EmissionsERC20Factory
+      startBlock: {{ emissionsERC20FactoryBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - EmissionsERC20Factory
+        - EmissionsERC20
+      abis:
+        - name: EmissionsERC20Factory
+          file: ./abis/emissionsERC20/EmissionsERC20Factory.json
+        - name: EmissionsERC20
+          file: ./abis/emissionsERC20/EmissionsERC20.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/emissionsERC20/emissionsERC20Factory.ts
+  - kind: ethereum/contract
+    name: GatedNFTFactory
+    network: {{ network }}
+    source:
+      address: "{{ gatedNFTFactory }}"
+      abi: GatedNFTFactory
+      startBlock: {{ blockGatedNFTFactory }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - GatedNFTFactory
+        - GatedNFT
+      abis:
+        - name: GatedNFTFactory
+          file: ./abis/gatedNFT/GatedNFTFactory.json
+        - name: GatedNFT
+          file: ./abis/gatedNFT/GatedNFT.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/gatedNFT/GatedNFTFactory.ts 
+  - kind: ethereum/contract
+    name: RedeemableERC20ClaimEscrow
+    network: {{ network }}
+    source:
+      address: "{{ redeemableERC20ClaimEscrow }}"
+      abi: RedeemableERC20ClaimEscrow
+      startBlock: {{ blockRedeemableERC20ClaimEscrow }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - GatedNFTFactory
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: RedeemableERC20ClaimEscrow
+          file: ./abis/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.json
+      eventHandlers:
+        - event: Deposit(address,address,address,address,address,uint256,uint256)
+          handler: handleDeposit
+        - event: PendingDeposit(address,address,address,address,uint256)
+          handler: handlePendingDeposit
+        - event: Sweep(address,address,address,address,address,uint256)
+          handler: handleSweep
+        - event: Undeposit(address,address,address,address,uint256,uint256)
+          handler: handleUndeposit
+        - event: Withdraw(address,address,address,address,uint256,uint256)
+          handler: handleWithdraw
+      file: ./src/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.ts 
+  - kind: ethereum/contract
+    name: NoticeBoard
+    network: {{ network }}
+    source:
+      address: "{{ noticeBoard }}"
+      abi: NoticeBoard
+      startBlock: {{ noticeBoardBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Notice
+      abis:
+        - name: NoticeBoard
+          file: ./abis/NoticeBoard.json
+      eventHandlers:
+        - event: NewNotice(address,(address,bytes))
+          handler: handleNewNotice
+      file: ./src/NoticeBoard.ts
 templates:
   - kind: ethereum/contract
     name: TrustTemplate
@@ -42,71 +323,36 @@ templates:
       abi: Trust
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - Notice
+        - Trust
+        - Contract
+        - DistributionProgress
+        - ERC20
+        - RedeemableERC20
+        - SeedERC20
+        - Pool
+        - CRP
       abis:
         - name: Trust
           file: ./abis/Trust.json
-      eventHandlers:
-        - event: Notice(indexed address,bytes)
-          handler: handleNotice
-      file: ./src/Trust.ts
-  - kind: ethereum/contract
-    name: BalancerPoolTemplate
-    network: {{ network }}
-    source:
-      abi: BPool
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - LOG_SWAP
-      abis:
-        - name: BPool
-          file: ./abis/BPool.json
         - name: ERC20
           file: ./abis/ERC20.json
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
       eventHandlers:
-        - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
-          handler: handleSwaps
-      file: ./src/BPool.ts
-  - kind: ethereum/contract
-    name: RedeemableERC20Template
-    network: {{ network }}
-    source:
-      abi: RedeemableERC20
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - Redeem
-        - Transfer
-        - TreasuryAsset
-      abis:
-        - name: RedeemableERC20
-          file: ./abis/RedeemableERC20.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: Trust
-          file: ./abis/Trust.json
-      eventHandlers:
-        - event: Redeem(indexed address,indexed address,uint256[2])
-          handler: handleRedeem
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-        - event: TreasuryAsset(indexed address,indexed address)
-          handler: handleTreasuryAsset
-      file: ./src/RedeemableERC20.ts
+        - event: Construction(address,address,address,address,address,address,uint256,uint256)
+          handler: handleConstruction
+        - event: CreatorFundsRelease(address,address,uint256)
+          handler: handleCreatorFundsRelease
+        - event: EndDutchAuction(address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleEndDutchAuction
+        - event: Initialize(address,(address,uint256,uint256,uint256,uint256,address,uint256,uint256,uint256),address,address,address,uint256)
+          handler: handleInitialize
+        - event: PhaseScheduled(address,uint256,uint256)
+          handler: handlePhaseScheduled
+        - event: StartDutchAuction(address,address,uint256)
+          handler: handleStartDutchAuction
+      file: ./src/trust/trust.ts
   - kind: ethereum/contract
     name: SeedERC20Template
     network: {{ network }}
@@ -114,52 +360,53 @@ templates:
       abi: SeedERC20
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - Transfer
         - Seed
         - Unseed
-        - Redeem
+        - SeedERC20
+        - Holder
       abis:
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: ERC20
-          file: ./abis/ERC20.json
         - name: SeedERC20
           file: ./abis/SeedERC20.json
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
+        - name: Trust
+          file: ./abis/Trust.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
+        - event: CooldownInitialize(address,uint256)
+          handler: handleCooldownInitialize
+        - event: Seed(address,uint256,uint256)
+          handler: handleSeed
+        - event: Redeem(address,address,uint256,uint256)
+          handler: handleRedeem
+        - event: Initialize(address,address,address,uint256)
+          handler: handleInitialize
+        - event: Unseed(address,uint256,uint256)
+          handler: handleUnseed
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
-        - event: Seed(indexed address,uint256[2])
-          handler: handleSeed
-        - event: Unseed(indexed address,uint256[2])
-          handler: handleUnseed
-        - event: Redeem(indexed address,uint256[2])
-          handler: handleRedeem
-      file: ./src/SeedERC20.ts
+      file: ./src/trust/SeedERC20.ts
   - kind: ethereum/contract
-    name: RedeemableERC20PoolTemplate
+    name: RedeemableERC20Template
     network: {{ network }}
     source:
-      abi: RedeemableERC20Pool
+      abi: RedeemableERC20
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - PhaseShiftScheduled
+        - ERC20Pull
+        - Holder
+        - RedeemableERC20
+        - TreasuryAsset
+        - TreasuryAssetCaller
+        - Redeem
       abis:
-        - name: Trust
-          file: ./abis/Trust.json
-        - name: RedeemableERC20Pool
-          file: ./abis/RedeemableERC20Pool.json
-        - name: BPool
-          file: ./abis/BPool.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: RedeemableERC20
@@ -167,6 +414,307 @@ templates:
         - name: SeedERC20
           file: ./abis/SeedERC20.json
       eventHandlers:
-        - event: PhaseShiftScheduled(indexed uint32)
-          handler: handlePhaseShiftScheduled
-      file: ./src/RedeemableERC20Pool.ts
+        - event: Initialize(address,(address,(string,string,address,uint256),address,uint256,address))
+          handler: handleInitialize
+        - event: Receiver(address,address)
+          handler: handleReceiver
+        - event: Sender(address,address)
+          handler: handleSender
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: ERC20PullInitialize(address,address,address)
+          handler: handleERC20PullInitialize
+        - event: Redeem(address,address,uint256,uint256)
+          handler: handleRedeem
+        - event: TreasuryAsset(address,address)
+          handler: handleTreasuryAsset
+      file: ./src/trust/RedeemableERC20.ts
+  - kind: ethereum/contract
+    name: PoolTemplate
+    network: {{ network }}
+    source:
+      abi: Pool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Pool
+        - Swap
+        - Trust
+      abis:
+        - name: Pool
+          file: ./abis/Pool.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: RedeemableERC20
+          file: ./abis/RedeemableERC20.json
+        - name: SeedERC20
+          file: ./abis/SeedERC20.json
+      eventHandlers:
+        - event: LOG_SWAP(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleLOG_SWAP
+      file: ./src/trust/Pool.ts
+  - kind: ethereum/contract
+    name: ERC20BalanceTierTemplate
+    network: {{ network }}
+    source:
+      abi: ERC20BalanceTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - ERC20
+        - ERC20BalanceTier
+      abis:
+        - name: ERC20BalanceTier
+          file: ./abis/tier/ERC20BalanceTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Initialize(address,address)
+          handler: handleInitialize
+        - event: InitializeValueTier(address,address)
+          handler: handleInitializeValueTier
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/ERC20BalanceTier.ts
+  - kind: ethereum/contract
+    name: ERC721BalanceTierTemplate
+    network: {{ network }}
+    source:
+      abi: ERC721BalanceTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - ERC721
+        - ERC721BalanceTier
+      abis:
+        - name: ERC721BalanceTier
+          file: ./abis/tier/ERC721BalanceTier.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        - event: Initialize(address,address)
+          handler: handleInitialize
+        - event: InitializeValueTier(address,address)
+          handler: handleInitializeValueTier
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/ERC721BalanceTier.ts
+  - kind: ethereum/contract
+    name: ERC20TransferTierTemplate
+    network: {{ network }}
+    source:
+      abi: ERC20TransferTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - ERC20
+        - ERC20TransferTier
+        - TierChange
+        - TierLevel
+      abis:
+        - name: ERC20TransferTier
+          file: ./abis/tier/ERC20TransferTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Initialize(address,address)
+          handler: handleInitialize
+        - event: InitializeValueTier(address,address)
+          handler: handleInitializeValueTier
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/ERC20TransferTier.ts
+  - kind: ethereum/contract
+    name: CombineTierTemplate
+    network: {{ network }}
+    source:
+      abi: CombineTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Snapshot
+      abis:
+        - name: CombineTier
+          file: ./abis/tier/CombineTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
+          handler: handleSnapshot
+      file: ./src/tier/CombineTier.ts
+  - kind: ethereum/contract
+    name: VerifyTierTemplate
+    network: {{ network }}
+    source:
+      abi: VerifyTier
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - VerifyTier
+      abis:
+        - name: VerifyTier
+          file: ./abis/tier/VerifyTier.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Initialize(address,address)
+          handler: handleInitialize
+        - event: TierChange(address,address,uint256,uint256)
+          handler: handleTierChange
+      file: ./src/tier/VerifyTier.ts
+  - kind: ethereum/contract
+    name: SaleTemplate
+    network: {{ network }}
+    source:
+      abi: Sale
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Sale
+        - SaleFactory
+        - ERC20
+        - SaleStart
+        - CanStartStateConfig
+        - CanEndStateConfig
+        - CalculatePriceStateConfig 
+        - SaleEnd
+        - SaleBuy
+        - SaleFeeRecipient
+        - SaleReceipt
+        - SaleRefund
+      abis:
+        - name: Sale
+          file: ./abis/sale/Sale.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Buy(address,(address,uint256,uint256,uint256,uint256),(uint256,address,uint256,uint256,uint256))
+          handler: handleBuy
+        - event: Construct(address,(uint256,address))
+          handler: handleConstruct
+        - event: CooldownInitialize(address,uint256)
+          handler: handleCooldownInitialize
+        - event: CooldownTriggered(address,uint256)
+          handler: handleCooldownTriggered
+        - event: End(address,uint8)
+          handler: handleEnd
+        - event: Initialize(address,((bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),address,address,uint256,uint256,uint256),address)
+          handler: handleInitialize
+        - event: Refund(address,(uint256,address,uint256,uint256,uint256))
+          handler: handleRefund
+        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
+          handler: handleSnapshot
+        - event: Start(address)
+          handler: handleStart
+      file: ./src/sale/Sale.ts
+  - kind: ethereum/contract
+    name: VerifyTemplate
+    network: {{ network }}
+    source:
+      abi: Verify
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Verify
+        - VerifyAddress
+        - VerifyApprove
+        - VerifyBan
+        - VerifyRemove
+        - VerifyRequestApprove
+        - VerifyRequestBan
+        - VerifyRequestRemove
+      abis:
+        - name: Verify
+          file: ./abis/verify/Verify.json
+      eventHandlers:
+        - event: Approve(address,(address,bytes))
+          handler: handleApprove
+        - event: Ban(address,(address,bytes))
+          handler: handleBan
+        - event: Remove(address,(address,bytes))
+          handler: handleRemove
+        - event: RequestApprove(address,(address,bytes))
+          handler: handleRequestApprove
+        - event: RequestBan(address,(address,bytes))
+          handler: handleRequestBan
+        - event: RequestRemove(address,(address,bytes))
+          handler: handleRequestRemove
+        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+          handler: handleRoleAdminChanged
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleRevoked
+      file: ./src/verify/Verify.ts
+  - kind: ethereum/contract
+    name: GatedNFTTemplate
+    network: {{ network }}
+    source:
+      abi: GatedNFT
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - GatedNFT
+        - UpdatedRoyaltyRecipient
+        - OwnershipTransferred
+        - GatedToken
+        - GatedTokenOwner
+        - HistoricalTransfer
+      abis:
+        - name: GatedNFT
+          file: ./abis/gatedNFT/GatedNFT.json
+      eventHandlers:
+        - event: CreatedGatedNFT(address,address,(string,string,string,string,string,bytes32,bytes32),address,uint256,uint256,uint8,uint256,address,uint256)
+          handler: handleCreatedGatedNFT
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: UpdatedRoyaltyRecipient(address)
+          handler: handleUpdatedRoyaltyRecipient
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+      file: ./src/gatedNFT/GatedNFT.ts
+  - kind: ethereum/contract
+    name: EmissionsERC20Template
+    network: {{ network }}
+    source:
+      abi: EmissionsERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - EmissionsERC20
+        - EmissionERC20Claim
+      abis:
+        - name: EmissionsERC20
+          file: ./abis/emissionsERC20/EmissionsERC20.json
+      eventHandlers:
+        - event: Claim(address,address,bytes)
+          handler: handleClaim
+        - event: Initialize(address,bool,uint256)
+          handler: handleInitialize
+        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
+          handler: handleSnapshot
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/emissionsERC20/emissionsERC20.ts

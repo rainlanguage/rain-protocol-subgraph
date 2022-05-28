@@ -1,0 +1,319 @@
+# TrustFactory entity.
+# Created when an Implementation event is emited by TrustFactory.
+# src/trustFactory.ts/handleImplementation
+
+# balancerFactory, crpFactory, redeemableERC20Factory, seedERC20Factory, bPoolFeeEscrow
+# will be initialised when Construction event is emited by first Trust.
+# src/trust.ts/handleConstruction
+
+type TrustFactory @entity {
+  id: ID! #address of the TrustFactory
+  trustCount: BigInt!
+  balancerFactory: Bytes
+  crpFactory: Bytes
+  redeemableERC20Factory: Bytes
+  seedERC20Factory: Bytes
+  bPoolFeeEscrow: Bytes
+  trusts: [Trust!]
+}
+
+# Trust entity
+# created when NewChild event is emited by TrustFactory
+# src/trustFactory.ts/handleNewChild
+type Trust implements Isale & INotice @entity {
+  id: ID! #address of trust contract - from TrustFactory NewContract events
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+  creator: Bytes! #Trust.creator()
+  contracts: Contract
+  factory: Bytes!
+  distributionProgress: DistributionProgress
+  dutchAuction: DutchAuction
+  trustParticipants: [TrustParticipant!]
+  notices: [Notice!]
+  saleStatus: Int
+}
+
+# Notice entity
+# created when Notice event is emited by Trust
+# src/trust.ts/handleNotice
+type Notice @entity {
+  id: ID! #tx hash
+  subject: INotice! #the trust that emitted the event
+  sender: Bytes! #the address of the sender, from the event
+  data: Bytes! #from the event
+  deployBlock: BigInt! #block of event
+  deployTimestamp: BigInt! #timestamp of event
+}
+
+# Contract entity
+# Created when Initialize event is emited by Trust
+# src/trust.ts/handleInitialize
+type Contract @entity {
+  id: ID!
+  reserveERC20: ERC20! #Trust.getContracts() => address reserveERC20
+  redeemableERC20: RedeemableERC20! #Trust.getContracts() => address redeemableERC20
+  seeder: SeedERC20! #Trust.getContracts() => address seeder
+  tier: TierContract! #Trust.getContracts() => address tier
+  configurableRightPool: ConfigurableRightPool! #Trust.getContracts() => address crp
+  pool: Pool! #Trust.getContracts() => address pool
+}
+
+# DistributionProgress entity
+# Created when Initialize event is emited by Trust
+# src/trust.ts/handleInitialize
+type DistributionProgress @entity {
+  id: ID!
+  # When EndDutchAuction is called, distributionStatus could be Success or Fail
+  distributionStatus: Int #Trust.getDistributionProgress() => DistributionStatus distributionStatus
+  distributionStartBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionStartBlock
+  distributionEndBlock: BigInt #Trust.getDistributionProgress() => uint32 distributionEndBlock
+  minimumTradingDuration: BigInt #RedeemableERC20Pool.minimumTradingDuration()
+  poolReserveBalance: BigInt! #Trust.getDistributionProgress() => uint256 poolReserveBalance
+  poolRedeemableBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
+  minimumCreatorRaise: BigInt #Trust.getDistributionProgress() => uint256 minimumCreatorRaise
+  finalWeight: BigInt #RedeemableERC20Pool.finalWeight()
+  initialValuation: BigInt
+  finalValuation: BigInt! #RedeemableERC20Pool.finalValuation()
+  successPoolBalance: BigInt #Trust.successBalance()
+  finalBalance: BigInt! #Trust.finalBalance()
+  reserveInit: BigInt! #Trust.getDistributionProgress() => uint256 reserveInit
+  redeemInit: BigInt! #Trust.getDistributionProgress() => uint256 redeemInit
+  minimumRaise: BigInt! #minimumCreatorRaise + redeemInit + Trust.SeedERC20.seederFee
+  amountRaised: BigInt! # = poolReserveBalance - reserveInit
+  percentRaised: BigDecimal # = amountRaised * 100  / minimumRaise
+  percentAvailable: BigDecimal # = poolTokenBalance * 100 / RedeemableERC20.totalSupply
+}
+
+# DutchAuction entity
+# created when StartDutchAuction event is emited by Trust
+# src/trust.ts/handleStartDutchAuction
+# values are updated when EndDutchAuction event is emited by Trust
+# src/trust.ts/handleEndDutchAuction
+
+type DutchAuction @entity {
+  id: ID!
+  starterAddress: Bytes
+  enderAddress: Bytes
+  pool: Bytes
+  finalAuctionBlock: BigInt
+  finalBalance: BigInt
+  seederPay: BigInt
+  creatorPay: BigInt
+  tokenPay: BigInt
+  poolDust: BigInt
+}
+
+type ConfigurableRightPool @entity {
+  id: ID!
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+}
+
+type RedeemableERC20Pool @entity {
+  id: ID!
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+}
+
+type Pool @entity {
+  id: ID!
+  trust: Trust! #the trust that is the owner of this pool
+  reserve: ERC20 #the reserve token for this trust
+  redeemable: RedeemableERC20 #the redeemable token for this trust
+  poolReserveBalance: BigInt #Trust.getDistributionProgress() => uint256 poolReserveBalance
+  poolRedeemableBalance: BigInt #Trust.getDistributionProgress() => uint256 poolTokenBalance
+  numberOfSwaps: BigInt!
+  swaps: [Swap!]
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+}
+
+type Swap @entity {
+  id: ID!
+  caller: Bytes!
+  tokenIn: Bytes!
+  tokenInSym: String!
+  tokenOut: Bytes!
+  tokenOutSym: String!
+  tokenAmountIn: BigInt!
+  tokenAmountOut: BigInt!
+  pool: Pool!
+  userAddress: Bytes!
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+}
+
+type RedeemableERC20 @entity {
+  id: ID!
+  deployer: Bytes
+  admin: Bytes
+  factory: Bytes #Trust.redeemableERC20Factory()
+  grantedReceivers: [Bytes!]
+  grantedSenders: [Bytes!]
+  redeems: [Redeem!]! #Redeem event in RedeemableERC20.sol
+  treasuryAssets: [TreasuryAsset!]
+  minimumTier: BigInt
+  symbol: String
+  totalSupply: BigInt
+  decimals: Int
+  name: String
+  holders: [Holder!]
+  deployBlock: BigInt #the block the contract was deployed
+  deployTimestamp: BigInt #the timestamp the contract was deployed
+  erc20Pull: ERC20Pull
+  tier: TierContract
+  saleAddress: Bytes
+  escrowSupplyTokenWithdrawers: [RedeemableEscrowSupplyTokenWithdrawer!]
+}
+
+type Redeem @entity {
+  id: ID!
+  trust: Trust!
+  caller: Bytes! #address indexed redeemer
+  treasuryAsset: TreasuryAsset!
+  redeemableERC20: RedeemableERC20! #address indexed redeemable
+  redeemAmount: BigInt! #redeemAmounts[0]
+  treasuryAssetAmount: BigInt! #redeemAmounts[1]
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+}
+
+type SeedERC20 @entity {
+  id: ID! #address of SeedERC20
+  # Update after Trust construction
+  deployer: Bytes
+  recipient: Bytes
+  reserve: Bytes!
+  seedPrice: BigInt
+  factory: Bytes #Trust.seedERC20Factory()
+  seederFee: BigInt #Trust.seederFee()
+  seederUnits: BigInt #Trust.seederUnits()
+  seedFeePerUnit: BigInt! # = seederFee / seederUnits
+  seederCooldownDuration: BigInt #Trust.seederCooldownDuration()
+  # Update after Seed event
+  seederUnitsAvail: BigInt! #SeedERC20.balanceOf(this)
+  seededAmount: BigInt! #ReserveERC20.balanceOf(this)
+  percentSeeded: BigDecimal #SeedERC20.seededAmount / Trust.redeemInit()
+  seeds: [Seed!] #Seed events
+  unseeds: [Unseed!] #Unseed events
+  #...Token interface fields. Update after Trust construction
+  deployBlock: BigInt #the block the contract was deployed
+  deployTimestamp: BigInt #the timestamp the contract was deployed
+  symbol: String
+  totalSupply: BigInt
+  decimals: Int
+  name: String
+  # Update after Transfer events
+  holders: [Holder!] #addresses of token holders
+  # Update after Redeem events for this SeedERC20
+  redeemSeeds: [RedeemSeed!] #redeem
+}
+
+type Holder @entity {
+  id: ID! # {tokenAddress} - {holderAddress}
+  address: Bytes!
+
+  balance: BigInt!
+}
+
+type Seed @entity {
+  id: ID!
+  caller: Bytes! #the address that was transferred to/from
+  seedERC20: SeedERC20! #the seedERC20 that emitted the event
+  tokensSeeded: BigInt! #the reserve amount that was transferred
+  reserveReceived: BigInt! #the amount of SeedERC20 that was transferred
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+}
+
+type Unseed @entity {
+  id: ID!
+  caller: Bytes! #the address that was transferred to/from
+  seedERC20: SeedERC20! #the seedERC20 that emitted the event
+  reserveReturned: BigInt! #the reserve amount that was transferred
+  tokensSeeded: BigInt! #the amount of SeedERC20 that was transferred
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+}
+
+type TrustParticipant @entity {
+  id: ID!
+  address: Bytes! #address of user
+  trust: Trust! #map by address of the trust
+  # Update after every Swap event from Pool, and after every Redeem event for this RedeemableERC20 (as this burns the token)
+  tokenBalance: BigInt #RedeemableERC20.balanceOf(this.user.address)
+  swaps: [Swap!] #Swaps for this.address
+  # Seed events for the SeedERC20 associated with this trust, for this.address
+  seeds: [Seed!]
+  unSeeds: [Unseed!]
+  # Seed redeem events for the SeedERC20 associated with this trust, for this.address
+  redeemSeeds: [RedeemSeed!]
+  # Update after Transfer events for SeedERC20
+  seedBalance: BigInt! #SeedERC20.balanceOf(this.user.address)
+  seedFeeClaimable: BigInt # = SeedERC20.balanceOf(this.user.address) * SeedERC20.seedFeePerUnit
+  # Reedeem events for this trust, for this.address
+  redeems: [Redeem!]
+}
+
+type RedeemSeed @entity {
+  id: ID!
+  caller: Bytes! #address indexed redeemer
+  seedERC20: SeedERC20! #the SeedERC20 that emitted the event
+  redeemAmount: BigInt! #redeemAmounts[0]
+  treasuryAssetAmount: BigInt! #redeemAmounts[1]
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+}
+
+type TreasuryAsset @entity {
+  id: ID!
+  callers: [TreasuryAssetCaller!]
+  redeems: [Redeem!]
+  trust: Trust!
+  address: Bytes!
+  # Update after TreasuryAsset event on RedeemableERC20
+  redeemableERC20: RedeemableERC20! #the RedeemableERC20 that emitted the TreasuryAsset event for this redeemable
+  # Update after TreasuryAsset event on RedeemableERC20, and after Transfer events for this token
+  balance: BigInt #this.balanceOf(RedeemableERC20.address())
+  redemptionRatio: BigInt #this.balanceOf(RedeemableERC20.address()) / RedeemableERC20.totalSupply()
+  #...Token interface fields
+  # Update after TreasuryAsset event on RedeemableERC20
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+  symbol: String
+  totalSupply: BigInt
+  decimals: Int
+  name: String
+}
+
+type TreasuryAssetCaller @entity {
+  id: ID!
+  trustAddress: Trust!
+  redeemableERC20Address: Bytes!
+  treasuryAsset: TreasuryAsset!
+  caller: Bytes!
+  deployBlock: BigInt!
+  deployTimestamp: BigInt!
+}
+
+type ERC20Pull @entity {
+  id: ID!
+  sender: Bytes
+  tokenSender: Bytes
+  token: Bytes
+}
+
+interface Isale {
+  saleStatus: Int
+}
+
+interface INotice {
+  id: ID!
+  notices: [Notice!]
+}
+
+type UnknownNotice implements INotice @entity {
+  id: ID!
+  notices: [Notice!]
+}

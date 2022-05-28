@@ -1,5 +1,24 @@
+## IDE
+.idea
+.vscode
+
+## Deps
 node_modules
+
+## Hardhat
+.env
+cache
+artifacts
+contracts
+typechain
+
+## Subgraph
 build
-package-lock.json
 generated
 subgraph.yaml
+schema.graphql
+docker/data
+config/localhost.json
+scripts/deployConfig.json
+
+graph-node

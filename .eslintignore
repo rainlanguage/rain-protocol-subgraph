@@ -1,0 +1,14 @@
+## Deps
+node_modules
+
+## Hardhat
+cache
+artifacts
+contracts
+typechain
+
+## Subgraph
+build
+generated
+docker/data
+scripts/**/*.js

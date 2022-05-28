@@ -1,0 +1,86 @@
+type GatedNFTFactory @entity {
+  id: ID! #factory address
+  address: Bytes! #factory address
+  implementation: Bytes! #implementation address from Implementation event
+  children: [GatedNFT!] #all the children that were deployed by this factory
+}
+
+type GatedNFT implements INotice @entity {
+  id: ID! #contract address
+  address: Bytes! #contract address
+  deployBlock: BigInt
+  deployTimestamp: BigInt
+  creator: Bytes #from event CreatedGatedNFT.creator
+  name: String
+  symbol: String
+  description: String
+  animationUrl: String
+  imageUrl: String
+  animationHash: Bytes
+  imageHash: Bytes
+  owner: Bytes #set with intial config, updated after every OwnershipTransferred event - use OwnershipTransferred.newOwner
+  tier: TierContract #link to a tier contract if we have already indexed it, otherwise create an UnknownTier
+  minimumStatus: BigInt
+  maxPerAddress: BigInt
+  transferrable: Int
+  maxMintable: BigInt
+  royaltyRecipient: Bytes #set in intial config, updated after every RoyaltyRecipientUpdated event
+  royaltyBPS: BigInt
+  royaltyPercent: BigDecimal # = royaltyBPS / 100
+  royaltyRecipientHistory: [UpdatedRoyaltyRecipient!]
+  ownershipHistory: [OwnershipTransferred!]
+  notices: [Notice!]
+  tokensMinted: BigInt! #contract.totalSupply()
+  gatedTokens: [GatedToken!]
+  gatedTokenOwners: [GatedTokenOwner!]
+}
+
+type UpdatedRoyaltyRecipient @entity {
+  id: ID! #tx hash
+  block: BigInt
+  timestamp: BigInt
+  nftContract: GatedNFT! #contract that emitted the event
+  origin: Bytes! #event.transaction.from
+  newRoyaltyRecipient: Bytes! #from event.royaltyRecipient
+}
+
+type OwnershipTransferred @entity {
+  id: ID! #txHash
+  block: BigInt
+  timestamp: BigInt
+  emitter: Bytes! #contract that emitted the event
+  sender: Bytes! #sender of the tx
+  oldOwner: Bytes! #from event.oldOwner
+  newOwner: Bytes! #from event.newOwner
+}
+
+## Created when someone mint and event "Transfer" is emitted and "from" is zeroAddress.
+type GatedToken @entity {
+  id: ID! #{GatedNFT address} - {event.tokenId}
+  tokenId: BigInt! # Token ID obtained when minted
+  ownerAddress: Bytes! #owner address - set when minted and updated after "Transfer" with "to" address
+  gatedNFTAddress: Bytes! #GatedNFT address
+  transferHistory: [HistoricalTransfer!] # Contain all HistoricalTransfers but should NOT add the mint (when "from" is zeroAddress)
+  mintBlock: BigInt
+  mintTimestamp: BigInt
+}
+
+## Created when mint and event "Transfer" is emitted and "from" is zeroAddress.
+type GatedTokenOwner @entity {
+  id: ID! #{GatedNFT address} - {transfer.to}
+  address: Bytes! #the account address
+  gatedNFTAddress: Bytes! #GatedNFT address
+  tokenCount: BigInt! #amount of token in the GatedNFT that this address have - contract.balanceOf(address)
+  tokens: [GatedToken!]
+}
+
+## Created after event "Transfer" is emitted and "from" is NOT zeroAddress.
+type HistoricalTransfer @entity {
+  id: ID! #transaction.hash
+  transactionHash: Bytes!
+  from: Bytes! #the account address
+  to: Bytes! #the from address
+  tokenId: BigInt! #the Token ID
+  eventBlock: BigInt
+  eventTimestamp: BigInt
+}
