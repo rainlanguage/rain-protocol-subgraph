@@ -37,7 +37,9 @@ export function handleInitialize(event: Initialize): void {
   }
 }
 
-export function handleInitializeValueTier(event: InitializeValueTier): void {}
+export function handleInitializeValueTier(event: InitializeValueTier): void {
+  //
+}
 
 export function handleTierChange(event: TierChangeEvent): void {
   let erc20TransferTier = ERC20TransferTier.load(event.address.toHex());

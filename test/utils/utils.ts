@@ -105,7 +105,10 @@ import type {
 import type { GatedNFT } from "../../typechain/GatedNFT";
 
 // VerifyFactory types
-import type { VerifyFactory } from "../../typechain/VerifyFactory";
+import type {
+  VerifyFactory,
+  VerifyConfigStruct,
+} from "../../typechain/VerifyFactory";
 import type { Verify } from "../../typechain/Verify";
 
 // VerifyTierFactory types
@@ -331,16 +334,6 @@ export enum OpcodeEmissionsERC20 {
   SCALE18_DECIMALS,
   CLAIMANT_ACCOUNT,
   CONSTRUCTION_BLOCK_NUMBER,
-}
-
-// Enum that represent the DistributionStatus (Trust)
-export enum DistributionStatus {
-  Pending,
-  Seeded,
-  Trading,
-  TradingCanEnd,
-  Success,
-  Fail,
 }
 
 // Enum that represent the SaleStatus (Sale)
@@ -815,13 +808,13 @@ export const emissionsDeploy = async (
 export const verifyDeploy = async (
   verifyFactory: VerifyFactory,
   creator: SignerWithAddress | Signer,
-  adminAddress: string,
+  verifyConfig: VerifyConfigStruct,
   override: Overrides = {}
 ): Promise<Verify> => {
   // Creating child
   const txDeploy = await verifyFactory
     .connect(creator)
-    .createChildTyped(adminAddress, override);
+    .createChildTyped(verifyConfig, override);
 
   const verify = new Verify__factory(creator).attach(
     await getChild(verifyFactory, txDeploy)

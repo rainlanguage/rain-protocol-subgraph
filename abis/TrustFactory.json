@@ -183,7 +183,7 @@
             "type": "tuple"
           },
           {
-            "internalType": "contract ITier",
+            "internalType": "address",
             "name": "tier",
             "type": "address"
           },
@@ -251,6 +251,19 @@
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "implementation",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

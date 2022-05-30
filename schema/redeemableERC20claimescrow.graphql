@@ -158,6 +158,10 @@ type RedeemableEscrowSupplyTokenDepositor @entity {
 
 type RedeemableEscrowSupplyTokenWithdrawer @entity {
   id: ID! #{sale}-{escrow}-{supply}-{token}-{withdrawer}
+  "Sale entity"
+  iSale: Isale
+  "Sale address"
+  iSaleAddress: Bytes!
   "RedeemableEscrowSupplyTokenDeposit entity"
   deposit: RedeemableEscrowSupplyTokenDeposit #the {sale}-{escrow}-{supply}-{token} that this withdrawer is linked to
   "Withdrawer address"
@@ -182,7 +186,7 @@ type RedeemableEscrowPendingDeposit @entity {
   escrow: RedeemableERC20ClaimEscrow! #escrow contract that emitted the event
   escrowAddress: Bytes! #escrow contract that emitted the event
   iSale: Isale
-  iSaleAddress: Bytes! #from PendingDeposit.trust
+  iSaleAddress: Bytes! #from PendingDeposit.sale
   redeemable: RedeemableERC20
   token: ERC20
   tokenAddress: Bytes!
@@ -203,7 +207,7 @@ type RedeemableEscrowDeposit @entity {
   "Sale entity"
   iSale: Isale
   "Sale address"
-  iSaleAddress: Bytes! #from Deposit.trust
+  iSaleAddress: Bytes! #from Deposit.sale
   "RedeemableERC20 entity"
   redeemable: RedeemableERC20
   "ERC20 token entity"

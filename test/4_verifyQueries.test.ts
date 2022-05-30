@@ -12,10 +12,10 @@ import {
   REMOVER,
   BANNER_ADMIN,
   BANNER,
-  RequestType,
   RequestStatus,
   VerifyStatus,
   VerifyRole,
+  zeroAddress,
 } from "./utils/utils";
 
 // Types
@@ -36,7 +36,7 @@ import {
   // Contracts factory
   verifyFactory,
   noticeBoard,
-} from "./1_trustQueries.test";
+} from "./1_initQueries.test.";
 
 let verify: Verify, transaction: ContractTransaction; // use to save/facilite a tx
 
@@ -81,7 +81,10 @@ describe("Verify Factory - Queries", function () {
     let eventsSigner2 = 0;
     let eventsAdmin = 0;
     it("should query the Verify child from factory after creation", async function () {
-      verify = await Util.verifyDeploy(verifyFactory, deployer, admin.address);
+      verify = await Util.verifyDeploy(verifyFactory, deployer, {
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       // Admin grants all roles to himself. This is for testing purposes only, it SHOULD be avoided.
       await verify.connect(admin).grantRole(APPROVER, admin.address);
@@ -521,9 +524,7 @@ describe("Verify Factory - Queries", function () {
         account: signer2.address,
         data: evidenceApprove,
       };
-      transaction = await verify
-        .connect(signer1)
-        .request(RequestType.APPROVE, [infoApprove]);
+      transaction = await verify.connect(signer1).requestApprove([infoApprove]);
 
       // Counter for this transaction, those signers are involved
       eventCounter++;
@@ -663,9 +664,7 @@ describe("Verify Factory - Queries", function () {
         account: signer2.address,
         data: evidenceRemove,
       };
-      transaction = await verify
-        .connect(signer1)
-        .request(RequestType.REMOVE, [infoRemove]);
+      transaction = await verify.connect(signer1).requestRemove([infoRemove]);
 
       // Increase the counter by 1
       eventCounter++;
@@ -1000,9 +999,7 @@ describe("Verify Factory - Queries", function () {
         account: signer2.address,
         data: evidenceBan,
       };
-      transaction = await verify
-        .connect(signer1)
-        .request(RequestType.BAN, [infoBan]);
+      transaction = await verify.connect(signer1).requestBan([infoBan]);
 
       // Increase the counter by 1
       eventCounter++;
@@ -1357,7 +1354,10 @@ describe("Verify Factory - Queries", function () {
     let eventCounter = 0;
 
     before(async function () {
-      verify = await Util.verifyDeploy(verifyFactory, deployer, admin.address);
+      verify = await Util.verifyDeploy(verifyFactory, deployer, {
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       // Admin grants all roles to himself. This is for testing purposes only, it SHOULD be avoided.
       await verify.connect(admin).grantRole(APPROVER, admin.address);
@@ -1393,10 +1393,7 @@ describe("Verify Factory - Queries", function () {
       // RequestApprove in one single transaction
       transaction = await verify
         .connect(admin)
-        .request(RequestType.APPROVE, [
-          requestApproveAccount1,
-          requestApproveAccount2,
-        ]);
+        .requestApprove([requestApproveAccount1, requestApproveAccount2]);
 
       // Increase the events counter
       eventCounter += 2;
@@ -1455,10 +1452,7 @@ describe("Verify Factory - Queries", function () {
       // RequestApprove in one single transaction
       transaction = await verify
         .connect(admin)
-        .request(RequestType.REMOVE, [
-          requestRemoveAccount1,
-          requestRemoveAccount2,
-        ]);
+        .requestRemove([requestRemoveAccount1, requestRemoveAccount2]);
 
       // Increase the events counter
       eventCounter += 2;
@@ -1517,7 +1511,7 @@ describe("Verify Factory - Queries", function () {
       // RequestApprove in one single transaction
       transaction = await verify
         .connect(admin)
-        .request(RequestType.BAN, [requestBanAccount1, requestBanAccount2]);
+        .requestBan([requestBanAccount1, requestBanAccount2]);
 
       // Increase the events counter
       eventCounter += 2;
@@ -1718,7 +1712,10 @@ describe("Verify Factory - Queries", function () {
       signer2VerifyAddress: string;
 
     before("deplopy new verify", async function () {
-      verify = await Util.verifyDeploy(verifyFactory, deployer, admin.address);
+      verify = await Util.verifyDeploy(verifyFactory, deployer, {
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       adminVerifyAddress = admin.address.toLowerCase();
       signer1VerifyAddress = signer1.address.toLowerCase();
