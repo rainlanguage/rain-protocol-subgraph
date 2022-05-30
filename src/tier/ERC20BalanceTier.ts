@@ -16,9 +16,13 @@ export function handleInitialize(event: Initialize): void {
     erc20BalanceTier.save();
   }
 }
-export function handleInitializeValueTier(event: InitializeValueTier): void {}
+export function handleInitializeValueTier(event: InitializeValueTier): void {
+  //
+}
 
-export function handleTierChange(event: TierChange): void {}
+export function handleTierChange(event: TierChange): void {
+  //
+}
 
 function getERC20(event: Initialize): ERC20 {
   let erc20 = ERC20.load(event.params.erc20.toHex());

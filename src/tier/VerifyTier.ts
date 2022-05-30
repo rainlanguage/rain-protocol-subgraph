@@ -35,4 +35,6 @@ export function handleInitialize(event: Initialize): void {
   }
 }
 
-export function handleTierChange(event: TierChange): void {}
+export function handleTierChange(event: TierChange): void {
+  //
+}

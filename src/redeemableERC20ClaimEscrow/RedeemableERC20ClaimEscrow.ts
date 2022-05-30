@@ -900,6 +900,8 @@ function getRedeemableEscrowSupplyTokenWithdrawer(
     RESTW.totalWithdrawn = ZERO_BI;
     RESTW.claimable = ZERO_BI;
     RESTW.totalWithdrawnAgainst = ZERO_BI;
+    RESTW.iSale = getIsale(sale.toHex());
+    RESTW.iSaleAddress = sale;
   }
 
   return RESTW as RedeemableEscrowSupplyTokenWithdrawer;

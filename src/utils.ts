@@ -12,8 +12,7 @@ import {
   TrustParticipant,
   Sale,
 } from "../generated/schema";
-import { SeedERC20 } from "../generated/TrustFactory/SeedERC20";
-import { RedeemableERC20 } from "../generated/TrustFactory/RedeemableERC20";
+import { RedeemableERC20 } from "../generated/templates/RedeemableERC20Template/RedeemableERC20";
 
 let ZERO_BI = BigInt.fromI32(0);
 let ONE_BI = BigInt.fromI32(1);
@@ -131,10 +130,6 @@ export function getTrustParticipent(
 
   // create seedERC20Contract using seeder from contracts
   if (contracts) {
-    let seedERC20Contract = SeedERC20.bind(
-      Address.fromString(contracts.seeder)
-    );
-
     // create seedERC20Contract using redeemableERC20 from contracts
     let redeemableERC20Contract = RedeemableERC20.bind(
       Address.fromString(contracts.redeemableERC20)
@@ -167,10 +162,8 @@ export function getTrustParticipent(
     }
 
     // Update the seedBalance and tokenBalance everytime when getting trustParticipant
-    let seedBalance = seedERC20Contract.try_balanceOf(participant);
     let tokenBalance = redeemableERC20Contract.try_balanceOf(participant);
 
-    if (!seedBalance.reverted) trustParticipant.seedBalance = seedBalance.value;
     if (!tokenBalance.reverted)
       trustParticipant.tokenBalance = tokenBalance.value;
   }

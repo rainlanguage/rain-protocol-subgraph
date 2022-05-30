@@ -58,8 +58,7 @@ import {
   noticeBoard,
   gatedNFTFactory,
   saleFactory,
-  trustFactory,
-} from "./1_trustQueries.test";
+} from "./1_initQueries.test.";
 
 let reserve: ReserveTokenTest, transaction: ContractTransaction;
 
@@ -74,7 +73,10 @@ describe("Subgraph Tier Test", function () {
 
     before("deploy fresh test contracts", async function () {
       // Creating a new Verify Child
-      verify = await Util.verifyDeploy(verifyFactory, creator, admin.address);
+      verify = await Util.verifyDeploy(verifyFactory, creator, {
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       // Admin grants all roles to himself.
       // ⚠️ NOTE: This is for testing purposes only ⚠️
@@ -218,7 +220,7 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should continue query if the Verify Address in VerifyTier is a non-Verify contract address", async function () {
-      const nonVerifyAddress = zeroAddress;
+      const nonVerifyAddress = signer2.address;
 
       // Creating the VerifyTier Contract with the non-Verify contract address
       verifyTier = await Util.verifyTierDeploy(
@@ -273,7 +275,10 @@ describe("Subgraph Tier Test", function () {
       // Verify deployed without factory
       const verifyIndependent = await new Verify__factory(deployer).deploy();
 
-      await verifyIndependent.initialize(admin.address);
+      await verifyIndependent.initialize({
+        admin: admin.address,
+        callback: zeroAddress,
+      });
 
       // Creating the VerifyTier Contract with the Verify
       verifyTier = await Util.verifyTierDeploy(
@@ -1398,105 +1403,6 @@ describe("Subgraph Tier Test", function () {
       expect(data.deployTimestamp).to.equals("0");
     });
 
-    it("should be an UnknownTier when used in a Trust contract", async function () {
-      // Properties of this trust
-      const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
-      const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
-      const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
-      const initialValuation = ethers.BigNumber.from("20000" + sixZeros);
-      const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
-      const minimumTradingDuration = 20;
-
-      const redeemableERC20Config = {
-        name: "Token",
-        symbol: "TKN",
-        distributor: zeroAddress,
-        initialSupply: totalTokenSupply,
-      };
-      // - Seeder props
-      const seederFee = ethers.BigNumber.from("100" + sixZeros);
-      const seederUnits = 10;
-      const seederCooldownDuration = 1;
-      const seedERC20Config = {
-        name: "SeedToken",
-        symbol: "SDT",
-        distributor: zeroAddress,
-        initialSupply: seederUnits,
-      };
-
-      const successLevel = redeemInit
-        .add(minimumCreatorRaise)
-        .add(seederFee)
-        .add(reserveInit);
-
-      const minimumTier = Tier.TWO;
-
-      const trust = await Util.trustDeploy(
-        trustFactory,
-        creator,
-        {
-          creator: creator.address,
-          minimumCreatorRaise,
-          seederFee,
-          redeemInit,
-          reserve: reserve.address,
-          reserveInit,
-          initialValuation,
-          finalValuation: successLevel,
-          minimumTradingDuration,
-        },
-        {
-          erc20Config: redeemableERC20Config,
-          tier: tierIndependent.address,
-          minimumTier,
-        },
-        {
-          seeder: zeroAddress,
-          cooldownDuration: seederCooldownDuration,
-          erc20Config: seedERC20Config,
-        },
-        { gasLimit: 15000000 }
-      );
-
-      await waitForSubgraphToBeSynced();
-
-      const query = `
-        {
-          trust (id: "${trust.address.toLowerCase()}") {
-            contracts {
-              tier {
-                __typename
-                ... on UnknownTier {
-                  id
-                }
-              }
-              redeemableERC20 {
-                tier {
-                  __typename
-                  ... on UnknownTier {
-                    id
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query,
-      })) as FetchResult;
-
-      const dataTier = response.data.trust.contracts.tier;
-      const dataRedeem = response.data.trust.contracts.redeemableERC20.tier;
-
-      expect(dataTier.__typename).to.equals("UnknownTier");
-      expect(dataTier.id).to.equals(tierIndependent.address.toLowerCase());
-
-      expect(dataRedeem.__typename).to.equals("UnknownTier");
-      expect(dataRedeem.id).to.equals(tierIndependent.address.toLowerCase());
-    });
-
     it("should be an UnknownTier when used in a SaleRedeemableERC20", async function () {
       const afterBlockNumberConfig = (blockNumber: number) => {
         return {
@@ -1561,6 +1467,7 @@ describe("Subgraph Tier Test", function () {
           cooldownDuration,
           minimumRaise,
           dustSize,
+          saleTimeout: 100,
         },
         {
           erc20Config: redeemableERC20Config,
