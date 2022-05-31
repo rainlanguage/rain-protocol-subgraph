@@ -8,6 +8,7 @@ contracts
 typechain
 
 ## Subgraph
+subgraph.template.yaml
 build
 generated
 docker/data
