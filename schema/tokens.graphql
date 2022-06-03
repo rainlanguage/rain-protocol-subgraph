@@ -1,0 +1,16 @@
+interface ERC20 @entity {
+  id: ID! #address of token
+  deployBlock: BigInt! #the block the contract was deployed
+  deployTimestamp: BigInt! #the timestamp the contract was deployed
+  symbol: String
+  totalSupply: BigInt
+  decimals: Int
+  name: String
+}
+
+interface Holder @entity {
+  id: ID! # {tokenAddress} - {holderAddress}
+  address: Bytes!
+  token: ERC20! # added this so Holder can be used for multiple ERC20 tokens
+  balance: BigInt!
+}

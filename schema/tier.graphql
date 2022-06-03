@@ -54,7 +54,7 @@ type ERC20BalanceTier implements TierContract & INotice @entity {
   notices: [Notice!]
 }
 
-type ERC20 @entity {
+type ERC20 implements ERC20 @entity {
   id: ID! #address of token
   deployBlock: BigInt! #the block the contract was deployed
   deployTimestamp: BigInt! #the timestamp the contract was deployed
