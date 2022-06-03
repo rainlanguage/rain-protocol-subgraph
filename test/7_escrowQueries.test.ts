@@ -10,6 +10,8 @@ import {
   Tier,
   LEVELS,
   SaleStatus,
+  AllStandardOps,
+  op,
 } from "./utils/utils";
 
 // Typechain Factories
@@ -88,24 +90,36 @@ const deploySale = async (
     distributor: Util.zeroAddress,
     initialSupply: totalTokenSupply,
   };
-  const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
-
-  const constants = [staticPrice];
-  const vBasePrice = Util.op(Util.OpcodeSale.VAL, 0);
-
-  const sources = [concat([vBasePrice])];
+  const basePrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+  const maxUnits = ethers.BigNumber.from(3);
+  const constants = [
+    basePrice,
+    startBlock - 1,
+    startBlock + saleTimeout - 1,
+    maxUnits,
+  ];
+  const vBasePrice = op(AllStandardOps.CONSTANT, 0);
+  const vStart = op(AllStandardOps.CONSTANT, 1);
+  const vEnd = op(AllStandardOps.CONSTANT, 2);
+  const vMaxUnits = op(AllStandardOps.CONSTANT, 3);
+  const sources = [
+    Util.betweenBlockNumbersSource(vStart, vEnd),
+    // prettier-ignore
+    concat([
+      // maxUnits
+      vMaxUnits, // static amount
+      // price
+      vBasePrice,
+    ]),
+  ];
 
   const sale = await Util.saleDeploy(
     saleFactory,
     creator,
     {
-      canStartStateConfig: Util.afterBlockNumberConfig(startBlock),
-      canEndStateConfig: Util.afterBlockNumberConfig(startBlock + saleTimeout),
-      calculatePriceStateConfig: {
-        sources,
-        constants,
-        stackLength: 1,
-        argumentsLength: 0,
+      vmStateConfig: {
+        sources: sources,
+        constants: constants,
       },
       recipient: recipient.address,
       reserve: saleReserve.address,
@@ -154,7 +168,7 @@ const deploySale = async (
  */
 const finishSale = async (_sale: Sale): Promise<void> => {
   if ((await _sale.saleStatus()) === SaleStatus.ACTIVE) {
-    while (!(await _sale.canEnd())) {
+    while (!(await _sale.canLive())) {
       await Util.createEmptyBlock();
     }
     await _sale.end();
@@ -180,7 +194,7 @@ const buySale = async (
       fee: fee,
       minimumUnits: desiredUnits,
       desiredUnits: desiredUnits,
-      maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+      maximumPrice: (await sale.calculateBuy(desiredUnits))[1].add(100),
     };
   }
 
@@ -393,7 +407,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         fee: fee,
         minimumUnits: desiredUnits,
         desiredUnits: desiredUnits,
-        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+        maximumPrice: (await sale.calculateBuy(desiredUnits))[1].add(100),
       };
 
       await buySale(sale, signer1, buyConfig);
@@ -1032,7 +1046,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         fee: fee,
         minimumUnits: desiredUnits,
         desiredUnits: desiredUnits,
-        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+        maximumPrice: (await sale.calculateBuy(desiredUnits))[1].add(100),
       };
 
       await buySale(sale, signer1, buyConfig);
@@ -1383,7 +1397,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         fee: fee,
         minimumUnits: desiredUnits,
         desiredUnits: desiredUnits,
-        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+        maximumPrice: (await sale.calculateBuy(desiredUnits))[1].add(100),
       };
 
       // Make a buy to have Redeemable with signers
@@ -1660,7 +1674,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         fee: fee,
         minimumUnits: desiredUnits,
         desiredUnits: desiredUnits,
-        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+        maximumPrice: (await sale.calculateBuy(desiredUnits))[1].add(100),
       };
 
       await buySale(sale, signer2, buyConfig);
@@ -1930,7 +1944,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         fee: fee,
         minimumUnits: desiredUnits,
         desiredUnits: desiredUnits,
-        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+        maximumPrice: (await sale.calculateBuy(desiredUnits))[1].add(100),
       };
 
       // Make a buy to have Redeemable with signers
@@ -2030,7 +2044,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         fee: fee,
         minimumUnits: desiredUnits,
         desiredUnits: desiredUnits,
-        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+        maximumPrice: (await sale.calculateBuy(desiredUnits))[1].add(100),
       };
 
       // Make a buy to have Redeemable with signers
@@ -2158,7 +2172,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         fee: fee,
         minimumUnits: desiredUnits,
         desiredUnits: desiredUnits,
-        maximumPrice: (await sale.calculatePrice(desiredUnits)).add(100),
+        maximumPrice: (await sale.calculateBuy(desiredUnits))[1].add(100),
       };
 
       // Make a buy to have Redeemable with signers

@@ -17,6 +17,10 @@ import { SaleFactory__factory } from "../typechain/factories/SaleFactory__factor
 import { GatedNFTFactory__factory } from "../typechain/factories/GatedNFTFactory__factory";
 import { RedeemableERC20ClaimEscrow__factory } from "../typechain/factories/RedeemableERC20ClaimEscrow__factory";
 import { RedeemableERC20Factory__factory } from "../typechain/factories/RedeemableERC20Factory__factory";
+import { AllStandardOpsStateBuilder__factory } from "../typechain/factories/AllStandardOpsStateBuilder__factory";
+import { StakeFactory__factory } from "../typechain/factories/StakeFactory__factory";
+import { OrderBookStateBuilder__factory } from "../typechain/factories/OrderBookStateBuilder__factory";
+import { OrderBook__factory } from "../typechain/factories/OrderBook__factory";
 
 // Types
 import type { ApolloFetch } from "apollo-fetch";
@@ -34,6 +38,8 @@ import type { VerifyFactory } from "../typechain/VerifyFactory";
 import type { SaleFactory } from "../typechain/SaleFactory";
 import type { GatedNFTFactory } from "../typechain/GatedNFTFactory";
 import type { RedeemableERC20ClaimEscrow } from "../typechain/RedeemableERC20ClaimEscrow";
+import type { StakeFactory } from "../typechain/StakeFactory";
+import type { OrderBook } from "../typechain/OrderBook";
 
 const subgraphName = "beehive-innovation/rain-protocol-test";
 
@@ -50,7 +56,9 @@ export let subgraph: ApolloFetch,
   erc721BalanceTierFactory: ERC721BalanceTierFactory,
   saleFactory: SaleFactory,
   gatedNFTFactory: GatedNFTFactory,
-  redeemableERC20ClaimEscrow: RedeemableERC20ClaimEscrow;
+  redeemableERC20ClaimEscrow: RedeemableERC20ClaimEscrow,
+  stakeFactory: StakeFactory,
+  orderBook: OrderBook;
 
 // Export signers
 export let deployer: SignerWithAddress,
@@ -77,13 +85,18 @@ before("Deployment contracts and subgraph", async function () {
   feeRecipient = signers[7];
   admin = signers[9];
 
+  // Depoying AllStandardOpsStateBuilder
+  const stateBuilder = await new AllStandardOpsStateBuilder__factory(
+    deployer
+  ).deploy();
+
   // Deploying NoticeBoard contract
   noticeBoard = await new NoticeBoard__factory(deployer).deploy();
 
   // Deploying EmissionsERC20Factory contract
   emissionsERC20Factory = await new EmissionsERC20Factory__factory(
     deployer
-  ).deploy();
+  ).deploy(stateBuilder.address);
 
   // Deploying RedeemableERC20Factory contract
   redeemableERC20Factory = await new RedeemableERC20Factory__factory(
@@ -105,7 +118,9 @@ before("Deployment contracts and subgraph", async function () {
   ).deploy();
 
   // - CombineTierFactory
-  combineTierFactory = await new CombineTierFactory__factory(deployer).deploy();
+  combineTierFactory = await new CombineTierFactory__factory(deployer).deploy(
+    stateBuilder.address
+  );
 
   verifyTierFactory = await new VerifyTierFactory__factory(deployer).deploy();
 
@@ -119,6 +134,7 @@ before("Deployment contracts and subgraph", async function () {
     maximumSaleTimeout: 10000,
     maximumCooldownDuration: 1000,
     redeemableERC20Factory: redeemableERC20Factory.address,
+    vmStateBuilder: stateBuilder.address,
   });
 
   // Deploying GatedNFTFactory contract
@@ -128,6 +144,19 @@ before("Deployment contracts and subgraph", async function () {
   redeemableERC20ClaimEscrow = await new RedeemableERC20ClaimEscrow__factory(
     deployer
   ).deploy();
+
+  // Deploying StakeFactory contract
+  stakeFactory = await new StakeFactory__factory(deployer).deploy();
+
+  // Deploying OrderBookStateBuilder contract
+  const orderBookStateBuilder = await new OrderBookStateBuilder__factory(
+    deployer
+  ).deploy();
+
+  // Deploying OrderBookcontract
+  orderBook = await new OrderBook__factory(deployer).deploy(
+    orderBookStateBuilder.address
+  );
 
   // Saving data in JSON
   const pathExampleConfig = path.resolve(__dirname, "../config/example.json");
@@ -175,6 +204,12 @@ before("Deployment contracts and subgraph", async function () {
   config.RedeemableERC20ClaimEscrow = redeemableERC20ClaimEscrow.address;
   config.RedeemableERC20ClaimEscrowBlock =
     redeemableERC20ClaimEscrow.deployTransaction.blockNumber;
+
+  config.StakeFactory = stakeFactory.address;
+  config.StakeFactoryBlock = stakeFactory.deployTransaction.blockNumber;
+
+  config.OrderBook = orderBook.address;
+  config.OrderBookBlock = orderBook.deployTransaction.blockNumber;
 
   // Write address and block to configuration contracts file
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");

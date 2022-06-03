@@ -18,30 +18,8 @@ import type {
   Overrides,
 } from "ethers";
 
-// Balancer contracts artifacts
-import bFactoryJson from "@beehiveinnovation/balancer-core/artifacts/BFactory.json";
-import smartPoolManagerJson from "@beehiveinnovation/configurable-rights-pool/artifacts/SmartPoolManager.json";
-import balancerSafeMathJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BalancerSafeMath.json";
-import rightsManagerJson from "@beehiveinnovation/configurable-rights-pool/artifacts/RightsManager.json";
-import crpFactoryJson from "@beehiveinnovation/configurable-rights-pool/artifacts/CRPFactory.json";
-import configurableRightsPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/ConfigurableRightsPool.json";
-import bPoolJson from "@beehiveinnovation/configurable-rights-pool/artifacts/BPool.json";
-
-// Balancer types
-import type { BFactory } from "../../typechain/BFactory";
-import type { BPool } from "../../typechain/BPool";
-import type { CRPFactory } from "../../typechain/CRPFactory";
-import type { ConfigurableRightsPool } from "../../typechain/ConfigurableRightsPool";
-
 // Typechain rain factories
-import { ReserveTokenTest__factory } from "../../typechain/factories/ReserveTokenTest__factory";
-import { RedeemableERC20Factory__factory } from "../../typechain/factories/RedeemableERC20Factory__factory";
-import { SeedERC20Factory__factory } from "../../typechain/factories/SeedERC20Factory__factory";
-import { TrustFactory__factory } from "../../typechain/factories/TrustFactory__factory";
-
-import { Trust__factory } from "../../typechain/factories/Trust__factory";
 import { Sale__factory } from "../../typechain/factories/Sale__factory";
-import { RedeemableERC20__factory } from "../../typechain/factories/RedeemableERC20__factory";
 import { GatedNFT__factory } from "../../typechain/factories/GatedNFT__factory";
 import { EmissionsERC20__factory } from "../../typechain/factories/EmissionsERC20__factory";
 import { Verify__factory } from "../../typechain/factories/Verify__factory";
@@ -50,10 +28,6 @@ import { ERC20BalanceTier__factory } from "../../typechain/factories/ERC20Balanc
 import { ERC20TransferTier__factory } from "../../typechain/factories/ERC20TransferTier__factory";
 import { CombineTier__factory } from "../../typechain/factories/CombineTier__factory";
 import { ERC721BalanceTier__factory } from "../../typechain/factories/ERC721BalanceTier__factory";
-
-// Rain Types
-import type { ITier } from "../../typechain/ITier";
-import type { ReserveTokenTest } from "../../typechain/ReserveTokenTest";
 
 // A fixed range to Tier Levels
 type levelsRange = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -66,21 +40,9 @@ import type {
 } from "../../typechain/Factory";
 
 // VMState types
-import type { StateStruct } from "../../typechain/VMState";
+import type { StateConfigStruct } from "../../typechain/VMStateBuilder";
 export type VMState = StateConfigStruct;
-export type State = StateStruct;
-
-// TrustFactory types
-import type {
-  TrustFactory,
-  TrustConfigStruct,
-  TrustRedeemableERC20ConfigStruct,
-  TrustSeedERC20ConfigStruct,
-} from "../../typechain/TrustFactory";
-import type { Trust } from "../../typechain/Trust";
-import type { RedeemableERC20Factory } from "../../typechain/RedeemableERC20Factory";
-import type { RedeemableERC20 } from "../../typechain/RedeemableERC20";
-import type { SeedERC20Factory } from "../../typechain/SeedERC20Factory";
+export type State = StateConfigStruct;
 
 // SaleFactory types
 import type {
@@ -88,7 +50,7 @@ import type {
   SaleConfigStruct,
   SaleRedeemableERC20ConfigStruct,
 } from "../../typechain/SaleFactory";
-import type { Sale, StateConfigStruct } from "../../typechain/Sale";
+import type { Sale } from "../../typechain/Sale";
 
 // EmissionsERC20Factory types
 import type {
@@ -143,13 +105,6 @@ import type { ERC721BalanceTier } from "../../typechain/ERC721BalanceTier";
 // Interfaces
 interface SyncedSubgraphType {
   synced: boolean;
-}
-
-interface CRPLibraries {
-  [key: string]: string;
-  SmartPoolManager: string;
-  BalancerSafeMath: string;
-  RightsManager: string;
 }
 
 interface BasicArtifact {
@@ -242,6 +197,53 @@ export enum Tier {
 }
 
 // Opcodes
+export enum AllStandardOps {
+  CONSTANT,
+  STACK,
+  CONTEXT,
+  STORAGE,
+  ZIPMAP,
+  DEBUG,
+  BLOCK_NUMBER,
+  BLOCK_TIMESTAMP,
+  SENDER,
+  THIS_ADDRESS,
+  SCALE18_MUL,
+  SCALE18_DIV,
+  SCALE18,
+  SCALEN,
+  SCALE_BY,
+  ADD,
+  SATURATING_ADD,
+  SUB,
+  SATURATING_SUB,
+  MUL,
+  SATURATING_MUL,
+  DIV,
+  MOD,
+  EXP,
+  MIN,
+  MAX,
+  ISZERO,
+  EAGER_IF,
+  EQUAL_TO,
+  LESS_THAN,
+  GREATER_THAN,
+  EVERY,
+  ANY,
+  REPORT,
+  SATURATING_DIFF,
+  UPDATE_BLOCKS_FOR_TIER_RANGE,
+  SELECT_LTE,
+  IERC20_BALANCE_OF,
+  IERC20_TOTAL_SUPPLY,
+  IERC721_BALANCE_OF,
+  IERC721_OWNER_OF,
+  IERC1155_BALANCE_OF,
+  IERC1155_BALANCE_OF_BATCH,
+  length,
+}
+
 export enum OpcodeSale {
   SKIP,
   VAL,
@@ -555,98 +557,6 @@ export const deploy = async (
 };
 
 /**
- * Deploy and return the balancer contracts as BFactory and CRPFactory with his libraries.
- * @param signer Signer that will deploy the contracts
- * @returns CRPFactory and Bfactory contract instances
- */
-export const balancerDeploy = async (
-  signer: SignerWithAddress | Signer
-): Promise<[CRPFactory, BFactory]> => {
-  const bFactory = (await deploy(bFactoryJson, signer, [])) as BFactory;
-
-  const smartPoolManager = await deploy(smartPoolManagerJson, signer, []);
-  const balancerSafeMath = await deploy(balancerSafeMathJson, signer, []);
-  const rightsManager = await deploy(rightsManagerJson, signer, []);
-
-  const libs: CRPLibraries = {
-    SmartPoolManager: smartPoolManager.address,
-    BalancerSafeMath: balancerSafeMath.address,
-    RightsManager: rightsManager.address,
-  };
-
-  const crpFactory = (await deploy(
-    linkBytecode(crpFactoryJson, libs),
-    signer,
-    []
-  )) as CRPFactory;
-
-  return [crpFactory, bFactory];
-};
-
-/**
- * Linking libraries to CRPFactory bytecode
- * @param artifact CRPFactory artifacts that contain the bytecode to link
- * @param links The libraries addresses to link
- * @returns The artifacts with the bytecode linked with libraries
- */
-const linkBytecode = (
-  artifact: Artifact | BasicArtifact,
-  links: CRPLibraries
-) => {
-  Object.keys(links).forEach((libraryName) => {
-    const libraryAddress = links[libraryName];
-    const regex = new RegExp(`__${libraryName}_+`, "g");
-    artifact.bytecode = artifact.bytecode.replace(
-      regex,
-      libraryAddress.replace("0x", "")
-    );
-  });
-  return artifact;
-};
-
-/**
- * Deploy all the factories that corresponding to the TrustFactory with a default values as constructor
- * @param crpFactory The CRPFactory contract instances to use in the TrustFactory. It should ensure that is a valid CRPFactory
- * @param balancerFactory The BFactory contract instances to use in the TrustFactory. It should ensure that is a valid BFactory
- * @param signer The signer that will deploy all the contracts
- * @returns A RedeemableERC20Factory, SeedERC20Factory and TrustFactory contract instances
- */
-export const trustFactoriesDeploy = async (
-  crpFactory: CRPFactory,
-  balancerFactory: BFactory,
-  signer: SignerWithAddress | Signer
-): Promise<{
-  redeemableERC20Factory: RedeemableERC20Factory;
-  seedERC20Factory: SeedERC20Factory;
-  trustFactory: TrustFactory;
-}> => {
-  const redeemableERC20Factory = await new RedeemableERC20Factory__factory(
-    signer
-  ).deploy();
-
-  const seedERC20Factory = await new SeedERC20Factory__factory(signer).deploy();
-
-  const TrustFactoryArgs = {
-    crpFactory: crpFactory.address,
-    balancerFactory: balancerFactory.address,
-    redeemableERC20Factory: redeemableERC20Factory.address,
-    seedERC20Factory: seedERC20Factory.address,
-    creatorFundsReleaseTimeout: CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING,
-    maxRaiseDuration: MAX_RAISE_DURATION_TESTING,
-  };
-
-  const trustFactory = await new TrustFactory__factory(signer).deploy(
-    TrustFactoryArgs
-  );
-
-  return {
-    redeemableERC20Factory,
-    seedERC20Factory,
-    trustFactory,
-  };
-};
-
-/**
  * Get the implementation address correpond to a Factory contract
  * @param factory The factory contract that have the implementation. For ex: a TrustFactory or SaleFactory
  * @returns The implementation address
@@ -688,47 +598,6 @@ export const getChild = async (
   }
 
   return child;
-};
-
-/**
- * Create a new Trust
- * @param trustFactory the TrustFactory that will create the child.
- * @param creator The signer that will create the child and will be connected to
- * @param trustConfig the trust configuration
- * @param trustRedeemableERC20Config the Redeemable configuration of this Trust
- * @param trustSeedERC20Config -the Seed configuration of this Trust
- * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
- * @returns The trust child
- */
-export const trustDeploy = async (
-  trustFactory: TrustFactory,
-  creator: SignerWithAddress | Signer,
-  trustConfig: TrustConfigStruct,
-  trustRedeemableERC20Config: TrustRedeemableERC20ConfigStruct,
-  trustSeedERC20Config: TrustSeedERC20ConfigStruct,
-  override: Overrides = {}
-): Promise<Trust> => {
-  // Creating child
-  const txDeploy = await trustFactory
-    .connect(creator)
-    .createChildTyped(
-      trustConfig,
-      trustRedeemableERC20Config,
-      trustSeedERC20Config,
-      override
-    );
-
-  const trust = new Trust__factory(creator).attach(
-    await getChild(trustFactory, txDeploy)
-  );
-
-  await trust.deployed();
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  trust.deployTransaction = txDeploy;
-
-  return trust;
 };
 
 /**
@@ -1046,46 +915,6 @@ export const gatedNFTDeploy = async (
 };
 
 /**
- * Get the ConfigurableRightPool and BPool of the a `trust`.
- * - **NOTE:** It is absolutely responsability of the user manage if the DutchAuction already started.
- *   In case that DutchAuction has not started yet, the bPool contract will be connected to a ZeroAddress
- *   and any transaction will be reverted
- * @param trust Trust Contract that will get the CRP and BPool
- * @param signer (optional) The signer that will be connected to the contracts
- * @returns A CRP and BPool contracts
- */
-export const poolContracts = async (
-  trust: Trust & Contract,
-  signer: Signer | SignerWithAddress = null
-): Promise<{
-  crp: ConfigurableRightsPool & Contract;
-  bPool: BPool & Contract;
-}> => {
-  const crp = new ethers.Contract(
-    await trust.crp(),
-    configurableRightsPoolJson.abi,
-    signer || trust.signer
-  ) as ConfigurableRightsPool & Contract;
-
-  const bPool = new ethers.Contract(
-    await crp.bPool(),
-    bPoolJson.abi,
-    signer || trust.signer
-  ) as BPool & Contract;
-
-  // ** NOTE WARNING **
-  // Can only get the deploy transaction of the CRP because we dont know when
-  // the bPool will be created. It is absolutely responsability of the user
-  // manage if the DutchAuction already started.
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  crp.deployTransaction = trust.deployTransaction;
-
-  return { crp, bPool };
-};
-
-/**
  * Send empty transactions to mine new blocks. Mainly used in HH network
  * @param count (optional) amount of block to be mined. If not provided, will just mine one block
  */
@@ -1221,23 +1050,14 @@ export function op(code: number, erand = 0): Uint8Array {
  * @returns The new State created from the VMState configuration
  */
 export function encodeStateExpected(vmStateConfig: VMState): State {
-  const stackIndex = ethers.BigNumber.from(0);
-  const stack = new Array(vmStateConfig.stackLength).fill(
-    ethers.BigNumber.from(0)
-  );
   const sources = vmStateConfig.sources.map((x) => ethers.utils.hexlify(x));
   const constants = vmStateConfig.constants.map((x) =>
     ethers.BigNumber.from(x)
   );
-  const args = new Array(vmStateConfig.argumentsLength).fill(
-    ethers.BigNumber.from(0)
-  );
+
   return {
-    stackIndex: stackIndex,
-    stack: stack,
     sources: sources,
     constants: constants,
-    arguments: args,
   };
 }
 
@@ -1255,196 +1075,6 @@ export const getTxTimeblock = async (
 };
 
 /**
- * Basic setup to RedeemableERC20ClainEscrow queries test
- * @param deployer - signer that will deploy the contracts in the basic Setup
- * @param creator - creator of the trust in the basic Setup
- * @param seeder - seeder of the trust in the basic setup
- * @param trustFactory - The trust factory that will be use
- * @param tier - A valid tier contract
- * @returns
- */
-export const basicSetup = async (
-  deployer: SignerWithAddress | Signer,
-  creator: SignerWithAddress | Signer,
-  seeder: SignerWithAddress | Signer,
-  trustFactory: TrustFactory,
-  tier: ITier
-): Promise<{
-  reserve: ReserveTokenTest;
-  trust: Trust;
-  crp: ConfigurableRightsPool;
-  bPool: BPool;
-  redeemableERC20: RedeemableERC20;
-  minimumTradingDuration: number;
-  minimumCreatorRaise: BigNumber;
-  successLevel: BigNumber;
-}> => {
-  const reserve = await new ReserveTokenTest__factory(deployer).deploy();
-
-  const minimumTier = Tier.FOUR;
-
-  const totalTokenSupply = ethers.BigNumber.from("2000" + eighteenZeros);
-  const redeemableERC20Config = {
-    name: "Token",
-    symbol: "TKN",
-    distributor: zeroAddress,
-    initialSupply: totalTokenSupply,
-  };
-  const seederUnits = 0;
-  const seedERC20Config = {
-    name: "SeedToken",
-    symbol: "SDT",
-    distributor: zeroAddress,
-    initialSupply: seederUnits,
-  };
-
-  const reserveInit = ethers.BigNumber.from("2000" + sixZeros);
-  const redeemInit = ethers.BigNumber.from("2000" + sixZeros);
-  const initialValuation = ethers.BigNumber.from("20000" + sixZeros);
-  const minimumCreatorRaise = ethers.BigNumber.from("100" + sixZeros);
-
-  const seederFee = ethers.BigNumber.from("100" + sixZeros);
-  const seederCooldownDuration = 0;
-
-  const successLevel = reserveInit
-    .add(seederFee)
-    .add(redeemInit)
-    .add(minimumCreatorRaise);
-
-  const minimumTradingDuration = 100;
-
-  const trust = await trustDeploy(
-    trustFactory,
-    creator,
-    {
-      creator: await creator.getAddress(),
-      minimumCreatorRaise,
-      seederFee,
-      redeemInit,
-      reserve: reserve.address,
-      reserveInit,
-      initialValuation,
-      finalValuation: successLevel,
-      minimumTradingDuration,
-    },
-    {
-      erc20Config: redeemableERC20Config,
-      tier: tier.address,
-      minimumTier,
-    },
-    {
-      seeder: await seeder.getAddress(),
-      cooldownDuration: seederCooldownDuration,
-      erc20Config: seedERC20Config,
-    },
-    { gasLimit: 15000000 }
-  );
-
-  await trust.deployed();
-
-  // seeder needs some cash, give enough to seeder
-  await reserve.transfer(await seeder.getAddress(), reserveInit);
-
-  const reserveSeeder = reserve.connect(seeder);
-
-  const redeemableERC20 = new RedeemableERC20__factory(creator).attach(
-    await trust.token()
-  );
-
-  // seeder must transfer funds to pool
-  await reserveSeeder.transfer(trust.address, reserveInit);
-
-  await trust.startDutchAuction({ gasLimit: 15000000 });
-
-  // crp and bPool are now defined
-  const { crp, bPool } = await poolContracts(trust, deployer);
-
-  return {
-    reserve,
-    trust,
-    crp,
-    bPool,
-    redeemableERC20,
-    minimumTradingDuration,
-    minimumCreatorRaise,
-    successLevel,
-  };
-};
-
-/**
- * Make a swap of `tokenIn` to `tokenOut` in their valid `bPool`. This function handle that the `signer` have
- * the `spend` amount in the `reserve` before swap, so it is not necessary tranfer outside this function -  just
- * make sure that the connected user to the `tokenIn` have balance
- * @param crp
- * @param bPool
- * @param tokenIn
- * @param tokenOut
- * @param signer
- * @param spend
- */
-export const swapReserveForTokens = async (
-  crp: ConfigurableRightsPool,
-  bPool: BPool,
-  tokenIn: Contract,
-  tokenOut: RedeemableERC20, // Token Address to out
-  signer: SignerWithAddress | Signer,
-  spend: BigNumber
-): Promise<void> => {
-  // give to signer some reserve
-  await tokenIn.transfer(await signer.getAddress(), spend);
-  await tokenIn.connect(signer).approve(bPool.address, spend);
-
-  const crpSigner = crp.connect(signer);
-  const bPoolSigner = bPool.connect(signer);
-
-  await crpSigner.pokeWeights();
-  await bPoolSigner.swapExactAmountIn(
-    tokenIn.address,
-    spend,
-    tokenOut.address,
-    ethers.BigNumber.from("1"),
-    ethers.BigNumber.from("1000000" + sixZeros)
-  );
-};
-
-/**
- * Determine a reserve dust in a Balancer Pool
- * @param bPoolReserveBalance The actual reserve balance in the Balancer Pool
- * @returns The dust in the Balancer Pool
- */
-export const determineReserveDust = (
-  bPoolReserveBalance: BigNumber
-): BigNumber => {
-  const RESERVE_MIN_BALANCE = ethers.BigNumber.from("1" + sixZeros);
-  let dust = bPoolReserveBalance.mul(ONE).div(1e7).div(ONE);
-  if (dust.lt(RESERVE_MIN_BALANCE)) {
-    dust = RESERVE_MIN_BALANCE;
-  }
-  return dust;
-};
-
-/**
- * Create a VMState configuration from a specific block number
- * @param blockNumber The block number to be use to create the VMState configuration
- * @returns The VMState configuration
- */
-export const afterBlockNumberConfig = (blockNumber: number): VMState => {
-  return {
-    sources: [
-      concat([
-        // (BLOCK_NUMBER blockNumberSub1 gt)
-        op(OpcodeSale.BLOCK_NUMBER),
-        op(OpcodeSale.VAL, 0),
-        op(OpcodeSale.GREATER_THAN),
-      ]),
-    ],
-    constants: [blockNumber - 1],
-    stackLength: 3,
-    argumentsLength: 0,
-  };
-};
-
-/**
  * Convert an config that is a VMState to get all their components as string. Useful to testing
  * @param config Config on a VMState to convert
  * @returns the configuration with all the components as string
@@ -1454,18 +1084,38 @@ export const convertConfig = (
 ): {
   sources: string[];
   constants: string[];
-  stackLength: string;
-  argumentsLength: string;
 } => {
   const sources = config.sources.map((x: BytesLike) => ethers.utils.hexlify(x));
   const constants = config.constants.map((x) => x.toString());
-  const stackLength = config.stackLength.toString();
-  const argumentsLength = config.argumentsLength.toString();
 
   return {
     sources,
     constants,
-    stackLength,
-    argumentsLength,
   };
+};
+
+export const afterBlockNumberSource = (constant: number): Uint8Array => {
+  // prettier-ignore
+  return concat([
+    // (BLOCK_NUMBER blockNumberSub1 gt)
+      op(AllStandardOps.BLOCK_NUMBER),
+      op(AllStandardOps.CONSTANT, constant),
+    op(AllStandardOps.GREATER_THAN),
+  ]);
+};
+
+export const betweenBlockNumbersSource = (
+  vStart: Uint8Array,
+  vEnd: Uint8Array
+): Uint8Array => {
+  // prettier-ignore
+  return concat([
+        op(AllStandardOps.BLOCK_NUMBER),
+        vStart,
+      op(AllStandardOps.GREATER_THAN),
+        op(AllStandardOps.BLOCK_NUMBER),
+        vEnd,
+      op(AllStandardOps.LESS_THAN),
+    op(AllStandardOps.EVERY, 2),
+  ])
 };

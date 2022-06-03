@@ -18,7 +18,6 @@ import {
 // Types
 import type { FetchResult } from "apollo-fetch";
 import type { ContractTransaction } from "ethers";
-import type { SnapshotEvent } from "../typechain/VMState";
 import type {
   EmissionsERC20,
   ClaimEvent,
@@ -190,19 +189,19 @@ describe("EmissionsERC20 queries test", function () {
   });
 
   it("should query the State config of the EmissionsERC20 correclty", async function () {
-    // Get the state from initialization with Snapshot event
-    const { state } = (await Util.getEventArgs(
-      emissionsERC20.deployTransaction,
-      "Snapshot",
-      emissionsERC20
-    )) as SnapshotEvent["args"];
+    // // Get the state from initialization with Snapshot event
+    // const { state } = (await Util.getEventArgs(
+    //   emissionsERC20.deployTransaction,
+    //   "Snapshot",
+    //   emissionsERC20
+    // )) as SnapshotEvent["args"];
 
-    // Using the values form Event and converting to strings
-    const stackIndexExpected = state.stackIndex.toString();
-    const stackExpected = Util.arrayToString(state.stack);
-    const sourcesExpected = state.sources;
-    const constantsExpected = Util.arrayToString(state.constants);
-    const argumentsExpected = Util.arrayToString(state.arguments);
+    // // Using the values form Event and converting to strings
+    // const stackIndexExpected = state.stackIndex.toString();
+    // const stackExpected = Util.arrayToString(state.stack);
+    // const sourcesExpected = state.sources;
+    // const constantsExpected = Util.arrayToString(state.constants);
+    // const argumentsExpected = Util.arrayToString(state.arguments);
 
     const query = `
       {
@@ -220,11 +219,7 @@ describe("EmissionsERC20 queries test", function () {
     })) as FetchResult;
     const data = response.data.state;
 
-    expect(data.stackIndex).to.equals(stackIndexExpected);
-    expect(data.stack).to.deep.equals(stackExpected);
-    expect(data.sources).to.deep.equals(sourcesExpected);
-    expect(data.constants).to.deep.equals(constantsExpected);
-    expect(data.arguments).to.deep.equals(argumentsExpected);
+    expect(data.stackIndex).to.equals(1); // will fail
   });
 
   it("should update the EmissionsERC20 after a claim", async function () {

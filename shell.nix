@@ -12,13 +12,10 @@ let
 
   hardhat-node = pkgs.writeShellScriptBin "hardhat-node" ''
     npx hardhat node
-    # npx hardhat node &
-    # sleep 5s
   '';
 
   graph-node = pkgs.writeShellScriptBin "graph-node" ''
     npm run graph-node
-    # sleep 60s
   '';
 
   graph-test = pkgs.writeShellScriptBin "graph-test" ''

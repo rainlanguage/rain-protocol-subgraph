@@ -6,14 +6,14 @@ import * as Util from "./utils/utils";
 import {
   op,
   waitForSubgraphToBeSynced,
-  afterBlockNumberConfig,
   getEventArgs,
   Tier,
   LEVELS,
   SaleStatus,
   zeroAddress,
-  OpcodeSale,
   VMState,
+  AllStandardOps,
+  betweenBlockNumbersSource,
 } from "./utils/utils";
 
 // Typechain Factories
@@ -22,7 +22,7 @@ import { RedeemableERC20__factory } from "../typechain/factories/RedeemableERC20
 
 // Types
 import type { FetchResult } from "apollo-fetch";
-import type { ContractTransaction } from "ethers";
+import { ContractTransaction } from "ethers";
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
 import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
 import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
@@ -101,6 +101,7 @@ describe("Sales queries test", function () {
 
   describe("Success sale", function () {
     const saleTimeout = 30;
+    const maxUnits = ethers.BigNumber.from(3);
     const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
 
     const totalTokenSupply = ethers.BigNumber.from("2000").mul(Util.ONE);
@@ -113,21 +114,8 @@ describe("Sales queries test", function () {
 
     const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
 
-    const constants = [staticPrice];
-    const vBasePrice = op(OpcodeSale.VAL, 0);
+    let startBlock: number, vmStateConfig: VMState;
 
-    const sources = [concat([vBasePrice])];
-
-    let startBlock: number,
-      canStartStateConfig: VMState,
-      canEndStateConfig: VMState;
-
-    const calculatePriceStateConfig: VMState = {
-      sources,
-      constants,
-      stackLength: 1,
-      argumentsLength: 0,
-    };
     const cooldownDuration = 1;
     const dustSize = 0;
 
@@ -145,16 +133,38 @@ describe("Sales queries test", function () {
       // 5 blocks from now
       startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
-      canStartStateConfig = afterBlockNumberConfig(startBlock);
-      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
+      const constants = [
+        staticPrice,
+        startBlock - 1,
+        startBlock + saleTimeout - 1,
+        maxUnits,
+      ];
+
+      const vBasePrice = op(AllStandardOps.CONSTANT, 0);
+      const vStart = op(AllStandardOps.CONSTANT, 1);
+      const vEnd = op(AllStandardOps.CONSTANT, 2);
+      const vMaxUnits = op(AllStandardOps.CONSTANT, 3);
+      const sources = [
+        betweenBlockNumbersSource(vStart, vEnd),
+        // prettier-ignore
+        concat([
+          // maxUnits
+          vMaxUnits, // static amount
+          // price
+          vBasePrice,
+        ]),
+      ];
+
+      vmStateConfig = {
+        constants: constants,
+        sources: sources,
+      };
 
       sale = await Util.saleDeploy(
         saleFactory,
         creator,
         {
-          canStartStateConfig: canStartStateConfig,
-          canEndStateConfig: canEndStateConfig,
-          calculatePriceStateConfig: calculatePriceStateConfig,
+          vmStateConfig: vmStateConfig,
           recipient: recipient.address,
           reserve: reserve.address,
           cooldownDuration: cooldownDuration,
@@ -325,10 +335,6 @@ describe("Sales queries test", function () {
 
     it("should query the State configs after Sale creation", async function () {
       // Converting the configs
-      const startConfigExpected = Util.convertConfig(canStartStateConfig);
-      const endConfigExpected = Util.convertConfig(canEndStateConfig);
-      const priceConfigExpected = Util.convertConfig(calculatePriceStateConfig);
-
       const query = `
         {
           sale (id: "${sale.address.toLowerCase()}") {
@@ -361,27 +367,6 @@ describe("Sales queries test", function () {
       const startData = response.data.sale.canStartStateConfig;
       const endData = response.data.sale.canEndStateConfig;
       const priceData = response.data.sale.calculatePriceStateConfig;
-
-      expect(startData.sources).to.eql(startConfigExpected.sources);
-      expect(startData.constants).to.eql(startConfigExpected.constants);
-      expect(startData.stackLength).to.equals(startConfigExpected.stackLength);
-      expect(startData.argumentsLength).to.equals(
-        startConfigExpected.argumentsLength
-      );
-
-      expect(endData.sources).to.eql(endConfigExpected.sources);
-      expect(endData.constants).to.eql(endConfigExpected.constants);
-      expect(endData.stackLength).to.equals(endConfigExpected.stackLength);
-      expect(endData.argumentsLength).to.equals(
-        endConfigExpected.argumentsLength
-      );
-
-      expect(priceData.sources).to.eql(priceConfigExpected.sources);
-      expect(priceData.constants).to.eql(priceConfigExpected.constants);
-      expect(priceData.stackLength).to.equals(priceConfigExpected.stackLength);
-      expect(priceData.argumentsLength).to.equals(
-        priceConfigExpected.argumentsLength
-      );
     });
 
     it("should query the RedeemableERC20 entity", async function () {
@@ -1319,23 +1304,8 @@ describe("Sales queries test", function () {
       initialSupply: totalTokenSupply,
     };
 
-    const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+    let startBlock: number, vmStateConfig: VMState;
 
-    const constants = [staticPrice];
-    const vBasePrice = op(OpcodeSale.VAL, 0);
-
-    const sources = [concat([vBasePrice])];
-
-    let startBlock: number,
-      canStartStateConfig: VMState,
-      canEndStateConfig: VMState;
-
-    const calculatePriceStateConfig: VMState = {
-      sources,
-      constants,
-      stackLength: 1,
-      argumentsLength: 0,
-    };
     const cooldownDuration = 1;
     const dustSize = 0;
 
@@ -1346,16 +1316,40 @@ describe("Sales queries test", function () {
       // 5 blocks from now
       startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
-      canStartStateConfig = afterBlockNumberConfig(startBlock);
-      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
+      const basePrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+      const maxUnits = ethers.BigNumber.from(3);
+      const constants = [
+        basePrice,
+        startBlock - 1,
+        startBlock + saleTimeout - 1,
+        maxUnits,
+      ];
+
+      const vBasePrice = op(AllStandardOps.CONSTANT, 0);
+      const vStart = op(AllStandardOps.CONSTANT, 1);
+      const vEnd = op(AllStandardOps.CONSTANT, 2);
+      const vMaxUnits = op(AllStandardOps.CONSTANT, 3);
+      const sources = [
+        betweenBlockNumbersSource(vStart, vEnd),
+        // prettier-ignore
+        concat([
+          // maxUnits
+          vMaxUnits, // static amount
+          // price
+          vBasePrice,
+        ]),
+      ];
+
+      vmStateConfig = {
+        constants: constants,
+        sources: sources,
+      };
 
       sale = await Util.saleDeploy(
         saleFactory,
         creator,
         {
-          canStartStateConfig: canStartStateConfig,
-          canEndStateConfig: canEndStateConfig,
-          calculatePriceStateConfig: calculatePriceStateConfig,
+          vmStateConfig: vmStateConfig,
           recipient: recipient.address,
           reserve: reserve.address,
           cooldownDuration: cooldownDuration,
@@ -1386,13 +1380,13 @@ describe("Sales queries test", function () {
     it("should query the Sale as failed correctly", async function () {
       // wait until sale can start
       while (
-        !(await sale.canStart()) &&
+        !(await sale.canLive()) &&
         (await sale.saleStatus()) == SaleStatus.PENDING
       ) {
         await Util.createEmptyBlock();
       }
 
-      assert(await sale.canStart(), "sale should be able to start");
+      assert(await sale.canLive(), "sale should be able to start");
 
       // Sale started
       await sale.start();
@@ -1402,13 +1396,13 @@ describe("Sales queries test", function () {
 
       // wait until sale can end
       while (
-        !(await sale.canEnd()) &&
+        !(await sale.canLive()) &&
         (await sale.saleStatus()) == SaleStatus.ACTIVE
       ) {
         await Util.createEmptyBlock();
       }
 
-      assert(await sale.canEnd(), "sale should be able to end");
+      assert(await sale.canLive(), "sale should be able to end");
 
       // Sale ended as failed
       transaction = await sale.connect(signer1).end();
@@ -1476,21 +1470,8 @@ describe("Sales queries test", function () {
 
   describe("Sale with a non-ERC20 token as reserve", function () {
     // The subgraph must not crash with non-ERC20 token / address as reserve
-    const vBasePrice = op(OpcodeSale.VAL, 0);
-    const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+    let startBlock: number, vmStateConfig: VMState;
 
-    const sources = [concat([vBasePrice])];
-    const constants = [staticPrice];
-
-    let startBlock: number,
-      canStartStateConfig: VMState,
-      canEndStateConfig: VMState;
-    const calculatePriceStateConfig: VMState = {
-      sources,
-      constants,
-      stackLength: 1,
-      argumentsLength: 0,
-    };
     const cooldownDuration = 1;
     const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
     const dustSize = 0;
@@ -1512,8 +1493,31 @@ describe("Sales queries test", function () {
       // 5 blocks from now
       startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
-      canStartStateConfig = afterBlockNumberConfig(startBlock);
-      canEndStateConfig = afterBlockNumberConfig(startBlock + saleTimeout);
+      const basePrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+      const maxUnits = ethers.BigNumber.from(3);
+      const constants = [
+        basePrice,
+        startBlock - 1,
+        startBlock + saleTimeout - 1,
+        maxUnits,
+      ];
+
+      const vBasePrice = op(AllStandardOps.CONSTANT, 0);
+      const vStart = op(AllStandardOps.CONSTANT, 1);
+      const vEnd = op(AllStandardOps.CONSTANT, 2);
+      const vMaxUnits = op(AllStandardOps.CONSTANT, 3);
+      const sources = [
+        betweenBlockNumbersSource(vStart, vEnd),
+        // prettier-ignore
+        concat([
+          // maxUnits
+          vMaxUnits, // static amount
+          // price
+          vBasePrice,
+        ]),
+      ];
+
+      vmStateConfig = { constants: constants, sources: sources };
 
       // It could be an non-ERC20 address
       nonErc20 = signer1.address;
@@ -1522,9 +1526,7 @@ describe("Sales queries test", function () {
         saleFactory,
         creator,
         {
-          canStartStateConfig: canStartStateConfig,
-          canEndStateConfig: canEndStateConfig,
-          calculatePriceStateConfig: calculatePriceStateConfig,
+          vmStateConfig: vmStateConfig,
           recipient: recipient.address,
           reserve: nonErc20,
           cooldownDuration: cooldownDuration,

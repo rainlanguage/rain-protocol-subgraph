@@ -8,14 +8,12 @@ import {
   getImplementation,
   getEventArgs,
   waitForSubgraphToBeSynced,
-  eighteenZeros,
-  sixZeros,
   zeroAddress,
   Tier,
   VMState,
   LEVELS,
   OpcodeTier,
-  OpcodeSale,
+  AllStandardOps,
 } from "./utils/utils";
 
 // Typechain Factories
@@ -28,7 +26,6 @@ import { Verify__factory } from "../typechain/factories/Verify__factory";
 import type { FetchResult } from "apollo-fetch";
 import type { BigNumber, ContractTransaction } from "ethers";
 import type { TierChangeEvent } from "../typechain/ITier";
-import type { SnapshotEvent } from "../typechain/VMState";
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
 import type { ReserveNFT } from "../typechain/ReserveNFT";
 import type { Verify } from "../typechain/Verify";
@@ -927,8 +924,6 @@ describe("Subgraph Tier Test", function () {
     const stateConfigAlways: VMState = {
       sources: [sourceAlways],
       constants: [],
-      stackLength: 2,
-      argumentsLength: 0,
     };
 
     it("should query CombineTierFactory correctly", async function () {
@@ -1032,22 +1027,16 @@ describe("Subgraph Tier Test", function () {
     it("should query the State present on CombineTier correclty", async function () {
       const stateId = `${combineTier.deployTransaction.hash.toLowerCase()}`;
 
-      const { state: stateExpected } = (await getEventArgs(
-        combineTier.deployTransaction,
-        "Snapshot",
-        combineTier
-      )) as SnapshotEvent["args"];
-
       const arrayToString = (arr: BigNumber[]): string[] => {
         return arr.map((x: BigNumber) => x.toString());
       };
 
       // Using the values form Event
-      const stackIndexExpected = stateExpected.stackIndex.toString();
-      const stackExpected = arrayToString(stateExpected.stack);
-      const sourcesExpected = stateExpected.sources;
-      const constantsExpected = arrayToString(stateExpected.constants);
-      const argumentsExpected = arrayToString(stateExpected.arguments);
+      // const stackIndexExpected = stateExpected.stackIndex.toString();
+      // const stackExpected = arrayToString(stateExpected.stack);
+      // const sourcesExpected = stateExpected.sources;
+      // const constantsExpected = arrayToString(stateExpected.constants);
+      // const argumentsExpected = arrayToString(stateExpected.arguments);
 
       const query = `
         {
@@ -1067,11 +1056,7 @@ describe("Subgraph Tier Test", function () {
 
       const data = response.data.state;
 
-      expect(data.stackIndex).to.equals(stackIndexExpected);
-      expect(data.stack).to.eql(stackExpected);
-      expect(data.sources).to.eql(sourcesExpected);
-      expect(data.constants).to.eql(constantsExpected);
-      expect(data.arguments).to.eql(argumentsExpected);
+      expect(data.stackIndex).to.equals(1); // will fail
     });
 
     it("should query Notice in CombineTier correctly", async function () {
@@ -1404,41 +1389,33 @@ describe("Subgraph Tier Test", function () {
     });
 
     it("should be an UnknownTier when used in a SaleRedeemableERC20", async function () {
-      const afterBlockNumberConfig = (blockNumber: number) => {
-        return {
-          sources: [
-            concat([
-              // (BLOCK_NUMBER blockNumberSub1 gt)
-              op(OpcodeSale.BLOCK_NUMBER),
-              op(OpcodeSale.VAL, 0),
-              op(OpcodeSale.GREATER_THAN),
-            ]),
-          ],
-          constants: [blockNumber - 1],
-          stackLength: 3,
-          argumentsLength: 0,
-        };
-      };
-
       const saleTimeout = 30;
       const startBlock = (await ethers.provider.getBlockNumber()) + 5;
 
-      const staticPrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
-      const vBasePrice = op(OpcodeSale.VAL, 0);
-      const constants = [staticPrice];
-      const sources = [concat([vBasePrice])];
-
       // SaleConfig
-      const canStartStateConfig = afterBlockNumberConfig(startBlock);
-      const canEndStateConfig = afterBlockNumberConfig(
-        startBlock + saleTimeout
-      );
-      const calculatePriceStateConfig = {
-        sources,
-        constants,
-        stackLength: 1,
-        argumentsLength: 0,
-      };
+      const basePrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
+      const maxUnits = ethers.BigNumber.from(3);
+      const constants = [
+        basePrice,
+        startBlock - 1,
+        startBlock + saleTimeout - 1,
+        maxUnits,
+      ];
+      const vBasePrice = op(AllStandardOps.CONSTANT, 0);
+      const vStart = op(AllStandardOps.CONSTANT, 1);
+      const vEnd = op(AllStandardOps.CONSTANT, 2);
+      const vMaxUnits = op(AllStandardOps.CONSTANT, 3);
+      const sources = [
+        Util.betweenBlockNumbersSource(vStart, vEnd),
+        // prettier-ignore
+        concat([
+          // maxUnits
+          vMaxUnits, // static amount
+          // price
+          vBasePrice,
+        ]),
+      ];
+
       const cooldownDuration = 1;
       const minimumRaise = ethers.BigNumber.from("150000").mul(
         Util.RESERVE_ONE
@@ -1459,9 +1436,10 @@ describe("Subgraph Tier Test", function () {
         saleFactory,
         creator,
         {
-          canStartStateConfig,
-          canEndStateConfig,
-          calculatePriceStateConfig,
+          vmStateConfig: {
+            sources: sources,
+            constants: constants,
+          },
           recipient: signer1.address,
           reserve: reserve.address,
           cooldownDuration,
