@@ -283,7 +283,6 @@ dataSources:
           handler: handleNewNotice
       file: ./src/NoticeBoard.ts
 templates:
-
   - kind: ethereum/contract
     name: RedeemableERC20Template
     network: {{ network }}
