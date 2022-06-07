@@ -1,3 +1,5 @@
+################## RainVM
+
 type Snapshot @entity {
   id: ID!
   sender: Bytes!
@@ -37,3 +39,20 @@ type State @entity {
   constants: [BigInt!]!
   arguments: [BigInt!]!
 }
+
+type OrderStateConfig implements StateConfig @entity {
+  id: ID!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+  stackLength: BigInt!
+  argumentsLength: BigInt!
+}
+
+interface StateConfig {
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+  stackLength: BigInt!
+  argumentsLength: BigInt!
+}
+
+################## RainVM

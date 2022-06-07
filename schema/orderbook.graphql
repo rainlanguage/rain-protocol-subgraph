@@ -1,6 +1,7 @@
+################## OrderBook
 type OrderBook @entity {
     "Address of the OrderBook contract"
-    id: Bytes!
+    id: ID!
     "Deployer of the OrderBook"
     deployer: Bytes!
     "Block the contract was deployed"
@@ -27,13 +28,13 @@ type Order @entity {
     "Output vault"
     outputVault: Vault! # Link by {Order.outputVaultId}-{owner}
     "Whether tracking is enabled for this Order"
-    tracking: Bool!
+    tracking: BigInt
     "The VM state"
-    vmState: StateConfig!
+    vmState: Bytes!
     # update to true on OrderLive events where the hash of OrderLive.order matches the ID of this order.
     # update to false on OrderDead events where the hash of OrderDead.order matches the ID of this order.
     "Whether the order is live or dead"
-    orderLiveness: Bool!
+    orderLiveness: Boolean
 }
 
 # Created and updated whenever an OrderLive event occurs
@@ -43,11 +44,11 @@ type Vault @entity {
     "The owner of this Vault"
     owner: Bytes!
     "Tokens in this Vault"
-    tokenVaults: [TokenVault!]!
+    tokenVaults: [TokenVault!]
     "Deposits into this Vault"
-    deposits: [VaultDeposit]! # add whenever a Deposit event occurs for this {vaultId}-{owner}
+    deposits: [VaultDeposit!] # add whenever a Deposit event occurs for this {vaultId}-{owner}
     "Withdrawals from this Vault"
-    withdraws: [VaultWithdraw]! # add whenver a Withdraw event occurs for this {vaultId}-{owner}
+    withdraws: [VaultWithdraw!] # add whenver a Withdraw event occurs for this {vaultId}-{owner}
 }
 
 # Represents the balance of one ERC20 token for one vaultId, one owner
@@ -75,12 +76,12 @@ type TokenVault @entity {
     # when {Order.inputVault}-{Order.owner}-{Order.inputToken} match this TokenVault
     # OR when {Order.outputVault}-{Order.owner}-{Order.outputToken} match this TokenVault
     "Orders that reference this vault, owner and token"
-    orders: [Order]!
+    orders: [Order!]
     # Add to array:
     # when {Clear.a_.inputVault}-{Clear.a_.owner}-{Clear.a_.inputToken} match this TokenVault
     # OR when {Clear.b_.outputVault}-{Clear.b_.owner}-{Clear.b_.outputToken} match this TokenVault
     "OrderClears that reference this vault, owner and token"
-    orderClears: [OrderClear]!
+    orderClears: [OrderClear!]
 }
 
 # Created for every Deposit event
@@ -131,7 +132,7 @@ type OrderClear @entity {
     "Order B being cleared"
     orderB: Order! # map by hash(Clear.b_)
     "The owners of the Orders that were cleared [Order A, Order B]"
-    owners: [Bytes!, Bytes!]! # [Clear.a_.owner, Clear.b_.owner]
+    owners: [Bytes!] # [Clear.a_.owner, Clear.b_.owner]
     "The token cleared into Order A"
     aInput: ERC20! # Clear.a_.inputToken
     "The token cleared into Order B"
@@ -175,3 +176,5 @@ type OrderClearStateChange @entity {
     aInput: BigInt! # AfterClear.stateChange.aInput
     bInput: BigInt! # AfterClear.stateChange.bInput
 }   
+
+################## OrderBook

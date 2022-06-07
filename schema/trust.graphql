@@ -34,18 +34,6 @@ type Trust implements Isale & INotice @entity {
   saleStatus: Int
 }
 
-# Notice entity
-# created when Notice event is emited by Trust
-# src/trust.ts/handleNotice
-type Notice @entity {
-  id: ID! #tx hash
-  subject: INotice! #the trust that emitted the event
-  sender: Bytes! #the address of the sender, from the event
-  data: Bytes! #from the event
-  deployBlock: BigInt! #block of event
-  deployTimestamp: BigInt! #timestamp of event
-}
-
 # Contract entity
 # Created when Initialize event is emited by Trust
 # src/trust.ts/handleInitialize
@@ -142,29 +130,6 @@ type Swap @entity {
   userAddress: Bytes!
   deployBlock: BigInt! #the block the contract was deployed
   deployTimestamp: BigInt! #the timestamp the contract was deployed
-}
-
-type RedeemableERC20 @entity {
-  id: ID!
-  deployer: Bytes
-  admin: Bytes
-  factory: Bytes #Trust.redeemableERC20Factory()
-  grantedReceivers: [Bytes!]
-  grantedSenders: [Bytes!]
-  redeems: [Redeem!]! #Redeem event in RedeemableERC20.sol
-  treasuryAssets: [TreasuryAsset!]
-  minimumTier: BigInt
-  symbol: String
-  totalSupply: BigInt
-  decimals: Int
-  name: String
-  holders: [Holder!]
-  deployBlock: BigInt #the block the contract was deployed
-  deployTimestamp: BigInt #the timestamp the contract was deployed
-  erc20Pull: ERC20Pull
-  tier: TierContract
-  saleAddress: Bytes
-  escrowSupplyTokenWithdrawers: [RedeemableEscrowSupplyTokenWithdrawer!]
 }
 
 type Redeem @entity {
@@ -302,15 +267,6 @@ type ERC20Pull @entity {
   sender: Bytes
   tokenSender: Bytes
   token: Bytes
-}
-
-interface Isale {
-  saleStatus: Int
-}
-
-interface INotice {
-  id: ID!
-  notices: [Notice!]
 }
 
 type UnknownNotice implements INotice @entity {

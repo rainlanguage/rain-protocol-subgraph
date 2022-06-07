@@ -1,3 +1,5 @@
+################## TierFactory
+
 interface TierFactory {
   id: ID! #factory address
   address: Bytes! #factory address
@@ -54,7 +56,7 @@ type ERC20BalanceTier implements TierContract & INotice @entity {
   notices: [Notice!]
 }
 
-type ERC20 implements ERC20 @entity {
+type ERC20 implements ERC20Interface @entity {
   id: ID! #address of token
   deployBlock: BigInt! #the block the contract was deployed
   deployTimestamp: BigInt! #the timestamp the contract was deployed
@@ -168,3 +170,17 @@ type UnknownTier implements TierContract @entity {
   factory: TierFactory #is this possible when using the TierContract interface?
   notices: [Notice!]
 }
+
+# Notice entity
+# created when Notice event is emited by Trust
+# src/trust.ts/handleNotice
+type Notice @entity {
+  id: ID! #tx hash
+  subject: INotice! #the trust that emitted the event
+  sender: Bytes! #the address of the sender, from the event
+  data: Bytes! #from the event
+  deployBlock: BigInt! #block of event
+  deployTimestamp: BigInt! #timestamp of event
+}
+
+################## TierFactory

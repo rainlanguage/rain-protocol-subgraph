@@ -1,7 +1,0 @@
-{
-  "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix",
-  "[yaml]": {
-    // Turn off to avoid separate the brackets
-    "editor.defaultFormatter": "vscode.markdown-language-features"
-  }
-}

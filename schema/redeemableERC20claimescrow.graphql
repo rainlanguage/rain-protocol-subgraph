@@ -1,3 +1,5 @@
+################## RedeemableERC20ClaimEscrow
+
 type RedeemableERC20ClaimEscrow implements INotice @entity {
   "Address of the escrow contract"
   id: ID! # address of the escrow contract
@@ -275,3 +277,27 @@ type UnknownSale implements Isale @entity {
   "salestatu of Sale"
   saleStatus: Int
 }
+
+type RedeemableERC20 @entity {
+  id: ID!
+  deployer: Bytes
+  admin: Bytes
+  factory: Bytes #Trust.redeemableERC20Factory()
+  grantedReceivers: [Bytes!]
+  grantedSenders: [Bytes!]
+  redeems: [Redeem!]! #Redeem event in RedeemableERC20.sol
+  treasuryAssets: [TreasuryAsset!]
+  minimumTier: BigInt
+  symbol: String
+  totalSupply: BigInt
+  decimals: Int
+  name: String
+  holders: [Holder!]
+  deployBlock: BigInt #the block the contract was deployed
+  deployTimestamp: BigInt #the timestamp the contract was deployed
+  erc20Pull: ERC20Pull
+  tier: TierContract
+  saleAddress: Bytes
+  escrowSupplyTokenWithdrawers: [RedeemableEscrowSupplyTokenWithdrawer!]
+}
+################## RedeemableERC20ClaimEscrow

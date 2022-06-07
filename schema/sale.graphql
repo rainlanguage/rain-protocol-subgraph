@@ -1,3 +1,5 @@
+################## SaleFactory
+
 type SaleFactory @entity {
   id: ID! #factory address
   address: Bytes! #factory address
@@ -148,3 +150,5 @@ enum SaleStatus {
   Success
   Fail
 }
+
+################## SaleFactory

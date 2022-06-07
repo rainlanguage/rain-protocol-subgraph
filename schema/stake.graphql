@@ -1,3 +1,5 @@
+################## StakeFactory
+
 type StakeFactory @entity {
   id: ID! #factory address
   "Address of the StakeFactory contract"
@@ -7,7 +9,7 @@ type StakeFactory @entity {
   children: [StakeERC20!] #all the children that were deployed by this factory
 }
 
-type StakeERC20 implements ERC20 @entity {
+type StakeERC20 implements ERC20Interface @entity {
   id: ID! #Stake contract address
   "Address of this Stake contract"
   address: Bytes! #Stake contract address
@@ -38,11 +40,11 @@ type StakeERC20 implements ERC20 @entity {
   "The last indexed raitio of Stake token to token"
   stateTokenToTokenRatio: BigInt! # tokenPoolSize / totalSupply - update everytime either totalSupply or tokenPoolSize changes
   "Deposits"
-  deposits: [StakeDeposit!]!
+  deposits: [StakeDeposit!]
   "Withdraws"
-  withdraws: [StakeWithdraw!]!
+  withdraws: [StakeWithdraw!]
   "Stake token holders"
-  holders: [StakeHolder]!
+  holders: [StakeHolder!]
 }
 
 # represents one holder of the Stake token
@@ -73,3 +75,5 @@ type StakeWithdraw @entity {
     token: ERC20! #get from StakeERC20.token
     stakeTokenMinted: BigInt! # get from the amount burned by the withdrawer
 }
+
+################## StakeFactory

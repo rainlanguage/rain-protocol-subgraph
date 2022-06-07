@@ -1,6 +1,6 @@
 {
-  "configPath": "config/network_example.json",
-  "subgraphName": "beehive-innovation/rain-protocol-test",
+  "configPath": "config/mumbai/mumbai_2_3.json",
+  "subgraphName": "beehive-innovation/rain-protocol-mumbai-e590ce",
   "versionLabel": "default",
   "endpoint": "default",
   "ipfsEndpoint": "default"

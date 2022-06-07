@@ -1,3 +1,5 @@
+################## EmissionsERC20Factory
+
 type EmissionsERC20Factory @entity {
   id: ID! #factory address
   "Address of EmissionsERC20Factory"
@@ -54,3 +56,5 @@ type EmissionsERC20Claim @entity {
   "contract that emitted the Claim event"
   emissionsERC20: EmissionsERC20! #the contract that emitted the Claim event
 }
+
+################## EmissionsERC20Factory

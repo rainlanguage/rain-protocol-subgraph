@@ -25,8 +25,7 @@ import {
   Trust,
   UnknownSale,
 } from "../../generated/schema";
-import { ERC20 as ERC20Contract } from "../../generated/RedeemableERC20ClaimEscrow/ERC20";
-import { SaleStatus, ZERO_BI } from "../utils";
+import { getERC20, SaleStatus, ZERO_BI } from "../utils";
 import { Trust as TrustContract } from "../../generated/RedeemableERC20ClaimEscrow/Trust";
 
 export function handleDeposit(event: Deposit): void {
@@ -652,36 +651,6 @@ function getRedeemableEscrowDepositor(
     redeemableEscrowDepositor.save();
   }
   return redeemableEscrowDepositor as RedeemableEscrowDepositor;
-}
-
-function getERC20(token: Address, block: ethereum.Block): ERC20 {
-  let erc20 = ERC20.load(token.toHex());
-  let erc20Contract = ERC20Contract.bind(token);
-  if (erc20 == null) {
-    erc20 = new ERC20(token.toHex());
-    erc20.deployBlock = block.number;
-    erc20.deployTimestamp = block.timestamp;
-
-    let name = erc20Contract.try_name();
-    let symbol = erc20Contract.try_symbol();
-    let decimals = erc20Contract.try_decimals();
-    let totalSupply = erc20Contract.try_totalSupply();
-    if (
-      !(
-        name.reverted ||
-        symbol.reverted ||
-        decimals.reverted ||
-        totalSupply.reverted
-      )
-    ) {
-      erc20.name = name.value;
-      erc20.symbol = symbol.value;
-      erc20.decimals = decimals.value;
-      erc20.totalSupply = totalSupply.value;
-    }
-    erc20.save();
-  }
-  return erc20 as ERC20;
 }
 
 function getIsale(iSale: string): string {

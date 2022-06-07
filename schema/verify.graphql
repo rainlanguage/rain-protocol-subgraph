@@ -1,3 +1,5 @@
+################## VerifyFactory
+
 type VerifyFactory @entity {
   id: ID! #factory address
   address: Bytes! #factory address
@@ -132,3 +134,5 @@ type VerifyAddress @entity {
   events: [VerifyEvent!] #all the event entities associated with this address for this Verify
   roles: [BigInt!]
 }
+
+################## VerifyFactory
