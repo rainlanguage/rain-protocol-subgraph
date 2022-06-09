@@ -4,6 +4,7 @@ import {
   ByteArray,
   crypto,
   ethereum,
+  log,
 } from "@graphprotocol/graph-ts";
 import {
   AfterClear,
@@ -25,12 +26,41 @@ import {
   TokenVault,
   OrderClearStateChange,
   Bounty,
-  OrderStateConfig,
 } from "../../generated/schema";
 
 import { getERC20 } from "../utils";
 
-export function handleAfterClear(event: AfterClear): void {}
+export function handleAfterClear(event: AfterClear): void {
+  let orderClearStateChange = new OrderClearStateChange(
+    event.block.timestamp.toString()
+  );
+
+  orderClearStateChange.aInput = event.params.stateChange.aInput;
+  orderClearStateChange.aOutput = event.params.stateChange.aOutput;
+  orderClearStateChange.bInput = event.params.stateChange.bInput;
+  orderClearStateChange.bOutput = event.params.stateChange.aInput;
+
+  orderClearStateChange.save();
+
+  let bounty = Bounty.load(event.block.timestamp.toString());
+
+  if (bounty) {
+    bounty.bountyAmountA = event.params.stateChange.aOutput.minus(
+      event.params.stateChange.bInput
+    );
+    bounty.bountyAmountA = event.params.stateChange.bOutput.minus(
+      event.params.stateChange.aInput
+    );
+
+    bounty.save();
+  }
+
+  let orderClear = OrderClear.load(event.block.timestamp.toString());
+  if (orderClear) {
+    orderClear.stateChange = orderClearStateChange.id;
+    orderClear.save();
+  }
+}
 
 export function handleDeposit(event: Deposit): void {
   let vaultDeposit = new VaultDeposit(event.transaction.hash.toHex());
@@ -203,7 +233,72 @@ export function handleOrderLive(event: OrderLive): void {
 }
 
 export function handleClear(event: Clear): void {
+  let orderClear = new OrderClear(event.block.timestamp.toString());
 
+  orderClear.sender = event.params.sender;
+  orderClear.clearer = event.params.sender;
+
+  let order_a_: Order, order_b_: Order;
+
+  let orders = getOrderClear(event);
+  order_a_ = orders[0];
+  order_b_ = orders[1];
+
+  orderClear.orderA = order_a_.id;
+  orderClear.orderB = order_b_.id;
+
+  orderClear.owners = [order_a_.owner, order_b_.owner];
+
+  orderClear.aInput = order_a_.inputToken;
+  orderClear.bInput = order_b_.inputToken;
+
+  let bounty = new Bounty(event.block.timestamp.toString());
+  bounty.clearer = event.params.sender;
+  bounty.orderClear = event.block.timestamp.toString();
+
+  let bountyVaultA = getVault(
+    event.params.bountyConfig.aVaultId,
+    event.params.sender.toHex()
+  );
+
+  let bountyVaultB = getVault(
+    event.params.bountyConfig.bVaultId,
+    event.params.sender.toHex()
+  );
+
+  bounty.bountyVaultA = bountyVaultA.id;
+  bounty.bountyVaultB = bountyVaultB.id;
+
+  bounty.bountyTokenA = order_a_.outputToken;
+  bounty.bountyTokenB = order_b_.outputToken;
+  bounty.save();
+
+  orderClear.bounty = bounty.id;
+
+  orderClear.save();
+}
+
+function getOrderClear(event: Clear): Order[] {
+  let encodedOrder_a_ = ethereum.encode(
+    ethereum.Value.fromTuple(event.params.a_)
+  );
+
+  let keccak256_a_ = crypto.keccak256(encodedOrder_a_ as ByteArray);
+  let uint256_a_ = BigInt.fromByteArray(keccak256_a_);
+
+  let order_a_ = Order.load(uint256_a_.toString());
+
+  let encodedOrder_b_ = ethereum.encode(
+    ethereum.Value.fromTuple(event.params.b_)
+  );
+
+  let keccak256_b_ = crypto.keccak256(encodedOrder_b_ as ByteArray);
+  let uint256_b_ = BigInt.fromByteArray(keccak256_b_);
+
+  let order_b_ = Order.load(uint256_b_.toString());
+  if (order_a_ && order_b_) return [order_a_, order_b_];
+  else log.info("Orders not found", []);
+  return [];
 }
 
 function getOrderLive(event: OrderLive): Order {

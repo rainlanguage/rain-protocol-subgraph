@@ -144,7 +144,7 @@ type OrderClear @entity {
     "The bounty paid when this order was cleared"
     bounty: Bounty! # map by unique id created - see Bounty entity
     "The state change that occured because of this Clear"
-    stateChange: OrderClearStateChange! # map by unique id created - see OrderClearStateChange entity
+    stateChange: OrderClearStateChange # map by unique id created - see OrderClearStateChange entity
 }
 
 # Created when each OrderClear entity is created
@@ -163,9 +163,9 @@ type Bounty @entity {
     "The B token for the bounty"
     bountyTokenB: ERC20! # Clear.b_.outputToken
     "The amount paid for bounty token A"
-    bountyAmountA: BigInt! # AfterClear.stateChange.aOutput - AfterClear.stateChange.bInput
+    bountyAmountA: BigInt # AfterClear.stateChange.aOutput - AfterClear.stateChange.bInput
     "The amount paid for bounty token B"
-    bountyAmountB: BigInt! # AfterClear.stateChange.bOutput - AfterClear.stateChange.aInput
+    bountyAmountB: BigInt # AfterClear.stateChange.bOutput - AfterClear.stateChange.aInput
 }
 
 # Create when an OrderClear entity is created
