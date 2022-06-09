@@ -18,15 +18,15 @@ type StakeERC20 implements ERC20Interface @entity {
   "Timestamp of contract deployment"
   deployTimestamp: BigInt! #the timestamp the contract was deployed
   "Address of deployer"
-  deployer: Bytes! #address of the deployer - get from event Initialize.sender
+  deployer: Bytes #address of the deployer - get from event Initialize.sender
   "Address of the StakeFactory that is this contract's parent "
   factory: StakeFactory! #the factory that deployed this contract
   "Stake token name"
-  name: String! #get from Initialize.config_.name
+  name: String #get from Initialize.config_.name
   "Stake token symbol"
-  symbol: String! #get from Initialize.config_.symbol
+  symbol: String #get from Initialize.config_.symbol
   "Stake token decimals"
-  decimals: Int! #get from Stake.decimals()
+  decimals: Int #get from Stake.decimals()
   "Stake token totalSupply"
   totalSupply: BigInt! #get from Stake.totalSupply() after every Transfer event from or to the zero address (i.e. mint or burn)
   "The token that is staked to receive the Stake token"

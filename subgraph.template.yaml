@@ -4,6 +4,29 @@ schema:
    
 dataSources:
   - kind: ethereum/contract
+    name: StakeFactory
+    network: {{ network }}
+    source:
+      address: "{{ StakeFactory }}"
+      abi: StakeFactory
+      startBlock: {{ StakeFactoryBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - VerifyFactory
+        - Verify
+      abis:
+        - name: StakeFactory
+          file: ./abis/stake/StakeFactory.json
+      eventHandlers:
+        - event: NewChild(address,address)
+          handler: handleNewChild
+        - event: Implementation(address,address)
+          handler: handleImplementation
+      file: ./src/stake/StakeFactory.ts
+  - kind: ethereum/contract
     name: VerifyFactory
     network: {{ network }}
     source:
@@ -473,6 +496,28 @@ templates:
         - event: TierChange(address,address,uint256,uint256,bytes)
           handler: handleTierChange
       file: ./src/tier/VerifyTier.ts
+  - kind: ethereum/contract
+    name: StakeERC20Template
+    network: {{ network }}
+    source:
+      abi: Stake
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - StakeERC20
+      abis:
+        - name: Stake
+          file: ./abis/stake/Stake.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+        - event: Initialize(address,(address,uint256,string,string))
+          handler: handleInitialize
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/stake/Stake.ts
   - kind: ethereum/contract
     name: SaleTemplate
     network: {{ network }}
