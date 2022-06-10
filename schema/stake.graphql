@@ -48,7 +48,7 @@ type StakeERC20 implements ERC20Interface @entity {
 }
 
 # represents one holder of the Stake token
-type StakeHolder implements Holder @entity {
+type StakeHolder @entity {
   id: ID! # {tokenAddress} - {holderAddress}
   address: Bytes!
   token: StakeERC20!

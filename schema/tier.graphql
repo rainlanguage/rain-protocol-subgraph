@@ -61,7 +61,7 @@ type ERC20 implements ERC20Interface @entity {
   deployBlock: BigInt! #the block the contract was deployed
   deployTimestamp: BigInt! #the timestamp the contract was deployed
   symbol: String
-  totalSupply: BigInt
+  totalSupply: BigInt!
   decimals: Int
   name: String
 }

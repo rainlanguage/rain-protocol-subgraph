@@ -301,6 +301,8 @@ dataSources:
       abis:
         - name: OrderBook
           file: ./abis/orderbook/OrderBook.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: AfterClear((uint256,uint256,uint256,uint256))
           handler: handleAfterClear

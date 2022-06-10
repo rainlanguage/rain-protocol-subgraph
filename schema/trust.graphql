@@ -175,7 +175,7 @@ type SeedERC20 @entity {
   redeemSeeds: [RedeemSeed!] #redeem
 }
 
-type Holder implements Holder @entity {
+type Holder implements HolderInterface @entity {
   id: ID! # {tokenAddress} - {holderAddress}
   address: Bytes!
   token: ERC20! # added this so Holder can be used for multiple ERC20 tokens

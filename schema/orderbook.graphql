@@ -1,14 +1,14 @@
 ################## OrderBook
-type OrderBook @entity {
-    "Address of the OrderBook contract"
-    id: ID!
-    "Deployer of the OrderBook"
-    deployer: Bytes!
-    "Block the contract was deployed"
-    deployBlock: Int!
-    "Timestamp for block the contract was deployed"
-    deployTimestamp: Int!
-}
+# type OrderBook @entity {
+#     "Address of the OrderBook contract"
+#     id: ID!
+#     "Deployer of the OrderBook"
+#     deployer: Bytes!
+#     "Block the contract was deployed"
+#     deployBlock: Int!
+#     "Timestamp for block the contract was deployed"
+#     deployTimestamp: Int!
+# }
 
 # Created with the first OrderLive event, then updated on the corresponding OrderDead/OrderLive events
 type Order @entity {

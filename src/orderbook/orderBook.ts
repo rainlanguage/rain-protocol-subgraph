@@ -18,7 +18,6 @@ import { ERC20 } from "../../generated/RedeemableERC20ClaimEscrow/ERC20";
 
 import {
   Order,
-  OrderBook,
   OrderClear,
   Vault,
   VaultDeposit,
@@ -99,6 +98,11 @@ export function handleDeposit(event: Deposit): void {
     let vDeposits = vault.deposits;
     if (vDeposits) vDeposits.push(vaultDeposit.id);
     vault.deposits = vDeposits;
+
+    let tokenVaults = vault.tokenVaults;
+    if (tokenVaults && !tokenVaults.includes(tokenVault.id))
+      tokenVaults.push(tokenVault.id);
+    vault.tokenVaults = tokenVaults;
     vault.save();
   }
 }

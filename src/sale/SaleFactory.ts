@@ -4,7 +4,7 @@ import {
   Implementation,
 } from "../../generated/SaleFactory/SaleFactory";
 import { SaleTemplate } from "../../generated/templates";
-import { DataSourceContext, log } from "@graphprotocol/graph-ts";
+import { DataSourceContext } from "@graphprotocol/graph-ts";
 import { ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../utils";
 
 export function handleImplementation(event: Implementation): void {
