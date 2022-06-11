@@ -38,6 +38,7 @@ export const amount = ethers.BigNumber.from(1 + eighteenZeros);
 
 describe.only("Orderbook test", () => {
   let depositTx: ContractTransaction;
+  let withdrawTx: ContractTransaction;
   before(async () => {
     const signers = await ethers.getSigners();
     deployer = signers[0];
@@ -123,7 +124,7 @@ describe.only("Orderbook test", () => {
     );
   });
 
-  it("Should create vault entity correctly", async () => {
+  it("Should create vault entity correctly after deposit", async () => {
     const query = `
       {
         vault(id: "${vaultId}-${depositor1.address.toLowerCase()}"){
@@ -182,5 +183,179 @@ describe.only("Orderbook test", () => {
     expect(erc20.totalSupply).to.equals(
       (await reserveToken.totalSupply()).toString()
     );
+  });
+
+  it("Should have correct amount of deposit after Deposit", async () => {
+    const query = `
+      {
+        tokenVault(id: "${vaultId}-${depositor1.address.toLowerCase()}-${reserveToken.address.toLowerCase()}"){
+          id
+          vaultId
+          token {
+            id
+          }
+          balance
+          owner
+          orders {
+            id
+          }
+          orderClears {
+            id
+          }
+        }
+      }
+    `;
+
+    const resposne = (await subgraph({ query })) as FetchResult;
+    const tokenVault = resposne.data.tokenVault;
+
+    expect(tokenVault.token.id).to.equals(reserveToken.address.toLowerCase());
+    expect(tokenVault.balance).to.equals(amount);
+    expect(tokenVault.vaultId).to.equals(vaultId.toString());
+    expect(tokenVault.owner).to.equals(depositor1.address.toLowerCase());
+
+    expect(tokenVault.orders).to.be.empty;
+    expect(tokenVault.orderClears).to.be.empty;
+  });
+
+  it("Should send withdraw transaction correctly", async () => {
+    const withdrawConfig: WithdrawConfigStruct = {
+      token: reserveToken.address,
+      vaultId: vaultId,
+      amount: amount.div(ethers.BigNumber.from(2)),
+    };
+
+    withdrawTx = await orderBook.connect(depositor1).withdraw(withdrawConfig);
+
+    const {
+      sender: withdrawer,
+      config: withdrawConfig_,
+      amount: withdrawAmount,
+    } = (await getEventArgs(
+      withdrawTx,
+      "Withdraw",
+      orderBook
+    )) as WithdrawEvent["args"];
+
+    expect(withdrawer).to.equals(depositor1.address);
+    expect(withdrawAmount).to.equals(amount.div(ethers.BigNumber.from(2)));
+
+    await waitForSubgraphToBeSynced();
+  });
+
+  it("Should create vaultWithdraw correctly", async () => {
+    const query = `
+      {
+        vaultWithdraw(id: "${withdrawTx.hash}"){
+          id
+          sender,
+          token{
+            id
+          }
+          vaultId
+          vault{
+            id
+          }
+          amount
+          tokenVault{
+            id
+          }
+        }
+      }
+    `;
+
+    const response = (await subgraph({ query })) as FetchResult;
+    const vaultWithdraw = response.data.vaultWithdraw;
+
+    expect(vaultWithdraw.id).to.equals(withdrawTx.hash);
+    expect(vaultWithdraw.amount).to.equals(
+      amount.div(ethers.BigNumber.from(2))
+    );
+    expect(vaultWithdraw.sender).to.equals(depositor1.address.toLowerCase());
+    expect(vaultWithdraw.vaultId).to.equals(vaultId.toString());
+    expect(vaultWithdraw.token.id).to.equals(
+      reserveToken.address.toLowerCase()
+    );
+    expect(vaultWithdraw.vault.id).to.equals(
+      `${vaultId}-${depositor1.address}`.toLowerCase()
+    );
+    expect(vaultWithdraw.tokenVault.id).to.equals(
+      `${vaultId}-${
+        depositor1.address
+      }-${reserveToken.address.toLowerCase()}`.toLowerCase()
+    );
+  });
+
+  it("Should create vault entity correctly after withdraw", async () => {
+    const query = `
+      {
+        vault(id: "${vaultId}-${depositor1.address.toLowerCase()}"){
+          id
+          tokenVaults{
+            id
+          }
+          deposits{
+            id
+          }
+          withdraws{
+            id
+          }
+        }
+      }
+    `;
+
+    const resposne = (await subgraph({ query })) as FetchResult;
+    const vault = resposne.data.vault;
+
+    expect(vault.tokenVaults).to.be.lengthOf(1);
+    expect(vault.deposits).to.be.lengthOf(1);
+    expect(vault.withdraws).to.be.lengthOf(1);
+
+    expect(vault.tokenVaults).to.deep.include({
+      id: `${vaultId}-${
+        depositor1.address
+      }-${reserveToken.address.toLowerCase()}`.toLowerCase(),
+    });
+
+    expect(vault.deposits).to.deep.include({
+      id: depositTx.hash,
+    });
+
+    expect(vault.withdraws).to.deep.include({
+      id: withdrawTx.hash,
+    });
+  });
+
+  it("Should have correct amount of deposit after Withdraw", async () => {
+    const query = `
+      {
+        tokenVault(id: "${vaultId}-${depositor1.address.toLowerCase()}-${reserveToken.address.toLowerCase()}"){
+          id
+          vaultId
+          token {
+            id
+          }
+          balance
+          owner
+          orders {
+            id
+          }
+          orderClears {
+            id
+          }
+        }
+      }
+    `;
+
+    const resposne = (await subgraph({ query })) as FetchResult;
+    const tokenVault = resposne.data.tokenVault;
+
+    expect(tokenVault.token.id).to.equals(reserveToken.address.toLowerCase());
+    expect(tokenVault.balance).to.equals(amount.div(ethers.BigNumber.from(2)));
+    expect(tokenVault.vaultId).to.equals(vaultId.toString());
+    expect(tokenVault.owner).to.equals(depositor1.address.toLowerCase());
+
+    expect(tokenVault.orders).to.be.empty;
+    expect(tokenVault.orderClears).to.be.empty;
   });
 });

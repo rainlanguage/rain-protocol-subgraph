@@ -61,7 +61,7 @@ type TokenVault @entity {
     "The owner of this Vault"
     owner: Bytes! # From Deposit.sender / Withdraw.sender
     "The id of this vault"
-    vaultId: Int!
+    vaultId: BigInt!
     "The token that has a balance for this vault and owner."
     token: ERC20!
     # Add to this value:

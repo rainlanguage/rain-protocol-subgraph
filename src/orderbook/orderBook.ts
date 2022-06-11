@@ -83,12 +83,8 @@ export function handleDeposit(event: Deposit): void {
 
   vaultDeposit.tokenVault = tokenVault.id;
 
-  let tokenContract = ERC20.bind(event.params.config.token);
-  let TVBalance = tokenContract.try_balanceOf(event.params.sender);
-
-  if (!TVBalance.reverted) {
-    tokenVault.balance = TVBalance.value;
-  }
+  tokenVault.balance = tokenVault.balance.plus(event.params.config.amount);
+  tokenVault.vaultId = event.params.config.vaultId;
 
   tokenVault.save();
 
@@ -124,14 +120,7 @@ export function handleWithdraw(event: Withdraw): void {
   );
 
   vaultWithdraw.tokenVault = tokenVault.id;
-
-  let tokenContract = ERC20.bind(event.params.config.token);
-  let TVBalance = tokenContract.try_balanceOf(event.params.sender);
-
-  if (!TVBalance.reverted) {
-    tokenVault.balance = TVBalance.value;
-  }
-
+  tokenVault.balance = tokenVault.balance.minus(event.params.amount);
   tokenVault.save();
 
   let vault = getVault(
