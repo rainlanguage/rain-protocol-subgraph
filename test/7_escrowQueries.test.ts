@@ -62,8 +62,6 @@ let escrowAddress: string,
   signer1Address: string,
   signer2Address: string;
 
-// TODO: Remove old test after finish this
-
 /**
  * Deploy a sale with prederminated values and setup to the env to avoid code repetition
  *
@@ -2280,6 +2278,111 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
         amountWithdrawn2,
         "the amount claimed is not the expected by the subgraph"
       );
+    });
+
+    it("should query RedeemableEscrowSupplyTokenWithdrawer after a Deposit and multiple rTKN holders", async function () {
+      const buyConfig_1 = {
+        feeRecipient: feeRecipient.address,
+        fee: 10,
+        minimumUnits: 100,
+        desiredUnits: 100,
+        maximumPrice: (await sale.calculatePrice(100)).add(100),
+      };
+      const buyConfig_2 = {
+        feeRecipient: feeRecipient.address,
+        fee: 10,
+        minimumUnits: 200,
+        desiredUnits: 200,
+        maximumPrice: (await sale.calculatePrice(200)).add(100),
+      };
+
+      // Make buys
+      await buySale(sale, signer1, buyConfig_1);
+      await buySale(sale, signer2, buyConfig_2);
+
+      // Finish the sale as failed since does not reach the minimum raise
+      await finishSale(sale);
+
+      // Make deposit
+      const txDeposit = await escrow
+        .connect(signer1)
+        .deposit(saleAddress, claimableReserveAddress, 2000);
+
+      const { supply, amount: totalDeposited } = (await getEventArgs(
+        txDeposit,
+        "Deposit",
+        escrow
+      )) as DepositEvent["args"];
+
+      await waitForSubgraphToBeSynced();
+
+      // IDs
+      const escrowSupplyTokenWithdrawerId_signer1 = `${saleAddress} - ${escrowAddress} - ${supply} - ${claimableReserveAddress} - ${signer1Address}`;
+      const escrowSupplyTokenWithdrawerId_signer2 = `${saleAddress} - ${escrowAddress} - ${supply} - ${claimableReserveAddress} - ${signer2Address}`;
+      const escrowSupplyTokenDepositId = `${saleAddress} - ${escrowAddress} - ${supply} - ${claimableReserveAddress}`;
+
+      const totalWithdrawnAgainst = ethers.constants.Zero;
+
+      // Signer1
+      const redeemableBalance_signer1 = await redeemableERC20.balanceOf(
+        signer1Address
+      );
+      const claimable_signer1 = totalDeposited
+        .sub(totalWithdrawnAgainst)
+        .mul(redeemableBalance_signer1)
+        .div(supply);
+
+      // Signer2
+      const redeemableBalance_signer2 = await redeemableERC20.balanceOf(
+        signer2Address
+      );
+      const claimable_signer2 = totalDeposited
+        .sub(totalWithdrawnAgainst)
+        .mul(redeemableBalance_signer2)
+        .div(supply);
+
+      const query = `
+        {
+          withdrawer1: redeemableEscrowSupplyTokenWithdrawer (id: "${escrowSupplyTokenWithdrawerId_signer1}") {
+            deposit {
+              id
+            }
+            withdrawerAddress
+            redeemableBalance
+            claimable
+            iSaleAddress
+          }
+          withdrawer2: redeemableEscrowSupplyTokenWithdrawer (id: "${escrowSupplyTokenWithdrawerId_signer2}") {
+            deposit {
+              id
+            }
+            withdrawerAddress
+            redeemableBalance
+            claimable
+            iSaleAddress
+          }
+        }
+      `;
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+      const data = response.data;
+      const data_1 = response.data.withdrawer1;
+      const data_2 = response.data.withdrawer2;
+
+      // Signer1
+      expect(data_1.deposit.id).to.be.equals(escrowSupplyTokenDepositId);
+      expect(data_1.withdrawerAddress).to.be.equals(signer1Address);
+      expect(data_1.redeemableBalance).to.be.equals(redeemableBalance_signer1);
+      expect(data_1.claimable).to.be.equals(claimable_signer1);
+      expect(data_1.iSaleAddress).to.be.equals(saleAddress);
+
+      // Signer2
+      expect(data_2.deposit.id).to.be.equals(escrowSupplyTokenDepositId);
+      expect(data_2.withdrawerAddress).to.be.equals(signer2Address);
+      expect(data_2.redeemableBalance).to.be.equals(redeemableBalance_signer2);
+      expect(data_2.claimable).to.be.equals(claimable_signer2);
+      expect(data_2.iSaleAddress).to.be.equals(saleAddress);
     });
   });
 });
