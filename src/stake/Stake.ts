@@ -29,7 +29,9 @@ export function handleInitialize(event: Initialize): void {
   }
 }
 
-export function handleApproval(event: Approval): void {}
+export function handleApproval(event: Approval): void {
+  //
+}
 
 export function handleTransfer(event: Transfer): void {
   let stakeERC20 = StakeERC20.load(event.address.toHex());

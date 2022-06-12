@@ -36,7 +36,7 @@ export let deployer: SignerWithAddress, depositor1: SignerWithAddress;
 export const vaultId = 1;
 export const amount = ethers.BigNumber.from(1 + eighteenZeros);
 
-describe.only("Orderbook test", () => {
+describe("Orderbook test", () => {
   let depositTx: ContractTransaction;
   let withdrawTx: ContractTransaction;
   before(async () => {

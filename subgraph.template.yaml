@@ -269,8 +269,6 @@ dataSources:
       abis:
         - name: ERC20
           file: ./abis/ERC20.json
-        - name: Trust
-          file: ./abis/Trust.json
         - name: RedeemableERC20ClaimEscrow
           file: ./abis/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.json
       eventHandlers:
@@ -316,7 +314,7 @@ dataSources:
           handler: handleOrderLive
         - event: Withdraw(address,(address,uint256,uint256),uint256)
           handler: handleWithdraw
-      file: ./src/Orderbook/OrderBook.ts
+      file: ./src/orderbook/orderBook.ts
   - kind: ethereum/contract
     name: NoticeBoard
     network: {{ network }}
@@ -359,8 +357,6 @@ templates:
           file: ./abis/ERC20.json
         - name: RedeemableERC20
           file: ./abis/RedeemableERC20.json
-        - name: SeedERC20
-          file: ./abis/SeedERC20.json
       eventHandlers:
         - event: Initialize(address,(address,(string,string,address,uint256),address,uint256,address))
           handler: handleInitialize
@@ -370,8 +366,6 @@ templates:
           handler: handleSender
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
-        - event: ERC20PullInitialize(address,address,address)
-          handler: handleERC20PullInitialize
         - event: Redeem(address,address,uint256,uint256)
           handler: handleRedeem
         - event: TreasuryAsset(address,address)
@@ -473,8 +467,6 @@ templates:
       eventHandlers:
         - event: TierChange(address,address,uint256,uint256,bytes)
           handler: handleTierChange
-        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
-          handler: handleSnapshot
       file: ./src/tier/CombineTier.ts
   - kind: ethereum/contract
     name: VerifyTierTemplate
@@ -550,7 +542,7 @@ templates:
       eventHandlers:
         - event: Buy(address,(address,uint256,uint256,uint256,uint256),(uint256,address,uint256,uint256,uint256))
           handler: handleBuy
-        - event: Construct(address,(uint256,uint256,address))
+        - event: Construct(address,(uint256,uint256,address,address))
           handler: handleConstruct
         - event: CooldownInitialize(address,uint256)
           handler: handleCooldownInitialize
@@ -558,12 +550,10 @@ templates:
           handler: handleCooldownTriggered
         - event: End(address,uint8)
           handler: handleEnd
-        - event: Initialize(address,((bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),(bytes[],uint256[],uint256,uint256),address,address,uint256,uint256,uint256,uint256),address)
+        - event: Initialize(address,((bytes[],uint256[]),address,address,uint256,uint256,uint256,uint256),address)
           handler: handleInitialize
         - event: Refund(address,(uint256,address,uint256,uint256,uint256))
           handler: handleRefund
-        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
-          handler: handleSnapshot
         - event: Start(address)
           handler: handleStart
       file: ./src/sale/Sale.ts
@@ -657,8 +647,6 @@ templates:
           handler: handleClaim
         - event: Initialize(address,bool)
           handler: handleInitialize
-        - event: Snapshot(address,address,(uint256,uint256[],bytes[],uint256[],uint256[]))
-          handler: handleSnapshot
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
       file: ./src/emissionsERC20/emissionsERC20.ts

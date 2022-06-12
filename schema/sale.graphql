@@ -17,9 +17,6 @@ type Sale implements Isale & INotice @entity {
   factory: SaleFactory! #the factory that deployed this contract
   token: RedeemableERC20! #from Intialize.token
   reserve: ERC20 #from Initialize.config.reserve
-  canStartStateConfig: CanStartStateConfig #from Initialize.config.canStartStateConfig
-  canEndStateConfig: CanEndStateConfig #from Initialize.config.canEndStateConfig
-  calculatePriceStateConfig: CalculatePriceStateConfig #from Initialize.config.calculatePriceStateConfig
   recipient: Bytes #from Initialize.config.recipient
   cooldownDuration: BigInt #from Initialize.config.cooldownDuration
   minimumRaise: BigInt! #from Initialize.config.minimumRaise

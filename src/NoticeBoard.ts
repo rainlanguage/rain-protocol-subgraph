@@ -3,7 +3,6 @@ import {
   UnknownTier,
   Notice,
   Sale,
-  Trust,
   Verify,
   ERC20BalanceTier,
   VerifyTier,
@@ -34,7 +33,6 @@ export function handleNewNotice(event: NewNotice): void {
   /**
    * load all the bojects to compare
    */
-  let trust = Trust.load(subject);
   let sale = Sale.load(subject);
   let verify = Verify.load(subject);
   let eRC20BalanceTier = ERC20BalanceTier.load(subject);
@@ -50,28 +48,7 @@ export function handleNewNotice(event: NewNotice): void {
    * check if subject is from which Entity and add the newNotice to it
    * else Create a UnknownNotice Entitiy and add notice in it
    */
-  if (trust) {
-    let notices = trust.notices;
-
-    if (notices) {
-      newNotice = new Notice(
-        trust.id +
-          " - " +
-          event.transaction.hash.toHex() +
-          " - " +
-          BigInt.fromI32(notices.length).toString()
-      );
-      newNotice.data = event.params.notice.data;
-      newNotice.sender = event.params.sender;
-      newNotice.deployBlock = event.block.number;
-      newNotice.deployTimestamp = event.block.timestamp;
-
-      newNotice.subject = trust.id;
-      notices.push(newNotice.id);
-      trust.notices = notices;
-      trust.save();
-    }
-  } else if (sale) {
+  if (sale) {
     let notices = sale.notices;
 
     if (notices) {
@@ -90,6 +67,8 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.subject = sale.id;
       notices.push(newNotice.id);
       sale.notices = notices;
+
+      newNotice.save();
       sale.save();
     }
   } else if (verify) {
@@ -111,6 +90,8 @@ export function handleNewNotice(event: NewNotice): void {
 
       notices.push(newNotice.id);
       verify.notices = notices;
+
+      newNotice.save();
       verify.save();
     }
   } else if (eRC20BalanceTier) {
@@ -133,6 +114,8 @@ export function handleNewNotice(event: NewNotice): void {
 
       notices.push(newNotice.id);
       eRC20BalanceTier.notices = notices;
+
+      newNotice.save();
       eRC20BalanceTier.save();
     }
   } else if (verifyTier) {
@@ -154,6 +137,8 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.subject = verifyTier.id;
       notices.push(newNotice.id);
       verifyTier.notices = notices;
+
+      newNotice.save();
       verifyTier.save();
     }
   } else if (eRC20TransferTier) {
@@ -175,6 +160,8 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.subject = eRC20TransferTier.id;
       notices.push(newNotice.id);
       eRC20TransferTier.notices = notices;
+
+      newNotice.save();
       eRC20TransferTier.save();
     }
   } else if (eRC721BalanceTier) {
@@ -196,6 +183,8 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.subject = eRC721BalanceTier.id;
       notices.push(newNotice.id);
       eRC721BalanceTier.notices = notices;
+
+      newNotice.save();
       eRC721BalanceTier.save();
     }
   } else if (combineTier) {
@@ -217,6 +206,8 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.subject = combineTier.id;
       notices.push(newNotice.id);
       combineTier.notices = notices;
+
+      newNotice.save();
       combineTier.save();
     }
   } else if (gatedNFT) {
@@ -238,6 +229,8 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.subject = gatedNFT.id;
       notices.push(newNotice.id);
       gatedNFT.notices = notices;
+
+      newNotice.save();
       gatedNFT.save();
     }
   } else if (redeemableERC20ClaimEscrow) {
@@ -259,6 +252,8 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.subject = redeemableERC20ClaimEscrow.id;
       notices.push(newNotice.id);
       redeemableERC20ClaimEscrow.notices = notices;
+
+      newNotice.save();
       redeemableERC20ClaimEscrow.save();
     }
   } else if (unknownTier) {
@@ -280,6 +275,8 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.subject = unknownTier.id;
       notices.push(newNotice.id);
       unknownTier.notices = notices;
+
+      newNotice.save();
       unknownTier.save();
     }
   } else {
@@ -307,9 +304,9 @@ export function handleNewNotice(event: NewNotice): void {
 
       notices.push(newNotice.id);
       unknownNotice.notices = notices;
+
+      newNotice.save();
       unknownNotice.save();
     }
   }
-
-  newNotice.save();
 }

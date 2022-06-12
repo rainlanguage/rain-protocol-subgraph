@@ -1,13 +1,9 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
-  Contract,
-  Pool,
-  Trust,
-  TrustParticipant,
   Sale,
   ERC20,
+  RedeemableERC20 as RedeemableERC20Contract,
 } from "../generated/schema";
-import { RedeemableERC20 } from "../generated/templates/RedeemableERC20Template/RedeemableERC20";
 import { ERC20 as ERC20Contract } from "../generated/RedeemableERC20ClaimEscrow/ERC20";
 
 let ZERO_BI = BigInt.fromI32(0);
@@ -107,107 +103,20 @@ export {
 };
 
 /**
- * @description A function to create a trustParticipant if not exists.
- * @param participant Address of user.
- * @param trust Address of Trust.
- * @returns TrustParticipant Enitity.
- */
-export function getTrustParticipent(
-  participant: Address,
-  trust: string
-): TrustParticipant {
-  // load trustParticipant using "participant - trust"
-  let trustParticipant = TrustParticipant.load(
-    participant.toHex() + " - " + trust
-  );
-
-  // load contracts of trust Address
-  let contracts = Contract.load(trust);
-
-  // create seedERC20Contract using seeder from contracts
-  if (contracts) {
-    // create seedERC20Contract using redeemableERC20 from contracts
-    let redeemableERC20Contract = RedeemableERC20.bind(
-      Address.fromString(contracts.redeemableERC20)
-    );
-
-    /**
-     *   check if trustParticipant exists
-     *   If not create a bew one with default value.
-     */
-    if (!trustParticipant) {
-      trustParticipant = new TrustParticipant(
-        participant.toHex() + " - " + trust
-      );
-      trustParticipant.address = participant;
-      trustParticipant.trust = trust;
-      trustParticipant.seedBalance = ZERO_BI;
-      trustParticipant.seeds = [];
-      trustParticipant.unSeeds = [];
-      trustParticipant.redeems = [];
-      trustParticipant.redeemSeeds = [];
-      trustParticipant.swaps = [];
-
-      let trustEntity = Trust.load(trust);
-      if (trustEntity) {
-        let tp = trustEntity.trustParticipants;
-        if (tp) tp.push(trustParticipant.id); // add the trustParticipant in Trust
-        trustEntity.trustParticipants = tp;
-        trustEntity.save();
-      }
-    }
-
-    // Update the seedBalance and tokenBalance everytime when getting trustParticipant
-    let tokenBalance = redeemableERC20Contract.try_balanceOf(participant);
-
-    if (!tokenBalance.reverted)
-      trustParticipant.tokenBalance = tokenBalance.value;
-  }
-
-  return trustParticipant as TrustParticipant;
-}
-
-/**
 * @description A function to chechk if a given address is not a ZERO_ADDRESSE
                 or contract address for the given Trust.
 * @param address Address of user.
 * @param trust Address of Trust.
 * @returns True if not any contract address or ZERO_ADDRESSE else False.
 */
-export function notAContract(address: string, trust: string): boolean {
-  let contracts = Contract.load(trust);
-  if (trust == address) return false;
-  if (contracts) {
-    if (contracts.seeder == address) return false;
-    if (contracts.redeemableERC20 == address) return false;
-    if (contracts.reserveERC20 == address) return false;
-    if (contracts.configurableRightPool == address) return false;
-    if (contracts.pool == address) return false;
-    if (contracts.tier == address) return false;
-  }
-
+export function notAContract(address: string): boolean {
   let sale = Sale.load(address);
   if (sale) return false;
 
+  let redeemableERC20 = RedeemableERC20Contract.load(address);
+  if (redeemableERC20) return false;
+
   return true;
-}
-
-export function getEmptyPool(): string {
-  let pool = new Pool("EMPTY_POOL");
-  pool.deployBlock = ZERO_BI;
-  pool.deployTimestamp = ZERO_BI;
-  pool.numberOfSwaps = ZERO_BI;
-
-  let trust = new Trust("EMPTY_TRUST");
-  trust.deployBlock = ZERO_BI;
-  trust.deployTimestamp = ZERO_BI;
-  trust.creator = Address.fromString(ZERO_ADDRESS);
-  trust.factory = Address.fromString(ZERO_ADDRESS);
-  trust.save();
-
-  pool.trust = trust.id;
-  pool.save();
-  return pool.id;
 }
 
 export function getERC20(token: Address, block: ethereum.Block): ERC20 {

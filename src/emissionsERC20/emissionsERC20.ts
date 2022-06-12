@@ -2,7 +2,6 @@ import {
   Initialize,
   Claim,
   Transfer,
-  Snapshot,
   EmissionsERC20 as EmissionsERC20Contract,
 } from "../../generated/templates/EmissionsERC20Template/EmissionsERC20";
 import {
@@ -40,22 +39,6 @@ export function handleClaim(event: Claim): void {
       emissionsERC20.claims = claims;
       emissionsERC20.save();
     }
-  }
-}
-
-export function handleSnapshot(event: Snapshot): void {
-  let calculateClaimStateConfig = new State(event.transaction.hash.toHex());
-  calculateClaimStateConfig.sources = event.params.state.sources;
-  calculateClaimStateConfig.constants = event.params.state.constants;
-  calculateClaimStateConfig.arguments = event.params.state.arguments;
-  calculateClaimStateConfig.stackIndex = event.params.state.stackIndex;
-  calculateClaimStateConfig.stack = event.params.state.stack;
-  calculateClaimStateConfig.save();
-
-  let emissionsERC20 = EmissionsERC20.load(event.address.toHex());
-  if (emissionsERC20) {
-    emissionsERC20.calculateClaimStateConfig = calculateClaimStateConfig.id;
-    emissionsERC20.save();
   }
 }
 

@@ -172,11 +172,10 @@ type UnknownTier implements TierContract @entity {
 }
 
 # Notice entity
-# created when Notice event is emited by Trust
 # src/trust.ts/handleNotice
 type Notice @entity {
   id: ID! #tx hash
-  subject: INotice! #the trust that emitted the event
+  subject: INotice! #the address that emitted the event
   sender: Bytes! #the address of the sender, from the event
   data: Bytes! #from the event
   deployBlock: BigInt! #block of event

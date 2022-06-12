@@ -12,7 +12,6 @@ import {
   End,
   Initialize,
   Refund,
-  Snapshot,
   Start,
 } from "../../generated/SaleFactory/Sale";
 import {
@@ -20,16 +19,12 @@ import {
   SaleFactory,
   ERC20,
   SaleStart,
-  CanStartStateConfig,
-  CanEndStateConfig,
-  CalculatePriceStateConfig,
   SaleEnd,
   SaleBuy,
   SaleFeeRecipient,
   SaleReceipt,
   SaleRefund,
   RedeemableERC20,
-  Contract,
 } from "../../generated/schema";
 import { RedeemableERC20Template } from "../../generated/templates";
 import { ERC20 as ERC20Contract } from "../../generated/templates/SaleTemplate/ERC20";
@@ -180,50 +175,6 @@ export function handleInitialize(event: Initialize): void {
 
     let balance = tokenContrct.try_balanceOf(event.address);
     if (!balance.reverted) sale.unitsAvailable = balance.value;
-
-    let canStartStateConfig = new CanStartStateConfig(
-      event.transaction.hash.toHex()
-    );
-    canStartStateConfig.sources =
-      event.params.config.canStartStateConfig.sources;
-    canStartStateConfig.stackLength =
-      event.params.config.canStartStateConfig.stackLength;
-    canStartStateConfig.argumentsLength =
-      event.params.config.canStartStateConfig.argumentsLength;
-    canStartStateConfig.constants =
-      event.params.config.canStartStateConfig.constants;
-    canStartStateConfig.save();
-
-    sale.canStartStateConfig = canStartStateConfig.id;
-
-    let canEndStateConfig = new CanEndStateConfig(
-      event.transaction.hash.toHex()
-    );
-    canEndStateConfig.sources = event.params.config.canEndStateConfig.sources;
-    canEndStateConfig.stackLength =
-      event.params.config.canEndStateConfig.stackLength;
-    canEndStateConfig.argumentsLength =
-      event.params.config.canEndStateConfig.argumentsLength;
-    canEndStateConfig.constants =
-      event.params.config.canEndStateConfig.constants;
-    canEndStateConfig.save();
-
-    sale.canEndStateConfig = canEndStateConfig.id;
-
-    let calculatePriceStateConfig = new CalculatePriceStateConfig(
-      event.transaction.hash.toHex()
-    );
-    calculatePriceStateConfig.sources =
-      event.params.config.calculatePriceStateConfig.sources;
-    calculatePriceStateConfig.stackLength =
-      event.params.config.calculatePriceStateConfig.stackLength;
-    calculatePriceStateConfig.argumentsLength =
-      event.params.config.calculatePriceStateConfig.argumentsLength;
-    calculatePriceStateConfig.constants =
-      event.params.config.calculatePriceStateConfig.constants;
-    calculatePriceStateConfig.save();
-
-    sale.calculatePriceStateConfig = calculatePriceStateConfig.id;
 
     token.save();
     reserve.save();
@@ -385,12 +336,6 @@ function getRedeemableERC20(
 
     redeemableERC20.save();
 
-    let contracts = Contract.load(ZERO_ADDRESS);
-    if (!contracts) {
-      contracts = new Contract(ZERO_ADDRESS);
-      contracts.save();
-    }
-
     let context = new DataSourceContext();
     context.setString("trust", ZERO_ADDRESS);
     RedeemableERC20Template.createWithContext(token, context);
@@ -405,8 +350,11 @@ function updateFeeRecipient(recipient: SaleFeeRecipient): void {
   let buyLength = buys.length;
 
   for (let i = 0; i < buyLength; i++) {
-    let saleBuy = SaleBuy.load(buys.pop());
-    if (saleBuy) buyAmount = buyAmount.plus(saleBuy.fee);
+    let buy = buys.pop();
+    if (buy) {
+      let saleBuy = SaleBuy.load(buy);
+      if (saleBuy) buyAmount = buyAmount.plus(saleBuy.fee);
+    }
   }
 
   let refunds = recipient.refunds;
@@ -414,8 +362,11 @@ function updateFeeRecipient(recipient: SaleFeeRecipient): void {
   let refundLength = refunds.length;
 
   for (let i = 0; i < refundLength; i++) {
-    let saleRefund = SaleRefund.load(refunds.pop());
-    if (saleRefund) refundAmount = refundAmount.plus(saleRefund.fee);
+    let refund = refunds.pop();
+    if (refund) {
+      let saleRefund = SaleRefund.load(refund);
+      if (saleRefund) refundAmount = refundAmount.plus(saleRefund.fee);
+    }
   }
 
   recipient.totalFees = buyAmount.minus(refundAmount);
@@ -440,10 +391,13 @@ function updateSale(sale: Sale): void {
       let buyLength = saleBuys.length;
 
       for (let i = 0; i < buyLength; i++) {
-        let saleBuy = SaleBuy.load(saleBuys.pop());
-        if (saleBuy) {
-          totalIn = totalIn.plus(saleBuy.totalIn);
-          buyFee = buyFee.plus(saleBuy.fee);
+        let buy = saleBuys.pop();
+        if (buy) {
+          let saleBuy = SaleBuy.load(buy);
+          if (saleBuy) {
+            totalIn = totalIn.plus(saleBuy.totalIn);
+            buyFee = buyFee.plus(saleBuy.fee);
+          }
         }
       }
     }
@@ -452,10 +406,13 @@ function updateSale(sale: Sale): void {
       let refundLength = saleRefunds.length;
 
       for (let i = 0; i < refundLength; i++) {
-        let saleRefund = SaleRefund.load(saleRefunds.pop());
-        if (saleRefund) {
-          totalOut = totalOut.plus(saleRefund.totalOut);
-          refundFee = refundFee.plus(saleRefund.fee);
+        let refund = saleRefunds.pop();
+        if (refund) {
+          let saleRefund = SaleRefund.load(refund);
+          if (saleRefund) {
+            totalOut = totalOut.plus(saleRefund.totalOut);
+            refundFee = refundFee.plus(saleRefund.fee);
+          }
         }
       }
     }
@@ -472,8 +429,4 @@ function updateSale(sale: Sale): void {
         .times(HUNDRED_BD);
     sale.save();
   }
-}
-
-export function handleSnapshot(event: Snapshot): void {
-  //Empty BLOCK
 }

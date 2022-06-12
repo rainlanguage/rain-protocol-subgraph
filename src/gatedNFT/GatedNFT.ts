@@ -141,9 +141,12 @@ export function handleTransfer(event: TransferEvent): void {
     let new_tokens: string[] = [];
     for (let i = ZERO_BI; i < sender.tokenCount; i = i.plus(ONE_BI)) {
       if (tokens) {
-        let token = GatedToken.load(tokens.pop());
-        if (token && token.tokenId != event.params.tokenId)
-          new_tokens.push(token.id);
+        let _token = tokens.pop();
+        if (_token) {
+          let token = GatedToken.load(_token);
+          if (token && token.tokenId != event.params.tokenId)
+            new_tokens.push(token.id);
+        }
       }
     }
     if (sender) {

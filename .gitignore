@@ -3,6 +3,7 @@
 
 ## Deps
 node_modules
+test/helper.txt
 
 ## Hardhat
 .env
