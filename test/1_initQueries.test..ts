@@ -63,10 +63,10 @@ export let subgraph: ApolloFetch,
 // Export signers
 export let deployer: SignerWithAddress,
   creator: SignerWithAddress,
-  seeder1: SignerWithAddress,
-  seeder2: SignerWithAddress,
   signer1: SignerWithAddress,
   signer2: SignerWithAddress,
+  signer3: SignerWithAddress,
+  signer4: SignerWithAddress,
   recipient: SignerWithAddress,
   feeRecipient: SignerWithAddress,
   admin: SignerWithAddress;
@@ -77,8 +77,8 @@ before("Deployment contracts and subgraph", async function () {
   // Signers (to avoid fetch again)
   deployer = signers[0]; // deployer is NOT creator
   creator = signers[1];
-  seeder1 = signers[2];
-  seeder2 = signers[3];
+  signer3 = signers[2];
+  signer4 = signers[3];
   signer1 = signers[4];
   signer2 = signers[5];
   recipient = signers[6];

@@ -1,5 +1,6 @@
 ################## OrderBook
-# type OrderBook @entity { # Require an Event in the constructor of the contract
+# Require an Event in the constructor of the contract
+# type   @entity {
 #     "Address of the OrderBook contract"
 #     id: ID!
 #     "Deployer of the OrderBook"

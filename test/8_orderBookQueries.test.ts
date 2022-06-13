@@ -1,361 +1,600 @@
-import { expect, should } from "chai";
-import { artifacts, ethers } from "hardhat";
-import path from "path";
+import { ethers } from "hardhat";
+import { concat } from "ethers/lib/utils";
+import { BigNumber } from "ethers";
+
 import {
-  BountyConfigStruct,
-  ClearEvent,
-  AfterClearEvent,
-  ClearStateChangeStruct,
-  DepositConfigStruct,
-  DepositEvent,
-  OrderBook,
-  OrderConfigStruct,
-  OrderDeadEvent,
-  OrderLiveEvent,
-  WithdrawConfigStruct,
-  WithdrawEvent,
-} from "../typechain/OrderBook";
-import {
-  eighteenZeros,
-  fetchFile,
+  op,
   getEventArgs,
+  eighteenZeros,
+  OrderBookOpcode,
   waitForSubgraphToBeSynced,
 } from "./utils/utils";
+import * as Util from "./utils/utils";
+
+// Typechain Factories
 import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
-import { ReserveTokenTest } from "../typechain/ReserveTokenTest";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { subgraph } from "./1_initQueries.test.";
-import { FetchResult } from "apollo-fetch";
-import { ContractTransaction } from "ethers";
 
-export let orderBook: OrderBook;
-export let reserveToken: ReserveTokenTest;
+// Types
+import type { FetchResult } from "apollo-fetch";
+import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import type {
+  // Structs - configs
+  OrderConfigStruct,
+  OrderStruct,
+  DepositConfigStruct,
+  BountyConfigStruct,
+  // Events
+  OrderLiveEvent,
+  DepositEvent,
+} from "../typechain/OrderBook";
 
-export let deployer: SignerWithAddress, depositor1: SignerWithAddress;
+import {
+  // Subgraph
+  subgraph,
+  // Contracts
+  orderBook,
+  // Signers
+  deployer,
+  signer1,
+  signer2,
+  signer3 as bountyAccount,
+} from "./1_initQueries.test.";
+import { expect } from "chai";
 
-export const vaultId = 1;
-export const amount = ethers.BigNumber.from(1 + eighteenZeros);
+let tokenA: ReserveTokenTest, tokenB: ReserveTokenTest;
 
-describe("Orderbook test", () => {
-  let depositTx: ContractTransaction;
-  let withdrawTx: ContractTransaction;
-  before(async () => {
-    const signers = await ethers.getSigners();
-    deployer = signers[0];
-    depositor1 = signers[1];
+function getOrderIdFromOrder(_order: Readonly<OrderStruct>): string {
+  const encodeOrder = ethers.utils.defaultAbiCoder.encode(
+    ["tuple(address, address, uint256, address, uint256, uint256, bytes)"],
+    [
+      [
+        _order.owner,
+        _order.inputToken,
+        _order.inputVaultId,
+        _order.outputToken,
+        _order.outputVaultId,
+        _order.tracking,
+        _order.vmState,
+      ],
+    ]
+  );
 
-    const pathExampleConfig = path.resolve(
-      __dirname,
-      "../config/localhost.json"
-    );
-    const config = JSON.parse(fetchFile(pathExampleConfig));
+  return BigNumber.from(ethers.utils.keccak256(encodeOrder)).toString();
+}
 
-    orderBook = (await ethers.getContractAt(
-      (
-        await artifacts.readArtifact("OrderBook")
-      ).abi,
-      config.OrderBook
-    )) as OrderBook;
+describe.only("Orderbook test", () => {
+  const TRACK_CLEARED_ORDER = 0x1;
+  const cOrderHash = op(OrderBookOpcode.CONTEXT, 0);
 
-    reserveToken = await new ReserveTokenTest__factory(deployer).deploy();
+  beforeEach("deploying fresh test contracts", async () => {
+    tokenA = await new ReserveTokenTest__factory(deployer).deploy();
+    tokenB = await new ReserveTokenTest__factory(deployer).deploy();
   });
 
-  it("Should get contract from config and deploy testToken", async () => {
-    expect(orderBook.address).to.be.not.null;
-    expect(reserveToken.address).to.be.not.null;
-  });
+  describe("Order entity", async () => {
+    it("should query the Order after addOrder", async () => {
+      const InputVault = 1;
+      const OutputVault = 2;
 
-  it("Should create vaultDeposit entity correctly", async () => {
-    await reserveToken.connect(deployer).transfer(depositor1.address, amount);
-    await reserveToken.connect(depositor1).approve(orderBook.address, amount);
+      // ASK ORDER
+      const askPrice = ethers.BigNumber.from("1" + eighteenZeros);
+      const askBlock = await ethers.provider.getBlockNumber();
+      const askConstants = [askPrice, askBlock, 5];
+      const vAskPrice = op(OrderBookOpcode.CONSTANT, 0);
+      const vAskBlock = op(OrderBookOpcode.CONSTANT, 1);
+      const v5 = op(OrderBookOpcode.CONSTANT, 2);
+      // prettier-ignore
+      const askSource = concat([
+        // outputMax = (currentBlock - askBlock) * 5 - aliceCleared
+        // 5 tokens available per block
+              op(OrderBookOpcode.BLOCK_NUMBER),
+              vAskBlock,
+            op(OrderBookOpcode.SUB, 2),
+            v5,
+          op(OrderBookOpcode.MUL, 2),
+            cOrderHash,
+          op(OrderBookOpcode.ORDER_FUNDS_CLEARED),
+        op(OrderBookOpcode.SUB, 2),
+        vAskPrice,
+      ]);
 
-    const depositConfig: DepositConfigStruct = {
-      token: reserveToken.address,
-      vaultId: vaultId,
-      amount: amount,
-    };
+      const askOrderConfig: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: InputVault,
+        outputToken: tokenB.address,
+        outputVaultId: OutputVault,
+        tracking: TRACK_CLEARED_ORDER,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants,
+        },
+      };
 
-    depositTx = await orderBook.connect(depositor1).deposit(depositConfig);
+      const transaction = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig);
 
-    const { sender: Depositor, config: DepositConfig } = (await getEventArgs(
-      depositTx,
-      "Deposit",
-      orderBook
-    )) as DepositEvent["args"];
+      const { config: orderConfig } = (await getEventArgs(
+        transaction,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
 
-    await waitForSubgraphToBeSynced();
-    const query = `
-      {
-        vaultDeposit(id: "${depositTx.hash}"){
-          id
-          sender
-          vaultId
-          vault {
-            id
-          }
-          amount
-          token {
-            id
-          }
-          tokenVault {
-            id
-          }
-        }
-      }
-    `;
+      const orderId = getOrderIdFromOrder(orderConfig);
+      const vault_inputVaultID = `${orderConfig.inputVaultId.toString()} - ${orderConfig.owner.toLowerCase()}`; // {vaultId}-{owner}
+      const vault_outputVaultID = `${orderConfig.outputVaultId.toString()} - ${orderConfig.owner.toLowerCase()}`; // {vaultId}-{owner}
 
-    const response = (await subgraph({ query })) as FetchResult;
-    const vaultDeposit = response.data.vaultDeposit;
+      await waitForSubgraphToBeSynced();
 
-    expect(Depositor).to.be.equals(depositor1.address);
-    expect(vaultDeposit.id).to.be.equals(depositTx.hash);
-
-    expect(vaultDeposit.sender).to.equals(depositor1.address.toLowerCase());
-    expect(vaultDeposit.vaultId).to.be.equal(vaultId.toString());
-    expect(vaultDeposit.vault.id).to.equals(
-      `${vaultId}-${depositor1.address.toLowerCase()}`.toLowerCase()
-    );
-    expect(vaultDeposit.amount).to.equals(amount.toString());
-    expect(vaultDeposit.token.id).to.equals(reserveToken.address.toLowerCase());
-    expect(vaultDeposit.tokenVault.id).to.equals(
-      `${vaultId}-${
-        depositor1.address
-      }-${reserveToken.address.toLowerCase()}`.toLowerCase()
-    );
-  });
-
-  it("Should create vault entity correctly after deposit", async () => {
-    const query = `
-      {
-        vault(id: "${vaultId}-${depositor1.address.toLowerCase()}"){
-          id
-          tokenVaults{
-            id
-          }
-          deposits{
-            id
-          }
-          withdraws{
-            id
-          }
-        }
-      }
-    `;
-
-    const resposne = (await subgraph({ query })) as FetchResult;
-    const vault = resposne.data.vault;
-
-    expect(vault.tokenVaults).to.be.lengthOf(1);
-    expect(vault.deposits).to.be.lengthOf(1);
-    expect(vault.withdraws).to.be.lengthOf(0);
-
-    expect(vault.tokenVaults).to.deep.include({
-      id: `${vaultId}-${
-        depositor1.address
-      }-${reserveToken.address.toLowerCase()}`.toLowerCase(),
-    });
-
-    expect(vault.deposits).to.deep.include({
-      id: depositTx.hash,
-    });
-  });
-
-  it("Should create ERC20 Token entity", async () => {
-    const query = `
-      {
-        erc20(id: "${reserveToken.address.toLowerCase()}"){
-          id
-          name
-          symbol
-          decimals
-          totalSupply
-        }
-      }
-    `;
-
-    const response = (await subgraph({ query })) as FetchResult;
-    const erc20 = response.data.erc20;
-
-    expect(erc20.id).to.equals(reserveToken.address.toLowerCase());
-    expect(erc20.name).to.equals(await reserveToken.name());
-    expect(erc20.symbol).to.equals(await reserveToken.symbol());
-    expect(erc20.decimals).to.equals(await await reserveToken.decimals());
-    expect(erc20.totalSupply).to.equals(
-      (await reserveToken.totalSupply()).toString()
-    );
-  });
-
-  it("Should have correct amount of deposit after Deposit", async () => {
-    const query = `
-      {
-        tokenVault(id: "${vaultId}-${depositor1.address.toLowerCase()}-${reserveToken.address.toLowerCase()}"){
-          id
-          vaultId
-          token {
-            id
-          }
-          balance
-          owner
+      // Make the order with a fixed ID
+      const query = `
+        {
           orders {
             id
-          }
-          orderClears {
-            id
-          }
-        }
-      }
-    `;
-
-    const resposne = (await subgraph({ query })) as FetchResult;
-    const tokenVault = resposne.data.tokenVault;
-
-    expect(tokenVault.token.id).to.equals(reserveToken.address.toLowerCase());
-    expect(tokenVault.balance).to.equals(amount);
-    expect(tokenVault.vaultId).to.equals(vaultId.toString());
-    expect(tokenVault.owner).to.equals(depositor1.address.toLowerCase());
-
-    expect(tokenVault.orders).to.be.empty;
-    expect(tokenVault.orderClears).to.be.empty;
-  });
-
-  it("Should send withdraw transaction correctly", async () => {
-    const withdrawConfig: WithdrawConfigStruct = {
-      token: reserveToken.address,
-      vaultId: vaultId,
-      amount: amount.div(ethers.BigNumber.from(2)),
-    };
-
-    withdrawTx = await orderBook.connect(depositor1).withdraw(withdrawConfig);
-
-    const {
-      sender: withdrawer,
-      config: withdrawConfig_,
-      amount: withdrawAmount,
-    } = (await getEventArgs(
-      withdrawTx,
-      "Withdraw",
-      orderBook
-    )) as WithdrawEvent["args"];
-
-    expect(withdrawer).to.equals(depositor1.address);
-    expect(withdrawAmount).to.equals(amount.div(ethers.BigNumber.from(2)));
-
-    await waitForSubgraphToBeSynced();
-  });
-
-  it("Should create vaultWithdraw correctly", async () => {
-    const query = `
-      {
-        vaultWithdraw(id: "${withdrawTx.hash}"){
-          id
-          sender,
-          token{
-            id
-          }
-          vaultId
-          vault{
-            id
-          }
-          amount
-          tokenVault{
-            id
+            owner
+            tracking
+            vmState
+            orderLiveness
+            inputToken {
+              id
+            }
+            outputToken {
+              id
+            }
+            inputVault {
+              id
+            }
+            outputVault {
+              id
+            }
+            inputTokenVault {
+              id
+            }
+            outputTokenVault {
+              id
+            }
           }
         }
-      }
-    `;
+      `;
 
-    const response = (await subgraph({ query })) as FetchResult;
-    const vaultWithdraw = response.data.vaultWithdraw;
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
 
-    expect(vaultWithdraw.id).to.equals(withdrawTx.hash);
-    expect(vaultWithdraw.amount).to.equals(
-      amount.div(ethers.BigNumber.from(2))
-    );
-    expect(vaultWithdraw.sender).to.equals(depositor1.address.toLowerCase());
-    expect(vaultWithdraw.vaultId).to.equals(vaultId.toString());
-    expect(vaultWithdraw.token.id).to.equals(
-      reserveToken.address.toLowerCase()
-    );
-    expect(vaultWithdraw.vault.id).to.equals(
-      `${vaultId}-${depositor1.address}`.toLowerCase()
-    );
-    expect(vaultWithdraw.tokenVault.id).to.equals(
-      `${vaultId}-${
-        depositor1.address
-      }-${reserveToken.address.toLowerCase()}`.toLowerCase()
-    );
-  });
+      console.log(orderId);
+      console.log(JSON.stringify(response.data, null, 2));
 
-  it("Should create vault entity correctly after withdraw", async () => {
-    const query = `
-      {
-        vault(id: "${vaultId}-${depositor1.address.toLowerCase()}"){
-          id
-          tokenVaults{
-            id
-          }
-          deposits{
-            id
-          }
-          withdraws{
-            id
-          }
-        }
-      }
-    `;
+      const data = response.data.orders[0];
 
-    const resposne = (await subgraph({ query })) as FetchResult;
-    const vault = resposne.data.vault;
+      expect(data.orderLiveness).to.be.true;
+      expect(data.owner).to.be.equals(orderConfig.owner.toLowerCase());
 
-    expect(vault.tokenVaults).to.be.lengthOf(1);
-    expect(vault.deposits).to.be.lengthOf(1);
-    expect(vault.withdraws).to.be.lengthOf(1);
+      expect(data.tracking).to.be.equals(orderConfig.tracking);
+      expect(data.vmState).to.be.equals(orderConfig.vmState);
 
-    expect(vault.tokenVaults).to.deep.include({
-      id: `${vaultId}-${
-        depositor1.address
-      }-${reserveToken.address.toLowerCase()}`.toLowerCase(),
+      expect(data.inputToken.id).to.be.equals(
+        orderConfig.inputToken.toLowerCase()
+      );
+      expect(data.outputToken.id).to.be.equals(
+        orderConfig.outputToken.toLowerCase()
+      );
+
+      // Vault
+      expect(data.inputVault.id).to.be.equals(vault_inputVaultID);
+      expect(data.outputVault.id).to.be.equals(vault_outputVaultID);
+
+      // TokenVault
+      expect(
+        data.inputTokenVault.id,
+        "wrong - there is not match for inputTokenVault yet"
+      ).to.be.null;
+      expect(
+        data.outputTokenVault.id,
+        "wrong - there is not match for outputTokenVault yet"
+      ).to.be.null;
     });
 
-    expect(vault.deposits).to.deep.include({
-      id: depositTx.hash,
-    });
+    it("should update orderLiveness to false in the Order after removeOrder", async () => {
+      const InputVault = 10;
+      const OutputVault = 20;
 
-    expect(vault.withdraws).to.deep.include({
-      id: withdrawTx.hash,
-    });
-  });
+      // ASK ORDER
+      const askPrice = ethers.BigNumber.from("1" + eighteenZeros);
+      const askBlock = await ethers.provider.getBlockNumber();
+      const askConstants = [askPrice, askBlock, 5];
+      const vAskPrice = op(OrderBookOpcode.CONSTANT, 0);
+      const vAskBlock = op(OrderBookOpcode.CONSTANT, 1);
+      const v5 = op(OrderBookOpcode.CONSTANT, 2);
+      // prettier-ignore
+      const askSource = concat([
+        // outputMax = (currentBlock - askBlock) * 5 - aliceCleared
+        // 5 tokens available per block
+              op(OrderBookOpcode.BLOCK_NUMBER),
+              vAskBlock,
+            op(OrderBookOpcode.SUB, 2),
+            v5,
+          op(OrderBookOpcode.MUL, 2),
+            cOrderHash,
+          op(OrderBookOpcode.ORDER_FUNDS_CLEARED),
+        op(OrderBookOpcode.SUB, 2),
+        vAskPrice,
+      ]);
 
-  it("Should have correct amount of deposit after Withdraw", async () => {
-    const query = `
-      {
-        tokenVault(id: "${vaultId}-${depositor1.address.toLowerCase()}-${reserveToken.address.toLowerCase()}"){
-          id
-          vaultId
-          token {
-            id
-          }
-          balance
-          owner
-          orders {
-            id
-          }
-          orderClears {
-            id
+      const askOrderConfig: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: InputVault,
+        outputToken: tokenB.address,
+        outputVaultId: OutputVault,
+        tracking: TRACK_CLEARED_ORDER,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants,
+        },
+      };
+
+      const txAddOrder = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig);
+
+      const { config: orderConfig } = (await getEventArgs(
+        txAddOrder,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      // Removing the order
+      await orderBook.connect(signer1).removeOrder(orderConfig);
+
+      const orderId = getOrderIdFromOrder(orderConfig);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          order (id: "${orderId}") {
+            orderLiveness
           }
         }
-      }
-    `;
+      `;
 
-    const resposne = (await subgraph({ query })) as FetchResult;
-    const tokenVault = resposne.data.tokenVault;
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
 
-    expect(tokenVault.token.id).to.equals(reserveToken.address.toLowerCase());
-    expect(tokenVault.balance).to.equals(amount.div(ethers.BigNumber.from(2)));
-    expect(tokenVault.vaultId).to.equals(vaultId.toString());
-    expect(tokenVault.owner).to.equals(depositor1.address.toLowerCase());
+      const data = response.data.order;
 
-    expect(tokenVault.orders).to.be.empty;
-    expect(tokenVault.orderClears).to.be.empty;
+      expect(data.orderLiveness).to.be.false;
+    });
+
+    it("should update orderLiveness to true in the Order after addOrder again", async () => {
+      const InputVault = 10;
+      const OutputVault = 20;
+
+      // ASK ORDER
+      const askPrice = ethers.BigNumber.from("1" + eighteenZeros);
+      const askBlock = await ethers.provider.getBlockNumber();
+      const askConstants = [askPrice, askBlock, 5];
+      const vAskPrice = op(OrderBookOpcode.CONSTANT, 0);
+      const vAskBlock = op(OrderBookOpcode.CONSTANT, 1);
+      const v5 = op(OrderBookOpcode.CONSTANT, 2);
+      // prettier-ignore
+      const askSource = concat([
+        // outputMax = (currentBlock - askBlock) * 5 - aliceCleared
+        // 5 tokens available per block
+              op(OrderBookOpcode.BLOCK_NUMBER),
+              vAskBlock,
+            op(OrderBookOpcode.SUB, 2),
+            v5,
+          op(OrderBookOpcode.MUL, 2),
+            cOrderHash,
+          op(OrderBookOpcode.ORDER_FUNDS_CLEARED),
+        op(OrderBookOpcode.SUB, 2),
+        vAskPrice,
+      ]);
+
+      const askOrderConfig: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: InputVault,
+        outputToken: tokenB.address,
+        outputVaultId: OutputVault,
+        tracking: TRACK_CLEARED_ORDER,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants,
+        },
+      };
+
+      const txAddOrder = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig);
+
+      const { config: orderConfig } = (await getEventArgs(
+        txAddOrder,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      // Removing the order
+      await orderBook.connect(signer1).removeOrder(orderConfig);
+
+      // Add again the order
+      await orderBook.connect(signer1).addOrder(askOrderConfig);
+
+      const orderId = getOrderIdFromOrder(orderConfig);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          order (id: "${orderId}") {
+            orderLiveness
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data = response.data.order;
+
+      expect(data.orderLiveness).to.be.true;
+    });
+
+    it("should update the Order after a deposit", async () => {
+      const InputVault = 1;
+      const OutputVault = 2;
+
+      // ASK ORDER
+      const askPrice = ethers.BigNumber.from("1" + eighteenZeros);
+      const askBlock = await ethers.provider.getBlockNumber();
+      const askConstants = [askPrice, askBlock, 5];
+      const vAskPrice = op(OrderBookOpcode.CONSTANT, 0);
+      const vAskBlock = op(OrderBookOpcode.CONSTANT, 1);
+      const v5 = op(OrderBookOpcode.CONSTANT, 2);
+      // prettier-ignore
+      const askSource = concat([
+        // outputMax = (currentBlock - askBlock) * 5 - aliceCleared
+        // 5 tokens available per block
+              op(OrderBookOpcode.BLOCK_NUMBER),
+              vAskBlock,
+            op(OrderBookOpcode.SUB, 2),
+            v5,
+          op(OrderBookOpcode.MUL, 2),
+            cOrderHash,
+          op(OrderBookOpcode.ORDER_FUNDS_CLEARED),
+        op(OrderBookOpcode.SUB, 2),
+        vAskPrice,
+      ]);
+
+      const askOrderConfig: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: InputVault,
+        outputToken: tokenB.address,
+        outputVaultId: OutputVault,
+        tracking: TRACK_CLEARED_ORDER,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants,
+        },
+      };
+
+      const txAddOrder = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig);
+
+      // DEPOSITS
+      // Provide tokens to Signer1
+      const amountB = ethers.BigNumber.from("1000" + eighteenZeros);
+      await tokenB.transfer(signer1.address, amountB);
+
+      const depositConfigOrder: DepositConfigStruct = {
+        token: tokenB.address,
+        vaultId: OutputVault,
+        amount: amountB,
+      };
+
+      await tokenB
+        .connect(signer1)
+        .approve(orderBook.address, depositConfigOrder.amount);
+
+      // Signer1 deposits tokenB into his output vault
+      const txDepositOrder = await orderBook
+        .connect(signer1)
+        .deposit(depositConfigOrder);
+
+      const { config: orderConfig } = (await getEventArgs(
+        txAddOrder,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      const { config: depositConfig } = (await getEventArgs(
+        txDepositOrder,
+        "Deposit",
+        orderBook
+      )) as DepositEvent["args"];
+
+      expect(orderConfig.outputToken).to.be.equals(depositConfig.token);
+      expect(orderConfig.outputVaultId).to.be.equals(depositConfig.vaultId);
+
+      await waitForSubgraphToBeSynced();
+
+      const orderId = getOrderIdFromOrder(orderConfig);
+      // {vaultId}-{owner}-{token}
+      const outputTokenVault_Id = `${orderConfig.outputVaultId.toString()} - ${orderConfig.owner.toLowerCase()} - ${orderConfig.outputToken.toLowerCase()}`;
+
+      const query = `
+        {
+          order (id: "${orderId}") {
+            outputTokenVault {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data = response.data.order;
+      expect(data.outputTokenVault.id).to.be.equals(outputTokenVault_Id);
+    });
+
+    it("should update the Order after a clear", async () => {
+      const signer1InputVault = ethers.BigNumber.from(1);
+      const signer1OutputVault = ethers.BigNumber.from(2);
+      const signer2InputVault = ethers.BigNumber.from(1);
+      const signer2OutputVault = ethers.BigNumber.from(2);
+      const bountyAccVaultA = ethers.BigNumber.from(1);
+      const bountyAccVaultB = ethers.BigNumber.from(2);
+
+      // ASK ORDER
+
+      const askPrice = ethers.BigNumber.from("90" + eighteenZeros);
+      const askBlock = await ethers.provider.getBlockNumber();
+      const askConstants = [askPrice, askBlock, 5];
+      const vAskPrice = op(OrderBookOpcode.CONSTANT, 0);
+      const vAskBlock = op(OrderBookOpcode.CONSTANT, 1);
+      const v5 = op(OrderBookOpcode.CONSTANT, 2);
+      // prettier-ignore
+      const askSource = concat([
+        // outputMax = (currentBlock - askBlock) * 5 - aliceCleared
+        // 5 tokens available per block
+              op(OrderBookOpcode.BLOCK_NUMBER),
+              vAskBlock,
+            op(OrderBookOpcode.SUB, 2),
+            v5,
+          op(OrderBookOpcode.MUL, 2),
+            cOrderHash,
+          op(OrderBookOpcode.ORDER_FUNDS_CLEARED),
+        op(OrderBookOpcode.SUB, 2),
+        vAskPrice,
+      ]);
+
+      const askOrderConfig: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: signer1InputVault,
+        outputToken: tokenB.address,
+        outputVaultId: signer1OutputVault,
+        tracking: TRACK_CLEARED_ORDER,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants,
+        },
+      };
+
+      const txAskOrderLive = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig);
+
+      const { config: askConfig } = (await getEventArgs(
+        txAskOrderLive,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      // BID ORDER
+      const bidOutputMax = Util.max_uint256;
+      const bidPrice = Util.fixedPointDiv(Util.ONE, askPrice);
+      const bidConstants = [bidOutputMax, bidPrice];
+      const vBidOutputMax = op(OrderBookOpcode.CONSTANT, 0);
+      const vBidPrice = op(OrderBookOpcode.CONSTANT, 1);
+      // prettier-ignore
+      const bidSource = concat([
+        vBidOutputMax,
+        vBidPrice,
+      ]);
+      const bidOrderConfig: OrderConfigStruct = {
+        inputToken: tokenB.address,
+        inputVaultId: signer2InputVault,
+        outputToken: tokenA.address,
+        outputVaultId: signer2OutputVault,
+        tracking: 0x0,
+        vmStateConfig: {
+          sources: [bidSource],
+          constants: bidConstants,
+        },
+      };
+
+      const txBidOrderLive = await orderBook
+        .connect(signer2)
+        .addOrder(bidOrderConfig);
+
+      const { config: bidConfig } = (await Util.getEventArgs(
+        txBidOrderLive,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      // DEPOSITS
+      const amountB = ethers.BigNumber.from("1000" + Util.eighteenZeros);
+      const amountA = ethers.BigNumber.from("1000" + Util.eighteenZeros);
+
+      await tokenB.transfer(signer1.address, amountB);
+      await tokenA.transfer(signer2.address, amountA);
+
+      const depositConfigSigner1: DepositConfigStruct = {
+        token: tokenB.address,
+        vaultId: signer1OutputVault,
+        amount: amountB,
+      };
+      const depositConfigSigner2: DepositConfigStruct = {
+        token: tokenA.address,
+        vaultId: signer2OutputVault,
+        amount: amountA,
+      };
+
+      await tokenB
+        .connect(signer1)
+        .approve(orderBook.address, depositConfigSigner1.amount);
+      await tokenA
+        .connect(signer2)
+        .approve(orderBook.address, depositConfigSigner2.amount);
+
+      // Signer1 deposits tokenB into her output vault
+      await orderBook.connect(signer1).deposit(depositConfigSigner1);
+      // Signer2 deposits tokenA into his output vault
+      await orderBook.connect(signer2).deposit(depositConfigSigner2);
+
+      // BOUNTY BOT CLEARS THE ORDER
+      const bountyConfig: BountyConfigStruct = {
+        aVaultId: bountyAccVaultA,
+        bVaultId: bountyAccVaultB,
+      };
+
+      await orderBook
+        .connect(bountyAccount)
+        .clear(askConfig, bidConfig, bountyConfig);
+
+      await waitForSubgraphToBeSynced();
+
+      const orderId = getOrderIdFromOrder(askConfig);
+      // {vaultId}-{owner}-{token}
+      const inputTokenVault_Id = `${askConfig.inputVaultId.toString()} - ${askConfig.owner.toLowerCase()} - ${askConfig.inputToken.toLowerCase()}`;
+      const outputTokenVault_Id = `${askConfig.outputVaultId.toString()} - ${askConfig.owner.toLowerCase()} - ${askConfig.outputToken.toLowerCase()}`;
+
+      const query = `
+          {
+            order (id: "${orderId}") {
+              inputTokenVault {
+                id
+              }
+              outputTokenVault {
+                id
+              }
+            }
+          }
+        `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data = response.data.order;
+      expect(data.inputTokenVault.id).to.be.equals(inputTokenVault_Id);
+      expect(data.outputTokenVault.id).to.be.equals(outputTokenVault_Id);
+    });
   });
 });

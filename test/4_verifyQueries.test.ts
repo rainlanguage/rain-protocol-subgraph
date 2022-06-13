@@ -30,8 +30,8 @@ import {
   deployer,
   signer1,
   signer2,
-  seeder1 as signer3,
-  seeder2 as signer4,
+  signer3,
+  signer4,
   admin,
   // Contracts factory
   verifyFactory,

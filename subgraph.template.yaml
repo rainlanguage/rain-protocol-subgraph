@@ -271,6 +271,8 @@ dataSources:
           file: ./abis/ERC20.json
         - name: RedeemableERC20ClaimEscrow
           file: ./abis/redeemableERC20ClaimEscrow/RedeemableERC20ClaimEscrow.json
+        - name: Sale
+          file: ./abis/sale/Sale.json
       eventHandlers:
         - event: Deposit(address,address,address,address,address,uint256,uint256)
           handler: handleDeposit

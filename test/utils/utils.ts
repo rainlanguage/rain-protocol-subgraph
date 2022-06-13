@@ -117,6 +117,9 @@ interface BasicArtifact {
 export const sixZeros = "000000";
 export const sixteenZeros = "0000000000000000";
 export const eighteenZeros = "000000000000000000";
+export const max_uint256 = ethers.BigNumber.from(
+  "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+);
 
 export const zeroAddress = ethers.constants.AddressZero;
 
@@ -196,7 +199,7 @@ export enum Tier {
   EIGHT, // JAWAD
 }
 
-// Opcodes
+// All Opcodes
 export enum AllStandardOps {
   CONSTANT,
   STACK,
@@ -244,6 +247,18 @@ export enum AllStandardOps {
   length,
 }
 
+// Orderbook opcodes
+export const OrderBookOps = {
+  ORDER_FUNDS_CLEARED: 0 + AllStandardOps.length,
+  COUNTERPARTY_FUNDS_CLEARED: 1 + AllStandardOps.length,
+};
+
+export const OrderBookOpcode = {
+  ...AllStandardOps,
+  ...OrderBookOps,
+};
+
+// Sale opcodes
 export enum OpcodeSale {
   SKIP,
   VAL,
@@ -289,6 +304,7 @@ export enum OpcodeSale {
   RESERVE_ADDRESS,
 }
 
+// Tier opcodes
 export enum OpcodeTier {
   END,
   VAL,
@@ -305,6 +321,7 @@ export enum OpcodeTier {
   ACCOUNT,
 }
 
+// Emissions opcodes
 export enum OpcodeEmissionsERC20 {
   SKIP,
   VAL,
@@ -1119,3 +1136,12 @@ export const betweenBlockNumbersSource = (
     op(AllStandardOps.EVERY, 2),
   ])
 };
+
+export const fixedPointMul = (a: BigNumber, b: BigNumber): BigNumber =>
+  a.mul(b).div(ONE);
+export const fixedPointDiv = (a: BigNumber, b: BigNumber): BigNumber =>
+  a.mul(ONE).div(b);
+export const minBN = (a: BigNumber, b: BigNumber): BigNumber =>
+  a.lt(b) ? a : b;
+export const maxBN = (a: BigNumber, b: BigNumber): BigNumber =>
+  a.gt(b) ? a : b;

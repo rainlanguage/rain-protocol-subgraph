@@ -420,11 +420,13 @@ function getTokenVault(
   valutId: BigInt
 ): TokenVault {
   let tokenVault = TokenVault.load(
-    valutId.toString() + "-" + owner + "-" + token
+    valutId.toString() + " - " + owner + " - " + token
   );
 
   if (!tokenVault) {
-    tokenVault = new TokenVault(valutId.toString() + "-" + owner + "-" + token);
+    tokenVault = new TokenVault(
+      valutId.toString() + " - " + owner + " - " + token
+    );
     tokenVault.owner = Address.fromString(owner);
     tokenVault.token = token;
     tokenVault.orders = [];
@@ -435,10 +437,10 @@ function getTokenVault(
 }
 
 function getVault(valutId: BigInt, owner: string): Vault {
-  let vault = Vault.load(valutId.toString() + "-" + owner);
+  let vault = Vault.load(valutId.toString() + " - " + owner);
 
   if (!vault) {
-    vault = new Vault(valutId.toString() + "-" + owner);
+    vault = new Vault(valutId.toString() + " - " + owner);
     vault.owner = Address.fromString(owner);
     vault.tokenVaults = [];
     vault.deposits = [];
