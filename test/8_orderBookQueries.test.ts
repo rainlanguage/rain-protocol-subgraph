@@ -161,9 +161,6 @@ describe.only("Orderbook test", () => {
         query,
       })) as FetchResult;
 
-      console.log(orderId);
-      console.log(JSON.stringify(response.data, null, 2));
-
       const data = response.data.orders[0];
 
       expect(data.orderLiveness).to.be.true;
@@ -187,11 +184,11 @@ describe.only("Orderbook test", () => {
       expect(
         data.inputTokenVault.id,
         "wrong - there is not match for inputTokenVault yet"
-      ).to.be.null;
+      ).to.be.not.null;
       expect(
         data.outputTokenVault.id,
         "wrong - there is not match for outputTokenVault yet"
-      ).to.be.null;
+      ).to.be.not.null;
     });
 
     it("should update orderLiveness to false in the Order after removeOrder", async () => {

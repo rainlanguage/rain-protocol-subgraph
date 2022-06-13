@@ -2,6 +2,7 @@ import {
   Address,
   BigInt,
   ByteArray,
+  Bytes,
   crypto,
   ethereum,
   log,
@@ -143,11 +144,11 @@ export function handleOrderDead(event: OrderDead): void {
   let order = getOrderDead(event);
   order.orderLiveness = false;
   order.tracking = event.params.config.tracking;
+  order.save();
 }
 
 export function handleOrderLive(event: OrderLive): void {
   let order = getOrderLive(event);
-
   if (order) {
     let inputTokenVault = getTokenVault(
       order.inputToken,
@@ -272,21 +273,37 @@ export function handleClear(event: Clear): void {
 }
 
 function getOrderClear(event: Clear): Order[] {
-  let encodedOrder_a_ = ethereum.encode(
-    ethereum.Value.fromTuple(event.params.a_)
-  );
+  let tupleArray_a_: Array<ethereum.Value> = [
+    ethereum.Value.fromAddress(event.params.a_.owner),
+    ethereum.Value.fromAddress(event.params.a_.inputToken),
+    ethereum.Value.fromUnsignedBigInt(event.params.a_.inputVaultId),
+    ethereum.Value.fromAddress(event.params.a_.outputToken),
+    ethereum.Value.fromUnsignedBigInt(event.params.a_.outputVaultId),
+    ethereum.Value.fromUnsignedBigInt(event.params.a_.tracking),
+    ethereum.Value.fromBytes(event.params.a_.vmState),
+  ];
 
+  let tuple_a_ = changetype<ethereum.Tuple>(tupleArray_a_);
+  let encodedOrder_a_ = ethereum.encode(ethereum.Value.fromTuple(tuple_a_))!;
   let keccak256_a_ = crypto.keccak256(encodedOrder_a_ as ByteArray);
-  let uint256_a_ = BigInt.fromByteArray(keccak256_a_);
+  let uint256_a_ = hexToBI(keccak256_a_.toHex());
 
   let order_a_ = Order.load(uint256_a_.toString());
 
-  let encodedOrder_b_ = ethereum.encode(
-    ethereum.Value.fromTuple(event.params.b_)
-  );
+  let tupleArray_b_: Array<ethereum.Value> = [
+    ethereum.Value.fromAddress(event.params.b_.owner),
+    ethereum.Value.fromAddress(event.params.b_.inputToken),
+    ethereum.Value.fromUnsignedBigInt(event.params.b_.inputVaultId),
+    ethereum.Value.fromAddress(event.params.b_.outputToken),
+    ethereum.Value.fromUnsignedBigInt(event.params.b_.outputVaultId),
+    ethereum.Value.fromUnsignedBigInt(event.params.b_.tracking),
+    ethereum.Value.fromBytes(event.params.b_.vmState),
+  ];
 
+  let tuple_b_ = changetype<ethereum.Tuple>(tupleArray_b_);
+  let encodedOrder_b_ = ethereum.encode(ethereum.Value.fromTuple(tuple_b_))!;
   let keccak256_b_ = crypto.keccak256(encodedOrder_b_ as ByteArray);
-  let uint256_b_ = BigInt.fromByteArray(keccak256_b_);
+  let uint256_b_ = hexToBI(keccak256_b_.toHex());
 
   let order_b_ = Order.load(uint256_b_.toString());
   if (order_a_ && order_b_) return [order_a_, order_b_];
@@ -295,19 +312,20 @@ function getOrderClear(event: Clear): Order[] {
 }
 
 function getOrderLive(event: OrderLive): Order {
-  // let encodedOrder = ethereum.encode(
-  //   [
-  //     "tuple(address owner, address inputToken, uint256 inputVaultId, address outputToken, uint256 outputVaultId, uint256 tracking, bytes vmState)",
-  //   ],
-  //   [event.params.config]
-  // );
+  let tupleArray: Array<ethereum.Value> = [
+    ethereum.Value.fromAddress(event.params.config.owner),
+    ethereum.Value.fromAddress(event.params.config.inputToken),
+    ethereum.Value.fromUnsignedBigInt(event.params.config.inputVaultId),
+    ethereum.Value.fromAddress(event.params.config.outputToken),
+    ethereum.Value.fromUnsignedBigInt(event.params.config.outputVaultId),
+    ethereum.Value.fromUnsignedBigInt(event.params.config.tracking),
+    ethereum.Value.fromBytes(event.params.config.vmState),
+  ];
 
-  let encodedOrder = ethereum.encode(
-    ethereum.Value.fromTuple(event.params.config)
-  );
-
+  let tuple = changetype<ethereum.Tuple>(tupleArray);
+  let encodedOrder = ethereum.encode(ethereum.Value.fromTuple(tuple))!;
   let keccak256 = crypto.keccak256(encodedOrder as ByteArray);
-  let uint256 = BigInt.fromByteArray(keccak256);
+  let uint256 = hexToBI(keccak256.toHex());
 
   let order = Order.load(uint256.toString());
   if (!order) {
@@ -355,19 +373,20 @@ function getOrderLive(event: OrderLive): Order {
 }
 
 function getOrderDead(event: OrderDead): Order {
-  // let encodedOrder = ethereum.encode(
-  //   [
-  //     "tuple(address owner, address inputToken, uint256 inputVaultId, address outputToken, uint256 outputVaultId, uint256 tracking, bytes vmState)",
-  //   ],
-  //   [event.params.config]
-  // );
+  let tupleArray: Array<ethereum.Value> = [
+    ethereum.Value.fromAddress(event.params.config.owner),
+    ethereum.Value.fromAddress(event.params.config.inputToken),
+    ethereum.Value.fromUnsignedBigInt(event.params.config.inputVaultId),
+    ethereum.Value.fromAddress(event.params.config.outputToken),
+    ethereum.Value.fromUnsignedBigInt(event.params.config.outputVaultId),
+    ethereum.Value.fromUnsignedBigInt(event.params.config.tracking),
+    ethereum.Value.fromBytes(event.params.config.vmState),
+  ];
 
-  let encodedOrder = ethereum.encode(
-    ethereum.Value.fromTuple(event.params.config)
-  );
-
+  let tuple = changetype<ethereum.Tuple>(tupleArray);
+  let encodedOrder = ethereum.encode(ethereum.Value.fromTuple(tuple))!;
   let keccak256 = crypto.keccak256(encodedOrder as ByteArray);
-  let uint256 = BigInt.fromByteArray(keccak256);
+  let uint256 = hexToBI(keccak256.toHex());
 
   let order = Order.load(uint256.toString());
   if (!order) {
@@ -449,4 +468,10 @@ function getVault(valutId: BigInt, owner: string): Vault {
   }
 
   return vault as Vault;
+}
+
+function hexToBI(hexString: string): BigInt {
+  return BigInt.fromUnsignedBytes(
+    changetype<Bytes>(Bytes.fromHexString(hexString).reverse())
+  );
 }
