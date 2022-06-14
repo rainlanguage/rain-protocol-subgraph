@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   Address,
   BigInt,
@@ -450,6 +451,7 @@ function getTokenVault(
     tokenVault.token = token;
     tokenVault.orders = [];
     tokenVault.orderClears = [];
+    tokenVault.vaultId = valutId;
   }
 
   return tokenVault as TokenVault;

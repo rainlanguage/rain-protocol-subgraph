@@ -53,7 +53,8 @@ type Vault @entity {
 }
 
 # Represents the balance of one ERC20 token for one vaultId, one owner
-# Created or updated: 
+# Created after an OrderLive event occurs
+# Updated: 
 # On each Deposit or Withdraw event for this {vaultId}-{owner}-{token} (see below for changes)
 # OR
 # On each Clear event that references an Order for this {vaultId}-{owner}-{token} (see below for changes)
