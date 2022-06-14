@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { concat } from "ethers/lib/utils";
-import { BigNumber } from "ethers";
+import { BigNumber, ContractTransaction } from "ethers";
 
 import {
   op,
@@ -1082,11 +1082,17 @@ describe.only("Orderbook test", () => {
 
       const askOrder_ID = getOrderIdFromOrder(askConfig);
       const bidOrder_ID = getOrderIdFromOrder(bidConfig);
-      const orderClear_ID = getOrderClearId(
-        afterClearValues,
-        clearValues,
-        txClear.hash
+      // const orderClear_ID = getOrderClearId(
+      //   afterClearValues,
+      //   clearValues,
+      //   txClear.hash
+      // );
+
+      const orderClearBlock = await ethers.provider.getBlock(
+        txClear.blockNumber
       );
+
+      const orderClear_ID = orderClearBlock.timestamp;
 
       await waitForSubgraphToBeSynced();
 
@@ -1111,7 +1117,7 @@ describe.only("Orderbook test", () => {
             }
           }
 
-          bidTokenOutput: tokenVault (id: "${bidTokenVaultInput_ID}") {
+          bidTokenInput: tokenVault (id: "${bidTokenVaultInput_ID}") {
             balance
             orders {
               id
@@ -1145,28 +1151,28 @@ describe.only("Orderbook test", () => {
       expect(dataAskTokenInput.balance).to.be.equals(signer1InputVaultBalance);
       expect(dataAskTokenInput.orders).to.deep.include({ id: askOrder_ID });
       expect(dataAskTokenInput.orderClears).to.deep.include({
-        id: orderClear_ID,
+        id: orderClear_ID.toString(),
       });
       expect(dataAskTokenOutput.balance).to.be.equals(
         signer1OutputVaultBalance
       );
       expect(dataAskTokenOutput.orders).to.deep.include({ id: askOrder_ID });
       expect(dataAskTokenOutput.orderClears).to.deep.include({
-        id: orderClear_ID,
+        id: orderClear_ID.toString(),
       });
 
       // Bid Order related values
       expect(dataBidTokenInput.balance).to.be.equals(signer2InputVaultBalance);
       expect(dataBidTokenInput.orders).to.deep.include({ id: bidOrder_ID });
       expect(dataBidTokenInput.orderClears).to.deep.include({
-        id: orderClear_ID,
+        id: orderClear_ID.toString(),
       });
       expect(dataBidTokenOutput.balance).to.be.equals(
         signer2OutputVaultBalance
       );
       expect(dataBidTokenOutput.orders).to.deep.include({ id: bidOrder_ID });
       expect(dataBidTokenOutput.orderClears).to.deep.include({
-        id: orderClear_ID,
+        id: orderClear_ID.toString(),
       });
     });
   });

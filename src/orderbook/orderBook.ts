@@ -29,7 +29,7 @@ import {
   Bounty,
 } from "../../generated/schema";
 
-import { getERC20 } from "../utils";
+import { getERC20, ZERO_BI } from "../utils";
 
 export function handleAfterClear(event: AfterClear): void {
   let orderClearStateChange = new OrderClearStateChange(
@@ -60,6 +60,66 @@ export function handleAfterClear(event: AfterClear): void {
   if (orderClear) {
     orderClear.stateChange = orderClearStateChange.id;
     orderClear.save();
+
+    let OrderA = Order.load(orderClear.orderA);
+
+    if (OrderA) {
+      let inputTokenVault = TokenVault.load(OrderA.inputTokenVault);
+      if (inputTokenVault) {
+        inputTokenVault.balance = inputTokenVault.balance.plus(
+          event.params.stateChange.aInput
+        );
+
+        let orderClears = inputTokenVault.orderClears;
+        if (orderClears) orderClears.push(orderClear.id);
+        inputTokenVault.orderClears = orderClears;
+
+        inputTokenVault.save();
+      }
+
+      let outputTokenVault = TokenVault.load(OrderA.outputTokenVault);
+      if (outputTokenVault) {
+        outputTokenVault.balance = outputTokenVault.balance.minus(
+          event.params.stateChange.aOutput
+        );
+
+        let orderClears = outputTokenVault.orderClears;
+        if (orderClears) orderClears.push(orderClear.id);
+        outputTokenVault.orderClears = orderClears;
+
+        outputTokenVault.save();
+      }
+    }
+
+    let OrderB = Order.load(orderClear.orderB);
+
+    if (OrderB) {
+      let inputTokenVault = TokenVault.load(OrderB.inputTokenVault);
+      if (inputTokenVault) {
+        inputTokenVault.balance = inputTokenVault.balance.plus(
+          event.params.stateChange.bInput
+        );
+
+        let orderClears = inputTokenVault.orderClears;
+        if (orderClears) orderClears.push(orderClear.id);
+        inputTokenVault.orderClears = orderClears;
+
+        inputTokenVault.save();
+      }
+
+      let outputTokenVault = TokenVault.load(OrderB.outputTokenVault);
+      if (outputTokenVault) {
+        outputTokenVault.balance = outputTokenVault.balance.minus(
+          event.params.stateChange.bOutput
+        );
+
+        let orderClears = outputTokenVault.orderClears;
+        if (orderClears) orderClears.push(orderClear.id);
+        outputTokenVault.orderClears = orderClears;
+
+        outputTokenVault.save();
+      }
+    }
   }
 }
 
@@ -164,7 +224,7 @@ export function handleOrderLive(event: OrderLive): void {
 
       let inputTokenContract = ERC20.bind(event.params.config.inputToken);
       let ITVBalance = inputTokenContract.try_balanceOf(
-        event.params.config.owner
+        event.params.config.inputToken
       );
 
       if (!ITVBalance.reverted) {
@@ -200,7 +260,7 @@ export function handleOrderLive(event: OrderLive): void {
 
       let outputTokenContract = ERC20.bind(event.params.config.outputToken);
       let OTVBalance = outputTokenContract.try_balanceOf(
-        event.params.config.owner
+        event.params.config.outputToken
       );
 
       if (!OTVBalance.reverted) {

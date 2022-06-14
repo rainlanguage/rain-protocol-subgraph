@@ -124,7 +124,7 @@ type VaultWithdraw @entity {
 
 # Created for every pair of AfterClear/Clear events
 type OrderClear @entity {
-    id: ID! # hash(hash(AfterClear), hash(Clear), transactionHash)
+    id: ID! # timestamp
     "The sender who cleared the Orders"
     sender: Bytes! # Clear.sender
     "The clearer who cleared this order"
