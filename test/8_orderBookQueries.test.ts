@@ -135,7 +135,7 @@ function getOrderIdFromOrder(_order: Readonly<OrderStruct>): string {
   return BigNumber.from(ethers.utils.keccak256(encodeOrder)).toString();
 }
 
-describe.only("Orderbook test", () => {
+describe("Orderbook test", () => {
   const TRACK_CLEARED_ORDER = 0x1;
   const cOrderHash = op(OrderBookOpcode.CONTEXT, 0);
 
@@ -909,7 +909,7 @@ describe.only("Orderbook test", () => {
       expect(data2.balance).to.be.equals(balanceAfterWithdrawExpected);
     });
 
-    it.only("should update the TokenVault after a clear", async () => {
+    it("should update the TokenVault after a clear", async () => {
       // Vaults balance will changes after a deposit, withdraw or clear
       let signer1InputVaultBalance = ethers.constants.Zero;
       let signer1OutputVaultBalance = ethers.constants.Zero;
@@ -1142,8 +1142,6 @@ describe.only("Orderbook test", () => {
       const response = (await subgraph({
         query,
       })) as FetchResult;
-
-      console.log(JSON.stringify(response, null, 2));
 
       const dataAskTokenInput = response.data.askTokenInput;
       const dataAskTokenOutput = response.data.askTokenOutput;

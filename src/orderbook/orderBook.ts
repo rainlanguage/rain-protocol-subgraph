@@ -219,16 +219,11 @@ export function handleOrderLive(event: OrderLive): void {
 
     if (inputTokenVault) {
       let ITVOrders = inputTokenVault.orders;
-      if (ITVOrders) ITVOrders.push(order.id);
-      inputTokenVault.orders = ITVOrders;
-
-      let inputTokenContract = ERC20.bind(event.params.config.inputToken);
-      let ITVBalance = inputTokenContract.try_balanceOf(
-        event.params.config.inputToken
-      );
-
-      if (!ITVBalance.reverted) {
-        inputTokenVault.balance = ITVBalance.value;
+      if (ITVOrders) {
+        if (!ITVOrders.includes(order.id)) {
+          ITVOrders.push(order.id);
+          inputTokenVault.orders = ITVOrders;
+        }
       }
 
       inputTokenVault.save();
@@ -255,17 +250,23 @@ export function handleOrderLive(event: OrderLive): void {
 
     if (outputTokenVault) {
       let OTVOrders = outputTokenVault.orders;
-      if (OTVOrders) OTVOrders.push(order.id);
-      outputTokenVault.orders = OTVOrders;
-
-      let outputTokenContract = ERC20.bind(event.params.config.outputToken);
-      let OTVBalance = outputTokenContract.try_balanceOf(
-        event.params.config.outputToken
-      );
-
-      if (!OTVBalance.reverted) {
-        outputTokenVault.balance = OTVBalance.value;
+      if (OTVOrders) {
+        if (!OTVOrders.includes(order.id)) {
+          OTVOrders.push(order.id);
+          outputTokenVault.orders = OTVOrders;
+        }
       }
+      // if (OTVOrders) OTVOrders.push(order.id);
+      // outputTokenVault.orders = OTVOrders;
+
+      // let outputTokenContract = ERC20.bind(event.params.config.outputToken);
+      // let OTVBalance = outputTokenContract.try_balanceOf(
+      //   event.params.config.outputToken
+      // );
+
+      // if (!OTVBalance.reverted) {
+      //   outputTokenVault.balance = OTVBalance.value;
+      // }
 
       outputTokenVault.save();
     }
@@ -512,6 +513,7 @@ function getTokenVault(
     tokenVault.orders = [];
     tokenVault.orderClears = [];
     tokenVault.vaultId = valutId;
+    tokenVault.balance = ZERO_BI;
   }
 
   return tokenVault as TokenVault;
