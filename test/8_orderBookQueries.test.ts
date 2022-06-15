@@ -909,7 +909,7 @@ describe.only("Orderbook test", () => {
       expect(data2.balance).to.be.equals(balanceAfterWithdrawExpected);
     });
 
-    it("should update the TokenVault after a clear", async () => {
+    it.only("should update the TokenVault after a clear", async () => {
       // Vaults balance will changes after a deposit, withdraw or clear
       let signer1InputVaultBalance = ethers.constants.Zero;
       let signer1OutputVaultBalance = ethers.constants.Zero;
@@ -1074,11 +1074,12 @@ describe.only("Orderbook test", () => {
         afterClearValues.stateChange.bOutput
       );
 
-      // IDs to query
+      // ASK ORDER IDs
       const askTokenVaultInput_ID = `${askConfig.inputVaultId.toString()} - ${askConfig.owner.toLowerCase()} - ${askConfig.inputToken.toLowerCase()}`;
       const askTokenVaultOutput_ID = `${askConfig.outputVaultId.toString()} - ${askConfig.owner.toLowerCase()} - ${askConfig.outputToken.toLowerCase()}`;
-      const bidTokenVaultInput_ID = `${askConfig.inputVaultId.toString()} - ${askConfig.owner.toLowerCase()} - ${askConfig.inputToken.toLowerCase()}`;
-      const bidTokenVaultOutput_ID = `${askConfig.outputVaultId.toString()} - ${askConfig.owner.toLowerCase()} - ${askConfig.outputToken.toLowerCase()}`;
+      // BID ORDER IDs
+      const bidTokenVaultInput_ID = `${bidConfig.inputVaultId.toString()} - ${bidConfig.owner.toLowerCase()} - ${bidConfig.inputToken.toLowerCase()}`;
+      const bidTokenVaultOutput_ID = `${bidConfig.outputVaultId.toString()} - ${bidConfig.owner.toLowerCase()} - ${bidConfig.outputToken.toLowerCase()}`;
 
       const askOrder_ID = getOrderIdFromOrder(askConfig);
       const bidOrder_ID = getOrderIdFromOrder(bidConfig);
@@ -1141,6 +1142,8 @@ describe.only("Orderbook test", () => {
       const response = (await subgraph({
         query,
       })) as FetchResult;
+
+      console.log(JSON.stringify(response, null, 2));
 
       const dataAskTokenInput = response.data.askTokenInput;
       const dataAskTokenOutput = response.data.askTokenOutput;
