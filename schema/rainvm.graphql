@@ -1,34 +1,26 @@
 ################## RainVM
 
-type Snapshot @entity {
+type CombineTierStateConfig implements StateConfig @entity {
   id: ID!
-  sender: Bytes!
-  pointer: Bytes!
-  state: State!
-}
-
-type State @entity {
-  id: ID!
-  stackIndex: BigInt!
-  stack: [BigInt!]!
   sources: [Bytes!]!
   constants: [BigInt!]!
-  arguments: [BigInt!]!
+}
+
+type EmissionsERC20StateConfig implements StateConfig @entity {
+  id: ID!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
 }
 
 type OrderStateConfig implements StateConfig @entity {
   id: ID!
   sources: [Bytes!]!
   constants: [BigInt!]!
-  stackLength: BigInt!
-  argumentsLength: BigInt!
 }
 
 interface StateConfig {
   sources: [Bytes!]!
   constants: [BigInt!]!
-  stackLength: BigInt!
-  argumentsLength: BigInt!
 }
 
 ################## RainVM

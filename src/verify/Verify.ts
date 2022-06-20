@@ -83,7 +83,7 @@ export function handleApprove(event: Approve): void {
 
     if (verifyAddress) {
       verifyAddress.requestStatus = RequestStatus.NONE;
-      verifyAddress.status = getstatus(state, event.block.number).toI32();
+      verifyAddress.status = getstatus(state, event.block.timestamp).toI32();
 
       // Add the event to VerifyAddress's events
       let events = verifyAddress.events;
@@ -155,7 +155,7 @@ export function handleBan(event: Ban): void {
 
     if (verifyAddress) {
       verifyAddress.requestStatus = RequestStatus.NONE;
-      verifyAddress.status = getstatus(state, event.block.number).toI32();
+      verifyAddress.status = getstatus(state, event.block.timestamp).toI32();
 
       // Add the event to VerifyAddress's events
       let events = verifyAddress.events;
@@ -229,7 +229,7 @@ export function handleRemove(event: Remove): void {
 
     if (verifyAddress) {
       verifyAddress.requestStatus = RequestStatus.NONE;
-      verifyAddress.status = getstatus(state, event.block.number).toI32();
+      verifyAddress.status = getstatus(state, event.block.timestamp).toI32();
 
       // Add the event to VerifyAddress's events
       let events = verifyAddress.events;
@@ -304,7 +304,7 @@ export function handleRequestApprove(event: RequestApprove): void {
 
     if (verifyAddress) {
       verifyAddress.requestStatus = RequestStatus.APPROVE;
-      verifyAddress.status = getstatus(state, event.block.number).toI32();
+      verifyAddress.status = getstatus(state, event.block.timestamp).toI32();
 
       // Add the event to VerifyAddress's events
       let events = verifyAddress.events;
@@ -376,7 +376,7 @@ export function handleRequestBan(event: RequestBan): void {
     if (verifyAddress) {
       // Add the event to VerifyAddress's events
       verifyAddress.requestStatus = RequestStatus.BAN;
-      verifyAddress.status = getstatus(state, event.block.number).toI32();
+      verifyAddress.status = getstatus(state, event.block.timestamp).toI32();
 
       let events = verifyAddress.events;
       if (events) events.push(verifyRequestBan.id);
@@ -447,7 +447,7 @@ export function handleRequestRemove(event: RequestRemove): void {
     if (verifyAddress) {
       // Add the event to VerifyAddress's events
       verifyAddress.requestStatus = RequestStatus.REMOVE;
-      verifyAddress.status = getstatus(state, event.block.number).toI32();
+      verifyAddress.status = getstatus(state, event.block.timestamp).toI32();
 
       let events = verifyAddress.events;
       if (events) events.push(verifyRequestRemove.id);
@@ -832,10 +832,10 @@ function getVerifyAddress(
 
 function getstatus(
   state_: Verify__stateResultValue0Struct,
-  blockNumber_: BigInt
+  timestamp_: BigInt
 ): BigInt {
-  // The state hasn't even been added so is picking up block zero as the
-  // evm fallback value. In this case if we checked other blocks using
+  // The state hasn't even been added so is picking up time zero as the
+  // evm fallback value. In this case if we checked other times using
   // a `<=` equality they would incorrectly return `true` always due to
   // also having a `0` fallback value.
   // Using `< 1` here to silence slither.
@@ -843,19 +843,19 @@ function getstatus(
     return BigInt.fromI32(Status.NIL);
   }
   // Banned takes priority over everything.
-  else if (state_.bannedSince <= blockNumber_) {
+  else if (state_.bannedSince <= timestamp_) {
     return BigInt.fromI32(Status.BANNED);
   }
   // Approved takes priority over added.
-  else if (state_.approvedSince <= blockNumber_) {
+  else if (state_.approvedSince <= timestamp_) {
     return BigInt.fromI32(Status.APPROVED);
   }
   // Added is lowest priority.
-  else if (state_.addedSince <= blockNumber_) {
+  else if (state_.addedSince <= timestamp_) {
     return BigInt.fromI32(Status.ADDED);
   }
-  // The `addedSince` block is after `blockNumber_` so `Status` is nil
-  // relative to `blockNumber_`.
+  // The `addedSince` time is after `timestamp_` so `Status` is nil
+  // relative to `timestamp_`.
   else {
     return BigInt.fromI32(Status.NIL);
   }

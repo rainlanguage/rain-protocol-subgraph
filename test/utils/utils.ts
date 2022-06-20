@@ -295,40 +295,6 @@ export enum OpcodeTier {
   ACCOUNT,
 }
 
-// Emissions opcodes
-export enum OpcodeEmissionsERC20 {
-  SKIP,
-  VAL,
-  DUP,
-  ZIPMAP,
-  BLOCK_NUMBER,
-  BLOCK_TIMESTAMP,
-  THIS_ADDRESS,
-  REPORT,
-  NEVER,
-  ALWAYS,
-  SATURATING_DIFF,
-  UPDATE_BLOCKS_FOR_TIER_RANGE,
-  SELECT_LTE,
-  ADD,
-  SUB,
-  MUL,
-  DIV,
-  MOD,
-  POW,
-  MIN,
-  MAX,
-  SCALE18_MUL,
-  SCALE18_DIV,
-  SCALE18,
-  SCALEN,
-  SCALE_BY,
-  SCALE18_ONE,
-  SCALE18_DECIMALS,
-  CLAIMANT_ACCOUNT,
-  CONSTRUCTION_BLOCK_NUMBER,
-}
-
 // Enum that represent the SaleStatus (Sale)
 export enum SaleStatus {
   PENDING,

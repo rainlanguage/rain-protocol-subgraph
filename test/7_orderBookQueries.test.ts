@@ -42,7 +42,7 @@ import {
   signer1,
   signer2,
   signer3 as bountyAccount,
-} from "./1_initQueries.test.";
+} from "./1_initQueries.test";
 import { expect } from "chai";
 
 let tokenA: ReserveTokenTest, tokenB: ReserveTokenTest;

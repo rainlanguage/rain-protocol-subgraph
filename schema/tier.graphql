@@ -35,27 +35,6 @@ type VerifyTier implements TierContract & INotice @entity {
   notices: [Notice!]
 }
 
-type ERC20BalanceTierFactory implements TierFactory @entity {
-  id: ID! #factory address
-  address: Bytes! #factory address
-  implementation: Bytes! #implementation address from Implementation event
-  children: [TierContract!] #all the children that were deployed by this factory
-}
-
-# ERC20BalanceTier - created by listening to NewChild events on the factory
-type ERC20BalanceTier implements TierContract & INotice @entity {
-  id: ID! #tier contract address
-  address: Bytes! #tier contract address
-  deployBlock: BigInt! #the block the contract was deployed
-  deployTimestamp: BigInt! #the timestamp the contract was deployed
-  deployer: Bytes #address of the deployer - get from event Initialize.sender
-  factory: TierFactory
-
-  token: ERC20 #map by id = Intialize.erc20
-  tierValues: [BigInt!]! #get from ERC20BalanceTier.tierValues() view method
-  notices: [Notice!]
-}
-
 type ERC20 implements ERC20Interface @entity {
   id: ID! #address of token
   deployBlock: BigInt! #the block the contract was deployed
@@ -64,29 +43,6 @@ type ERC20 implements ERC20Interface @entity {
   totalSupply: BigInt!
   decimals: Int
   name: String
-}
-
-type ERC20TransferTierFactory implements TierFactory @entity {
-  id: ID! #factory address
-  address: Bytes! #factory address
-  implementation: Bytes! #implementation address from Implementation event
-  children: [TierContract!] #all the children that were deployed by this factory
-}
-
-# ERC20TransferTier - created by listening to NewChild events on the factory
-type ERC20TransferTier implements TierContract & INotice @entity {
-  id: ID! #tier contract address
-  address: Bytes! #tier contract address
-  deployBlock: BigInt! #the block the contract was deployed
-  deployTimestamp: BigInt! #the timestamp the contract was deployed
-  deployer: Bytes #address of the deployer - get from event Initialize.sender
-  factory: TierFactory
-
-  token: ERC20 #map by id = Intialize.erc20
-  tierValues: [BigInt!] #get from ERC20BalanceTier.tierValues() view method
-  tierChanges: [TierChange!] #get from TierChange event
-  tierLevels: [TierLevel!] #always eight for a Tier contract
-  notices: [Notice!]
 }
 
 type TierChange @entity {
@@ -109,27 +65,6 @@ type TierLevel @entity {
   ## As a user changes tier, we memberCount++ for all tiers between startTier and endTier (if going up),
   ## and memberCount-- for all tiers between startTier and endTier (if going down).
   memberCount: BigInt! #can be derived from all the TierChange events for the parent contract.
-}
-
-type ERC721BalanceTierFactory implements TierFactory @entity {
-  id: ID! #factory address
-  address: Bytes! #factory address
-  implementation: Bytes! #implementation address from Implementation event
-  children: [TierContract!] #all the children that were deployed by this factory
-}
-
-# Created by listening to NewChild events on the factory
-type ERC721BalanceTier implements TierContract & INotice @entity {
-  id: ID! #tier contract address
-  address: Bytes! #tier contract address
-  deployBlock: BigInt! #the block the contract was deployed
-  deployTimestamp: BigInt! #the timestamp the contract was deployed
-  deployer: Bytes #address of the deployer - get from event Initialize.sender
-  factory: TierFactory
-
-  token: ERC721 #map by id = Intialize.erc20
-  tierValues: [BigInt!] #get from ERC721BalanceTier.tierValues() view method\
-  notices: [Notice!]
 }
 
 type ERC721 @entity {
@@ -156,8 +91,8 @@ type CombineTier implements TierContract & INotice @entity {
   deployTimestamp: BigInt! #the timestamp the contract was deployed
   deployer: Bytes #address of the deployer
   factory: TierFactory
-
-  state: State #from event Snapshot.state
+  combinedTiersLength: BigInt!  #from event Initialize.config.combinedTiersLength
+  state: CombineTierStateConfig #from event Initialize.config.sourceConfig
   notices: [Notice!]
 }
 
@@ -172,7 +107,6 @@ type UnknownTier implements TierContract @entity {
 }
 
 # Notice entity
-# src/trust.ts/handleNotice
 type Notice @entity {
   id: ID! #tx hash
   subject: INotice! #the address that emitted the event

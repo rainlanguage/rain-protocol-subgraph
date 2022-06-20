@@ -4,9 +4,6 @@ import {
   TreasuryAsset,
   TreasuryAssetCaller,
   Redeem,
-  ERC20BalanceTier,
-  ERC20TransferTier,
-  ERC721BalanceTier,
   VerifyTier,
   CombineTier,
   UnknownTier,
@@ -361,15 +358,8 @@ export function handleTreasuryAsset(event: TreasuryAssetEvent): void {
 function getTier(tierAddress: string): string {
   /**
    * Check one by if Tier address to any existing tier entites like
-   * ERC20BalanceTier, ERC20TransferTier, ERC721BalanceTier, CombineTier
-   * VerifyTier
+   * CombineTier VerifyTier
    */
-  let eRC20BalanceTier = ERC20BalanceTier.load(tierAddress);
-  if (eRC20BalanceTier != null) return eRC20BalanceTier.id;
-  let eRC20TransferTier = ERC20TransferTier.load(tierAddress);
-  if (eRC20TransferTier != null) return eRC20TransferTier.id;
-  let eRC721BalanceTier = ERC721BalanceTier.load(tierAddress);
-  if (eRC721BalanceTier != null) return eRC721BalanceTier.id;
   let combineTier = CombineTier.load(tierAddress);
   if (combineTier != null) return combineTier.id;
   let verifyTier = VerifyTier.load(tierAddress);

@@ -4,12 +4,8 @@ import {
   Notice,
   Sale,
   Verify,
-  ERC20BalanceTier,
   VerifyTier,
-  ERC20TransferTier,
-  ERC721BalanceTier,
   CombineTier,
-  GatedNFT,
   RedeemableERC20ClaimEscrow,
   UnknownNotice,
 } from "../generated/schema";
@@ -35,12 +31,8 @@ export function handleNewNotice(event: NewNotice): void {
    */
   let sale = Sale.load(subject);
   let verify = Verify.load(subject);
-  let eRC20BalanceTier = ERC20BalanceTier.load(subject);
   let verifyTier = VerifyTier.load(subject);
-  let eRC20TransferTier = ERC20TransferTier.load(subject);
-  let eRC721BalanceTier = ERC721BalanceTier.load(subject);
   let combineTier = CombineTier.load(subject);
-  let gatedNFT = GatedNFT.load(subject);
   let unknownTier = UnknownTier.load(subject);
   let redeemableERC20ClaimEscrow = RedeemableERC20ClaimEscrow.load(subject);
 
@@ -94,30 +86,6 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.save();
       verify.save();
     }
-  } else if (eRC20BalanceTier) {
-    let notices = eRC20BalanceTier.notices;
-
-    if (notices) {
-      newNotice = new Notice(
-        eRC20BalanceTier.id +
-          " - " +
-          event.transaction.hash.toHex() +
-          " - " +
-          BigInt.fromI32(notices.length).toString()
-      );
-      newNotice.data = event.params.notice.data;
-      newNotice.sender = event.params.sender;
-      newNotice.deployBlock = event.block.number;
-      newNotice.deployTimestamp = event.block.timestamp;
-
-      newNotice.subject = eRC20BalanceTier.id;
-
-      notices.push(newNotice.id);
-      eRC20BalanceTier.notices = notices;
-
-      newNotice.save();
-      eRC20BalanceTier.save();
-    }
   } else if (verifyTier) {
     let notices = verifyTier.notices;
 
@@ -141,52 +109,6 @@ export function handleNewNotice(event: NewNotice): void {
       newNotice.save();
       verifyTier.save();
     }
-  } else if (eRC20TransferTier) {
-    let notices = eRC20TransferTier.notices;
-
-    if (notices) {
-      newNotice = new Notice(
-        eRC20TransferTier.id +
-          " - " +
-          event.transaction.hash.toHex() +
-          " - " +
-          BigInt.fromI32(notices.length).toString()
-      );
-      newNotice.data = event.params.notice.data;
-      newNotice.sender = event.params.sender;
-      newNotice.deployBlock = event.block.number;
-      newNotice.deployTimestamp = event.block.timestamp;
-
-      newNotice.subject = eRC20TransferTier.id;
-      notices.push(newNotice.id);
-      eRC20TransferTier.notices = notices;
-
-      newNotice.save();
-      eRC20TransferTier.save();
-    }
-  } else if (eRC721BalanceTier) {
-    let notices = eRC721BalanceTier.notices;
-
-    if (notices) {
-      newNotice = new Notice(
-        eRC721BalanceTier.id +
-          " - " +
-          event.transaction.hash.toHex() +
-          " - " +
-          BigInt.fromI32(notices.length).toString()
-      );
-      newNotice.data = event.params.notice.data;
-      newNotice.sender = event.params.sender;
-      newNotice.deployBlock = event.block.number;
-      newNotice.deployTimestamp = event.block.timestamp;
-
-      newNotice.subject = eRC721BalanceTier.id;
-      notices.push(newNotice.id);
-      eRC721BalanceTier.notices = notices;
-
-      newNotice.save();
-      eRC721BalanceTier.save();
-    }
   } else if (combineTier) {
     let notices = combineTier.notices;
 
@@ -209,29 +131,6 @@ export function handleNewNotice(event: NewNotice): void {
 
       newNotice.save();
       combineTier.save();
-    }
-  } else if (gatedNFT) {
-    let notices = gatedNFT.notices;
-
-    if (notices) {
-      newNotice = new Notice(
-        gatedNFT.id +
-          " - " +
-          event.transaction.hash.toHex() +
-          " - " +
-          BigInt.fromI32(notices.length).toString()
-      );
-      newNotice.data = event.params.notice.data;
-      newNotice.sender = event.params.sender;
-      newNotice.deployBlock = event.block.number;
-      newNotice.deployTimestamp = event.block.timestamp;
-
-      newNotice.subject = gatedNFT.id;
-      notices.push(newNotice.id);
-      gatedNFT.notices = notices;
-
-      newNotice.save();
-      gatedNFT.save();
     }
   } else if (redeemableERC20ClaimEscrow) {
     let notices = redeemableERC20ClaimEscrow.notices;

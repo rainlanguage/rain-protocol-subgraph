@@ -6,6 +6,7 @@ import {
   op,
   getTxTimeblock,
   getImplementation,
+  getEventArgs,
   waitForSubgraphToBeSynced,
   zeroAddress,
   Tier,
@@ -20,13 +21,13 @@ import { RedeemableERC20__factory } from "../typechain/factories/RedeemableERC20
 
 // Types
 import type { FetchResult } from "apollo-fetch";
-import type { ContractTransaction } from "ethers";
+import type { ContractTransaction, BigNumber } from "ethers";
 
 import type { Verify } from "../typechain/Verify";
 import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
 
 import type { VerifyTier } from "../typechain/VerifyTier";
-import type { CombineTier } from "../typechain/CombineTier";
+import type { CombineTier, InitializeEvent } from "../typechain/CombineTier";
 import type { Sale } from "../typechain/Sale";
 
 import {
@@ -47,7 +48,7 @@ import {
   saleFactory,
   vmStateBuilder,
   redeemableERC20Factory,
-} from "./1_initQueries.test.";
+} from "./1_initQueries.test";
 
 let transaction: ContractTransaction;
 
@@ -510,26 +511,32 @@ describe("Subgraph Tier Test", function () {
 
     it("should query the State present on CombineTier correclty", async function () {
       const stateId = `${combineTier.deployTransaction.hash.toLowerCase()}`;
+      const { config } = (await getEventArgs(
+        combineTier.deployTransaction,
+        "Initialize",
+        combineTier
+      )) as InitializeEvent["args"];
 
-      // const arrayToString = (arr: BigNumber[]): string[] => {
-      //   return arr.map((x: BigNumber) => x.toString());
-      // };
+      const stateExpected = config.sourceConfig;
+
+      const arrayToString = (arr: BigNumber[]): string[] => {
+        return arr.map((x: BigNumber) => x.toString());
+      };
 
       // Using the values form Event
-      // const stackIndexExpected = stateExpected.stackIndex.toString();
-      // const stackExpected = arrayToString(stateExpected.stack);
-      // const sourcesExpected = stateExpected.sources;
-      // const constantsExpected = arrayToString(stateExpected.constants);
-      // const argumentsExpected = arrayToString(stateExpected.arguments);
+      const sourcesExpected = stateExpected.sources;
+      const constantsExpected = arrayToString(stateExpected.constants);
 
       const query = `
         {
-          state (id: "${stateId}") {
-            stackIndex
-            stack
+          combineTier (id: "${combineTier.address.toLowerCase()}") {
+            state {
+              id
+            }
+          }
+          stateConfig (id: "${stateId}") {
             sources
             constants
-            arguments
           }
         }
       `;
@@ -538,9 +545,13 @@ describe("Subgraph Tier Test", function () {
         query,
       })) as FetchResult;
 
-      const data = response.data.state;
+      const data = response.data.stateConfig;
+      const dataTier = response.data.combineTier;
 
-      expect(data.stackIndex).to.equals(1); // will fail
+      expect(dataTier.state.id).to.equals(stateId);
+
+      expect(data.sources).to.deep.equal(sourcesExpected);
+      expect(data.constants).to.deep.equals(constantsExpected);
     });
 
     it("should query Notice in CombineTier correctly", async function () {
@@ -592,7 +603,6 @@ describe("Subgraph Tier Test", function () {
 
   describe("UnknownTiers - Queries", function () {
     // It will work with any Tier Contract deployed without any the indexed Tier Factories
-    // Deploying an `ERC20BalanceTier` independient that should be Unknown in all Entities
     let tierIndependent: CombineTier;
 
     before("deploy independent tier contract", async function () {

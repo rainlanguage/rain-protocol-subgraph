@@ -279,15 +279,15 @@ templates:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - Snapshot
+        - CombineTierStateConfig
       abis:
         - name: CombineTier
           file: ./abis/tier/CombineTier.json
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:
-        - event: TierChange(address,address,uint256,uint256,bytes)
-          handler: handleTierChange
+        - event: Initialize(address,(uint256,(bytes[],uint256[])))
+          handler: handleInitialize
       file: ./src/tier/CombineTier.ts
   - kind: ethereum/contract
     name: VerifyTierTemplate
@@ -308,8 +308,6 @@ templates:
       eventHandlers:
         - event: Initialize(address,address)
           handler: handleInitialize
-        - event: TierChange(address,address,uint256,uint256,bytes)
-          handler: handleTierChange
       file: ./src/tier/VerifyTier.ts
   - kind: ethereum/contract
     name: StakeERC20Template
@@ -437,7 +435,7 @@ templates:
       eventHandlers:
         - event: Claim(address,address,bytes)
           handler: handleClaim
-        - event: Initialize(address,bool)
+        - event: Initialize(address,(bool,(string,string,address,uint256),(bytes[],uint256[])))
           handler: handleInitialize
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer

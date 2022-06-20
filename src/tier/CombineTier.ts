@@ -1,23 +1,20 @@
-import { CombineTier, State } from "../../generated/schema";
-import { TierChange } from "../../generated/templates/CombineTierTemplate/CombineTier";
+import { CombineTier, CombineTierStateConfig } from "../../generated/schema";
+import { Initialize } from "../../generated/templates/CombineTierTemplate/CombineTier";
 
-export function handleTierChange(event: TierChange): void {
-  //
+export function handleInitialize(event: Initialize): void {
+  let combineTier = CombineTier.load(event.address.toHex());
+
+  if (combineTier) {
+    let stateConfig = new CombineTierStateConfig(
+      event.transaction.hash.toHex()
+    );
+    stateConfig.sources = event.params.config.sourceConfig.sources;
+    stateConfig.constants = event.params.config.sourceConfig.constants;
+
+    combineTier.combinedTiersLength = event.params.config.combinedTiersLength;
+    combineTier.state = stateConfig.id;
+
+    stateConfig.save();
+    combineTier.save();
+  }
 }
-
-// export function handleSnapshot(event: SnapshotEvent): void {
-//   let combineTier = CombineTier.load(event.address.toHex());
-
-//   let state = new State(event.transaction.hash.toHex());
-//   state.arguments = event.params.state.arguments;
-//   state.stack = event.params.state.stack;
-//   state.stackIndex = event.params.state.stackIndex;
-//   state.constants = event.params.state.constants;
-//   state.sources = event.params.state.sources;
-//   state.save();
-
-//   if (combineTier) {
-//     combineTier.state = state.id;
-//     combineTier.save();
-//   }
-// }

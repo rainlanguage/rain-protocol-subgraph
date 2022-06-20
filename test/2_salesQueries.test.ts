@@ -49,7 +49,7 @@ import {
   combineTierFactory,
   redeemableERC20Factory,
   noticeBoard,
-} from "./1_initQueries.test.";
+} from "./1_initQueries.test";
 
 let reserve: ReserveTokenTest,
   combineTier: CombineTier,

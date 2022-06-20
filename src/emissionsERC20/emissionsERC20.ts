@@ -7,13 +7,23 @@ import {
 import {
   EmissionsERC20,
   EmissionsERC20Claim,
-  State,
+  EmissionsERC20StateConfig,
 } from "../../generated/schema";
 import { ZERO_ADDRESS } from "../utils";
 export function handleInitialize(event: Initialize): void {
   let emissionsERC20 = EmissionsERC20.load(event.address.toHex());
   if (emissionsERC20) {
-    emissionsERC20.allowDelegatedClaims = event.params.allowDelegatedClaims;
+    let stateConfig = new EmissionsERC20StateConfig(
+      event.transaction.hash.toHex()
+    );
+    stateConfig.sources = event.params.config.vmStateConfig.sources;
+    stateConfig.constants = event.params.config.vmStateConfig.constants;
+
+    emissionsERC20.calculateClaimStateConfig = stateConfig.id;
+    emissionsERC20.allowDelegatedClaims =
+      event.params.config.allowDelegatedClaims;
+
+    stateConfig.save();
     emissionsERC20.save();
   }
 }

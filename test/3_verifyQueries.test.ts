@@ -36,7 +36,7 @@ import {
   // Contracts factory
   verifyFactory,
   noticeBoard,
-} from "./1_initQueries.test.";
+} from "./1_initQueries.test";
 
 let verify: Verify, transaction: ContractTransaction; // use to save/facilite a tx
 
@@ -294,7 +294,7 @@ describe("Verify Factory - Queries", function () {
       const expectedVerifyAddr = {
         id: signer1Id,
         requestStatus: RequestStatus.APPROVE,
-        status: VerifyStatus.NIL,
+        status: VerifyStatus.ADDED,
       };
 
       const query = `
@@ -326,8 +326,6 @@ describe("Verify Factory - Queries", function () {
 
       const dataVerifyContract = queryResponse.data.verify.verifyAddresses;
       const data = queryResponse.data.verifyAddress;
-      console.log(JSON.stringify(queryResponse.data, null, 2));
-      console.log(JSON.stringify(expectedVerifyAddr, null, 2));
 
       // Expected Verify contract values
       expect(dataVerifyContract).to.deep.include(expectedVerifyAddr);

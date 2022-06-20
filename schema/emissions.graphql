@@ -30,9 +30,9 @@ type EmissionsERC20 @entity {
   "Token totalSupply"
   totalSupply: BigInt! #get from EmissionsERC20.totalSupply() after every Transfer event from the zero address
   "Is allowDelegatedClaims"
-  allowDelegatedClaims: Boolean #from Initialize.allowDelegatedClaims
+  allowDelegatedClaims: Boolean #from Initialize.config.allowDelegatedClaims
   "StateConfig to calculate claim"
-  calculateClaimStateConfig: State #from Snapshot event emitted during intialization
+  calculateClaimStateConfig: EmissionsERC20StateConfig #from Initialize.config.vmStateConfig
   "List of EmissionsERC20Claim"
   claims: [EmissionsERC20Claim!] #get from Claim events
 }

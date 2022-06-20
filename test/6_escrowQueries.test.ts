@@ -46,7 +46,7 @@ import {
   redeemableERC20ClaimEscrow as escrow,
   combineTierFactory,
   noticeBoard,
-} from "./1_initQueries.test.";
+} from "./1_initQueries.test";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction, Signer } from "ethers";
 

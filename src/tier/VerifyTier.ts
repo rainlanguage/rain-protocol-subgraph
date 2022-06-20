@@ -1,9 +1,6 @@
 import { Address } from "@graphprotocol/graph-ts";
 import { VerifyTier, Verify } from "../../generated/schema";
-import {
-  Initialize,
-  TierChange,
-} from "../../generated/templates/VerifyTierTemplate/VerifyTier";
+import { Initialize } from "../../generated/templates/VerifyTierTemplate/VerifyTier";
 import { ZERO_ADDRESS, ZERO_BI } from "../utils";
 
 export function handleInitialize(event: Initialize): void {
@@ -33,8 +30,4 @@ export function handleInitialize(event: Initialize): void {
 
     verifyTier.save();
   }
-}
-
-export function handleTierChange(event: TierChange): void {
-  //
 }

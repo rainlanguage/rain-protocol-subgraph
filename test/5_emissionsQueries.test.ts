@@ -1,11 +1,7 @@
 import { expect, assert } from "chai";
 import { concat, hexlify } from "ethers/lib/utils";
 import * as Util from "./utils/utils";
-import {
-  waitForSubgraphToBeSynced,
-  op,
-  OpcodeEmissionsERC20,
-} from "./utils/utils";
+import { waitForSubgraphToBeSynced, op, AllStandardOps } from "./utils/utils";
 
 import {
   subgraph,
@@ -13,15 +9,16 @@ import {
   signer1,
   signer2,
   emissionsERC20Factory,
-} from "./1_initQueries.test.";
+} from "./1_initQueries.test";
 
 // Types
 import type { FetchResult } from "apollo-fetch";
-import type { ContractTransaction } from "ethers";
+import type { ContractTransaction, BigNumber } from "ethers";
 import type {
   EmissionsERC20,
   ClaimEvent,
   TransferEvent,
+  InitializeEvent,
 } from "../typechain/EmissionsERC20";
 
 let emissionsERC20: EmissionsERC20, transaction: ContractTransaction;
@@ -32,10 +29,8 @@ describe("EmissionsERC20 queries test", function () {
   const claimMessage = hexlify([...Buffer.from("Custom claim message")]);
 
   const vmStateConfig = {
-    sources: [concat([op(OpcodeEmissionsERC20.VAL)])],
+    sources: [concat([op(AllStandardOps.CONSTANT)])],
     constants: [claimAmount],
-    argumentsLength: 0,
-    stackLength: 1,
   };
 
   it("should query the EmissionsERC20Factory after construction correctly", async function () {
@@ -189,37 +184,48 @@ describe("EmissionsERC20 queries test", function () {
   });
 
   it("should query the State config of the EmissionsERC20 correclty", async function () {
-    // // Get the state from initialization with Snapshot event
-    // const { state } = (await Util.getEventArgs(
-    //   emissionsERC20.deployTransaction,
-    //   "Snapshot",
-    //   emissionsERC20
-    // )) as SnapshotEvent["args"];
+    // Get the state from initialization with Initialize event
+    const { config } = (await Util.getEventArgs(
+      emissionsERC20.deployTransaction,
+      "Initialize",
+      emissionsERC20
+    )) as InitializeEvent["args"];
 
-    // // Using the values form Event and converting to strings
-    // const stackIndexExpected = state.stackIndex.toString();
-    // const stackExpected = Util.arrayToString(state.stack);
-    // const sourcesExpected = state.sources;
-    // const constantsExpected = Util.arrayToString(state.constants);
-    // const argumentsExpected = Util.arrayToString(state.arguments);
+    const stateExpected = config.vmStateConfig;
+
+    const arrayToString = (arr: BigNumber[]): string[] => {
+      return arr.map((x: BigNumber) => x.toString());
+    };
+
+    // Using the values form Event
+    const sourcesExpected = stateExpected.sources;
+    const constantsExpected = arrayToString(stateExpected.constants);
+
+    const stateId = emissionsERC20.deployTransaction.hash.toLowerCase();
 
     const query = `
       {
-        state (id: "${emissionsERC20.deployTransaction.hash.toLowerCase()}") {
-          stackIndex
-          stack
+        emissionsERC20 (id: "${emissionsERC20.address.toLowerCase()}") {
+          calculateClaimStateConfig {
+            id
+          }
+        }
+        stateConfig (id: "${stateId}") {
           sources
           constants
-          arguments
         }
       }
     `;
     const response = (await subgraph({
       query,
     })) as FetchResult;
-    const data = response.data.state;
+    const data = response.data.stateConfig;
+    const dataEmission = response.data.emissionsERC20;
 
-    expect(data.stackIndex).to.equals(1); // will fail
+    expect(dataEmission.calculateClaimStateConfig.id).to.equals(stateId);
+
+    expect(data.sources).to.deep.equal(sourcesExpected);
+    expect(data.constants).to.deep.equals(constantsExpected);
   });
 
   it("should update the EmissionsERC20 after a claim", async function () {
