@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { concat } from "ethers/lib/utils";
-import { BigNumber, ContractTransaction } from "ethers";
+import { BigNumber } from "ethers";
 
 import {
   op,

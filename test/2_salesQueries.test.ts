@@ -8,7 +8,6 @@ import {
   waitForSubgraphToBeSynced,
   getEventArgs,
   Tier,
-  LEVELS,
   SaleStatus,
   zeroAddress,
   VMState,
@@ -24,7 +23,7 @@ import { RedeemableERC20__factory } from "../typechain/factories/RedeemableERC20
 import type { FetchResult } from "apollo-fetch";
 import { ContractTransaction } from "ethers";
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
-import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
+import type { CombineTier } from "../typechain/CombineTier";
 import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
 import type {
   Sale,
@@ -47,19 +46,19 @@ import {
   // Factories
   saleFactory,
   feeRecipient,
-  erc20BalanceTierFactory,
+  combineTierFactory,
   redeemableERC20Factory,
   noticeBoard,
 } from "./1_initQueries.test.";
 
 let reserve: ReserveTokenTest,
-  erc20BalanceTier: ERC20BalanceTier,
+  combineTier: CombineTier,
   sale: Sale,
   redeemableERC20Contract: RedeemableERC20,
   transaction: ContractTransaction,
   transactionAux: ContractTransaction;
 
-let tierReserve: ReserveTokenTest, tier: ERC20BalanceTier;
+let tier: CombineTier;
 
 /**
  * Deploy a sale
@@ -207,13 +206,8 @@ const deploySale = async (
 
 describe("Sales queries test", function () {
   before("deploying fresh test contracts", async function () {
-    tierReserve = await new ReserveTokenTest__factory(deployer).deploy();
-
     // Deploying a tier
-    tier = await Util.erc20BalanceTierDeploy(erc20BalanceTierFactory, creator, {
-      erc20: tierReserve.address,
-      tierValues: LEVELS,
-    });
+    tier = await Util.deployAlwaysTier(combineTierFactory, creator);
   });
 
   describe("SaleFactory entity", async () => {
@@ -351,7 +345,7 @@ describe("Sales queries test", function () {
         },
         {
           erc20Config: redeemableERC20Config,
-          tier: erc20BalanceTier.address,
+          tier: combineTier.address,
           minimumTier: minimumTier,
           distributionEndForwardingAddress: distributionEndForwardingAddress,
         }
@@ -592,7 +586,7 @@ describe("Sales queries test", function () {
 
       expect(data.redeems).to.be.empty;
       expect(data.treasuryAssets).to.deep.include({ id: treasuryAssetId });
-      expect(data.tier.id).to.equals(erc20BalanceTier.address.toLowerCase());
+      expect(data.tier.id).to.equals(combineTier.address.toLowerCase());
 
       expect(data.minimumTier).to.equals(minimumTier.toString());
       expect(data.name).to.equals(redeemableERC20Config.name);
@@ -636,7 +630,7 @@ describe("Sales queries test", function () {
       expect(data.decimals).to.equals(await redeemableERC20Contract.decimals());
       expect(data.totalSupply).to.equals(redeemableERC20Config.initialSupply);
 
-      expect(data.tier.id).to.equals(erc20BalanceTier.address.toLowerCase());
+      expect(data.tier.id).to.equals(combineTier.address.toLowerCase());
       expect(data.minimumTier).to.equals(minimumTier.toString());
 
       expect(data.deployBlock).to.equals(deployBlock.toString());
@@ -1536,7 +1530,7 @@ describe("Sales queries test", function () {
         },
         {
           erc20Config: redeemableERC20Config,
-          tier: erc20BalanceTier.address,
+          tier: combineTier.address,
           minimumTier: minimumTier,
           distributionEndForwardingAddress: distributionEndForwardingAddress,
         }
@@ -1713,7 +1707,7 @@ describe("Sales queries test", function () {
         },
         {
           erc20Config: redeemableERC20Config,
-          tier: erc20BalanceTier.address,
+          tier: combineTier.address,
           minimumTier: minimumTier,
           distributionEndForwardingAddress: distributionEndForwardingAddress,
         }

@@ -41,18 +41,13 @@
     "deploy-subgraph": "ts-node scripts/index.ts"
   },
   "dependencies": {
-    "@0xsequence/sstore2": "github:0xsequence/sstore2",
     "@graphprotocol/graph-cli": "0.26.0",
     "@graphprotocol/graph-ts": "0.25.0",
     "0xsequence": "^0.39.0",
     "mustache": "^3.2.1"
   },
   "devDependencies": {
-    "@0xsequence/sstore2": "github:0xsequence/sstore2",
-    "@beehiveinnovation/balancer-core": "^0.0.7",
-    "@beehiveinnovation/configurable-rights-pool": "^0.0.1",
-    "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#af9a3f638d8084d96cbf6898c035920544647879",
-    "@beehiveinnovation/rain-statusfi": "git+https://github.com/beehive-innovation/rain-statusfi.git#288e082ae81ca796b0732619a9631db24beb7a7a",
+    "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#5a35b097475d37fd5f44446922a32025708c1f8c",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@typechain/ethers-v5": "^8.0.5",
@@ -62,7 +57,6 @@
     "@types/node": "^17.0.21",
     "@typescript-eslint/eslint-plugin": "^4.29.1",
     "@typescript-eslint/parser": "^4.29.1",
-    "@vishalkale15107/rain-protocol": "git+https://github.com/vishalkale151071/rain-protocol.git#3d0ee716430d28716365f0f1c999fe14c30f0b4b",
     "apollo-fetch": "^0.7.0",
     "chai": "^4.2.0",
     "dotenv": "^10.0.0",

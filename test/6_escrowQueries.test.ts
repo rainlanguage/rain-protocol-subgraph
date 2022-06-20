@@ -8,7 +8,6 @@ import {
   getEventArgs,
   waitForSubgraphToBeSynced,
   Tier,
-  LEVELS,
   SaleStatus,
   AllStandardOps,
   op,
@@ -20,7 +19,7 @@ import { RedeemableERC20__factory } from "../typechain/factories/RedeemableERC20
 
 // Types
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
-import type { ERC20BalanceTier } from "../typechain/ERC20BalanceTier";
+import type { CombineTier } from "../typechain/CombineTier";
 import type { Sale, BuyConfigStruct as BuyConfig } from "../typechain/Sale";
 import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
 
@@ -45,16 +44,15 @@ import {
   saleFactory,
   redeemableERC20Factory,
   redeemableERC20ClaimEscrow as escrow,
-  erc20BalanceTierFactory,
+  combineTierFactory,
   noticeBoard,
 } from "./1_initQueries.test.";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractTransaction, Signer } from "ethers";
 
 let claimableReserve: ReserveTokenTest,
-  reserveTier: ReserveTokenTest,
   sale: Sale,
-  tier: ERC20BalanceTier,
+  tier: CombineTier,
   redeemableERC20: RedeemableERC20;
 
 let escrowAddress: string,
@@ -205,13 +203,9 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
   before("deploy general contracts", async function () {
     // Deploying tokens
     claimableReserve = await new ReserveTokenTest__factory(deployer).deploy();
-    reserveTier = await new ReserveTokenTest__factory(deployer).deploy();
 
-    // Deploying a tier
-    tier = await Util.erc20BalanceTierDeploy(erc20BalanceTierFactory, creator, {
-      erc20: reserveTier.address,
-      tierValues: LEVELS,
-    });
+    // Deploying an always tier
+    tier = await Util.deployAlwaysTier(combineTierFactory, creator);
 
     // Providing to signers a lot of tokens to avoid sending everytime
     const amount = (await claimableReserve.totalSupply()).div(2);

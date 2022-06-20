@@ -20,14 +20,10 @@ import type {
 
 // Typechain rain factories
 import { Sale__factory } from "../../typechain/factories/Sale__factory";
-import { GatedNFT__factory } from "../../typechain/factories/GatedNFT__factory";
 import { EmissionsERC20__factory } from "../../typechain/factories/EmissionsERC20__factory";
 import { Verify__factory } from "../../typechain/factories/Verify__factory";
 import { VerifyTier__factory } from "../../typechain/factories/VerifyTier__factory";
-import { ERC20BalanceTier__factory } from "../../typechain/factories/ERC20BalanceTier__factory";
-import { ERC20TransferTier__factory } from "../../typechain/factories/ERC20TransferTier__factory";
 import { CombineTier__factory } from "../../typechain/factories/CombineTier__factory";
-import { ERC721BalanceTier__factory } from "../../typechain/factories/ERC721BalanceTier__factory";
 
 // A fixed range to Tier Levels
 type levelsRange = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -59,13 +55,6 @@ import type {
 } from "../../typechain/EmissionsERC20Factory";
 import type { EmissionsERC20 } from "../../typechain/EmissionsERC20";
 
-// GatedNFTFactory types
-import type {
-  GatedNFTFactory,
-  ConfigStruct,
-} from "../../typechain/GatedNFTFactory";
-import type { GatedNFT } from "../../typechain/GatedNFT";
-
 // VerifyFactory types
 import type {
   VerifyFactory,
@@ -77,30 +66,12 @@ import type { Verify } from "../../typechain/Verify";
 import type { VerifyTierFactory } from "../../typechain/VerifyTierFactory";
 import type { VerifyTier } from "../../typechain/VerifyTier";
 
-// ERC20BalanceTierFactory types
-import type {
-  ERC20BalanceTierFactory,
-  ERC20BalanceTierConfigStruct,
-} from "../../typechain/ERC20BalanceTierFactory";
-import type { ERC20BalanceTier } from "../../typechain/ERC20BalanceTier";
-
-// ERC20TransferTierFactory types
-import type {
-  ERC20TransferTierFactory,
-  ERC20TransferTierConfigStruct,
-} from "../../typechain/ERC20TransferTierFactory";
-import type { ERC20TransferTier } from "../../typechain/ERC20TransferTier";
-
 // CombineTierFactory types
 import type { CombineTierFactory } from "../../typechain/CombineTierFactory";
-import type { CombineTier } from "../../typechain/CombineTier";
-
-// ERC721BalanceTierFactory types
 import type {
-  ERC721BalanceTierFactory,
-  ERC721BalanceTierConfigStruct,
-} from "../../typechain/ERC721BalanceTierFactory";
-import type { ERC721BalanceTier } from "../../typechain/ERC721BalanceTier";
+  CombineTier,
+  CombineTierConfigStruct,
+} from "../../typechain/CombineTier";
 
 // Interfaces
 interface SyncedSubgraphType {
@@ -207,43 +178,46 @@ export enum AllStandardOps {
   STORAGE,
   ZIPMAP,
   DEBUG,
-  BLOCK_NUMBER,
-  BLOCK_TIMESTAMP,
-  SENDER,
-  THIS_ADDRESS,
-  SCALE18_MUL,
-  SCALE18_DIV,
-  SCALE18,
-  SCALEN,
-  SCALE_BY,
-  ADD,
-  SATURATING_ADD,
-  SUB,
-  SATURATING_SUB,
-  MUL,
-  SATURATING_MUL,
-  DIV,
-  MOD,
-  EXP,
-  MIN,
-  MAX,
-  ISZERO,
-  EAGER_IF,
-  EQUAL_TO,
-  LESS_THAN,
-  GREATER_THAN,
-  EVERY,
-  ANY,
-  REPORT,
-  SATURATING_DIFF,
-  UPDATE_BLOCKS_FOR_TIER_RANGE,
-  SELECT_LTE,
-  IERC20_BALANCE_OF,
-  IERC20_TOTAL_SUPPLY,
+  ERC20_BALANCE_OF,
+  ERC20_TOTAL_SUPPLY,
+  ERC20_SNAPSHOT_BALANCE_OF_AT,
+  ERC20_SNAPSHOT_TOTAL_SUPPLY_AT,
   IERC721_BALANCE_OF,
   IERC721_OWNER_OF,
   IERC1155_BALANCE_OF,
   IERC1155_BALANCE_OF_BATCH,
+  BLOCK_NUMBER,
+  SENDER,
+  THIS_ADDRESS,
+  BLOCK_TIMESTAMP,
+  SCALE18,
+  SCALE18_DIV,
+  SCALE18_MUL,
+  SCALE_BY,
+  SCALEN,
+  ANY,
+  EAGER_IF,
+  EQUAL_TO,
+  EVERY,
+  GREATER_THAN,
+  ISZERO,
+  LESS_THAN,
+  SATURATING_ADD,
+  SATURATING_MUL,
+  SATURATING_SUB,
+  ADD,
+  DIV,
+  EXP,
+  MAX,
+  MIN,
+  MOD,
+  MUL,
+  SUB,
+  ITIERV2_REPORT,
+  ITIERV2_REPORT_TIME_FOR_TIER,
+  SATURATING_DIFF,
+  SELECT_LTE,
+  UPDATE_TIMES_FOR_TIER_RANGE,
   length,
 }
 
@@ -748,67 +722,48 @@ export const verifyTierDeploy = async (
 };
 
 /**
- * Create a new ERC20BalanceTier contract
- * @param erc20BalanceTierFactory The ERC20BalanceTier Factory
+ * Create a new AlwaysTier contract
+ * @param combineTierFactory The CombineTier Factory
  * @param creator The signer that will create the child and will be connected to
- * @param erc20BalanceTierConfig The ERC20BalanceTier configuration
  * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
- * @returns The erc20BalanceTier child
+ * @returns The always tier child
  */
-export const erc20BalanceTierDeploy = async (
-  erc20BalanceTierFactory: ERC20BalanceTierFactory,
+export const deployAlwaysTier = async (
+  combineTierFactory: CombineTierFactory,
   creator: SignerWithAddress | Signer,
-  erc20BalanceTierConfig: ERC20BalanceTierConfigStruct,
   override: Overrides = {}
-): Promise<ERC20BalanceTier> => {
-  // Creating child
-  const txDeploy = await erc20BalanceTierFactory
-    .connect(creator)
-    .createChildTyped(erc20BalanceTierConfig, override);
+): Promise<CombineTier> => {
+  // prettier-ignore
+  const sourceReportTimeForTierDefault = concat([
+      op(AllStandardOps.THIS_ADDRESS),
+      op(AllStandardOps.CONTEXT, 0),
+    op(AllStandardOps.ITIERV2_REPORT),
+  ]);
 
-  const erc20BalanceTier = new ERC20BalanceTier__factory(creator).attach(
-    await getChild(erc20BalanceTierFactory, txDeploy)
+  const alwaysArg = {
+    combinedTiersLength: 0,
+    sourceConfig: {
+      sources: [op(AllStandardOps.CONSTANT, 0), sourceReportTimeForTierDefault],
+      constants: [0],
+    },
+  };
+
+  // Creating child
+  const txDeploy = await combineTierFactory
+    .connect(creator)
+    .createChildTyped(alwaysArg, override);
+
+  const alwaitTier = new CombineTier__factory(creator).attach(
+    await getChild(combineTierFactory, txDeploy)
   );
 
-  await erc20BalanceTier.deployed();
+  await alwaitTier.deployed();
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  erc20BalanceTier.deployTransaction = txDeploy;
+  alwaitTier.deployTransaction = txDeploy;
 
-  return erc20BalanceTier;
-};
-
-/**
- * Create a new ERC20TransferTier contract
- * @param erc20TransferTierFactory The ERC20TransferTier Factory
- * @param creator The signer that will create the child and will be connected to
- * @param erc20TransferTierConfigStruct The ERC20TransferTier configuration
- * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
- * @returns The erc20TransferTier child
- */
-export const erc20TransferTierDeploy = async (
-  erc20TransferTierFactory: ERC20TransferTierFactory,
-  creator: SignerWithAddress | Signer,
-  erc20TransferTierConfigStruct: ERC20TransferTierConfigStruct,
-  override: Overrides = {}
-): Promise<ERC20TransferTier> => {
-  // Creating child
-  const txDeploy = await erc20TransferTierFactory
-    .connect(creator)
-    .createChildTyped(erc20TransferTierConfigStruct, override);
-
-  const erc20TransferTier = new ERC20TransferTier__factory(creator).attach(
-    await getChild(erc20TransferTierFactory, txDeploy)
-  );
-
-  await erc20TransferTier.deployed();
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  erc20TransferTier.deployTransaction = txDeploy;
-
-  return erc20TransferTier;
+  return alwaitTier;
 };
 
 /**
@@ -822,13 +777,13 @@ export const erc20TransferTierDeploy = async (
 export const combineTierDeploy = async (
   combineTierFactory: CombineTierFactory,
   creator: SignerWithAddress | Signer,
-  stateConfigStruct: StateConfigStruct,
+  combineTierArg: CombineTierConfigStruct,
   override: Overrides = {}
 ): Promise<CombineTier> => {
   // Creating child
   const txDeploy = await combineTierFactory
     .connect(creator)
-    .createChildTyped(stateConfigStruct, override);
+    .createChildTyped(combineTierArg, override);
 
   const combineTier = new CombineTier__factory(creator).attach(
     await getChild(combineTierFactory, txDeploy)
@@ -841,94 +796,6 @@ export const combineTierDeploy = async (
   combineTier.deployTransaction = txDeploy;
 
   return combineTier;
-};
-
-/**
- * Create a new ERC721BalanceTier contract
- * @param erc721BalanceTierFactory The ERC721BalanceTier Factory
- * @param creator The signer that will create the child and will be connected to
- * @param erc721BalanceTierConfigStruct The ERC721BalanceTier configuration
- * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
- * @returns The erc721BalanceTier child
- */
-export const erc721BalanceTierDeploy = async (
-  erc721BalanceTierFactory: ERC721BalanceTierFactory,
-  creator: SignerWithAddress | Signer,
-  erc721BalanceTierConfigStruct: ERC721BalanceTierConfigStruct,
-  override: Overrides = {}
-): Promise<ERC721BalanceTier> => {
-  // Creating child
-  const txDeploy = await erc721BalanceTierFactory
-    .connect(creator)
-    .createChildTyped(erc721BalanceTierConfigStruct, override);
-
-  const erc721BalanceTier = new ERC721BalanceTier__factory(creator).attach(
-    await getChild(erc721BalanceTierFactory, txDeploy)
-  );
-
-  await erc721BalanceTier.deployed();
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  erc721BalanceTier.deployTransaction = txDeploy;
-
-  return erc721BalanceTier;
-};
-
-/**
- * Create a new GatedNFT contract
- * @param gatedNFTFactory The GatedNFT Factory
- * @param creator The signer that will create the child and will be connected to
- * @param config The ERC721BalanceTier configuratio
- * @param tier The tier contract address
- * @param minimumStatus The minimum TierLevel to mint
- * @param maxPerAddress The max mint allowed per address
- * @param transferrable Allow transfer the NFT
- * @param maxMintable The total max allowed to mint
- * @param royaltyRecipient The royalty recipient address
- * @param royaltyBPS The royaltyBPS
- * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
- * @returns The gatedNFT child
- */
-export const gatedNFTDeploy = async (
-  gatedNFTFactory: GatedNFTFactory,
-  creator: SignerWithAddress | Signer,
-  config: ConfigStruct,
-  tier: string,
-  minimumStatus: BigNumberish,
-  maxPerAddress: BigNumberish,
-  transferrable: BigNumberish,
-  maxMintable: BigNumberish,
-  royaltyRecipient: string,
-  royaltyBPS: BigNumberish,
-  override: Overrides = {}
-): Promise<GatedNFT> => {
-  // Creating child
-  const txDeploy = await gatedNFTFactory
-    .connect(creator)
-    .createChildTyped(
-      config,
-      tier,
-      minimumStatus,
-      maxPerAddress,
-      transferrable,
-      maxMintable,
-      royaltyRecipient,
-      royaltyBPS,
-      override
-    );
-
-  const gatedNFT = new GatedNFT__factory(creator).attach(
-    await getChild(gatedNFTFactory, txDeploy)
-  );
-
-  await gatedNFT.deployed();
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  gatedNFT.deployTransaction = txDeploy;
-
-  return gatedNFT;
 };
 
 /**
