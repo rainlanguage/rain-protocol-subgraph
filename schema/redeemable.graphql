@@ -1,3 +1,25 @@
+type RedeemableERC20 @entity {
+  id: ID!
+  deployer: Bytes
+  admin: Bytes
+  factory: Bytes #redeemableERC20Factory()
+  grantedReceivers: [Bytes!]
+  grantedSenders: [Bytes!]
+  redeems: [Redeem!]! #Redeem event in RedeemableERC20.sol
+  treasuryAssets: [TreasuryAsset!]
+  minimumTier: BigInt
+  symbol: String
+  totalSupply: BigInt
+  decimals: Int
+  name: String
+  holders: [Holder!]
+  deployBlock: BigInt #the block the contract was deployed
+  deployTimestamp: BigInt #the timestamp the contract was deployed
+  tier: TierContract
+  saleAddress: Bytes
+  escrowSupplyTokenWithdrawers: [RedeemableEscrowSupplyTokenWithdrawer!]
+}
+
 type Redeem @entity {
   id: ID!
   sale: Sale! # Sale entity

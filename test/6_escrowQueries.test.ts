@@ -20,7 +20,13 @@ import { RedeemableERC20__factory } from "../typechain/factories/RedeemableERC20
 // Types
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
 import type { CombineTier } from "../typechain/CombineTier";
-import type { Sale, BuyConfigStruct as BuyConfig } from "../typechain/Sale";
+import type {
+  Sale,
+  BuyConfigStruct as BuyConfig,
+  StateConfigStruct,
+  SaleConfigStruct,
+  SaleRedeemableERC20ConfigStruct,
+} from "../typechain/Sale";
 import type { RedeemableERC20 } from "../typechain/RedeemableERC20";
 
 import type {
@@ -77,25 +83,23 @@ const deploySale = async (
 }> => {
   const saleReserve = await new ReserveTokenTest__factory(deployer).deploy();
 
-  const startBlock = await ethers.provider.getBlockNumber();
-  const saleTimeout = 30;
-
+  const cooldownDuration = 1;
+  const dustSize = 0;
   const minimumRaise = ethers.BigNumber.from("50000").mul(Util.RESERVE_ONE);
-  const totalTokenSupply = ethers.BigNumber.from("2000").mul(Util.ONE);
-  const redeemableERC20Config = {
-    name: "Token",
-    symbol: "TKN",
-    distributor: Util.zeroAddress,
-    initialSupply: totalTokenSupply,
-  };
+  const saleTimeout = 100;
+
+  const startBlock = await ethers.provider.getBlockNumber();
+  const saleEnd = 30;
+
   const basePrice = ethers.BigNumber.from("75").mul(Util.RESERVE_ONE);
   const maxUnits = ethers.BigNumber.from(3);
   const constants = [
     basePrice,
     startBlock - 1,
-    startBlock + saleTimeout - 1,
+    startBlock + saleEnd - 1,
     maxUnits,
   ];
+
   const vBasePrice = op(AllStandardOps.CONSTANT, 0);
   const vStart = op(AllStandardOps.CONSTANT, 1);
   const vEnd = op(AllStandardOps.CONSTANT, 2);
@@ -111,27 +115,42 @@ const deploySale = async (
     ]),
   ];
 
+  const _vmStateConfig: StateConfigStruct = {
+    sources: sources,
+    constants: constants,
+  };
+
+  // SaleRedeemableERC20Config predefined values
+  const totalTokenSupply = ethers.BigNumber.from("2000").mul(Util.ONE);
+  const redeemableERC20Config = {
+    name: "Token",
+    symbol: "TKN",
+    distributor: Util.zeroAddress,
+    initialSupply: totalTokenSupply,
+  };
+
+  const saleConfig: SaleConfigStruct = {
+    cooldownDuration: cooldownDuration,
+    dustSize: dustSize,
+    minimumRaise: minimumRaise,
+    recipient: recipient.address,
+    reserve: saleReserve.address,
+    saleTimeout: saleTimeout,
+    vmStateConfig: _vmStateConfig,
+  };
+
+  const saleRedeemableConfig: SaleRedeemableERC20ConfigStruct = {
+    distributionEndForwardingAddress: Util.zeroAddress,
+    erc20Config: redeemableERC20Config,
+    minimumTier: Tier.ZERO,
+    tier: tier.address,
+  };
+
   const sale = await Util.saleDeploy(
     saleFactory,
     creator,
-    {
-      vmStateConfig: {
-        sources: sources,
-        constants: constants,
-      },
-      recipient: recipient.address,
-      reserve: saleReserve.address,
-      cooldownDuration: 1,
-      minimumRaise: minimumRaise,
-      dustSize: 0,
-      saleTimeout: 100,
-    },
-    {
-      erc20Config: redeemableERC20Config,
-      tier: tier.address,
-      minimumTier: Tier.ZERO,
-      distributionEndForwardingAddress: Util.zeroAddress,
-    }
+    saleConfig,
+    saleRedeemableConfig
   );
 
   const redeemableERC20 = new RedeemableERC20__factory(deployer).attach(
