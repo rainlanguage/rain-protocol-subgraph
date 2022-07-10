@@ -8,6 +8,7 @@ import { ERC20 as ERC20Contract } from "../generated/RedeemableERC20ClaimEscrow/
 
 let ZERO_BI = BigInt.fromI32(0);
 let ONE_BI = BigInt.fromI32(1);
+let TWO_BI = BigInt.fromI32(2);
 let ZERO_BD = BigDecimal.fromString("0.0");
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 let HUNDRED_BD = BigDecimal.fromString("100.0");
@@ -89,6 +90,7 @@ let BANNER =
 export {
   ZERO_BI,
   ONE_BI,
+  TWO_BI,
   ZERO_BD,
   HUNDRED_BD,
   ZERO_ADDRESS,

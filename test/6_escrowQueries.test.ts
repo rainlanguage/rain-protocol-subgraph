@@ -1139,7 +1139,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
   });
 
-  describe("RedeemableEscrowSupplyTokenDeposit entity", async function () {
+  describe("RedeemableEscrowSupplyTokenDeposit entity", function () {
     beforeEach("deploying fresh sale", async function () {
       // In each `it` statement will have a fresh sale, redeemable and saleReserve
       ({ sale, redeemableERC20 } = await deploySale([signer1, signer2]));
@@ -1480,7 +1480,7 @@ describe("Subgraph RedeemableERC20ClaimEscrow test", function () {
     });
   });
 
-  describe("RedeemableEscrowSupplyTokenDepositor entity", async function () {
+  describe("RedeemableEscrowSupplyTokenDepositor entity", function () {
     beforeEach("deploying fresh sale", async function () {
       // In each `it` statement will have a fresh sale, redeemable and saleReserve
       ({ sale, redeemableERC20 } = await deploySale([signer1, signer2]));

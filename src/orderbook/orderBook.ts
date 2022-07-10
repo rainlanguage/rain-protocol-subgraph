@@ -16,7 +16,6 @@ import {
   OrderLive,
   Clear,
 } from "../../generated/OrderBook/OrderBook";
-import { ERC20 } from "../../generated/RedeemableERC20ClaimEscrow/ERC20";
 
 import {
   Order,
@@ -27,101 +26,12 @@ import {
   TokenVault,
   OrderClearStateChange,
   Bounty,
+  ClearedOrder,
+  ClearedCounterparty,
+  Pair,
 } from "../../generated/schema";
 
-import { getERC20, ZERO_BI } from "../utils";
-
-export function handleAfterClear(event: AfterClear): void {
-  let orderClearStateChange = new OrderClearStateChange(
-    event.block.timestamp.toString()
-  );
-
-  orderClearStateChange.aInput = event.params.stateChange.aInput;
-  orderClearStateChange.aOutput = event.params.stateChange.aOutput;
-  orderClearStateChange.bInput = event.params.stateChange.bInput;
-  orderClearStateChange.bOutput = event.params.stateChange.aInput;
-
-  orderClearStateChange.save();
-
-  let bounty = Bounty.load(event.block.timestamp.toString());
-
-  if (bounty) {
-    bounty.bountyAmountA = event.params.stateChange.aOutput.minus(
-      event.params.stateChange.bInput
-    );
-    bounty.bountyAmountA = event.params.stateChange.bOutput.minus(
-      event.params.stateChange.aInput
-    );
-
-    bounty.save();
-  }
-
-  let orderClear = OrderClear.load(event.block.timestamp.toString());
-  if (orderClear) {
-    orderClear.stateChange = orderClearStateChange.id;
-    orderClear.save();
-
-    let OrderA = Order.load(orderClear.orderA);
-
-    if (OrderA) {
-      let inputTokenVault = TokenVault.load(OrderA.inputTokenVault);
-      if (inputTokenVault) {
-        inputTokenVault.balance = inputTokenVault.balance.plus(
-          event.params.stateChange.aInput
-        );
-
-        let orderClears = inputTokenVault.orderClears;
-        if (orderClears) orderClears.push(orderClear.id);
-        inputTokenVault.orderClears = orderClears;
-
-        inputTokenVault.save();
-      }
-
-      let outputTokenVault = TokenVault.load(OrderA.outputTokenVault);
-      if (outputTokenVault) {
-        outputTokenVault.balance = outputTokenVault.balance.minus(
-          event.params.stateChange.aOutput
-        );
-
-        let orderClears = outputTokenVault.orderClears;
-        if (orderClears) orderClears.push(orderClear.id);
-        outputTokenVault.orderClears = orderClears;
-
-        outputTokenVault.save();
-      }
-    }
-
-    let OrderB = Order.load(orderClear.orderB);
-
-    if (OrderB) {
-      let inputTokenVault = TokenVault.load(OrderB.inputTokenVault);
-      if (inputTokenVault) {
-        inputTokenVault.balance = inputTokenVault.balance.plus(
-          event.params.stateChange.bInput
-        );
-
-        let orderClears = inputTokenVault.orderClears;
-        if (orderClears) orderClears.push(orderClear.id);
-        inputTokenVault.orderClears = orderClears;
-
-        inputTokenVault.save();
-      }
-
-      let outputTokenVault = TokenVault.load(OrderB.outputTokenVault);
-      if (outputTokenVault) {
-        outputTokenVault.balance = outputTokenVault.balance.minus(
-          event.params.stateChange.bOutput
-        );
-
-        let orderClears = outputTokenVault.orderClears;
-        if (orderClears) orderClears.push(orderClear.id);
-        outputTokenVault.orderClears = orderClears;
-
-        outputTokenVault.save();
-      }
-    }
-  }
-}
+import { getERC20, TWO_BI, ONE_BI, ZERO_BI } from "../utils";
 
 export function handleDeposit(event: Deposit): void {
   let vaultDeposit = new VaultDeposit(event.transaction.hash.toHex());
@@ -283,22 +193,32 @@ export function handleOrderLive(event: OrderLive): void {
 
     outputValut.save();
 
+    // Pairs
+    let pair = getPair(order.inputToken, order.outputToken);
+    let _orders = pair.orders;
+    if (_orders) _orders.push(order.id);
+    pair.orders = _orders;
+    pair.save();
+
+    // ClearedOrders
+    let clearedOrder = getClearedOrder(order.id);
+    clearedOrder.order = order.id;
+    clearedOrder.save();
+
     order.orderLiveness = true;
     order.save();
   }
 }
 
 export function handleClear(event: Clear): void {
-  let orderClear = new OrderClear(event.block.timestamp.toString());
+  let orderClear = new OrderClear(event.transaction.hash.toHex());
 
   orderClear.sender = event.params.sender;
   orderClear.clearer = event.params.sender;
 
-  let order_a_: Order, order_b_: Order;
-
   let orders = getOrderClear(event);
-  order_a_ = orders[0];
-  order_b_ = orders[1];
+  let order_a_ = orders[0];
+  let order_b_ = orders[1];
 
   orderClear.orderA = order_a_.id;
   orderClear.orderB = order_b_.id;
@@ -308,9 +228,9 @@ export function handleClear(event: Clear): void {
   orderClear.aInput = order_a_.inputToken;
   orderClear.bInput = order_b_.inputToken;
 
-  let bounty = new Bounty(event.block.timestamp.toString());
+  let bounty = new Bounty(event.transaction.hash.toHex());
   bounty.clearer = event.params.sender;
-  bounty.orderClear = event.block.timestamp.toString();
+  bounty.orderClear = event.transaction.hash.toHex();
 
   let bountyVaultA = getVault(
     event.params.bountyConfig.aVaultId,
@@ -334,6 +254,169 @@ export function handleClear(event: Clear): void {
   orderClear.save();
 }
 
+export function handleAfterClear(event: AfterClear): void {
+  let orderClearStateChange = new OrderClearStateChange(
+    event.transaction.hash.toHex()
+  );
+
+  orderClearStateChange.aInput = event.params.stateChange.aInput;
+  orderClearStateChange.aOutput = event.params.stateChange.aOutput;
+  orderClearStateChange.bInput = event.params.stateChange.bInput;
+  orderClearStateChange.bOutput = event.params.stateChange.aInput;
+
+  orderClearStateChange.save();
+
+  let bounty = Bounty.load(event.transaction.hash.toHex());
+
+  if (bounty) {
+    bounty.bountyAmountA = event.params.stateChange.aOutput.minus(
+      event.params.stateChange.bInput
+    );
+    bounty.bountyAmountA = event.params.stateChange.bOutput.minus(
+      event.params.stateChange.aInput
+    );
+
+    bounty.save();
+  }
+
+  let orderClear = OrderClear.load(event.transaction.hash.toHex());
+  if (orderClear) {
+    orderClear.stateChange = orderClearStateChange.id;
+    orderClear.save();
+
+    const owners = orderClear.owners;
+    let ownerA = owners![0].toString();
+    let ownerB = owners![1].toString();
+
+    let OrderA = Order.load(orderClear.orderA);
+
+    if (OrderA) {
+      let inputTokenVault = TokenVault.load(OrderA.inputTokenVault);
+      if (inputTokenVault) {
+        inputTokenVault.balance = inputTokenVault.balance.plus(
+          event.params.stateChange.aInput
+        );
+
+        let orderClears = inputTokenVault.orderClears;
+        if (orderClears) orderClears.push(orderClear.id);
+        inputTokenVault.orderClears = orderClears;
+
+        inputTokenVault.save();
+      }
+
+      let outputTokenVault = TokenVault.load(OrderA.outputTokenVault);
+      if (outputTokenVault) {
+        outputTokenVault.balance = outputTokenVault.balance.minus(
+          event.params.stateChange.aOutput
+        );
+
+        let orderClears = outputTokenVault.orderClears;
+        if (orderClears) orderClears.push(orderClear.id);
+        outputTokenVault.orderClears = orderClears;
+
+        outputTokenVault.save();
+      }
+
+      if (OrderA.tracking) {
+        // ClearedOrders and ClearedCounterparties
+        let clearedOrderA = getClearedOrder(OrderA.id);
+
+        // TRACKING_MASK_CLEARED_ORDER - ClearedOrder
+        if (OrderA.tracking === ONE_BI) {
+          clearedOrderA.funds = clearedOrderA.funds.plus(
+            orderClearStateChange.aOutput
+          );
+        }
+
+        // TRACKING_MASK_CLEARED_COUNTERPARTY - ClearedCounterparty
+        if (OrderA.tracking === TWO_BI) {
+          let clearedCounterparty = getClearedCounterparty(OrderA.id, ownerB);
+          clearedCounterparty.funds = clearedCounterparty.funds.plus(
+            orderClearStateChange.aOutput
+          );
+          clearedCounterparty.save();
+
+          let counterParties = clearedOrderA.clearedCounterparties;
+          if (counterParties) {
+            if (!counterParties.includes(clearedCounterparty.id)) {
+              counterParties.push(clearedCounterparty.id);
+              clearedOrderA.clearedCounterparties = counterParties;
+            }
+          }
+        }
+
+        clearedOrderA.save();
+      }
+    }
+
+    let OrderB = Order.load(orderClear.orderB);
+
+    if (OrderB) {
+      let inputTokenVault = TokenVault.load(OrderB.inputTokenVault);
+      if (inputTokenVault) {
+        inputTokenVault.balance = inputTokenVault.balance.plus(
+          event.params.stateChange.bInput
+        );
+
+        let orderClears = inputTokenVault.orderClears;
+        if (orderClears) orderClears.push(orderClear.id);
+        inputTokenVault.orderClears = orderClears;
+
+        inputTokenVault.save();
+      }
+
+      let outputTokenVault = TokenVault.load(OrderB.outputTokenVault);
+      if (outputTokenVault) {
+        outputTokenVault.balance = outputTokenVault.balance.minus(
+          event.params.stateChange.bOutput
+        );
+
+        let orderClears = outputTokenVault.orderClears;
+        if (orderClears) orderClears.push(orderClear.id);
+        outputTokenVault.orderClears = orderClears;
+
+        outputTokenVault.save();
+      }
+
+      if (OrderB.tracking) {
+        // ClearedOrders and ClearedCounterparties
+        let clearedOrderB = getClearedOrder(OrderB.id);
+
+        // TRACKING_MASK_CLEARED_ORDER - ClearedOrder
+        if (OrderB.tracking == ONE_BI) {
+          clearedOrderB.funds = clearedOrderB.funds.plus(
+            orderClearStateChange.bOutput
+          );
+        }
+
+        // TRACKING_MASK_CLEARED_COUNTERPARTY - ClearedCounterparty
+        if (OrderB.tracking == TWO_BI) {
+          let clearedCounterparty = getClearedCounterparty(OrderB.id, ownerA);
+          clearedCounterparty.funds = clearedCounterparty.funds.plus(
+            orderClearStateChange.bOutput
+          );
+          clearedCounterparty.save();
+
+          let counterParties = clearedOrderB.clearedCounterparties;
+          if (counterParties) {
+            if (!counterParties.includes(clearedCounterparty.id)) {
+              counterParties.push(clearedCounterparty.id);
+              clearedOrderB.clearedCounterparties = counterParties;
+            }
+          }
+        }
+
+        clearedOrderB.save();
+      }
+    }
+  }
+}
+
+/**
+ * Get the orders present in an Order clear event
+ * @param event OrderClear event
+ * @returns The orders present in OrderClear event
+ */
 function getOrderClear(event: Clear): Order[] {
   let tupleArray_a_: Array<ethereum.Value> = [
     ethereum.Value.fromAddress(event.params.a_.owner),
@@ -532,6 +615,54 @@ function getVault(valutId: BigInt, owner: string): Vault {
   }
 
   return vault as Vault;
+}
+
+function getPair(inputToken: string, outputToken: string): Pair {
+  const _id = inputToken + " - " + outputToken;
+  let pair = Pair.load(_id);
+  if (!pair) {
+    pair = new Pair(_id);
+    pair.orders = [];
+    pair.inputToken = Bytes.fromHexString(inputToken);
+    pair.outputToken = Bytes.fromHexString(outputToken);
+    pair.save();
+  }
+
+  return pair as Pair;
+}
+
+function getClearedOrder(_orderHash: string): ClearedOrder {
+  // It will be the same hash
+  const _id = _orderHash;
+  let clearedOrder = ClearedOrder.load(_id);
+
+  if (!clearedOrder) {
+    clearedOrder = new ClearedOrder(_id);
+    clearedOrder.funds = ZERO_BI;
+    clearedOrder.order = _orderHash;
+    clearedOrder.clearedCounterparties = [];
+    clearedOrder.save();
+  }
+
+  return clearedOrder as ClearedOrder;
+}
+
+function getClearedCounterparty(
+  _orderHash: string,
+  _owner: string
+): ClearedCounterparty {
+  // It will be the same hash
+  const _id = _orderHash + " - " + _owner;
+  let clearedCounterparty = ClearedCounterparty.load(_id);
+
+  if (!clearedCounterparty) {
+    clearedCounterparty = new ClearedCounterparty(_id);
+    clearedCounterparty.funds = ZERO_BI;
+    clearedCounterparty.order = _orderHash;
+    clearedCounterparty.save();
+  }
+
+  return clearedCounterparty as ClearedCounterparty;
 }
 
 function hexToBI(hexString: string): BigInt {

@@ -116,7 +116,12 @@ function getOrderClearId(
   );
 }
 
-function getOrderIdFromOrder(_order: Readonly<OrderStruct>): string {
+/**
+ * Generate an orderHash from an Order
+ * @param _order - The order
+ * @returns
+ */
+function getOrderHashFromOrder(_order: Readonly<OrderStruct>): string {
   const encodeOrder = ethers.utils.defaultAbiCoder.encode(
     ["tuple(address, address, uint256, address, uint256, uint256, bytes)"],
     [
@@ -135,7 +140,7 @@ function getOrderIdFromOrder(_order: Readonly<OrderStruct>): string {
   return BigNumber.from(ethers.utils.keccak256(encodeOrder)).toString();
 }
 
-describe("Orderbook test", () => {
+describe.only("Orderbook test", () => {
   const TRACK_CLEARED_ORDER = 0x1;
   const cOrderHash = op(OrderBookOpcode.CONTEXT, 0);
 
@@ -144,7 +149,7 @@ describe("Orderbook test", () => {
     tokenB = await new ReserveTokenTest__factory(deployer).deploy();
   });
 
-  describe("Order entity", async () => {
+  describe("Order entity", function () {
     it("should query the Order after addOrder", async () => {
       const InputVault = 1;
       const OutputVault = 2;
@@ -176,7 +181,6 @@ describe("Orderbook test", () => {
         inputVaultId: InputVault,
         outputToken: tokenB.address,
         outputVaultId: OutputVault,
-        tracking: TRACK_CLEARED_ORDER,
         vmStateConfig: {
           sources: [askSource],
           constants: askConstants,
@@ -193,7 +197,7 @@ describe("Orderbook test", () => {
         orderBook
       )) as OrderLiveEvent["args"];
 
-      const orderId = getOrderIdFromOrder(orderConfig);
+      const orderId = getOrderHashFromOrder(orderConfig);
       const vault_inputVaultID = `${orderConfig.inputVaultId.toString()} - ${orderConfig.owner.toLowerCase()}`; // {vaultId}-{owner}
       const vault_outputVaultID = `${orderConfig.outputVaultId.toString()} - ${orderConfig.owner.toLowerCase()}`; // {vaultId}-{owner}
 
@@ -292,7 +296,6 @@ describe("Orderbook test", () => {
         inputVaultId: InputVault,
         outputToken: tokenB.address,
         outputVaultId: OutputVault,
-        tracking: TRACK_CLEARED_ORDER,
         vmStateConfig: {
           sources: [askSource],
           constants: askConstants,
@@ -312,7 +315,7 @@ describe("Orderbook test", () => {
       // Removing the order
       await orderBook.connect(signer1).removeOrder(orderConfig);
 
-      const orderId = getOrderIdFromOrder(orderConfig);
+      const orderId = getOrderHashFromOrder(orderConfig);
 
       await waitForSubgraphToBeSynced();
 
@@ -364,7 +367,6 @@ describe("Orderbook test", () => {
         inputVaultId: InputVault,
         outputToken: tokenB.address,
         outputVaultId: OutputVault,
-        tracking: TRACK_CLEARED_ORDER,
         vmStateConfig: {
           sources: [askSource],
           constants: askConstants,
@@ -387,7 +389,7 @@ describe("Orderbook test", () => {
       // Add again the order
       await orderBook.connect(signer1).addOrder(askOrderConfig);
 
-      const orderId = getOrderIdFromOrder(orderConfig);
+      const orderId = getOrderHashFromOrder(orderConfig);
 
       await waitForSubgraphToBeSynced();
 
@@ -439,7 +441,6 @@ describe("Orderbook test", () => {
         inputVaultId: InputVault,
         outputToken: tokenB.address,
         outputVaultId: OutputVault,
-        tracking: TRACK_CLEARED_ORDER,
         vmStateConfig: {
           sources: [askSource],
           constants: askConstants,
@@ -487,7 +488,7 @@ describe("Orderbook test", () => {
 
       await waitForSubgraphToBeSynced();
 
-      const orderId = getOrderIdFromOrder(orderConfig);
+      const orderId = getOrderHashFromOrder(orderConfig);
       // {vaultId}-{owner}-{token}
       const outputTokenVault_Id = `${orderConfig.outputVaultId.toString()} - ${orderConfig.owner.toLowerCase()} - ${orderConfig.outputToken.toLowerCase()}`;
 
@@ -545,7 +546,6 @@ describe("Orderbook test", () => {
         inputVaultId: signer1InputVault,
         outputToken: tokenB.address,
         outputVaultId: signer1OutputVault,
-        tracking: TRACK_CLEARED_ORDER,
         vmStateConfig: {
           sources: [askSource],
           constants: askConstants,
@@ -578,7 +578,6 @@ describe("Orderbook test", () => {
         inputVaultId: signer2InputVault,
         outputToken: tokenA.address,
         outputVaultId: signer2OutputVault,
-        tracking: 0x0,
         vmStateConfig: {
           sources: [bidSource],
           constants: bidConstants,
@@ -637,7 +636,7 @@ describe("Orderbook test", () => {
 
       await waitForSubgraphToBeSynced();
 
-      const orderId = getOrderIdFromOrder(askConfig);
+      const orderId = getOrderHashFromOrder(askConfig);
       // {vaultId}-{owner}-{token}
       const inputTokenVault_Id = `${askConfig.inputVaultId.toString()} - ${askConfig.owner.toLowerCase()} - ${askConfig.inputToken.toLowerCase()}`;
       const outputTokenVault_Id = `${askConfig.outputVaultId.toString()} - ${askConfig.owner.toLowerCase()} - ${askConfig.outputToken.toLowerCase()}`;
@@ -697,7 +696,6 @@ describe("Orderbook test", () => {
         inputVaultId: InputVault,
         outputToken: tokenB.address,
         outputVaultId: OutputVault,
-        tracking: TRACK_CLEARED_ORDER,
         vmStateConfig: {
           sources: [askSource],
           constants: askConstants,
@@ -714,7 +712,7 @@ describe("Orderbook test", () => {
         orderBook
       )) as OrderLiveEvent["args"];
 
-      const orderId = getOrderIdFromOrder(orderConfig);
+      const orderId = getOrderHashFromOrder(orderConfig);
 
       // #{vaultId}-{owner}-{token}
       const tokenVaultInput_ID = `${orderConfig.inputVaultId.toString()} - ${orderConfig.owner.toLowerCase()} - ${orderConfig.inputToken.toLowerCase()}`;
@@ -816,7 +814,6 @@ describe("Orderbook test", () => {
         inputVaultId: InputVault,
         outputToken: tokenB.address,
         outputVaultId: OutputVault,
-        tracking: TRACK_CLEARED_ORDER,
         vmStateConfig: {
           sources: [askSource],
           constants: askConstants,
@@ -950,7 +947,6 @@ describe("Orderbook test", () => {
         inputVaultId: signer1InputVault,
         outputToken: tokenB.address,
         outputVaultId: signer1OutputVault,
-        tracking: TRACK_CLEARED_ORDER,
         vmStateConfig: {
           sources: [askSource],
           constants: askConstants,
@@ -983,7 +979,6 @@ describe("Orderbook test", () => {
         inputVaultId: signer2InputVault,
         outputToken: tokenA.address,
         outputVaultId: signer2OutputVault,
-        tracking: 0x0,
         vmStateConfig: {
           sources: [bidSource],
           constants: bidConstants,
@@ -1081,19 +1076,15 @@ describe("Orderbook test", () => {
       const bidTokenVaultInput_ID = `${bidConfig.inputVaultId.toString()} - ${bidConfig.owner.toLowerCase()} - ${bidConfig.inputToken.toLowerCase()}`;
       const bidTokenVaultOutput_ID = `${bidConfig.outputVaultId.toString()} - ${bidConfig.owner.toLowerCase()} - ${bidConfig.outputToken.toLowerCase()}`;
 
-      const askOrder_ID = getOrderIdFromOrder(askConfig);
-      const bidOrder_ID = getOrderIdFromOrder(bidConfig);
+      const askOrder_ID = getOrderHashFromOrder(askConfig);
+      const bidOrder_ID = getOrderHashFromOrder(bidConfig);
       // const orderClear_ID = getOrderClearId(
       //   afterClearValues,
       //   clearValues,
       //   txClear.hash
       // );
 
-      const orderClearBlock = await ethers.provider.getBlock(
-        txClear.blockNumber
-      );
-
-      const orderClear_ID = orderClearBlock.timestamp;
+      const orderClear_ID = txClear.hash.toLowerCase();
 
       await waitForSubgraphToBeSynced();
 
@@ -1152,29 +1143,305 @@ describe("Orderbook test", () => {
       expect(dataAskTokenInput.balance).to.be.equals(signer1InputVaultBalance);
       expect(dataAskTokenInput.orders).to.deep.include({ id: askOrder_ID });
       expect(dataAskTokenInput.orderClears).to.deep.include({
-        id: orderClear_ID.toString(),
+        id: orderClear_ID,
       });
       expect(dataAskTokenOutput.balance).to.be.equals(
         signer1OutputVaultBalance
       );
       expect(dataAskTokenOutput.orders).to.deep.include({ id: askOrder_ID });
       expect(dataAskTokenOutput.orderClears).to.deep.include({
-        id: orderClear_ID.toString(),
+        id: orderClear_ID,
       });
 
       // Bid Order related values
       expect(dataBidTokenInput.balance).to.be.equals(signer2InputVaultBalance);
       expect(dataBidTokenInput.orders).to.deep.include({ id: bidOrder_ID });
       expect(dataBidTokenInput.orderClears).to.deep.include({
-        id: orderClear_ID.toString(),
+        id: orderClear_ID,
       });
       expect(dataBidTokenOutput.balance).to.be.equals(
         signer2OutputVaultBalance
       );
       expect(dataBidTokenOutput.orders).to.deep.include({ id: bidOrder_ID });
       expect(dataBidTokenOutput.orderClears).to.deep.include({
-        id: orderClear_ID.toString(),
+        id: orderClear_ID,
       });
+    });
+  });
+
+  describe("Pair entity", function () {
+    it("should get the Pair after an order", async () => {
+      const InputVault = 1;
+      const OutputVault = 2;
+
+      // ASK ORDER
+      const askPrice = ethers.BigNumber.from("1" + eighteenZeros);
+      const askBlock = await ethers.provider.getBlockNumber();
+      const askConstants = [askPrice, askBlock, 5];
+      const vAskPrice = op(OrderBookOpcode.CONSTANT, 0);
+      const vAskBlock = op(OrderBookOpcode.CONSTANT, 1);
+      const v5 = op(OrderBookOpcode.CONSTANT, 2);
+      // prettier-ignore
+      const askSource = concat([
+        // outputMax = (currentBlock - askBlock) * 5 - aliceCleared
+        // 5 tokens available per block
+              op(OrderBookOpcode.BLOCK_NUMBER),
+              vAskBlock,
+            op(OrderBookOpcode.SUB, 2),
+            v5,
+          op(OrderBookOpcode.MUL, 2),
+            cOrderHash,
+          op(OrderBookOpcode.ORDER_FUNDS_CLEARED),
+        op(OrderBookOpcode.SUB, 2),
+        vAskPrice,
+      ]);
+
+      const askOrderConfig: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: InputVault,
+        outputToken: tokenB.address,
+        outputVaultId: OutputVault,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants,
+        },
+      };
+
+      const transaction = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig);
+
+      const { config: orderConfig } = (await getEventArgs(
+        transaction,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      const orderId = getOrderHashFromOrder(orderConfig);
+      const inputToken = askOrderConfig.inputToken.toLowerCase();
+      const outputToken = askOrderConfig.outputToken.toLowerCase();
+      const pairID = `${askOrderConfig.inputToken.toLowerCase()} - ${askOrderConfig.outputToken.toLowerCase()}`;
+
+      await waitForSubgraphToBeSynced();
+
+      // Make the order with a fixed ID
+      const query = `
+        {
+          pair (id: "${pairID}") {
+            inputToken
+            outputToken
+            orders {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data = response.data.pair;
+
+      expect(data.orders).to.deep.include({ id: orderId });
+      expect(data.inputToken).to.be.equals(inputToken);
+      expect(data.outputToken).to.be.equals(outputToken);
+    });
+
+    it("should update the Pair adding a new order", async () => {
+      const InputVault = 1;
+      const OutputVault = 2;
+
+      // ASK ORDER
+      const askPrice = ethers.BigNumber.from("1" + eighteenZeros);
+      const askBlock = await ethers.provider.getBlockNumber();
+      const askConstants = [askPrice, askBlock, 5];
+      const vAskPrice = op(OrderBookOpcode.CONSTANT, 0);
+      const vAskBlock = op(OrderBookOpcode.CONSTANT, 1);
+      const v5 = op(OrderBookOpcode.CONSTANT, 2);
+      // prettier-ignore
+      const askSource = concat([
+        // outputMax = (currentBlock - askBlock) * 5 - aliceCleared
+        // 5 tokens available per block
+              op(OrderBookOpcode.BLOCK_NUMBER),
+              vAskBlock,
+            op(OrderBookOpcode.SUB, 2),
+            v5,
+          op(OrderBookOpcode.MUL, 2),
+            cOrderHash,
+          op(OrderBookOpcode.ORDER_FUNDS_CLEARED),
+        op(OrderBookOpcode.SUB, 2),
+        vAskPrice,
+      ]);
+
+      const askOrderConfig: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: InputVault,
+        outputToken: tokenB.address,
+        outputVaultId: OutputVault,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants,
+        },
+      };
+
+      const transaction = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig);
+
+      const { config: orderConfig } = (await getEventArgs(
+        transaction,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      const pairID = `${askOrderConfig.inputToken.toLowerCase()} - ${askOrderConfig.outputToken.toLowerCase()}`;
+      const orderId_1 = getOrderHashFromOrder(orderConfig);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          pair (id: "${pairID}") {
+            orders {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data = response.data.pair;
+
+      expect(data.orders).to.deep.include({ id: orderId_1 });
+
+      // ASK ORDER 2
+      const askPrice_2 = ethers.BigNumber.from("1" + eighteenZeros);
+      const askBlock_2 = await ethers.provider.getBlockNumber();
+      const askConstants_2 = [askPrice_2, askBlock_2, 5];
+
+      const InputVault_2 = 1;
+      const OutputVault_2 = 2;
+
+      const askOrderConfig_2: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: InputVault_2,
+        outputToken: tokenB.address,
+        outputVaultId: OutputVault_2,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants_2,
+        },
+      };
+
+      const transaction_2 = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig_2);
+
+      const { config: orderConfig_2 } = (await getEventArgs(
+        transaction_2,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      const orderId_2 = getOrderHashFromOrder(orderConfig_2);
+
+      await waitForSubgraphToBeSynced();
+
+      // Using the same query
+      const response_2 = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data_2 = response_2.data.pair;
+
+      expect(data_2.orders).to.deep.include({ id: orderId_1 });
+      expect(data_2.orders).to.deep.include({ id: orderId_2 });
+    });
+  });
+
+  describe("ClearedOrder entity", function () {
+    it("should get the ClearedOrder after an order", async () => {
+      const InputVault = 1;
+      const OutputVault = 2;
+
+      // ASK ORDER
+      const askPrice = ethers.BigNumber.from("1" + eighteenZeros);
+      const askBlock = await ethers.provider.getBlockNumber();
+      const askConstants = [askPrice, askBlock, 5];
+      const vAskPrice = op(OrderBookOpcode.CONSTANT, 0);
+      const vAskBlock = op(OrderBookOpcode.CONSTANT, 1);
+      const v5 = op(OrderBookOpcode.CONSTANT, 2);
+      // prettier-ignore
+      const askSource = concat([
+        // outputMax = (currentBlock - askBlock) * 5 - aliceCleared
+        // 5 tokens available per block
+              op(OrderBookOpcode.BLOCK_NUMBER),
+              vAskBlock,
+            op(OrderBookOpcode.SUB, 2),
+            v5,
+          op(OrderBookOpcode.MUL, 2),
+            cOrderHash,
+          op(OrderBookOpcode.ORDER_FUNDS_CLEARED),
+        op(OrderBookOpcode.SUB, 2),
+        vAskPrice,
+      ]);
+
+      const askOrderConfig: OrderConfigStruct = {
+        inputToken: tokenA.address,
+        inputVaultId: InputVault,
+        outputToken: tokenB.address,
+        outputVaultId: OutputVault,
+        vmStateConfig: {
+          sources: [askSource],
+          constants: askConstants,
+        },
+      };
+
+      const transaction = await orderBook
+        .connect(signer1)
+        .addOrder(askOrderConfig);
+
+      const { config: orderConfig } = (await getEventArgs(
+        transaction,
+        "OrderLive",
+        orderBook
+      )) as OrderLiveEvent["args"];
+
+      console.log("orderConfig.tracking: ", orderConfig.tracking);
+
+      const orderId = getOrderHashFromOrder(orderConfig);
+      const clearedOrderId = orderId; // Both use the same hash
+
+      await waitForSubgraphToBeSynced();
+
+      // Make the order with a fixed ID
+      const query = `
+        {
+          clearedOrder (id: "${clearedOrderId}") {
+            funds
+            order {
+              id
+            }
+            clearedCounterparties {
+              id
+            }
+          }
+        }
+      `;
+
+      const response = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data = response.data.clearedOrder;
+
+      expect(data.funds).to.be.equals("0");
+      expect(data.order.id).to.be.equals(orderId);
+      expect(data.clearedCounterparties).to.be.empty;
     });
   });
 });

@@ -260,13 +260,13 @@ const endSale = async (_sale: Sale): Promise<ContractTransaction> => {
   }
 };
 
-describe.only("Sales queries test", function () {
+describe("Sales queries test", function () {
   before("deploying tier contract", async function () {
     // Deploying a tier
     tier = await Util.deployAlwaysTier(combineTierFactory, creator);
   });
 
-  describe("SaleFactory entity", async () => {
+  describe("SaleFactory entity", function () {
     it("should query all the basic fields correctly", async () => {
       // Get the Sale implementation
       const implementation = await Util.getImplementation(saleFactory);
@@ -326,7 +326,7 @@ describe.only("Sales queries test", function () {
     });
   });
 
-  describe("Sale entity", async () => {
+  describe("Sale entity", function () {
     it("should query the Sale after creation", async () => {
       const reserve = await new ReserveTokenTest__factory(creator).deploy();
       const cooldownDuration = "1";
