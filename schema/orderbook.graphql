@@ -17,13 +17,13 @@ type Order @entity {
   "Owner of the Order"
   owner: Bytes!
   "Input token"
-  inputToken: ERC20!
+  inputToken: OrderBookToken!
   "Input token vault"
   inputTokenVault: TokenVault! # Match on {Order.inputVaultId}-{owner}-{inputToken}
   "Input vault"
   inputVault: Vault! # Link by {Order.inputVaultId}-{owner}
   "Output token"
-  outputToken: ERC20!
+  outputToken: OrderBookToken!
   "Output token vault"
   outputTokenVault: TokenVault! # Match on {Order.outputVault}-{owner}-{outputToken}
   "Output vault"
@@ -65,7 +65,7 @@ type TokenVault @entity {
   "The id of this vault"
   vaultId: BigInt!
   "The token that has a balance for this vault and owner."
-  token: ERC20!
+  token: OrderBookToken!
   # Add to this value:
   # Deposit.amount when there is a matching Deposit event for {vaultId}-{owner}-{token}
   # OR AfterClear.stateChange.aInput when there is a Clear event that matches {Clear.a_.inputVault}-{Clear.a_.owner}-{Clear.a_.inputToken}
@@ -92,7 +92,7 @@ type VaultDeposit @entity {
   "The transaction sender of this deposit"
   sender: Bytes! # Deposit.sender
   "The token that was deposited"
-  token: ERC20! # Deposit.config.token
+  token: OrderBookToken! # Deposit.config.token
   "The vaultId that was deposited into"
   vaultId: BigInt! # Deposit.config.vaultId
   "The Vault that was deposited into"
@@ -109,7 +109,7 @@ type VaultWithdraw @entity {
   "The transaction sender of this withdrawal"
   sender: Bytes! # Withdrawal.sender
   "The token that was withdrawn"
-  token: ERC20! # Withdraw.config.token
+  token: OrderBookToken! # Withdraw.config.token
   "The vaultId that was withdrawn from"
   vaultId: BigInt! # Withdraw.config.vaultId
   "The Vault that was withdrawn from"
@@ -136,9 +136,9 @@ type OrderClear @entity {
   "The owners of the Orders that were cleared [Order A, Order B]"
   owners: [Bytes!] # [Clear.a_.owner, Clear.b_.owner]
   "The token cleared into Order A"
-  aInput: ERC20! # Clear.a_.inputToken
+  aInput: OrderBookToken! # Clear.a_.inputToken
   "The token cleared into Order B"
-  bInput: ERC20! # Clear.b_.inputToken
+  bInput: OrderBookToken! # Clear.b_.inputToken
   "The amount cleared into Order A"
   aInputAmount: BigInt! #AfterClear.stateChange.aInput
   "The amount cleared into Order B"
@@ -161,9 +161,9 @@ type Bounty @entity {
   "The Vault that bounty token B was deposited into"
   bountyVaultB: Vault! # map by {Clear.bountyConfig.bVaultId}-{Clear.sender}
   "The A token for the bounty"
-  bountyTokenA: ERC20! # Clear.a_.outputToken
+  bountyTokenA: OrderBookToken! # Clear.a_.outputToken
   "The B token for the bounty"
-  bountyTokenB: ERC20! # Clear.b_.outputToken
+  bountyTokenB: OrderBookToken! # Clear.b_.outputToken
   "The amount paid for bounty token A"
   bountyAmountA: BigInt # AfterClear.stateChange.aOutput - AfterClear.stateChange.bInput
   "The amount paid for bounty token B"
@@ -201,7 +201,29 @@ type ClearedCounterparty @entity {
 # Created and update after Order is emitted and match the inputToken and outputToken
 type Pair @entity {
   id: ID! # ${inputToken} - ${outputToken}
-  inputToken: Bytes!
-  outputToken: Bytes!
+  inputToken: OrderBookToken!
+  outputToken: OrderBookToken!
   orders: [Order!] # Orders that match the same input/output Tokens
+  liveOrders: [Order] # Orders that match the same input/output Tokens with Order.orderLiveness = true
+  clears: [OrderClear] # All order clears with same input/output Tokens
+  totalInputCleared: BigInt! # Total cleared for the inputToken
+  totalOutputCleared: BigInt! # Total cleared for the outputToken
+}
+
+# Created for each new OrderBookToken referenced anywhere else
+type OrderBookToken implements ERC20Interface @entity {
+    id: ID! #address of token
+    deployBlock: BigInt! #the block the contract was deployed
+    deployTimestamp: BigInt! #the timestamp the contract was deployed
+    symbol: String
+    totalSupply: BigInt!
+    decimals: Int
+    name: String
+    inputTokenOrders: [Order]
+    outputTokenOrders: [Order]
+    vaults: [TokenVault]
+    vaultDeposits: [VaultDeposit]
+    vaultWithdraws: [VaultWithdraw]
+    totalDeposited: BigInt! # = deposits - withdraws
+    totalBountyPaid: BigInt! # total bounty paid for this ERC20
 }
