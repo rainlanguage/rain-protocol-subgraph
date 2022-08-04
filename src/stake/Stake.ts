@@ -1,3 +1,4 @@
+import { log } from "@graphprotocol/graph-ts";
 import {
   StakeDeposit,
   StakeERC20,
@@ -24,6 +25,7 @@ export function handleInitialize(event: Initialize): void {
 
     let token = getERC20(event.params.config.token, event.block);
     if (token) stakeERC20.token = token.id;
+    log.info("Token : {}", [event.params.config.token.toHex()]);
 
     stakeERC20.save();
   }
@@ -41,13 +43,17 @@ export function handleTransfer(event: Transfer): void {
         event.params.value
       );
 
-      stakeERC20.tokenToStakeTokenRatio = stakeERC20.totalSupply.div(
-        stakeERC20.tokenPoolSize
-      );
+      if (stakeERC20.tokenPoolSize != ZERO_BI) {
+        stakeERC20.tokenToStakeTokenRatio = stakeERC20.totalSupply.div(
+          stakeERC20.tokenPoolSize
+        );
+      }
 
-      stakeERC20.stateTokenToTokenRatio = stakeERC20.tokenPoolSize.div(
-        stakeERC20.totalSupply
-      );
+      if (stakeERC20.totalSupply != ZERO_BI) {
+        stakeERC20.stateTokenToTokenRatio = stakeERC20.tokenPoolSize.div(
+          stakeERC20.totalSupply
+        );
+      }
 
       stakeERC20.save();
     }
@@ -99,9 +105,11 @@ export function handleTransfer(event: Transfer): void {
         stakeERC20.save();
       }
       stakeHolder.balance = stakeHolder.balance.plus(event.params.value);
-      stakeHolder.totalEntitlement = stakeHolder.balance
-        .times(stakeERC20.tokenPoolSize)
-        .div(stakeERC20.totalSupply);
+      if (stakeERC20.totalSupply != ZERO_BI) {
+        stakeHolder.totalEntitlement = stakeHolder.balance
+          .times(stakeERC20.tokenPoolSize)
+          .div(stakeERC20.totalSupply);
+      }
       stakeHolder.save();
     }
   }

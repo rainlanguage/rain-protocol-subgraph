@@ -122,7 +122,7 @@ export function notAContract(address: string): boolean {
 export function getERC20(token: Address, block: ethereum.Block): ERC20 {
   let erc20 = ERC20.load(token.toHex());
   let erc20Contract = ERC20Contract.bind(token);
-  if (erc20 == null) {
+  if (!erc20) {
     erc20 = new ERC20(token.toHex());
     erc20.deployBlock = block.number;
     erc20.deployTimestamp = block.timestamp;
