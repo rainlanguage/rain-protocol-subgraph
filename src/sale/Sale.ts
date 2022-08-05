@@ -25,6 +25,7 @@ import {
   SaleReceipt,
   SaleRefund,
   RedeemableERC20,
+  SaleStateConfig,
 } from "../../generated/schema";
 import { RedeemableERC20Template } from "../../generated/templates";
 import { ERC20 as ERC20Contract } from "../../generated/templates/SaleTemplate/ERC20";
@@ -151,7 +152,6 @@ export function handleEnd(event: End): void {
 
 export function handleInitialize(event: Initialize): void {
   let sale = Sale.load(event.address.toHex());
-
   if (sale) {
     let token = getRedeemableERC20(
       event.address,
@@ -164,7 +164,7 @@ export function handleInitialize(event: Initialize): void {
     let reserve = getERC20(event.params.config.reserve, event.block);
     if (reserve) sale.reserve = reserve.id;
 
-    let tokenContrct = ERC20Contract.bind(event.params.token);
+    let tokenContract = ERC20Contract.bind(event.params.token);
 
     sale.recipient = event.params.config.recipient;
     sale.cooldownDuration = event.params.config.cooldownDuration;
@@ -173,9 +173,15 @@ export function handleInitialize(event: Initialize): void {
     sale.dustSize = event.params.config.dustSize;
     sale.saleStatus = SaleStatus.Pending;
 
-    let balance = tokenContrct.try_balanceOf(event.address);
+    let balance = tokenContract.try_balanceOf(event.address);
     if (!balance.reverted) sale.unitsAvailable = balance.value;
 
+    let saleStateConfig = new SaleStateConfig(event.address.toHex());
+    saleStateConfig.sources = event.params.config.vmStateConfig.sources;
+    saleStateConfig.constants = event.params.config.vmStateConfig.constants;
+    saleStateConfig.save();
+
+    sale.vmStateConfig = saleStateConfig.id;
     token.save();
     reserve.save();
     sale.save();

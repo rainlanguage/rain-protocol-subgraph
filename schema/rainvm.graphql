@@ -18,6 +18,12 @@ type OrderStateConfig implements StateConfig @entity {
   constants: [BigInt!]!
 }
 
+type SaleStateConfig implements StateConfig @entity {
+  id: ID!
+  sources: [Bytes!]!
+  constants: [BigInt!]!
+}
+
 interface StateConfig {
   sources: [Bytes!]!
   constants: [BigInt!]!

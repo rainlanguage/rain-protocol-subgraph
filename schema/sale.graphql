@@ -15,12 +15,12 @@ type Sale implements Isale & INotice @entity {
   deployTimestamp: BigInt! #the timestamp the contract was deployed
   deployer: Bytes! #address of the deployer - get from event Initialize.sender
   factory: SaleFactory! #the factory that deployed this contract
-  token: RedeemableERC20! #from Intialize.token
+  token: RedeemableERC20! #from Initialize.token
   reserve: ERC20 #from Initialize.config.reserve
   recipient: Bytes #from Initialize.config.recipient
   cooldownDuration: BigInt #from Initialize.config.cooldownDuration
   minimumRaise: BigInt! #from Initialize.config.minimumRaise
-  dustSize: BigInt #from Intialize.config.dustSize
+  dustSize: BigInt #from Initialize.config.dustSize
   startEvent: SaleStart #from Start event on Sale
   endEvent: SaleEnd #from End event on Sale
   buys: [SaleBuy!] #all buy events
@@ -34,6 +34,7 @@ type Sale implements Isale & INotice @entity {
   saleStatus: Int #starts at SaleStatus.Pending, Start event moves it to Active, End event provides the last saleStatus (will be Success/Fail)
   notices: [Notice!]
   saleFeeRecipients: [SaleFeeRecipient!]
+  vmStateConfig: StateConfig
 }
 
 type SaleRedeemableERC20 @entity {
@@ -137,7 +138,7 @@ type SaleFeeRecipient @entity {
   address: Bytes!
   totalFees: BigInt! #total fees for this recipient for this Sale. Get by adding all SaleFeeRecipient.buys.fee and subtracting all SaleFeeRecipient.refunds.fee
   buys: [SaleBuy!]! #all buys that reference this feeRecipient
-  refunds: [SaleRefund!]! #all refunds that reference this feeRcipient
+  refunds: [SaleRefund!]! #all refunds that reference this feeRecipient
   sale: Sale!
 }
 
