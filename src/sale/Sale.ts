@@ -29,7 +29,14 @@ import {
 } from "../../generated/schema";
 import { RedeemableERC20Template } from "../../generated/templates";
 import { ERC20 as ERC20Contract } from "../../generated/templates/SaleTemplate/ERC20";
-import { ETHER, HUNDRED_BD, SaleStatus, ZERO_ADDRESS, ZERO_BI } from "../utils";
+import {
+  ETHER,
+  getERC20,
+  HUNDRED_BD,
+  SaleStatus,
+  ZERO_ADDRESS,
+  ZERO_BI,
+} from "../utils";
 
 export function handleBuy(event: Buy): void {
   let sale = Sale.load(event.address.toHex());
@@ -269,35 +276,6 @@ export function handleStart(event: Start): void {
 
     sale.save();
   }
-}
-
-function getERC20(token: Address, block: ethereum.Block): ERC20 {
-  let erc20 = ERC20.load(token.toHex());
-  let erc20Contract = ERC20Contract.bind(token);
-  if (!erc20) {
-    erc20 = new ERC20(token.toHex());
-    erc20.deployBlock = block.number;
-    erc20.deployTimestamp = block.timestamp;
-
-    let name = erc20Contract.try_name();
-    let symbol = erc20Contract.try_symbol();
-    let decimals = erc20Contract.try_decimals();
-    let totalSupply = erc20Contract.try_totalSupply();
-    if (
-      !(
-        name.reverted ||
-        symbol.reverted ||
-        decimals.reverted ||
-        totalSupply.reverted
-      )
-    ) {
-      erc20.name = name.value;
-      erc20.symbol = symbol.value;
-      erc20.decimals = decimals.value;
-      erc20.totalSupply = totalSupply.value;
-    }
-  }
-  return erc20 as ERC20;
 }
 
 function getRedeemableERC20(

@@ -24,8 +24,14 @@ export function handleInitialize(event: Initialize): void {
     stakeERC20.initialRatio = event.params.config.initialRatio;
 
     let token = getERC20(event.params.config.token, event.block);
-    if (token) stakeERC20.token = token.id;
-    log.info("Token : {}", [event.params.config.token.toHex()]);
+    if (token) {
+      stakeERC20.token = token.id;
+      let stakeContracts = token.stakeContracts;
+      if (stakeContracts && !stakeContracts.includes(stakeERC20.id))
+        stakeContracts.push(stakeERC20.id);
+      token.stakeContracts = stakeContracts;
+      token.save();
+    }
 
     stakeERC20.save();
   }
@@ -37,23 +43,27 @@ export function handleApproval(event: Approval): void {
 
 export function handleTransfer(event: Transfer): void {
   let stakeERC20 = StakeERC20.load(event.address.toHex());
+  let stakeContract = Stake.bind(event.address);
+
   if (stakeERC20) {
+    stakeERC20.totalSupply = stakeContract.totalSupply();
+
+    if (stakeERC20.tokenPoolSize != ZERO_BI) {
+      stakeERC20.tokenToStakeTokenRatio = stakeERC20.totalSupply.div(
+        stakeERC20.tokenPoolSize
+      );
+    }
+
+    if (stakeERC20.totalSupply != ZERO_BI) {
+      stakeERC20.stakeTokenToTokenRatio = stakeERC20.tokenPoolSize.div(
+        stakeERC20.totalSupply
+      );
+    }
+
     if (event.params.from.toHex() == stakeERC20.id) {
       stakeERC20.tokenPoolSize = stakeERC20.tokenPoolSize.plus(
         event.params.value
       );
-
-      if (stakeERC20.tokenPoolSize != ZERO_BI) {
-        stakeERC20.tokenToStakeTokenRatio = stakeERC20.totalSupply.div(
-          stakeERC20.tokenPoolSize
-        );
-      }
-
-      if (stakeERC20.totalSupply != ZERO_BI) {
-        stakeERC20.stateTokenToTokenRatio = stakeERC20.tokenPoolSize.div(
-          stakeERC20.totalSupply
-        );
-      }
 
       stakeERC20.save();
     }
@@ -69,6 +79,7 @@ export function handleTransfer(event: Transfer): void {
       let deposits = stakeERC20.deposits;
       if (deposits) deposits.push(stakeDeposit.id);
       stakeERC20.deposits = deposits;
+
       stakeERC20.save();
     }
 

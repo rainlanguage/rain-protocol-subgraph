@@ -16,7 +16,6 @@ import {
   OrderLive,
   Clear,
 } from "../../generated/OrderBook/OrderBook";
-import { ERC20 } from "../../generated/RedeemableERC20ClaimEscrow/ERC20";
 
 import {
   Order,

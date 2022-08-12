@@ -38,7 +38,7 @@ type StakeERC20 implements ERC20Interface @entity {
   "The last indexed ratio of token to Stake token"
   tokenToStakeTokenRatio: BigInt! # totalSupply / tokenPoolSize - update everytime either totalSupply or tokenPoolSize changes
   "The last indexed raitio of Stake token to token"
-  stateTokenToTokenRatio: BigInt! # tokenPoolSize / totalSupply - update everytime either totalSupply or tokenPoolSize changes
+  stakeTokenToTokenRatio: BigInt! # tokenPoolSize / totalSupply - update everytime either totalSupply or tokenPoolSize changes
   "Deposits"
   deposits: [StakeDeposit!]
   "Withdraws"
