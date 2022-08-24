@@ -6,6 +6,7 @@ type SaleFactory @entity {
   implementation: Bytes! #implementation address from Implementation event
   children: [Sale!] #all the children that were deployed by this factory
   redeemableERC20Factory: Bytes #from Contract.config.redeemableERC20Factory on first child's Construct event
+  childrenCount: BigInt!
 }
 
 type Sale implements Isale & INotice @entity {

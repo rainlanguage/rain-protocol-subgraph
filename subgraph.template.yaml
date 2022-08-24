@@ -454,6 +454,8 @@ templates:
       abis:
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: Stake
+          file: ./abis/stake/Stake.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer

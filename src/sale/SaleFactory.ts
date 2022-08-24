@@ -5,13 +5,14 @@ import {
 } from "../../generated/SaleFactory/SaleFactory";
 import { SaleTemplate } from "../../generated/templates";
 import { DataSourceContext } from "@graphprotocol/graph-ts";
-import { ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../utils";
+import { ONE_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../utils";
 
 export function handleImplementation(event: Implementation): void {
   let saleFactory = new SaleFactory(event.address.toHex());
   saleFactory.address = event.address;
   saleFactory.implementation = event.params.implementation;
   saleFactory.children = [];
+  saleFactory.childrenCount = ZERO_BI;
   saleFactory.save();
 
   let context = new DataSourceContext();
@@ -46,7 +47,7 @@ export function handleNewChild(event: NewChild): void {
     let children = saleFactory.children;
     if (children) children.push(sale.id);
     saleFactory.children = children;
-
+    saleFactory.childrenCount = saleFactory.childrenCount.plus(ONE_BI);
     saleFactory.save();
   }
 

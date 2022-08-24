@@ -5,6 +5,7 @@ type VerifyFactory @entity {
   address: Bytes! #factory address
   implementation: Bytes! #implementation address from Implementation event
   children: [Verify!]! #all the children that were deployed by this factory
+  childrenCount: BigInt!
 }
 
 type Verify implements INotice @entity {

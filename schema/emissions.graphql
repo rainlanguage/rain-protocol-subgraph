@@ -7,6 +7,7 @@ type EmissionsERC20Factory @entity {
   implementation: Bytes! #implementation address from Implementation event
   "EmissionsERC20 addresses deployed by factory"
   children: [EmissionsERC20!] #all the children that were deployed by this factory
+  childrenCount: BigInt!
 }
 
 type EmissionsERC20 @entity {

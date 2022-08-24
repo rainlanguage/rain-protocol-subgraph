@@ -3,12 +3,13 @@ import {
   NewChild,
 } from "../../generated/StakeFactory/StakeFactory";
 import { StakeFactory, StakeERC20 } from "../../generated/schema";
-import { ZERO_ADDRESS, ZERO_BI } from "../utils";
+import { ONE_BI, ZERO_ADDRESS, ZERO_BI } from "../utils";
 import { StakeERC20Template } from "../../generated/templates";
 export function handleImplementation(event: Implementation): void {
   let stakeFactory = new StakeFactory(event.address.toHex());
   stakeFactory.implementation = event.params.implementation;
   stakeFactory.children = [];
+  stakeFactory.childrenCount = ZERO_BI;
   stakeFactory.address = event.address;
   stakeFactory.save();
 }
@@ -36,6 +37,7 @@ export function handleNewChild(event: NewChild): void {
     let children = stakeFactory.children;
     if (children) children.push(stakeERC20.id);
     stakeFactory.children = children;
+    stakeFactory.childrenCount = stakeFactory.childrenCount.plus(ONE_BI);
     stakeFactory.save();
 
     StakeERC20Template.create(event.params.child);

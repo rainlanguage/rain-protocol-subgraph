@@ -4,6 +4,7 @@ import {
 } from "../../generated/CombineTierFactory/CombineTierFactory";
 import { CombineTier, CombineTierFactory } from "../../generated/schema";
 import { CombineTierTemplate } from "../../generated/templates";
+import { ONE_BI, ZERO_BI } from "../utils";
 
 export function handleNewChild(event: NewChild): void {
   let combineTierFactory = CombineTierFactory.load(event.address.toHex());
@@ -21,7 +22,8 @@ export function handleNewChild(event: NewChild): void {
     let children = combineTierFactory.children;
     if (children) children.push(combineTier.id);
     combineTierFactory.children = children;
-
+    combineTierFactory.childrenCount =
+      combineTierFactory.childrenCount.plus(ONE_BI);
     combineTierFactory.save();
   }
 
@@ -35,5 +37,6 @@ export function handleImplementation(event: Implementation): void {
   combineFactory.implementation = event.params.implementation;
   combineFactory.address = event.address;
   combineFactory.children = [];
+  combineFactory.childrenCount = ZERO_BI;
   combineFactory.save();
 }

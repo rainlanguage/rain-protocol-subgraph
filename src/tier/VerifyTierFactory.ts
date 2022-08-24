@@ -4,6 +4,7 @@ import {
 } from "../../generated/VerifyTierFactory/VerifyTierFactory";
 import { VerifyTierFactory, VerifyTier } from "../../generated/schema";
 import { VerifyTierTemplate } from "../../generated/templates";
+import { ONE_BI, ZERO_BI } from "../utils";
 
 export function handleNewChild(event: NewChild): void {
   let verifyTierFactory = VerifyTierFactory.load(event.address.toHex());
@@ -21,7 +22,8 @@ export function handleNewChild(event: NewChild): void {
     let children = verifyTierFactory.children;
     if (children) children.push(verifyTier.id);
     verifyTierFactory.children = children;
-
+    verifyTierFactory.childrenCount =
+      verifyTierFactory.childrenCount.plus(ONE_BI);
     verifyTierFactory.save();
   }
 
@@ -36,5 +38,6 @@ export function handleImplementation(event: Implementation): void {
   verifyTierFactory.implementation = event.params.implementation;
   verifyTierFactory.address = event.address;
   verifyTierFactory.children = [];
+  verifyTierFactory.childrenCount = ZERO_BI;
   verifyTierFactory.save();
 }

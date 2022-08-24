@@ -21,6 +21,7 @@ type VerifyTierFactory implements TierFactory @entity {
   address: Bytes! #factory address
   implementation: Bytes! #implementation address from Implementation event
   children: [TierContract!] #all the children that were deployed by this factory
+  childrenCount: BigInt!
 }
 
 type VerifyTier implements TierContract & INotice @entity {
@@ -71,6 +72,7 @@ type CombineTierFactory implements TierFactory @entity {
   address: Bytes! #factory address
   implementation: Bytes! #implementation address from Implementation event
   children: [TierContract!] #all the children that were deployed by this factory
+  childrenCount: BigInt!
 }
 
 # Created by listening to NewChild events on the factory

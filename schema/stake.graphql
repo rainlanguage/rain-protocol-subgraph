@@ -7,6 +7,7 @@ type StakeFactory @entity {
   implementation: Bytes! #implementation address from Implementation event
   "Stake addresses deployed by this factory"
   children: [StakeERC20!] #all the children that were deployed by this factory
+  childrenCount: BigInt!
 }
 
 type StakeERC20 implements ERC20Interface @entity {
