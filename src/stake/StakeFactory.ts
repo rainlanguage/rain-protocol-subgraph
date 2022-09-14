@@ -19,7 +19,7 @@ export function handleNewChild(event: NewChild): void {
   if (stakeFactory) {
     let stakeERC20 = new StakeERC20(event.params.child.toHex());
     stakeERC20.address = event.params.child;
-    stakeERC20.deployer = event.params.sender;
+    stakeERC20.deployer = event.transaction.from;
     stakeERC20.deployBlock = event.block.number;
     stakeERC20.deployTimestamp = event.block.timestamp;
     stakeERC20.factory = stakeFactory.id;
