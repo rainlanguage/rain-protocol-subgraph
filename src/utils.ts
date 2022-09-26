@@ -130,16 +130,16 @@ export function getERC20(token: Address, block: ethereum.Block): ERC20 {
 
     let decimals = erc20Contract.try_decimals();
     let totalSupply = erc20Contract.try_totalSupply();
-    if (!decimals.reverted && !totalSupply.reverted) {
-      erc20.name = erc20Contract.name();
-      erc20.symbol = erc20Contract.symbol();
-      erc20.decimals = decimals.value;
-      erc20.totalSupply = totalSupply.value;
-      erc20.stakeContracts = [];
-    }
+    let name = erc20Contract.try_name();
+    let symbol = erc20Contract.try_symbol();
+    erc20.decimals = !decimals.reverted ? decimals.value : 18;
+    erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
+    erc20.name = !name.reverted ? name.value : "NONE";
+    erc20.symbol = !symbol.reverted ? symbol.value : "NONE";
     erc20.save();
     ERC20Template.create(token);
   }
-  erc20.totalSupply = erc20Contract.totalSupply();
+  let totalSupply = erc20Contract.try_totalSupply();
+  erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
   return erc20 as ERC20;
 }
