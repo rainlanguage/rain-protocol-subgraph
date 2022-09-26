@@ -128,20 +128,11 @@ export function getERC20(token: Address, block: ethereum.Block): ERC20 {
     erc20.deployBlock = block.number;
     erc20.deployTimestamp = block.timestamp;
 
-    let name = erc20Contract.try_name();
-    let symbol = erc20Contract.try_symbol();
     let decimals = erc20Contract.try_decimals();
     let totalSupply = erc20Contract.try_totalSupply();
-    if (
-      !(
-        name.reverted ||
-        symbol.reverted ||
-        decimals.reverted ||
-        totalSupply.reverted
-      )
-    ) {
-      erc20.name = name.value;
-      erc20.symbol = symbol.value;
+    if (!decimals.reverted && !totalSupply.reverted) {
+      erc20.name = erc20Contract.name();
+      erc20.symbol = erc20Contract.symbol();
       erc20.decimals = decimals.value;
       erc20.totalSupply = totalSupply.value;
       erc20.stakeContracts = [];
@@ -149,5 +140,6 @@ export function getERC20(token: Address, block: ethereum.Block): ERC20 {
     erc20.save();
     ERC20Template.create(token);
   }
+  erc20.totalSupply = erc20Contract.totalSupply();
   return erc20 as ERC20;
 }
