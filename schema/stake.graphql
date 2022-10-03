@@ -33,19 +33,19 @@ type StakeERC20 implements ERC20Interface @entity {
   "The token that is staked to receive the Stake token"
   token: ERC20! # get from Initialize.config_.token
   "The total pool size of token"
-  tokenPoolSize: BigInt! # update for every Transfer event of token TO the Stake contract
+  tokenPoolSize: BigInt! # update for every Transfer event of token TO the Stake contract 
   "The initial starting ratio of token to Stake token"
-  initialRatio: BigInt! # get from Initialize.config_.intialRatio
+  initialRatio: BigInt! # get from Initialize.config_.initialRatio
   "The last indexed ratio of token to Stake token"
-  tokenToStakeTokenRatio: BigInt! # totalSupply / tokenPoolSize - update everytime either totalSupply or tokenPoolSize changes
-  "The last indexed raitio of Stake token to token"
-  stakeTokenToTokenRatio: BigInt! # tokenPoolSize / totalSupply - update everytime either totalSupply or tokenPoolSize changes
+  tokenToStakeTokenRatio: BigInt! # totalSupply / tokenPoolSize - update every time either totalSupply or tokenPoolSize changes
+  "The last indexed ratio of Stake token to token"
+  stakeTokenToTokenRatio: BigInt! # tokenPoolSize / totalSupply - update every time either totalSupply or tokenPoolSize changes
   "Deposits"
-  deposits: [StakeDeposit!]
+  deposits: [StakeDeposit!] @derivedFrom(field: "stakeToken")
   "Withdraws"
-  withdraws: [StakeWithdraw!]
+  withdraws: [StakeWithdraw!] @derivedFrom(field: "stakeToken")
   "Stake token holders"
-  holders: [StakeHolder!]
+  holders: [StakeHolder!] @derivedFrom(field: "stakeToken")
 }
 
 # represents one holder of the Stake token
@@ -54,27 +54,37 @@ type StakeHolder @entity {
   address: Bytes!
   token: StakeERC20!
   balance: BigInt!
+  stakeToken: StakeERC20!
+  totalStake: BigInt!
   # == unique fields for StakeHolder ==
   "The current entitlement of the token pool for this StakeHolder"
   totalEntitlement: BigInt! # (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply => update anytime one of these values changes
+  deposits: [StakeDeposit!] @derivedFrom(field: "depositor")
+  withdraws: [StakeWithdraw!] @derivedFrom(field: "withdrawer")
 }
 
 # represents one deposit - created whenever there is a mint of the StakeERC20 (i.e. transfers from the zero address)
 type StakeDeposit @entity {
     id: ID! #txhash
-    depositor: Bytes! # address of the recipient of the Stake mint
+    depositor: StakeHolder! # address of the recipient of the Stake mint
     stakeToken: StakeERC20!
     token: ERC20! #get from StakeERC20.token
     stakeTokenMinted: BigInt! # get from the amount minted to the depositor
+    timestamp: BigInt!
+    tokenPoolSize: BigInt!
+    value: BigInt!
 }
 
 # represents one deposit - created whenever there is a burn of the StakeERC20 (i.e. transfers to the zero address)
 type StakeWithdraw @entity {
     id: ID! #txhash
-    withdrawer: Bytes! # address of the burner of the Stake token
+    withdrawer: StakeHolder! # address of the burner of the Stake token
     stakeToken: StakeERC20!
     token: ERC20! #get from StakeERC20.token
     stakeTokenMinted: BigInt! # get from the amount burned by the withdrawer
+    timestamp: BigInt!
+    tokenPoolSize: BigInt!
+    value: BigInt!
 }
 
 ################## StakeFactory

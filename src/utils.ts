@@ -136,6 +136,7 @@ export function getERC20(token: Address, block: ethereum.Block): ERC20 {
     erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
     erc20.name = !name.reverted ? name.value : "NONE";
     erc20.symbol = !symbol.reverted ? symbol.value : "NONE";
+    erc20.stakeContracts = [];
     erc20.save();
     ERC20Template.create(token);
   }
