@@ -172,28 +172,15 @@ before("Deployment contracts and subgraph", async function () {
   const pathConfigLocal = path.resolve(__dirname, "../config/localhost.json");
   Util.writeFile(pathConfigLocal, JSON.stringify(config, null, 2));
 
-  // Read deploy configuration example and create subgraph deployment configuration
-  const deployConfigExPath = path.resolve(
-    __dirname,
-    "../scripts/deployConfig.example.json"
-  );
-  const deployConfig = JSON.parse(Util.fetchFile(deployConfigExPath));
-
   // Setting all to localhost to test locally
-  deployConfig.subgraphName = subgraphName;
-  deployConfig.configPath = "config/localhost.json";
-  deployConfig.endpoint = "http://localhost:8020/";
-  deployConfig.ipfsEndpoint = "http://localhost:5001";
-  deployConfig.versionLabel = "test-v2.0.0";
+  const configPath = "config/localhost.json";
+  const endpoint = "http://localhost:8020/";
+  const ipfsEndpoint = "http://localhost:5001";
+  const versionLabel = "test-v2.0.0";
 
-  // Write to the deployment configuration
-  const deployConfigPath = path.resolve(
-    __dirname,
-    "../scripts/deployConfig.json"
+  Util.exec(
+    `npm run deploy-subgraph -- --config ${configPath} --subgraphName ${subgraphName} --endpoint ${endpoint} --ipfsEndpoint ${ipfsEndpoint} --versionLabel ${versionLabel}`
   );
-  Util.writeFile(deployConfigPath, JSON.stringify(deployConfig, null, 2));
-
-  Util.exec(`npm run deploy-subgraph`);
 
   subgraph = Util.fetchSubgraph(subgraphName);
 
