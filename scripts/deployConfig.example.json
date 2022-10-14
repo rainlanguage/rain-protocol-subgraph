@@ -1,7 +1,0 @@
-{
-  "configPath": "config/network_example.json",
-  "subgraphName": "beehive-innovation/rain-protocol-test",
-  "versionLabel": "default",
-  "endpoint": "default",
-  "ipfsEndpoint": "default"
-}
