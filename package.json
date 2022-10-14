@@ -58,6 +58,7 @@
     "@vishalkale15107/rain-protocol": "git+https://github.com/vishalkale151071/rain-protocol.git#3d0ee716430d28716365f0f1c999fe14c30f0b4b",
     "apollo-fetch": "^0.7.0",
     "chai": "^4.2.0",
+    "commander": "^9.4.1",
     "dotenv": "^10.0.0",
     "eslint": "^7.29.0",
     "eslint-config-prettier": "^8.3.0",
