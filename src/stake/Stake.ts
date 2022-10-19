@@ -127,9 +127,6 @@ export function handleTransfer(event: Transfer): void {
             .times(stakeERC20.tokenPoolSize)
             .div(stakeERC20.totalSupply);
         }
-        stakeHolder.totalStake = stakeHolder.totalStake.minus(
-          event.params.value
-        );
         stakeHolder.save();
       }
     }
