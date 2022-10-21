@@ -462,4 +462,3 @@ templates:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
       file: ./src/erc20.ts
-  

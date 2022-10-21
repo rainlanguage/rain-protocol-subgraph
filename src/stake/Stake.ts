@@ -77,13 +77,13 @@ export function handleTransfer(event: Transfer): void {
     }
 
     if (event.params.to.toHex() == ZERO_ADDRESS) {
-      // Deposit
+      // Withdraw
       let stakeWithdraw = new StakeWithdraw(event.transaction.hash.toHex());
       stakeWithdraw.withdrawer =
         event.address.toHex() + "-" + event.params.from.toHex();
       stakeWithdraw.stakeToken = event.address.toHex();
       stakeWithdraw.token = stakeERC20.token;
-      stakeWithdraw.stakeTokenMinted = event.params.value;
+      stakeWithdraw.stakeTokenBurned = event.params.value;
       stakeWithdraw.timestamp = event.block.timestamp;
       stakeWithdraw.tokenPoolSize = stakeERC20.tokenPoolSize;
       stakeWithdraw.value = event.params.value;
@@ -93,7 +93,7 @@ export function handleTransfer(event: Transfer): void {
     }
 
     if (event.params.to.toHex() != ZERO_ADDRESS) {
-      let stakeHolder = StakeHolder.load(
+      let stakeHolder = loadStakeHolder(
         event.address.toHex() + "-" + event.params.to.toHex()
       );
       if (!stakeHolder) {
@@ -112,12 +112,12 @@ export function handleTransfer(event: Transfer): void {
           .times(stakeERC20.tokenPoolSize)
           .div(stakeERC20.totalSupply);
       }
-      stakeHolder.totalStake = stakeHolder.totalStake.plus(event.params.value);
+
       stakeHolder.save();
     }
 
     if (event.params.from.toHex() != ZERO_ADDRESS) {
-      let stakeHolder = StakeHolder.load(
+      let stakeHolder = loadStakeHolder(
         event.address.toHex() + "-" + event.params.from.toHex()
       );
       if (stakeHolder) {
@@ -131,4 +131,16 @@ export function handleTransfer(event: Transfer): void {
       }
     }
   }
+}
+
+export function getStakeDeposit(txHash: string): StakeDeposit | null {
+  return StakeDeposit.load(txHash);
+}
+
+export function getStakeWithdraw(txHash: string): StakeWithdraw | null {
+  return StakeWithdraw.load(txHash);
+}
+
+export function loadStakeHolder(holderId: string): StakeHolder | null {
+  return StakeHolder.load(holderId);
 }

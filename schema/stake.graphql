@@ -33,7 +33,7 @@ type StakeERC20 implements ERC20Interface @entity {
   "The token that is staked to receive the Stake token"
   token: ERC20! # get from Initialize.config_.token
   "The total pool size of token"
-  tokenPoolSize: BigInt! # update for every Transfer event of token TO the Stake contract 
+  tokenPoolSize: BigInt! # update for every Transfer event of token TO the Stake contract
   "The initial starting ratio of token to Stake token"
   initialRatio: BigInt! # get from Initialize.config_.initialRatio
   "The last indexed ratio of token to Stake token"
@@ -65,26 +65,28 @@ type StakeHolder @entity {
 
 # represents one deposit - created whenever there is a mint of the StakeERC20 (i.e. transfers from the zero address)
 type StakeDeposit @entity {
-    id: ID! #txhash
-    depositor: StakeHolder! # address of the recipient of the Stake mint
-    stakeToken: StakeERC20!
-    token: ERC20! #get from StakeERC20.token
-    stakeTokenMinted: BigInt! # get from the amount minted to the depositor
-    timestamp: BigInt!
-    tokenPoolSize: BigInt!
-    value: BigInt!
+  id: ID! #txhash
+  depositor: StakeHolder! # address of the recipient of the Stake mint
+  stakeToken: StakeERC20!
+  token: ERC20! #get from StakeERC20.token
+  stakeTokenMinted: BigInt! # get from the amount minted to the depositor
+  timestamp: BigInt!
+  tokenPoolSize: BigInt!
+  value: BigInt!
+  depositedAmount: BigInt!
 }
 
 # represents one deposit - created whenever there is a burn of the StakeERC20 (i.e. transfers to the zero address)
 type StakeWithdraw @entity {
-    id: ID! #txhash
-    withdrawer: StakeHolder! # address of the burner of the Stake token
-    stakeToken: StakeERC20!
-    token: ERC20! #get from StakeERC20.token
-    stakeTokenMinted: BigInt! # get from the amount burned by the withdrawer
-    timestamp: BigInt!
-    tokenPoolSize: BigInt!
-    value: BigInt!
+  id: ID! #txhash
+  withdrawer: StakeHolder! # address of the burner of the Stake token
+  stakeToken: StakeERC20!
+  token: ERC20! #get from StakeERC20.token
+  stakeTokenBurned: BigInt! # get from the amount burned by the withdrawer
+  timestamp: BigInt!
+  tokenPoolSize: BigInt!
+  value: BigInt!
+  returnedAmount: BigInt!
 }
 
 ################## StakeFactory
