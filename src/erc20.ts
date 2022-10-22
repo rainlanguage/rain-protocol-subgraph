@@ -3,10 +3,12 @@ import { Stake } from "../generated/templates/StakeERC20Template/Stake";
 import { Transfer } from "../generated/templates/ERC20Template/ERC20";
 import { ZERO_BI } from "./utils";
 import {
-  getStakeDeposit,
-  loadStakeHolder,
-  getStakeWithdraw,
+  getStakeDepositFromHash,
+  getStakeWithdrawFromHash,
+  getStakeHolder,
 } from "./stake/Stake";
+
+// import { log } from "@graphprotocol/graph-ts";
 
 export function handleTransfer(event: Transfer): void {
   let erc20 = ERC20.load(event.address.toHex());
@@ -36,25 +38,23 @@ export function handleTransfer(event: Transfer): void {
       }
 
       // Get Deposit
-      let stakeDeposit = getStakeDeposit(event.transaction.hash.toHex());
-
-      if (stakeDeposit) {
-        stakeDeposit.depositedAmount = event.params.value;
-        stakeDeposit.save();
-      }
+      let stakeDeposit = getStakeDepositFromHash(
+        event.transaction.hash.toHex()
+      );
+      stakeDeposit.depositedAmount = event.params.value;
+      stakeDeposit.save();
 
       // Get StakeHolder
-      let stakeHolder = loadStakeHolder(
+      let stakeHolder = getStakeHolder(
         event.params.to.toHex() + "-" + event.params.from.toHex()
       );
 
-      if (stakeHolder) {
-        stakeHolder.totalStake = stakeHolder.totalStake.plus(
-          event.params.value
-        );
+      stakeHolder.totalStake = stakeHolder.totalStake.plus(event.params.value);
+      stakeHolder.totalDeposited = stakeHolder.totalDeposited.plus(
+        event.params.value
+      );
 
-        stakeHolder.save();
-      }
+      stakeHolder.save();
     }
 
     if (stakeContracts && stakeContracts.includes(event.params.from.toHex())) {
@@ -81,15 +81,14 @@ export function handleTransfer(event: Transfer): void {
       }
 
       // Get Withdraw
-      let stakeWithdraw = getStakeWithdraw(event.transaction.hash.toHex());
-
-      if (stakeWithdraw) {
-        stakeWithdraw.returnedAmount = event.params.value;
-        stakeWithdraw.save();
-      }
+      let stakeWithdraw = getStakeWithdrawFromHash(
+        event.transaction.hash.toHex()
+      );
+      stakeWithdraw.returnedAmount = event.params.value;
+      stakeWithdraw.save();
 
       // Get StakeHolder
-      let stakeHolder = loadStakeHolder(
+      let stakeHolder = getStakeHolder(
         event.params.from.toHex() + "-" + event.params.to.toHex()
       );
 

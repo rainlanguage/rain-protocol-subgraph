@@ -132,8 +132,8 @@ describe.only("Stake queries test", function () {
     });
   });
 
-  describe("Deposits", () => {
-    it("should query a deposit correclty", async () => {
+  describe("StakeHolder queries", () => {
+    it("should query a StakeHolder after a deposit correctly", async () => {
       const { _stake, _reserveToken } = await deployStake(deployer);
 
       const tokenPoolSize0_ = await _reserveToken.balanceOf(_stake.address);
@@ -167,13 +167,27 @@ describe.only("Stake queries test", function () {
 
       await waitForSubgraphToBeSynced();
 
-      const stakeHolder = `${_stake.address.toLowerCase()} - ${signer1.address.toLowerCase()}`;
+      const stakeHolder = `${_stake.address.toLowerCase()}-${signer1.address.toLowerCase()}`;
 
       const query = `
       {
-        stakeHolder (id: "${stakeHolder}") {
+        stakeHolder(id: "${stakeHolder}") {
+          address
+          token {
+            id
+          }
+          stakeToken {
+            id
+          }
           balance
           totalStake
+          totalDeposited
+          deposits {
+            id
+          }
+          withdraws {
+            id
+          }
         }
       }
     `;
@@ -184,8 +198,16 @@ describe.only("Stake queries test", function () {
 
       const data = response.data.stakeHolder;
 
-      expect(data.balance).to.equals(signer1StakeBalance);
-      expect(data.totalStake).to.equals(amountToDeposit);
+      expect(data.address).to.be.equals(signer1.address.toLowerCase());
+      expect(data.token.id).to.be.equals(_reserveToken.address.toLowerCase());
+      expect(data.stakeToken.id).to.be.equals(_stake.address.toLowerCase());
+
+      expect(data.balance).to.be.equals(signer1StakeBalance);
+      expect(data.totalStake).to.be.equals(amountToDeposit);
+      expect(data.totalDeposited).to.be.equals(amountToDeposit);
+
+      expect(data.deposits).to.have.lengthOf(1);
+      expect(data.withdraws).to.be.empty;
     });
   });
 });

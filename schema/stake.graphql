@@ -52,10 +52,11 @@ type StakeERC20 implements ERC20Interface @entity {
 type StakeHolder @entity {
   id: ID! # {tokenAddress} - {holderAddress}
   address: Bytes!
-  token: StakeERC20!
+  token: ERC20!
   balance: BigInt!
   stakeToken: StakeERC20!
   totalStake: BigInt!
+  totalDeposited: BigInt!
   # == unique fields for StakeHolder ==
   "The current entitlement of the token pool for this StakeHolder"
   totalEntitlement: BigInt! # (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply => update anytime one of these values changes
