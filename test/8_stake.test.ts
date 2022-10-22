@@ -1,24 +1,13 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { concat } from "ethers/lib/utils";
 import * as Util from "./utils/utils";
-import {
-  op,
-  getTxTimeblock,
-  getImplementation,
-  getEventArgs,
-  waitForSubgraphToBeSynced,
-  zeroAddress,
-  Tier,
-  AllStandardOps as Opcode,
-} from "./utils/utils";
+import { waitForSubgraphToBeSynced } from "./utils/utils";
 
 // Typechain Factories
 import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
 
 // Types
 import type { FetchResult } from "apollo-fetch";
-import type { ContractTransaction, BigNumber } from "ethers";
 
 import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
 import type {
@@ -33,15 +22,10 @@ import {
   // Signers
   deployer,
   signer1,
-  signer2,
   // Contracts factories
   stakeFactory,
 } from "./1_initQueries.test";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
-let transaction: ContractTransaction;
-let stakeContract: Stake;
-let reserverToken: ReserveTokenTest;
 
 async function deployStake(
   deployerAccount: SignerWithAddress,
