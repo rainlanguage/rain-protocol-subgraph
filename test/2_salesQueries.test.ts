@@ -260,7 +260,7 @@ const endSale = async (_sale: Sale): Promise<ContractTransaction> => {
   }
 };
 
-describe.only("Sales queries test", function () {
+describe("Sales queries test", function () {
   before("deploying tier contract", async function () {
     // Deploying a tier
     tier = await Util.deployAlwaysTier(combineTierFactory, creator);

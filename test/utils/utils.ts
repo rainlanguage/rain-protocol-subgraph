@@ -24,6 +24,7 @@ import { EmissionsERC20__factory } from "../../typechain/factories/EmissionsERC2
 import { Verify__factory } from "../../typechain/factories/Verify__factory";
 import { VerifyTier__factory } from "../../typechain/factories/VerifyTier__factory";
 import { CombineTier__factory } from "../../typechain/factories/CombineTier__factory";
+import { Stake__factory } from "../../typechain/factories/Stake__factory";
 
 // A fixed range to Tier Levels
 type levelsRange = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -72,6 +73,8 @@ import type {
   CombineTier,
   CombineTierConfigStruct,
 } from "../../typechain/CombineTier";
+import { StakeFactory, StakeConfigStruct } from "../../typechain/StakeFactory";
+import { Stake } from "../../typechain/Stake";
 
 // Interfaces
 interface SyncedSubgraphType {
@@ -762,6 +765,37 @@ export const combineTierDeploy = async (
   combineTier.deployTransaction = txDeploy;
 
   return combineTier;
+};
+/**
+ * Create a new Stake contract
+ * @param stakeFactory The Stake Factory
+ * @param creator The signer that will create the child and will be connected to
+ * @param stakeConfigStruct The Stake configuration
+ * @param override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
+ * @returns The Stake child
+ */
+export const stakeDeploy = async (
+  stakeFactory: StakeFactory,
+  creator: SignerWithAddress | Signer,
+  stakeConfigStruct: StakeConfigStruct,
+  override: Overrides = {}
+): Promise<Stake> => {
+  // Creating child
+  const txDeploy = await stakeFactory
+    .connect(creator)
+    .createChildTyped(stakeConfigStruct, override);
+
+  const stake = new Stake__factory(creator).attach(
+    await getChild(stakeFactory, txDeploy)
+  );
+
+  await stake.deployed();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  stake.deployTransaction = txDeploy;
+
+  return stake;
 };
 
 /**

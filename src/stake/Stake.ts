@@ -1,4 +1,3 @@
-import { log } from "@graphprotocol/graph-ts";
 import {
   StakeDeposit,
   StakeERC20,
@@ -61,8 +60,11 @@ export function handleTransfer(event: Transfer): void {
     }
 
     if (event.params.from.toHex() == ZERO_ADDRESS) {
+      let stakeDeposit = getStakeDepositFromHash(
+        event.transaction.hash.toHex()
+      );
+
       // Deposit
-      let stakeDeposit = new StakeDeposit(event.transaction.hash.toHex());
       stakeDeposit.depositor =
         event.address.toHex() + "-" + event.params.to.toHex();
       stakeDeposit.stakeToken = event.address.toHex();
@@ -77,13 +79,16 @@ export function handleTransfer(event: Transfer): void {
     }
 
     if (event.params.to.toHex() == ZERO_ADDRESS) {
-      // Deposit
-      let stakeWithdraw = new StakeWithdraw(event.transaction.hash.toHex());
+      let stakeWithdraw = getStakeWithdrawFromHash(
+        event.transaction.hash.toHex()
+      );
+
+      // Withdraw
       stakeWithdraw.withdrawer =
         event.address.toHex() + "-" + event.params.from.toHex();
       stakeWithdraw.stakeToken = event.address.toHex();
       stakeWithdraw.token = stakeERC20.token;
-      stakeWithdraw.stakeTokenMinted = event.params.value;
+      stakeWithdraw.stakeTokenBurned = event.params.value;
       stakeWithdraw.timestamp = event.block.timestamp;
       stakeWithdraw.tokenPoolSize = stakeERC20.tokenPoolSize;
       stakeWithdraw.value = event.params.value;
@@ -93,45 +98,77 @@ export function handleTransfer(event: Transfer): void {
     }
 
     if (event.params.to.toHex() != ZERO_ADDRESS) {
-      let stakeHolder = StakeHolder.load(
+      let stakeHolder = getStakeHolder(
         event.address.toHex() + "-" + event.params.to.toHex()
       );
-      if (!stakeHolder) {
-        stakeHolder = new StakeHolder(
-          event.address.toHex() + "-" + event.params.to.toHex()
-        );
-        stakeHolder.address = event.params.to;
-        stakeHolder.token = stakeERC20.id;
-        stakeHolder.balance = ZERO_BI;
-        stakeHolder.stakeToken = stakeERC20.id;
-        stakeHolder.totalStake = ZERO_BI;
-      }
+      stakeHolder.address = event.params.to;
+      stakeHolder.token = stakeERC20.token;
+      stakeHolder.stakeToken = stakeERC20.id;
+
       stakeHolder.balance = stakeHolder.balance.plus(event.params.value);
       if (stakeERC20.totalSupply != ZERO_BI) {
         stakeHolder.totalEntitlement = stakeHolder.balance
           .times(stakeERC20.tokenPoolSize)
           .div(stakeERC20.totalSupply);
       }
-      stakeHolder.totalStake = stakeHolder.totalStake.plus(event.params.value);
+
       stakeHolder.save();
     }
 
     if (event.params.from.toHex() != ZERO_ADDRESS) {
-      let stakeHolder = StakeHolder.load(
+      let stakeHolder = getStakeHolder(
         event.address.toHex() + "-" + event.params.from.toHex()
       );
-      if (stakeHolder) {
-        stakeHolder.balance = stakeHolder.balance.minus(event.params.value);
-        if (stakeERC20.totalSupply != ZERO_BI) {
-          stakeHolder.totalEntitlement = stakeHolder.balance
-            .times(stakeERC20.tokenPoolSize)
-            .div(stakeERC20.totalSupply);
-        }
-        stakeHolder.totalStake = stakeHolder.totalStake.minus(
-          event.params.value
-        );
-        stakeHolder.save();
+      stakeHolder.balance = stakeHolder.balance.minus(event.params.value);
+      if (stakeERC20.totalSupply != ZERO_BI) {
+        stakeHolder.totalEntitlement = stakeHolder.balance
+          .times(stakeERC20.tokenPoolSize)
+          .div(stakeERC20.totalSupply);
       }
+      stakeHolder.save();
     }
+  }
+}
+
+export function getStakeDepositFromHash(txHash: string): StakeDeposit {
+  let _stakeDeposit = StakeDeposit.load(txHash);
+
+  if (_stakeDeposit) {
+    // Exist and return
+    return _stakeDeposit;
+  } else {
+    // Does not exist but we have only the tx hash
+    let _stakeDeposit = new StakeDeposit(txHash);
+    _stakeDeposit.save();
+    return _stakeDeposit;
+  }
+}
+
+export function getStakeWithdrawFromHash(txHash: string): StakeWithdraw {
+  let _stakeWithdraw = StakeWithdraw.load(txHash);
+
+  if (_stakeWithdraw) {
+    // Exist and return
+    return _stakeWithdraw;
+  } else {
+    // Does not exist but we have only the tx hash
+    let _stakeWithdraw = new StakeWithdraw(txHash);
+    _stakeWithdraw.save();
+    return _stakeWithdraw;
+  }
+}
+
+export function getStakeHolder(holderId: string): StakeHolder {
+  let _stakeHolder = StakeHolder.load(holderId);
+
+  if (_stakeHolder) {
+    return _stakeHolder;
+  } else {
+    let _stakeHolder = new StakeHolder(holderId);
+    _stakeHolder.balance = ZERO_BI;
+    _stakeHolder.totalStake = ZERO_BI;
+    _stakeHolder.totalDeposited = ZERO_BI;
+    _stakeHolder.save();
+    return _stakeHolder;
   }
 }

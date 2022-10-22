@@ -58,7 +58,7 @@ const checkEndpoint = (endpoint: string): string => {
 };
 
 const checkIpfsEndpoint = (endpoint: string): string => {
-  if (endpoint === "default" || "") {
+  if (endpoint === "default" || endpoint === "") {
     return "";
   } else {
     return `--ipfs ${endpoint}`;
@@ -66,7 +66,7 @@ const checkIpfsEndpoint = (endpoint: string): string => {
 };
 
 const createLabel = (label: string): string => {
-  if (label === "default" || "") {
+  if (label === "default" || label === "") {
     return "";
   } else {
     return `--version-label ${label}`;
