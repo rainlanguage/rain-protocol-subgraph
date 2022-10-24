@@ -49,6 +49,7 @@ export let subgraph: ApolloFetch,
   combineTierFactory: CombineTierFactory,
   erc721BalanceTierFactory: ERC721BalanceTierFactory,
   saleFactory: SaleFactory,
+  saleFactory2: SaleFactory,
   gatedNFTFactory: GatedNFTFactory,
   redeemableERC20ClaimEscrow: RedeemableERC20ClaimEscrow;
 
@@ -120,6 +121,12 @@ before("Deployment contracts and subgraph", async function () {
     maximumCooldownDuration: 1000,
     redeemableERC20Factory: redeemableERC20Factory.address,
   });
+  // Deploying SaleFactory contract
+  saleFactory2 = await new SaleFactory__factory(deployer).deploy({
+    maximumSaleTimeout: 100000,
+    maximumCooldownDuration: 1000,
+    redeemableERC20Factory: redeemableERC20Factory.address,
+  });
 
   // Deploying GatedNFTFactory contract
   gatedNFTFactory = await new GatedNFTFactory__factory(deployer).deploy();
@@ -168,6 +175,9 @@ before("Deployment contracts and subgraph", async function () {
 
   config.SaleFactory = saleFactory.address;
   config.SaleFactoryBlock = saleFactory.deployTransaction.blockNumber;
+
+  config.SaleFactory2 = saleFactory2.address;
+  config.SaleFactoryBlock2 = saleFactory2.deployTransaction.blockNumber;
 
   config.GatedNFTFactory = gatedNFTFactory.address;
   config.GatedNFTFactoryBlock = gatedNFTFactory.deployTransaction.blockNumber;

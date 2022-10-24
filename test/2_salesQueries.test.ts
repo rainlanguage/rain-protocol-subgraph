@@ -43,6 +43,7 @@ import {
   recipient,
   // Factories
   saleFactory,
+  saleFactory2,
   feeRecipient,
   erc20BalanceTierFactory,
   redeemableERC20Factory,
@@ -56,7 +57,7 @@ let reserve: ReserveTokenTest,
   transaction: ContractTransaction,
   transactionAux: ContractTransaction;
 
-describe("Sales queries test", function () {
+describe.only("Sales queries test", function () {
   before("deploying fresh test contracts", async function () {
     // Deploying new reserve to test
     reserve = await new ReserveTokenTest__factory(deployer).deploy();
@@ -99,7 +100,7 @@ describe("Sales queries test", function () {
     );
   });
 
-  describe("Success sale", function () {
+  describe.only("Success sale", function () {
     const saleTimeout = 30;
     const minimumRaise = ethers.BigNumber.from("150000").mul(Util.RESERVE_ONE);
 
@@ -170,6 +171,28 @@ describe("Sales queries test", function () {
         }
       );
 
+      const sale2 = await Util.saleDeploy(
+        saleFactory2,
+        creator,
+        {
+          canStartStateConfig: canStartStateConfig,
+          canEndStateConfig: canEndStateConfig,
+          calculatePriceStateConfig: calculatePriceStateConfig,
+          recipient: recipient.address,
+          reserve: reserve.address,
+          cooldownDuration: cooldownDuration,
+          minimumRaise,
+          dustSize: dustSize,
+          saleTimeout: 100,
+        },
+        {
+          erc20Config: redeemableERC20Config,
+          tier: erc20BalanceTier.address,
+          minimumTier: minimumTier,
+          distributionEndForwardingAddress: distributionEndForwardingAddress,
+        }
+      );
+
       // Creating the instance for contracts
       redeemableERC20Contract = new RedeemableERC20__factory(deployer).attach(
         await Util.getChild(redeemableERC20Factory, sale.deployTransaction)
@@ -182,7 +205,7 @@ describe("Sales queries test", function () {
       await waitForSubgraphToBeSynced();
     });
 
-    it("should query the sale child after creation", async function () {
+    it.only("should query the sale child after creation", async function () {
       const query = `
         {
           saleFactory (id: "${saleFactory.address.toLowerCase()}") {
