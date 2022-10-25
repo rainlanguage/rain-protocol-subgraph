@@ -161,7 +161,7 @@ dataSources:
     source:
       address: "{{ SaleFactory }}"
       abi: SaleFactory
-      startBlock: {{ SaleFactoryBlock2 }}
+      startBlock: {{ SaleFactoryBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -186,7 +186,7 @@ dataSources:
     source:
       address: "{{ SaleFactory2 }}"
       abi: SaleFactory
-      startBlock: {{ SaleFactoryBlock }}
+      startBlock: {{ SaleFactoryBlock2 }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
