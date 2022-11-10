@@ -2,7 +2,7 @@ import { execSync } from "child_process";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import * as fs from "fs";
-import * as deployConfig from "./deployConfig.json";
+import { program } from "commander";
 
 dotenv.config();
 
@@ -25,20 +25,6 @@ const exec = (cmd: string): string | Buffer => {
     return execSync(cmd, { cwd: srcDir, stdio: "inherit" });
   } catch (e) {
     throw new Error(`Failed to run command \`${cmd}\``);
-  }
-};
-
-/**
- * Read a file a return it as string
- * @param _path Location of the file
- * @returns The file as string
- */
-const fetchFile = (_path: string): string => {
-  try {
-    return fs.readFileSync(_path).toString();
-  } catch (error) {
-    console.log(error);
-    return "";
   }
 };
 
@@ -72,7 +58,7 @@ const checkEndpoint = (endpoint: string): string => {
 };
 
 const checkIpfsEndpoint = (endpoint: string): string => {
-  if (endpoint === "default" || "") {
+  if (endpoint === "default" || endpoint === "") {
     return "";
   } else {
     return `--ipfs ${endpoint}`;
@@ -80,45 +66,68 @@ const checkIpfsEndpoint = (endpoint: string): string => {
 };
 
 const createLabel = (label: string): string => {
-  if (label === "default" || "") {
+  if (label === "default" || label === "") {
     return "";
   } else {
     return `--version-label ${label}`;
   }
 };
 
-const getDeployConfig = (config: DeployConfig): DeployConfig => {
-  const subgraphName = config.subgraphName;
-  const configPath = config.configPath;
-  const endpoint = checkEndpoint(config.endpoint);
-  const ipfsEndpoint = checkIpfsEndpoint(config.ipfsEndpoint);
-  const versionLabel = createLabel(config.versionLabel);
-  return {
-    subgraphName,
-    configPath,
-    endpoint,
-    ipfsEndpoint,
-    versionLabel,
-  };
-};
-
 const main = async () => {
-  const { subgraphName, configPath, endpoint, ipfsEndpoint, versionLabel } =
-    getDeployConfig(deployConfig);
+  program
+    .requiredOption(
+      "--config <string>",
+      "Path to JSON file with the addresess and chain to deploy."
+    )
+    .requiredOption(
+      "--subgraphName <string>",
+      "The subgraph name to deploy. Eg: 'user/name'."
+    )
+    .option(
+      "--versionLabel <string>",
+      "The subgraph version label that will be append.",
+      ""
+    )
+    .option(
+      "--endpoint <string>",
+      "The URL that will be use to deploy the subgraph.",
+      "https://api.thegraph.com/deploy/"
+    )
+    .option(
+      "--ipfsEndpoint <string>",
+      "The URL that will be use with IPFS.",
+      ""
+    )
+    .option(
+      "--subgraphTemplate <string>",
+      "Specify a path to a another differente yaml file to be used as template. By the default use the root template.",
+      "subgraph.template.yaml"
+    );
 
-  // const prepareCommand = `npx mustache ${configPath} subgraph.template.yaml subgraph.yaml`;
+  program.parse();
+  const options = program.opts();
 
-  // exec(prepareCommand);
-  exec(`npx mustache ${configPath} subgraph.template.yaml subgraph.yaml`);
-  exec("npm run generate-schema && npm run codegen && npm run build");
+  const _config = options.config;
+  const _subgraphName = options.subgraphName;
+  const _endpoint = checkEndpoint(options.endpoint);
+  const _ipfsEndpoint = checkIpfsEndpoint(options.ipfsEndpoint);
+  const _versionLabel = createLabel(options.versionLabel);
+  const _subgraphTemplate = options.subgraphTemplate;
 
-  // This create the graph node with the endpoint and subgraph name
-  if (endpoint.includes("localhost") || endpoint.includes("127.0.0.1")) {
-    exec(`npx graph create ${endpoint} ${subgraphName}`);
+  // Add the address to the subgraph.yaml file
+  exec(`npx mustache ${_config} ${_subgraphTemplate} subgraph.yaml`);
+
+  // Generate all teh SG code
+  exec("npm run codegen && npm run build");
+
+  // This create the graph node with the endpoint and subgraph name to be used locally
+  if (_endpoint.includes("localhost") || _endpoint.includes("127.0.0.1")) {
+    exec(`npx graph create ${_endpoint} ${_subgraphName}`);
   }
 
+  // Deploy the Subgraph
   exec(
-    `npx graph deploy ${endpoint} ${ipfsEndpoint} ${subgraphName} ${versionLabel}`
+    `npx graph deploy ${_endpoint} ${_ipfsEndpoint} ${_subgraphName} ${_versionLabel}`
   );
 };
 

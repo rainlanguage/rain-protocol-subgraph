@@ -1,7 +1,0 @@
-{
-  "configPath": "config/goerli/goerli_3800c.json",
-  "subgraphName": "beehive-innovation/rain-protocol-goerli-v3",
-  "versionLabel": "default",
-  "endpoint": "default",
-  "ipfsEndpoint": "default"
-}

@@ -172,7 +172,7 @@ type Bounty @entity {
 
 # Create when an OrderClear entity is created
 type OrderClearStateChange @entity {
-    id: ID! # create a unqiue ID when OrderClear entity is created
+    id: ID! # create a unique ID when OrderClear entity is created
     aOutput: BigInt! # AfterClear.stateChange.aOutput
     bOutput: BigInt! # AfterClear.stateChange.bOutput
     aInput: BigInt! # AfterClear.stateChange.aInput

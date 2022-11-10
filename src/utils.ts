@@ -4,8 +4,7 @@ import {
   ERC20,
   RedeemableERC20 as RedeemableERC20Contract,
 } from "../generated/schema";
-import { ERC20 as ERC20Contract } from "../generated/RedeemableERC20ClaimEscrow/ERC20";
-import { ERC20Template } from "../generated/templates";
+import { ERC20 as ERC20Contract } from "../generated/OrderBook/ERC20";
 
 let ZERO_BI = BigInt.fromI32(0);
 let ONE_BI = BigInt.fromI32(1);
@@ -137,7 +136,7 @@ export function getERC20(token: Address, block: ethereum.Block): ERC20 {
     erc20.name = !name.reverted ? name.value : "NONE";
     erc20.symbol = !symbol.reverted ? symbol.value : "NONE";
     erc20.save();
-    ERC20Template.create(token);
+    // ERC20Template.create(token);
   }
   let totalSupply = erc20Contract.try_totalSupply();
   erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
