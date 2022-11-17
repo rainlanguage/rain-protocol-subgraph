@@ -1,89 +1,101 @@
-################## OrderBook
-# Require an Event in the constructor of the contract
-# type   @entity {
-#     "Address of the OrderBook contract"
-#     id: ID!
-#     "Deployer of the OrderBook"
-#     deployer: Bytes!
-#     "Block the contract was deployed"
-#     deployBlock: Int!
-#     "Timestamp for block the contract was deployed"
-#     deployTimestamp: Int!
-# }
 
-# Created with the first OrderLive event, then updated on the corresponding OrderDead/OrderLive events
-type Order @entity {
-    id: ID! # use the hash of the order from OrderLive.order, OrderDead.order
-    "Owner of the Order"
-    owner: Bytes!
-    "Input token"
-    inputToken: ERC20!
-    "Input token vault"
-    inputTokenVault: TokenVault! # Match on {Order.inputVaultId}-{owner}-{inputToken}
-    "Input vault"
-    inputVault: Vault! # Link by {Order.inputVaultId}-{owner}
-    "Output token"
-    outputToken: ERC20!
-    "Output token vault"
-    outputTokenVault: TokenVault! # Match on {Order.outputVault}-{owner}-{outputToken}
-    "Output vault"
-    outputVault: Vault! # Link by {Order.outputVaultId}-{owner}
-    "Whether tracking is enabled for this Order"
-    tracking: BigInt
-    "The VM state"
-    vmState: Bytes!
-    # update to true on OrderLive events where the hash of OrderLive.order matches the ID of this order.
-    # update to false on OrderDead events where the hash of OrderDead.order matches the ID of this order.
-    "Whether the order is live or dead"
-    orderLiveness: Boolean
+################## OrderBook
+
+type IO @entity { 
+    id: ID! 
+    token: ERC20!
+    vault: Vault! 
+    tokenVault: TokenVault! 
 }
 
+# Created with the first AddOrder event, then updated on the corresponding OrderDead/OrderLive events
+type Order @entity {
+    id: ID! # use the hash of the order
+
+    "Owner of the Order" 
+    owner: Bytes!  
+
+    transactionHash: Bytes!
+
+    "validInputs" 
+    validInputs: [IO!] 
+
+    "validOutputs" 
+    validOutputs: [IO!]   
+
+    "interpreter" 
+    interpreter: Bytes! 
+
+    "expression" 
+    expression: Bytes! 
+
+    "expiresAfter" 
+    expiresAfter: BigInt!  
+
+    "Whether the order is live or dead"
+    orderLive: Boolean
+
+} 
+
+
+
 # Created and updated whenever an OrderLive event occurs
-# ALSO created and updated when a pair of Clear/AfterClear events occur
+# ALSO created and updated when a pair of Clear/AfterClear events occur 
+
 type Vault @entity {
-    id: ID! #{vaultId}-{owner}
+
+    id: ID! #{vaultId}-{owner} 
+
     "The owner of this Vault"
-    owner: Bytes!
+    owner: Bytes! 
+
     "Tokens in this Vault"
-    tokenVaults: [TokenVault!]
+    tokenVaults: [TokenVault!] 
+
     "Deposits into this Vault"
-    deposits: [VaultDeposit!] # add whenever a Deposit event occurs for this {vaultId}-{owner}
+    deposits: [VaultDeposit!] # add whenever a Deposit event occurs for this {vaultId}-{owner} 
+    
     "Withdrawals from this Vault"
     withdraws: [VaultWithdraw!] # add whenver a Withdraw event occurs for this {vaultId}-{owner}
 }
 
-# Represents the balance of one ERC20 token for one vaultId, one owner
-# Created after an OrderLive event occurs
-# Updated: 
-# On each Deposit or Withdraw event for this {vaultId}-{owner}-{token} (see below for changes)
-# OR
-# On each Clear event that references an Order for this {vaultId}-{owner}-{token} (see below for changes)
-type TokenVault @entity {
+
+type TokenVault @entity { 
+
     id: ID! #{vaultId}-{owner}-{token}
-    "The owner of this Vault"
+    "The owner of this Vault" 
+
     owner: Bytes! # From Deposit.sender / Withdraw.sender
-    "The id of this vault"
-    vaultId: BigInt!
+
+    "The id of this vault" 
+    vaultId: BigInt! 
+
     "The token that has a balance for this vault and owner."
     token: ERC20!
+
     # Add to this value:
     # Deposit.amount when there is a matching Deposit event for {vaultId}-{owner}-{token}
     # OR AfterClear.stateChange.aInput when there is a Clear event that matches {Clear.a_.inputVault}-{Clear.a_.owner}-{Clear.a_.inputToken}
     # OR AfterClear.stateChange.bInput when there is a Clear event that matches {Clear.b_.inputVault}-{Clear.b_.owner}-{Clear.b_.inputToken}
     # Subtract from this value:
-    # Withdraw.amount when there is a matching Withdraw event for {vaultId}-{owner}-{token}
+    # Withdraw.amount when there is a matching Withdraw event for {vaultId}-{owner}-{token} 
+
     "The balance of this token, for this vault, for this owner"
-    balance: BigInt! # updated on every Deposit/Withdraw event that occurs for this {vaultId}-{owner}-{token}
+    balance: BigInt! # updated on every Deposit/Withdraw event that occurs for this {vaultId}-{owner}-{token} 
+
     # Add to array:
     # when {Order.inputVault}-{Order.owner}-{Order.inputToken} match this TokenVault
-    # OR when {Order.outputVault}-{Order.owner}-{Order.outputToken} match this TokenVault
+    # OR when {Order.outputVault}-{Order.owner}-{Order.outputToken} match this TokenVault 
+
     "Orders that reference this vault, owner and token"
-    orders: [Order!]
+    orders: [Order!] 
+
     # Add to array:
     # when {Clear.a_.inputVault}-{Clear.a_.owner}-{Clear.a_.inputToken} match this TokenVault
     # OR when {Clear.b_.outputVault}-{Clear.b_.owner}-{Clear.b_.outputToken} match this TokenVault
     "OrderClears that reference this vault, owner and token"
-    orderClears: [OrderClear!]
+    orderClears: [OrderClear!] 
+
 }
 
 # Created for every Deposit event
@@ -124,29 +136,57 @@ type VaultWithdraw @entity {
 
 # Created for every pair of AfterClear/Clear events
 type OrderClear @entity {
-    id: ID! # timestamp
+    id: ID! # timestamp 
+
     "The sender who cleared the Orders"
-    sender: Bytes! # Clear.sender
+    sender: Bytes! # Clear.sender 
+
     "The clearer who cleared this order"
-    clearer: Bytes! # from Clear.sender
+    clearer: Bytes! # from Clear.sender 
+
     "Order A being cleared"
-    orderA: Order! # map by hash(Clear.a_)
+    orderA: Order! # map by hash(Clear.a_) 
+
     "Order B being cleared"
-    orderB: Order! # map by hash(Clear.b_)
+    orderB: Order! # map by hash(Clear.b_) 
+
     "The owners of the Orders that were cleared [Order A, Order B]"
-    owners: [Bytes!] # [Clear.a_.owner, Clear.b_.owner]
-    "The token cleared into Order A"
-    aInput: ERC20! # Clear.a_.inputToken
-    "The token cleared into Order B"
-    bInput: ERC20! # Clear.b_.inputToken
-    "The amount cleared into Order A"
-    aInputAmount: BigInt! #AfterClear.stateChange.aInput
-    "The amount cleared into Order B"
-    bInputAmount: BigInt! #AfterClear.stateChange.bInput
+    owners: [Bytes!] # [Clear.a_.owner, Clear.b_.owner] 
+
+    "The token input index cleared into Order A"
+    aInputIOIndex: BigInt! 
+
+    "The token output index cleared into Order A"
+    aOutputIOIndex: BigInt! 
+
+    "The token input index cleared into Order B"
+    bInputIOIndex: BigInt! 
+
+    "The token output index cleared into Order B"
+    bOutputIOIndex: BigInt! 
+
     "The bounty paid when this order was cleared"
-    bounty: Bounty! # map by unique id created - see Bounty entity
+    bounty: Bounty! # map by unique id created - see Bounty entity 
+
     "The state change that occured because of this Clear"
     stateChange: OrderClearStateChange # map by unique id created - see OrderClearStateChange entity
+}  
+
+# Created for every pair of TakeOrder events
+type TakeOrderEntity @entity {  
+
+    id: ID! # timestamp 
+    sender: Bytes! 
+    order: Order!
+    input: BigInt! 
+    output: BigInt! 
+    inputIOIndex: BigInt! 
+    outputIOIndex: BigInt!  
+    inputToken: ERC20!
+    outputToken: ERC20!
+    transactionHash: Bytes!
+   
+
 }
 
 # Created when each OrderClear entity is created
@@ -155,28 +195,38 @@ type Bounty @entity {
     "The clearer who received this bounty"
     clearer: Bytes! # from Clear.sender
     "The Clear event that paid this bounty"
-    orderClear: OrderClear!
-    "The Vault that bounty token A was deposited into"
-    bountyVaultA: Vault! # map by {Clear.bountyConfig.aVaultId}-{Clear.sender}
+    orderClear: OrderClear! 
+
+    "The Vault that bounty token A was deposited into" 
+    bountyVaultA: Vault! # map by {Clear.bountyConfig.aVaultId}-{Clear.sender} 
+
     "The Vault that bounty token B was deposited into"
-    bountyVaultB: Vault! # map by {Clear.bountyConfig.bVaultId}-{Clear.sender}
+    bountyVaultB: Vault! # map by {Clear.bountyConfig.bVaultId}-{Clear.sender} 
+
+    # Not Including Tokens , bounty referenced by VaultA And VaultB 
+
     "The A token for the bounty"
-    bountyTokenA: ERC20! # Clear.a_.outputToken
+    bountyTokenA: ERC20! # Clear.a_.outputToken 
+
     "The B token for the bounty"
-    bountyTokenB: ERC20! # Clear.b_.outputToken
-    "The amount paid for bounty token A"
-    bountyAmountA: BigInt # AfterClear.stateChange.aOutput - AfterClear.stateChange.bInput
+    bountyTokenB: ERC20! # Clear.b_.outputToken 
+
+    "The amount paid for bounty token A" 
+    bountyAmountA: BigInt # AfterClear.stateChange.aOutput - AfterClear.stateChange.bInput 
+
     "The amount paid for bounty token B"
     bountyAmountB: BigInt # AfterClear.stateChange.bOutput - AfterClear.stateChange.aInput
 }
 
 # Create when an OrderClear entity is created
-type OrderClearStateChange @entity {
-    id: ID! # create a unique ID when OrderClear entity is created
+type OrderClearStateChange @entity { 
+
+    id: ID! # create a unqiue ID when OrderClear entity is created
     aOutput: BigInt! # AfterClear.stateChange.aOutput
     bOutput: BigInt! # AfterClear.stateChange.bOutput
     aInput: BigInt! # AfterClear.stateChange.aInput
-    bInput: BigInt! # AfterClear.stateChange.bInput
+    bInput: BigInt! # AfterClear.stateChange.bInput 
+    
 }   
 
 ################## OrderBook

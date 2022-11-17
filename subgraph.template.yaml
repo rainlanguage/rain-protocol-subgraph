@@ -43,7 +43,7 @@ dataSources:
           handler: handleTakeOrder
         - event: Withdraw(address,(address,uint256,uint256),uint256)
           handler: handleWithdraw
-      file: ./src/orderbook/orderBook.ts
+      file: ./src/orderbook/orderBook2.ts
 templates: 
   - kind: ethereum/contract
     name: ERC20Template
