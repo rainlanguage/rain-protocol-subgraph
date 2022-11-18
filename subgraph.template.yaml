@@ -21,29 +21,27 @@ dataSources:
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:
-        - event: AddOrder(address,(address,address,address,uint32,(address,uint256)[],(address,uint256)[]),uint256)
+        - event: AddOrder(address,(address,address,address,(address,uint256)[],(address,uint256)[]),uint256)
           handler: handleAddOrder
         - event: AfterClear((uint256,uint256,uint256,uint256))
           handler: handleAfterClear
-        - event: Clear(address,(address,address,address,uint32,(address,uint256)[],(address,uint256)[]),(address,address,address,uint32,(address,uint256)[],(address,uint256)[]),(uint256,uint256,uint256,uint256,uint256,uint256))
+        - event: Clear(address,(address,address,address,(address,uint256)[],(address,uint256)[]),(address,address,address,(address,uint256)[],(address,uint256)[]),(uint256,uint256,uint256,uint256,uint256,uint256))
           handler: handleClear
         - event: Deposit(address,(address,uint256,uint256))
           handler: handleDeposit
         - event: OrderExceedsMaxRatio(address,address,uint256)
           handler: handleOrderExceedsMaxRatio
-        - event: OrderExpired(address,address,uint256)
-          handler: handleOrderExpired
         - event: OrderNotFound(address,address,uint256)
           handler: handleOrderNotFound
         - event: OrderZeroAmount(address,address,uint256)
           handler: handleOrderZeroAmount
-        - event: RemoveOrder(address,(address,address,address,uint32,(address,uint256)[],(address,uint256)[]),uint256)
+        - event: RemoveOrder(address,(address,address,address,(address,uint256)[],(address,uint256)[]),uint256)
           handler: handleRemoveOrder
-        - event: TakeOrder(address,((address,address,address,uint32,(address,uint256)[],(address,uint256)[]),uint256,uint256),uint256,uint256)
+        - event: TakeOrder(address,((address,address,address,(address,uint256)[],(address,uint256)[]),uint256,uint256),uint256,uint256)
           handler: handleTakeOrder
         - event: Withdraw(address,(address,uint256,uint256),uint256)
           handler: handleWithdraw
-      file: ./src/orderbook/orderBook2.ts
+      file: ./src/orderbook/orderBook.ts
 templates: 
   - kind: ethereum/contract
     name: ERC20Template

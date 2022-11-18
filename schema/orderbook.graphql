@@ -1,6 +1,7 @@
 
 ################## OrderBook
 
+# Created with AddOrder
 type IO @entity { 
     id: ID! 
     token: ERC20!
@@ -28,9 +29,6 @@ type Order @entity {
 
     "expression" 
     expression: Bytes! 
-
-    "expiresAfter" 
-    expiresAfter: BigInt!  
 
     "Whether the order is live or dead"
     orderLive: Boolean
@@ -179,11 +177,11 @@ type TakeOrderEntity @entity {
     sender: Bytes! 
     order: Order!
     input: BigInt! 
-    output: BigInt! 
-    inputIOIndex: BigInt! 
-    outputIOIndex: BigInt!  
-    inputToken: ERC20!
-    outputToken: ERC20!
+    output: BigInt!   
+    inputIOIndex: BigInt! # index of input token for Input Token Array
+    outputIOIndex: BigInt!  # index of output token for Output Token Array
+    inputToken: ERC20! # input token 
+    outputToken: ERC20! # output token
     transactionHash: Bytes!
    
 
