@@ -43,8 +43,8 @@
     "deploy-subgraph": "ts-node scripts/index.ts"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.26.0",
-    "@graphprotocol/graph-ts": "0.25.0",
+    "@graphprotocol/graph-cli": "^0.35.0",
+    "@graphprotocol/graph-ts": "^0.28.1",
     "0xsequence": "^0.39.0",
     "mustache": "^3.2.1"
   },
@@ -66,7 +66,7 @@
     "hardhat-gas-reporter": "^1.0.4",
     "hardhat-contract-sizer": "^2.1.1",
     "eslint": "^7.29.0",
-    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-prettier": "^8.3.0",   
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-node": "^11.1.0",

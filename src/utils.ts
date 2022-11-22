@@ -1,8 +1,9 @@
-import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum , Bytes } from "@graphprotocol/graph-ts";
 import {
-  Sale,
-  ERC20,
-  RedeemableERC20 as RedeemableERC20Contract,
+  // Sale,
+  ERC20, 
+  ExpressionStateConfig
+  // RedeemableERC20 as RedeemableERC20Contract,
 } from "../generated/schema";
 import { ERC20 as ERC20Contract } from "../generated/OrderBook/ERC20";
 
@@ -109,15 +110,15 @@ export {
 * @param trust Address of Trust.
 * @returns True if not any contract address or ZERO_ADDRESSE else False.
 */
-export function notAContract(address: string): boolean {
-  let sale = Sale.load(address);
-  if (sale) return false;
+// export function notAContract(address: string): boolean {
+//   let sale = Sale.load(address);
+//   if (sale) return false;
 
-  let redeemableERC20 = RedeemableERC20Contract.load(address);
-  if (redeemableERC20) return false;
+//   let redeemableERC20 = RedeemableERC20Contract.load(address);
+//   if (redeemableERC20) return false;
 
-  return true;
-}
+//   return true;
+// }
 
 export function getERC20(token: Address, block: ethereum.Block): ERC20 {
   let erc20 = ERC20.load(token.toHex());
@@ -142,3 +143,23 @@ export function getERC20(token: Address, block: ethereum.Block): ERC20 {
   erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
   return erc20 as ERC20;
 }
+ 
+
+
+
+// export function getExpressionStateConfig(tx: string , exprnAddr: Bytes): ExpressionStateConfig{  
+
+//   let exprnStateConfig = ExpressionStateConfig.load(tx); 
+//   if (!exprnStateConfig) {  
+
+//     exprnStateConfig = new ExpressionStateConfig(tx);   
+    
+//     exprnStateConfig.sources = []  
+//     exprnStateConfig.constants = []  
+//     exprnStateConfig.expressionAddress = exprnAddr  
+
+//     exprnStateConfig.save()
+//   }  
+//   return exprnStateConfig as ExpressionStateConfig;
+
+// }

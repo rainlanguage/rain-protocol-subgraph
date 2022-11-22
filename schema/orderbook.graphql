@@ -3,7 +3,8 @@
 
 # Created with AddOrder
 type IO @entity { 
-    id: ID! 
+    id: ID!  
+    index: BigInt! 
     token: ERC20!
     vault: Vault! 
     tokenVault: TokenVault! 
@@ -31,7 +32,9 @@ type Order @entity {
     expression: Bytes! 
 
     "Whether the order is live or dead"
-    orderLive: Boolean
+    orderLive: Boolean  
+
+    stateConfig: ExpressionStateConfig!
 
 } 
 

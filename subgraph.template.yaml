@@ -42,6 +42,30 @@ dataSources:
         - event: Withdraw(address,(address,uint256,uint256),uint256)
           handler: handleWithdraw
       file: ./src/orderbook/orderBook.ts
+  - kind: ethereum/contract
+    name: RainterpreterExpressionDeployer
+    network: {{ network }}
+    source:
+      address: "{{ Rainterpreter }}"
+      abi: RainterpreterExpressionDeployer
+      startBlock: {{ RainterpreterBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - RainterpreterExpressionDeployer
+      abis:
+        - name: RainterpreterExpressionDeployer
+          file: ./abis/RainterpreterExpressionDeployer.json
+        - name: Rainterpreter
+          file: ./abis/Rainterpreter.json
+      eventHandlers:
+        - event: DeployExpression(address,(bytes[],uint256[]),address,uint256)
+          handler: handleDeployExpression
+        - event: ValidInterpreter(address,address)
+          handler: handleValidInterpreter
+      file: ./src/interpreter/rainterpreterExpressionDeployer.ts
 templates: 
   - kind: ethereum/contract
     name: ERC20Template

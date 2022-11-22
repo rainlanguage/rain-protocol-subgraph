@@ -18,7 +18,8 @@ import {
     OrderNotFound , 
     OrderZeroAmount ,
     RemoveOrder ,
-    TakeOrder
+    TakeOrder ,
+   
 
   } from "../../generated/OrderBook/OrderBook";
   
@@ -33,14 +34,20 @@ import {
     TakeOrderEntity ,
     Bounty, 
     IO,
-    ERC20
-  } from "../../generated/schema";
+    ERC20 ,ExpressionStateConfig
+    
+  } from "../../generated/schema"; 
+
+
+
   
-  import { getERC20, ZERO_BI } from "../utils";   
+  import { getERC20, ZERO_BI  } from "../utils";   
 
   import {log} from "@graphprotocol/graph-ts" ;
   
 
+
+  
 export function handleOrderExceedsMaxRatio(event: OrderExceedsMaxRatio): void {
   
 } 
@@ -54,6 +61,8 @@ export function handleOrderZeroAmount(event: OrderZeroAmount): void {
 } 
 
 export function handleAddOrder(event: AddOrder): void {    
+  
+  
      let order = getOrderAdd(event); 
      if (order) { 
         let validInputsParams = event.params.order.validInputs 
@@ -141,7 +150,12 @@ export function handleAddOrder(event: AddOrder): void {
               outputValut.save();
             
         }   
-        order.orderLive = true;
+        order.orderLive = true;  
+
+       
+
+        
+
         order.save();   
      }
 }  
@@ -594,7 +608,9 @@ function getOrderAdd(event: AddOrder): Order {
       order.owner = event.params.order.owner
       order.interpreter = event.params.order.interpreter
       order.expression = event.params.order.expression
-      order.transactionHash = event.transaction.hash
+      order.transactionHash = event.transaction.hash 
+
+      order.stateConfig = event.transaction.hash.toHex()
 
 
       let validInputsParams = event.params.order.validInputs  
@@ -610,6 +626,7 @@ function getOrderAdd(event: AddOrder): Order {
 
           let inputIO = getIO(event.params.orderHash.toHex() , ipToken.id ,  input.vaultId);
           inputIO.token =  ipToken.id  
+          inputIO.index =  BigInt.fromI32(i)
 
           let ipVault = getVault(input.vaultId , event.params.sender.toHex()) 
           inputIO.vault =  ipVault.id  
@@ -631,8 +648,9 @@ function getOrderAdd(event: AddOrder): Order {
           let opToken = getERC20(output.token, event.block) 
           let outputIO = getIO(event.params.orderHash.toHex() , opToken.id ,  output.vaultId  );   
 
-          outputIO.token =  opToken.id   
-          
+          outputIO.token = opToken.id   
+          outputIO.index = BigInt.fromI32(i)
+
           let opVault = getVault(output.vaultId , event.params.sender.toHex())
           outputIO.vault =  opVault.id 
   
@@ -902,7 +920,8 @@ function hexToBI(hexString: string): BigInt {
     return BigInt.fromUnsignedBytes(
       changetype<Bytes>(Bytes.fromHexString(hexString).reverse())
     );
-}
+} 
+
 
 
 

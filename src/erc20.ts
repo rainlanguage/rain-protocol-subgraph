@@ -1,4 +1,6 @@
-import { ERC20, StakeERC20 } from "../generated/schema";
+// import { ERC20, StakeERC20 } from "../generated/schema";\
+import { ERC20 } from "../generated/schema";
+
 import {
   Transfer,
   ERC20 as ERC20Contract,

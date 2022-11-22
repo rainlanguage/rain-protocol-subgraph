@@ -1,5 +1,9 @@
 {
     "network": "mumbai",
     "OrderBook": "0x7b60b0225e002577322fde6b4288f3c13bd8fa8b",
-    "OrderBookBlock": 29208084 
+    "OrderBookBlock": 29208084  ,
+
+    "Rainterpreter": "0x6a199e376D0dc789E87E5f9ED6d303b63b259c91",
+    "RainterpreterBlock": 29043278
+
 }

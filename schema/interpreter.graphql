@@ -1,0 +1,8 @@
+
+type ExpressionStateConfig @entity { 
+
+  id: ID! 
+  expressionAddress: Bytes!
+  sources: [Bytes!]!
+  constants: [BigInt!]!  
+} 
