@@ -607,8 +607,12 @@ function getOrderAdd(event: AddOrder): Order {
       order = new Order(event.params.orderHash.toHex())  
       order.owner = event.params.order.owner
       order.interpreter = event.params.order.interpreter
-      order.expression = event.params.order.expression
-      order.transactionHash = event.transaction.hash 
+      
+      order.transactionHash = event.transaction.hash  
+      
+      order.dispatch = event.params.order.dispatch
+      order.handleIODispatch = event.params.order.handleIODispatch
+
 
       order.stateConfig = event.transaction.hash.toHex()
 
@@ -751,7 +755,9 @@ function getOrderHash(event: Clear): string[]{
 let tupleArray_a_: Array<ethereum.Value> = [
   ethereum.Value.fromAddress(event.params.a.owner),
   ethereum.Value.fromAddress(event.params.a.interpreter),
-  ethereum.Value.fromAddress(event.params.a.expression),
+  ethereum.Value.fromUnsignedBigInt(event.params.a.dispatch),
+  ethereum.Value.fromUnsignedBigInt(event.params.a.handleIODispatch),
+
   ethereum.Value.fromTupleArray(ipAIOTulpe),
   ethereum.Value.fromTupleArray(opAIOTulpe) 
 ];
@@ -765,7 +771,8 @@ let uint256_a_ = hexToBI(keccak256_a_.toHex());
 let tupleArray_b_: Array<ethereum.Value> = [
   ethereum.Value.fromAddress(event.params.b.owner),
   ethereum.Value.fromAddress(event.params.b.interpreter),
-  ethereum.Value.fromAddress(event.params.b.expression),
+  ethereum.Value.fromUnsignedBigInt(event.params.a.dispatch),
+  ethereum.Value.fromUnsignedBigInt(event.params.a.handleIODispatch),
   ethereum.Value.fromTupleArray(ipBIOTulpe),
   ethereum.Value.fromTupleArray(opBIOTulpe) 
 ];
@@ -841,7 +848,8 @@ function getTakeOrder(event: TakeOrder): Order[] {
   let tupleArray_a_: Array<ethereum.Value> = [
       ethereum.Value.fromAddress(order_.owner),
       ethereum.Value.fromAddress(order_.interpreter),
-      ethereum.Value.fromAddress(order_.expression),
+      ethereum.Value.fromUnsignedBigInt(order_.dispatch),
+      ethereum.Value.fromUnsignedBigInt(order_.handleIODispatch),
       ethereum.Value.fromTupleArray(ipAIOTulpe),
       ethereum.Value.fromTupleArray(opAIOTulpe) 
     ];

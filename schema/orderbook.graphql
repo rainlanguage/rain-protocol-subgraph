@@ -28,11 +28,13 @@ type Order @entity {
     "interpreter" 
     interpreter: Bytes! 
 
-    "expression" 
-    expression: Bytes! 
-
     "Whether the order is live or dead"
-    orderLive: Boolean  
+    orderLive: Boolean   
+
+    dispatch: BigInt! 
+
+    handleIODispatch: BigInt! 
+
 
     stateConfig: ExpressionStateConfig!
 

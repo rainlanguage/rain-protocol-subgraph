@@ -1,8 +1,25 @@
 
-type ExpressionStateConfig @entity { 
+type ExpressionStateConfig @entity {  
 
   id: ID! 
   expressionAddress: Bytes!
   sources: [Bytes!]!
   constants: [BigInt!]!  
-} 
+  decompiledSources: [Bytes!]! 
+
+}  
+
+
+type ExpressionDeployer @entity { 
+
+  "The address of this deployer."
+  id: ID! 
+
+  "The interpreter instance this deployer uses."
+  interpreter: Bytes! # interpreter address 
+  
+  "functionPointers"
+  functionPointers: String! 
+
+}
+
