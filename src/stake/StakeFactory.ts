@@ -3,7 +3,7 @@ import {
   NewChild,
 } from "../../generated/StakeFactory/StakeFactory";
 import { StakeFactory, StakeERC20 } from "../../generated/schema";
-import { ONE_BI, ZERO_ADDRESS, ZERO_BI } from "../utils";
+import { ONE_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../utils";
 import { StakeERC20Template } from "../../generated/templates";
 export function handleImplementation(event: Implementation): void {
   let stakeFactory = new StakeFactory(event.address.toHex());
@@ -26,8 +26,8 @@ export function handleNewChild(event: NewChild): void {
     stakeERC20.token = ZERO_ADDRESS;
     stakeERC20.tokenPoolSize = ZERO_BI;
     stakeERC20.initialRatio = ZERO_BI;
-    stakeERC20.tokenToStakeTokenRatio = ZERO_BI;
-    stakeERC20.stakeTokenToTokenRatio = ZERO_BI;
+    stakeERC20.tokenToStakeTokenRatio = ZERO_BD;
+    stakeERC20.stakeTokenToTokenRatio = ZERO_BD;
 
     stakeERC20.save();
 

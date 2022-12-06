@@ -1,10 +1,6 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import {
-  Sale,
-  ERC20,
-  RedeemableERC20 as RedeemableERC20Contract,
-} from "../generated/schema";
-import { ERC20 as ERC20Contract } from "../generated/RedeemableERC20ClaimEscrow/ERC20";
+import { ERC20 } from "../generated/schema";
+import { ERC20 as ERC20Contract } from "../generated/templates/ERC20Template/ERC20";
 import { ERC20Template } from "../generated/templates";
 
 let ZERO_BI = BigInt.fromI32(0);
@@ -102,23 +98,6 @@ export {
   BANNER_ADMIN,
   BANNER,
 };
-
-/**
-* @description A function to chechk if a given address is not a ZERO_ADDRESSE
-                or contract address for the given Trust.
-* @param address Address of user.
-* @param trust Address of Trust.
-* @returns True if not any contract address or ZERO_ADDRESSE else False.
-*/
-export function notAContract(address: string): boolean {
-  let sale = Sale.load(address);
-  if (sale) return false;
-
-  let redeemableERC20 = RedeemableERC20Contract.load(address);
-  if (redeemableERC20) return false;
-
-  return true;
-}
 
 export function getERC20(token: Address, block: ethereum.Block): ERC20 {
   let erc20 = ERC20.load(token.toHex());

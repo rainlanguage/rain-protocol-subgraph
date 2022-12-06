@@ -24,15 +24,15 @@ export function handleTransfer(event: Transfer): void {
         stakeERC20.totalSupply = stakeContract.totalSupply();
 
         if (stakeERC20.tokenPoolSize != ZERO_BI) {
-          stakeERC20.tokenToStakeTokenRatio = stakeERC20.totalSupply.div(
-            stakeERC20.tokenPoolSize
-          );
+          stakeERC20.tokenToStakeTokenRatio = stakeERC20.totalSupply
+            .toBigDecimal()
+            .div(stakeERC20.tokenPoolSize.toBigDecimal());
         }
 
         if (stakeERC20.totalSupply != ZERO_BI) {
-          stakeERC20.stakeTokenToTokenRatio = stakeERC20.tokenPoolSize.div(
-            stakeERC20.totalSupply
-          );
+          stakeERC20.stakeTokenToTokenRatio = stakeERC20.tokenPoolSize
+            .toBigDecimal()
+            .div(stakeERC20.totalSupply.toBigDecimal());
         }
         stakeERC20.save();
       }
@@ -67,15 +67,15 @@ export function handleTransfer(event: Transfer): void {
         stakeERC20.totalSupply = stakeContract.totalSupply();
 
         if (stakeERC20.tokenPoolSize != ZERO_BI) {
-          stakeERC20.tokenToStakeTokenRatio = stakeERC20.totalSupply.div(
-            stakeERC20.tokenPoolSize
-          );
+          stakeERC20.tokenToStakeTokenRatio = stakeERC20.totalSupply
+            .toBigDecimal()
+            .div(stakeERC20.tokenPoolSize.toBigDecimal());
         }
 
         if (stakeERC20.totalSupply != ZERO_BI) {
-          stakeERC20.stakeTokenToTokenRatio = stakeERC20.tokenPoolSize.div(
-            stakeERC20.totalSupply
-          );
+          stakeERC20.stakeTokenToTokenRatio = stakeERC20.tokenPoolSize
+            .toBigDecimal()
+            .div(stakeERC20.totalSupply.toBigDecimal());
         }
         stakeERC20.save();
       }
