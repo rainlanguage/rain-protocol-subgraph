@@ -333,6 +333,7 @@ export function handleAfterClear(event: AfterClear): void {
 
 export function handleClear(event: Clear): void { 
 
+
  let orderClear = new OrderClear(event.block.timestamp.toString()); 
 
   orderClear.sender = event.params.sender;
@@ -342,7 +343,8 @@ export function handleClear(event: Clear): void {
 
   let orders = getOrderClear(event);
   order_a_ = orders[0]
-  order_b_ = orders[1]
+  order_b_ = orders[1] 
+
 
   orderClear.orderA = order_a_.id;
   orderClear.orderB = order_b_.id;
@@ -462,10 +464,8 @@ export function handleDeposit(event: Deposit): void {
 export function handleRemoveOrder(event: RemoveOrder): void {  
   
     let order = Order.load(event.params.orderHash.toHex());    
-    log.info("order : {} " , [ event.params.orderHash.toHex()  ])
-
+   
     if(order){ 
-      log.info("order loaded " , [])
       order.orderLive = false;
       order.save();
     }
@@ -473,14 +473,14 @@ export function handleRemoveOrder(event: RemoveOrder): void {
 
 export function handleTakeOrder(event: TakeOrder): void { 
 
-     let takeOrder = new TakeOrderEntity(event.block.timestamp.toString())   
+     let takeOrder = new TakeOrderEntity(event.transaction.hash.toHex())   
 
      takeOrder.sender = event.params.sender
      takeOrder.input = event.params.input
      takeOrder.output = event.params.output
      takeOrder.inputIOIndex = event.params.takeOrder.inputIOIndex
      takeOrder.outputIOIndex = event.params.takeOrder.outputIOIndex 
-     takeOrder.transactionHash = event.transaction.hash 
+     
 
     let order_: Order
     order_ = getTakeOrder(event)[0]
@@ -612,7 +612,8 @@ function getOrderAdd(event: AddOrder): Order {
       
       order.dispatch = event.params.order.dispatch
       order.handleIODispatch = event.params.order.handleIODispatch
-
+      order.data = event.params.order.data
+      order.timestamp = event.block.timestamp
 
       order.stateConfig = event.transaction.hash.toHex()
 
@@ -679,21 +680,21 @@ function getOrderAdd(event: AddOrder): Order {
 
 function getOrderHash(event: Clear): string[]{  
 
-    
-
   let ordera_ = event.params.a
   let orderb_ = event.params.b
 
   // tokenA array 
   let validAIP = ordera_.validInputs
-  let ipAIOTulpe:Array<ethereum.Tuple> = []
+  let ipAIOTulpe:Array<ethereum.Tuple> = [] 
+
 
   for(let i = 0 ; i < validAIP.length ; i++ ){ 
 
-      let e = validAIP[i] 
+      let e = validAIP[i]  
 
       let ioElement : Array<ethereum.Value> = [
           ethereum.Value.fromAddress(e.token),
+          ethereum.Value.fromI32(e.decimals) , 
           ethereum.Value.fromUnsignedBigInt(e.vaultId),
       ] 
       let ioTupleElement = changetype<ethereum.Tuple>(ioElement); 
@@ -710,6 +711,7 @@ function getOrderHash(event: Clear): string[]{
 
       let opElement : Array<ethereum.Value> = [
           ethereum.Value.fromAddress(e.token),
+          ethereum.Value.fromI32(e.decimals) , 
           ethereum.Value.fromUnsignedBigInt(e.vaultId),
       ] 
       let opTupleElement = changetype<ethereum.Tuple>(opElement); 
@@ -728,6 +730,7 @@ function getOrderHash(event: Clear): string[]{
 
       let ioElement : Array<ethereum.Value> = [
           ethereum.Value.fromAddress(e.token),
+          ethereum.Value.fromI32(e.decimals) ,
           ethereum.Value.fromUnsignedBigInt(e.vaultId),
       ] 
       let ioTupleElement = changetype<ethereum.Tuple>(ioElement); 
@@ -744,6 +747,7 @@ function getOrderHash(event: Clear): string[]{
 
       let opElement : Array<ethereum.Value> = [
           ethereum.Value.fromAddress(e.token),
+          ethereum.Value.fromI32(e.decimals) ,
           ethereum.Value.fromUnsignedBigInt(e.vaultId),
       ] 
       let opTupleElement = changetype<ethereum.Tuple>(opElement); 
@@ -757,34 +761,37 @@ let tupleArray_a_: Array<ethereum.Value> = [
   ethereum.Value.fromAddress(event.params.a.interpreter),
   ethereum.Value.fromUnsignedBigInt(event.params.a.dispatch),
   ethereum.Value.fromUnsignedBigInt(event.params.a.handleIODispatch),
-
   ethereum.Value.fromTupleArray(ipAIOTulpe),
-  ethereum.Value.fromTupleArray(opAIOTulpe) 
+  ethereum.Value.fromTupleArray(opAIOTulpe) ,
+  ethereum.Value.fromBytes(event.params.a.data)
 ];
 
 
 let tuple_a_ = changetype<ethereum.Tuple>(tupleArray_a_);
 let encodedOrder_a_ = ethereum.encode(ethereum.Value.fromTuple(tuple_a_))!;
 let keccak256_a_ = crypto.keccak256(encodedOrder_a_ as ByteArray);
-let uint256_a_ = hexToBI(keccak256_a_.toHex()); 
+let uint256_a_ = hexToBI(keccak256_a_.toHex());  
+
 
 let tupleArray_b_: Array<ethereum.Value> = [
   ethereum.Value.fromAddress(event.params.b.owner),
   ethereum.Value.fromAddress(event.params.b.interpreter),
-  ethereum.Value.fromUnsignedBigInt(event.params.a.dispatch),
-  ethereum.Value.fromUnsignedBigInt(event.params.a.handleIODispatch),
+  ethereum.Value.fromUnsignedBigInt(event.params.b.dispatch),
+  ethereum.Value.fromUnsignedBigInt(event.params.b.handleIODispatch),
   ethereum.Value.fromTupleArray(ipBIOTulpe),
-  ethereum.Value.fromTupleArray(opBIOTulpe) 
+  ethereum.Value.fromTupleArray(opBIOTulpe),
+  ethereum.Value.fromBytes(event.params.b.data)
+
 ];
 
 let tuple_b_ = changetype<ethereum.Tuple>(tupleArray_b_);
 let encodedOrder_b_ = ethereum.encode(ethereum.Value.fromTuple(tuple_b_))!;
 let keccak256_b_ = crypto.keccak256(encodedOrder_b_ as ByteArray);
-let uint256_b_ = hexToBI(keccak256_b_.toHex()); 
+let uint256_b_ = hexToBI(keccak256_b_.toHex());  
 
 if (uint256_a_ && uint256_b_) return [keccak256_a_.toHex() , keccak256_b_.toHex() ]; 
 
-else log.info("Hash not found", []);
+else log.info("getOrderHash Hash not found", []);
 return []; 
 
 
@@ -795,6 +802,7 @@ function getOrderClear(event: Clear): Order[] {
 
     
   let orderHash = getOrderHash(event)
+
   let order_a_ = Order.load(orderHash[0]); 
   let order_b_ = Order.load(orderHash[1]);   
 
@@ -802,7 +810,7 @@ function getOrderClear(event: Clear): Order[] {
     return [order_a_ , order_b_ ] 
   }
   else{
-     log.info("Orders not found", []); 
+     log.info("getOrderClear Orders not found", []); 
   } 
     
   return []; 
@@ -822,6 +830,7 @@ function getTakeOrder(event: TakeOrder): Order[] {
 
       let ioElement : Array<ethereum.Value> = [
           ethereum.Value.fromAddress(e.token),
+          ethereum.Value.fromI32(e.decimals) ,
           ethereum.Value.fromUnsignedBigInt(e.vaultId),
       ] 
       let ioTupleElement = changetype<ethereum.Tuple>(ioElement); 
@@ -838,6 +847,7 @@ function getTakeOrder(event: TakeOrder): Order[] {
 
       let opElement : Array<ethereum.Value> = [
           ethereum.Value.fromAddress(e.token),
+          ethereum.Value.fromI32(e.decimals) ,
           ethereum.Value.fromUnsignedBigInt(e.vaultId),
       ] 
       let opTupleElement = changetype<ethereum.Tuple>(opElement); 
@@ -851,7 +861,9 @@ function getTakeOrder(event: TakeOrder): Order[] {
       ethereum.Value.fromUnsignedBigInt(order_.dispatch),
       ethereum.Value.fromUnsignedBigInt(order_.handleIODispatch),
       ethereum.Value.fromTupleArray(ipAIOTulpe),
-      ethereum.Value.fromTupleArray(opAIOTulpe) 
+      ethereum.Value.fromTupleArray(opAIOTulpe), 
+      ethereum.Value.fromBytes(order_.data)
+
     ];
    
   

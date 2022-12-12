@@ -33,8 +33,11 @@ type Order @entity {
 
     dispatch: BigInt! 
 
-    handleIODispatch: BigInt! 
+    handleIODispatch: BigInt!  
 
+    timestamp: BigInt!
+
+    data: Bytes!
 
     stateConfig: ExpressionStateConfig!
 
@@ -178,7 +181,7 @@ type OrderClear @entity {
 # Created for every pair of TakeOrder events
 type TakeOrderEntity @entity {  
 
-    id: ID! # timestamp 
+    id: ID! # txhash 
     sender: Bytes! 
     order: Order!
     input: BigInt! 
@@ -187,7 +190,6 @@ type TakeOrderEntity @entity {
     outputIOIndex: BigInt!  # index of output token for Output Token Array
     inputToken: ERC20! # input token 
     outputToken: ERC20! # output token
-    transactionHash: Bytes!
    
 
 }
