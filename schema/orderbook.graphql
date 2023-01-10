@@ -118,7 +118,10 @@ type VaultDeposit @entity {
     "The amount that was deposited"
     amount: BigInt! # Deposit.config.amount
     "The current balance of this token for this Vault"
-    tokenVault: TokenVault! # map by {Deposit.config.vaultId}-{Deposit.sender}-{Deposit.config.token}
+    tokenVault: TokenVault! # map by {Deposit.config.vaultId}-{Deposit.sender}-{Deposit.config.token} 
+
+    timestamp: BigInt! #timestamp of tx
+
 }
 
 # Created for every Withdraw event
@@ -137,7 +140,10 @@ type VaultWithdraw @entity {
     "The amount that was withdrawn"
     amount: BigInt! # Withdraw.amount
     "The current balance of this token for this Vault"
-    tokenVault: TokenVault! # map by {Withdraw.config.vaultId}-{Withdraw.sender}-{Withdraw.config.token}
+    tokenVault: TokenVault! # map by {Withdraw.config.vaultId}-{Withdraw.sender}-{Withdraw.config.token} 
+
+    timestamp: BigInt! #timestamp of tx
+
 }
 
 # Created for every pair of AfterClear/Clear events
@@ -190,8 +196,7 @@ type TakeOrderEntity @entity {
     outputIOIndex: BigInt!  # index of output token for Output Token Array
     inputToken: ERC20! # input token 
     outputToken: ERC20! # output token
-   
-
+    timestamp: BigInt!
 }
 
 # Created when each OrderClear entity is created

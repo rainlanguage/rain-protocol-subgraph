@@ -422,7 +422,8 @@ export function handleDeposit(event: Deposit): void {
     let vaultDeposit = new VaultDeposit(event.transaction.hash.toHex());
     vaultDeposit.sender = event.params.sender;
     vaultDeposit.token = getERC20(event.params.config.token, event.block).id;
-    vaultDeposit.vaultId = event.params.config.vaultId;
+    vaultDeposit.vaultId = event.params.config.vaultId; 
+    vaultDeposit.timestamp = event.block.timestamp ;
 
     let vault = getVault(
         event.params.config.vaultId,
@@ -480,6 +481,7 @@ export function handleTakeOrder(event: TakeOrder): void {
      takeOrder.output = event.params.output
      takeOrder.inputIOIndex = event.params.takeOrder.inputIOIndex
      takeOrder.outputIOIndex = event.params.takeOrder.outputIOIndex 
+     takeOrder.timestamp = event.block.timestamp
      
 
     let order_: Order
@@ -566,7 +568,9 @@ export function handleWithdraw(event: Withdraw): void {
   vaultWithdraw.sender = event.params.sender;
   vaultWithdraw.amount = event.params.amount;
   vaultWithdraw.vaultId = event.params.config.vaultId;
-  vaultWithdraw.requestedAmount = event.params.config.amount;
+  vaultWithdraw.requestedAmount = event.params.config.amount; 
+  vaultWithdraw.timestamp = event.block.timestamp ;
+
 
   let token = getERC20(event.params.config.token, event.block);
   vaultWithdraw.token = token.id;
