@@ -1,8 +1,14 @@
-import { Address, BigDecimal, BigInt, ethereum , Bytes } from "@graphprotocol/graph-ts";
+import {
+  Address,
+  BigDecimal,
+  BigInt,
+  ethereum,
+  Bytes,
+} from "@graphprotocol/graph-ts";
 import {
   // Sale,
-  ERC20, 
-  ExpressionStateConfig
+  ERC20,
+  ExpressionStateConfig,
   // RedeemableERC20 as RedeemableERC20Contract,
 } from "../generated/schema";
 import { ERC20 as ERC20Contract } from "../generated/OrderBook/ERC20";
@@ -143,23 +149,20 @@ export function getERC20(token: Address, block: ethereum.Block): ERC20 {
   erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
   return erc20 as ERC20;
 }
- 
 
+// export function getExpressionStateConfig(tx: string , exprnAddr: Bytes): ExpressionStateConfig{
 
+//   let exprnStateConfig = ExpressionStateConfig.load(tx);
+//   if (!exprnStateConfig) {
 
-// export function getExpressionStateConfig(tx: string , exprnAddr: Bytes): ExpressionStateConfig{  
+//     exprnStateConfig = new ExpressionStateConfig(tx);
 
-//   let exprnStateConfig = ExpressionStateConfig.load(tx); 
-//   if (!exprnStateConfig) {  
-
-//     exprnStateConfig = new ExpressionStateConfig(tx);   
-    
-//     exprnStateConfig.sources = []  
-//     exprnStateConfig.constants = []  
-//     exprnStateConfig.expressionAddress = exprnAddr  
+//     exprnStateConfig.sources = []
+//     exprnStateConfig.constants = []
+//     exprnStateConfig.expressionAddress = exprnAddr
 
 //     exprnStateConfig.save()
-//   }  
+//   }
 //   return exprnStateConfig as ExpressionStateConfig;
 
 // }

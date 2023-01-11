@@ -61,8 +61,10 @@ dataSources:
         - name: Rainterpreter
           file: ./abis/Rainterpreter.json
       eventHandlers:
-        - event: DeployExpression(address,(bytes[],uint256[]),address,uint256)
-          handler: handleDeployExpression
+        - event: ExpressionConfig(address,(bytes[],uint256[]))
+          handler: handleExpressionConfig
+        - event: ExpressionDeployed(address,address)
+          handler: handleExpressionDeployed
         - event: ValidInterpreter(address,address)
           handler: handleValidInterpreter
       file: ./src/interpreter/rainterpreterExpressionDeployer.ts
