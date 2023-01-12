@@ -20,11 +20,7 @@ import { ReserveToken__factory } from "../typechain/factories/ReserveToken__fact
 // Types
 import type { FetchResult } from "apollo-fetch";
 import type { ReserveToken } from "../typechain/ReserveToken";
-import type {
-  Stake,
-  StakeConfigStruct,
-  TransferEvent,
-} from "../typechain/Stake";
+import type { Stake, StakeConfigStruct } from "../typechain/Stake";
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
@@ -61,7 +57,7 @@ async function deployStake(
   return { _stake, _reserveToken, _stakeConfig };
 }
 
-describe.only("Stake queries - Test", function () {
+describe("Stake queries - Test", function () {
   describe("StakeFactory entity", async () => {
     it("should query all the basic fields correctly", async () => {
       // Get the Stake implementation
@@ -378,7 +374,7 @@ describe.only("Stake queries - Test", function () {
     });
   });
 
-  describe.only("StakeHolder queries", () => {
+  describe("StakeHolder queries", () => {
     it("should query a StakeHolder after deposits", async () => {
       const { _stake: stakeContract, _reserveToken: token } = await deployStake(
         deployer
@@ -510,19 +506,6 @@ describe.only("Stake queries - Test", function () {
         await stakeContract.maxWithdraw(signer1.address)
       ).div(2);
 
-      console.log(
-        "Balance before withdrawTx: ",
-        await stakeContract.balanceOf(signer1.address)
-      );
-      console.log(
-        "tokenPoolSize before withdrawTx: ",
-        await token.balanceOf(stakeContract.address)
-      );
-      console.log(
-        "totalSupply before withdrawTx: ",
-        await stakeContract.totalSupply()
-      );
-
       const withdrawTx = await stakeContract
         .connect(signer1)
         .withdraw(amountToWithdraw, signer1.address, signer1.address);
@@ -555,20 +538,6 @@ describe.only("Stake queries - Test", function () {
         query,
       })) as FetchResult;
 
-      console.log(JSON.stringify(response, null, 2));
-      console.log(
-        "Balance after withdrawTx: ",
-        await stakeContract.balanceOf(signer1.address)
-      );
-      console.log(
-        "tokenPoolSize after withdrawTx: ",
-        await token.balanceOf(stakeContract.address)
-      );
-      console.log(
-        "totalSupply after withdrawTx: ",
-        await stakeContract.totalSupply()
-      );
-
       const data = response.data.stakeHolder;
 
       expect(data.balance).to.be.equals(
@@ -586,92 +555,6 @@ describe.only("Stake queries - Test", function () {
           ),
           await stakeContract.totalSupply()
         ).toString()
-      );
-
-      expect(data.withdraws).to.deep.include({
-        id: withdrawTx.hash,
-      });
-    });
-
-    xit("should update and query a StakeERC20 after withdraw", async () => {
-      const { _stake: stakeContract, _reserveToken: token } = await deployStake(
-        deployer
-      );
-
-      // Give Alice some reserve tokens and deposit them
-      await token.transfer(
-        signer1.address,
-        BigNumber.from("1000" + Util.sixZeros)
-      );
-      const tokenBalanceSigner1 = await token.balanceOf(signer1.address);
-      await token
-        .connect(signer1)
-        .approve(stakeContract.address, tokenBalanceSigner1);
-      await stakeContract
-        .connect(signer1)
-        .deposit(tokenBalanceSigner1, signer1.address);
-
-      // Give Bob some reserve tokens and deposit them
-      await token.transfer(
-        signer2.address,
-        BigNumber.from("1000" + Util.sixZeros)
-      );
-      const tokenBalanceSigner2 = await token.balanceOf(signer2.address);
-      await token
-        .connect(signer2)
-        .approve(stakeContract.address, tokenBalanceSigner2);
-      await stakeContract
-        .connect(signer2)
-        .deposit(tokenBalanceSigner2, signer2.address);
-
-      // Signer1 and Signer2 each own 50% of stToken supply
-      const amountToWithdraw = await stakeContract.maxWithdraw(signer1.address);
-
-      const withdrawTx = await stakeContract
-        .connect(signer1)
-        .withdraw(amountToWithdraw, signer1.address, signer1.address);
-
-      const tokenPoolSizeExpected = await token.balanceOf(
-        stakeContract.address
-      );
-
-      await waitForSubgraphToBeSynced();
-
-      const query = `
-        {
-          stakeERC20(id: "${stakeContract.address.toLowerCase()}") {
-            totalSupply
-            tokenPoolSize
-            tokenToStakeTokenRatio
-            stakeTokenToTokenRatio
-            withdraws {
-              id
-            }
-            holders {
-              id
-            }
-          }
-        }
-      `;
-
-      const response = (await subgraph({
-        query,
-      })) as FetchResult;
-
-      const data = response.data.stakeERC20;
-
-      expect(data.totalSupply).to.be.equals(await stakeContract.totalSupply());
-      expect(data.tokenPoolSize).to.be.equals(tokenPoolSizeExpected);
-
-      expect(
-        FixedNumber.from(data.tokenToStakeTokenRatio).toString()
-      ).to.be.equals(
-        Util.divBNOrFixed(data.totalSupply, tokenPoolSizeExpected).toString()
-      );
-      expect(
-        FixedNumber.from(data.stakeTokenToTokenRatio).toString()
-      ).to.be.equals(
-        Util.divBNOrFixed(tokenPoolSizeExpected, data.totalSupply).toString()
       );
 
       expect(data.withdraws).to.deep.include({

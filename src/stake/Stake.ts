@@ -1,4 +1,6 @@
+import { Address, log } from "@graphprotocol/graph-ts";
 import {
+  ERC20,
   StakeDeposit,
   StakeERC20,
   StakeHolder,
@@ -10,6 +12,8 @@ import {
   Transfer,
   Stake,
 } from "../../generated/templates/StakeERC20Template/Stake";
+import { ERC20 as ERC20Contract } from "../../generated/templates/ERC20Template/ERC20";
+
 import { getERC20, ZERO_ADDRESS, ZERO_BI } from "../utils";
 
 export function handleInitialize(event: Initialize): void {
@@ -44,6 +48,12 @@ export function handleTransfer(event: Transfer): void {
   let stakeContract = Stake.bind(event.address);
 
   if (stakeERC20) {
+    let erc20Contract = ERC20Contract.bind(
+      Address.fromString(stakeERC20.token)
+    );
+
+    stakeERC20.tokenPoolSize = erc20Contract.balanceOf(event.address);
+
     stakeERC20.totalSupply = stakeContract.totalSupply();
 
     if (stakeERC20.tokenPoolSize != ZERO_BI) {
