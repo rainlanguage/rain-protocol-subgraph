@@ -8,6 +8,9 @@ import {
   getStakeHolder,
 } from "./stake/Stake";
 
+import { ERC20 as ERC20Contract } from "../generated/templates/ERC20Template/ERC20";
+import { Address } from "@graphprotocol/graph-ts";
+
 // import { log } from "@graphprotocol/graph-ts";
 
 export function handleTransfer(event: Transfer): void {
@@ -18,9 +21,11 @@ export function handleTransfer(event: Transfer): void {
       let stakeERC20 = StakeERC20.load(event.params.to.toHex());
       if (stakeERC20) {
         let stakeContract = Stake.bind(event.params.to);
-        stakeERC20.tokenPoolSize = stakeERC20.tokenPoolSize.plus(
-          event.params.value
+        let erc20Contract = ERC20Contract.bind(
+          Address.fromString(stakeERC20.token)
         );
+
+        stakeERC20.tokenPoolSize = erc20Contract.balanceOf(event.params.to);
         stakeERC20.totalSupply = stakeContract.totalSupply();
 
         if (stakeERC20.tokenPoolSize != ZERO_BI) {
@@ -61,9 +66,11 @@ export function handleTransfer(event: Transfer): void {
       let stakeERC20 = StakeERC20.load(event.params.from.toHex());
       if (stakeERC20) {
         let stakeContract = Stake.bind(event.params.from);
-        stakeERC20.tokenPoolSize = stakeERC20.tokenPoolSize.minus(
-          event.params.value
+        let erc20Contract = ERC20Contract.bind(
+          Address.fromString(stakeERC20.token)
         );
+
+        stakeERC20.tokenPoolSize = erc20Contract.balanceOf(event.params.from);
         stakeERC20.totalSupply = stakeContract.totalSupply();
 
         if (stakeERC20.tokenPoolSize != ZERO_BI) {
