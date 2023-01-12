@@ -5,22 +5,17 @@ import * as Util from "./utils/utils";
 import { waitForSubgraphToBeSynced } from "./utils/utils";
 
 // Typechain Factories
-import { AllStandardOpsStateBuilder__factory } from "../typechain/factories/AllStandardOpsStateBuilder__factory";
 import { StakeFactory__factory } from "../typechain/factories/StakeFactory__factory";
 
 // Types
 import type { ApolloFetch } from "apollo-fetch";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
 import type { StakeFactory } from "../typechain/StakeFactory";
-import { Contract } from "ethers";
 
-const subgraphName = "beehive-innovation/rain-protocol-test";
+const subgraphName = "rainprotocol/rain-protocol-test";
 
 // Export Factories
-export let subgraph: ApolloFetch,
-  stakeFactory: StakeFactory,
-  vmStateBuilder: Contract;
+export let subgraph: ApolloFetch, stakeFactory: StakeFactory;
 
 // Export signers
 export let deployer: SignerWithAddress,
@@ -46,11 +41,6 @@ before("Deployment contracts and subgraph", async function () {
   recipient = signers[6];
   feeRecipient = signers[7];
   admin = signers[9];
-
-  // Depoying AllStandardOpsStateBuilder
-  vmStateBuilder = await new AllStandardOpsStateBuilder__factory(
-    deployer
-  ).deploy();
 
   // Deploying StakeFactory contract
   stakeFactory = await new StakeFactory__factory(deployer).deploy();
@@ -85,5 +75,3 @@ before("Deployment contracts and subgraph", async function () {
   // Wait for sync
   await waitForSubgraphToBeSynced(1000);
 });
-
-// TODO: Rewrite Redeemable Test

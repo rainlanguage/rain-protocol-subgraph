@@ -15,11 +15,11 @@ import {
 } from "./initialization.test";
 
 // Typechain Factories
-import { ReserveTokenTest__factory } from "../typechain/factories/ReserveTokenTest__factory";
+import { ReserveToken__factory } from "../typechain/factories/ReserveToken__factory";
 
 // Types
 import type { FetchResult } from "apollo-fetch";
-import type { ReserveTokenTest } from "../typechain/ReserveTokenTest";
+import type { ReserveToken } from "../typechain/ReserveToken";
 import type {
   Stake,
   StakeConfigStruct,
@@ -28,26 +28,27 @@ import type {
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+const { BigNumber, FixedNumber } = ethers;
+
 async function deployStake(
   deployerAccount: SignerWithAddress,
   config?: StakeConfigStruct
 ): Promise<{
   _stake: Stake;
-  _reserveToken: ReserveTokenTest;
+  _reserveToken: ReserveToken;
   _stakeConfig: StakeConfigStruct;
 }> {
   let _stakeConfig: StakeConfigStruct = config;
-  let _reserveToken: ReserveTokenTest;
+  let _reserveToken: ReserveToken;
 
   if (!config) {
-    _reserveToken = await new ReserveTokenTest__factory(
-      deployerAccount
-    ).deploy();
+    _reserveToken = await new ReserveToken__factory(deployerAccount).deploy();
+    await _reserveToken.initialize();
+
     _stakeConfig = {
       name: "Stake Token",
       symbol: "STKN",
-      token: _reserveToken.address,
-      initialRatio: Util.ONE,
+      asset: _reserveToken.address,
     };
   }
 
@@ -124,7 +125,7 @@ describe.only("Stake queries - Test", function () {
     });
   });
 
-  describe.only("StakeERC20 queries", () => {
+  describe("StakeERC20 queries", () => {
     it("should query a StakeERC20 after creating with initial values", async () => {
       const {
         _stake: stakeContract,
@@ -156,7 +157,6 @@ describe.only("Stake queries - Test", function () {
           decimals
           totalSupply
           tokenPoolSize
-          initialRatio
           tokenToStakeTokenRatio
           stakeTokenToTokenRatio
           deposits {
@@ -192,7 +192,6 @@ describe.only("Stake queries - Test", function () {
       expect(data.totalSupply).to.be.equals(await stakeContract.totalSupply());
 
       expect(data.tokenPoolSize).to.be.equals("0");
-      expect(data.initialRatio).to.be.equals(deployedConfig.initialRatio);
       expect(data.tokenToStakeTokenRatio).to.be.equals("0");
       expect(data.stakeTokenToTokenRatio).to.be.equals("0");
 
@@ -202,15 +201,13 @@ describe.only("Stake queries - Test", function () {
     });
 
     it("should update and query a StakeERC20 after deposits", async () => {
-      const {
-        _stake: stakeContract,
-        _reserveToken: token,
-        _stakeConfig,
-      } = await deployStake(deployer);
+      const { _stake: stakeContract, _reserveToken: token } = await deployStake(
+        deployer
+      );
 
       const tokenPoolSize0_ = await token.balanceOf(stakeContract.address);
       const totalSupply0_ = await stakeContract.totalSupply();
-      const amountToDeposit = ethers.BigNumber.from("1000" + Util.sixZeros);
+      const amountToDeposit = BigNumber.from("1000" + Util.sixZeros);
 
       // Checking init values
       expect(tokenPoolSize0_).to.be.equals(totalSupply0_);
@@ -225,36 +222,15 @@ describe.only("Stake queries - Test", function () {
       // First deposit
       const depositTx1 = await stakeContract
         .connect(signer1)
-        .deposit(amountToDeposit);
+        .deposit(amountToDeposit, signer1.address);
 
       // Second deposit
       const depositTx2 = await stakeContract
         .connect(signer1)
-        .deposit(amountToDeposit);
+        .deposit(amountToDeposit, signer1.address);
 
-      // Values from events
-      const { value: value1 } = (await Util.getEventArgs(
-        depositTx1,
-        "Transfer",
-        stakeContract
-      )) as TransferEvent["args"];
-
-      const { value: value2 } = (await Util.getEventArgs(
-        depositTx2,
-        "Transfer",
-        stakeContract
-      )) as TransferEvent["args"];
-
-      const signer1StakeBalance = await stakeContract.balanceOf(
-        signer1.address
-      );
-
-      const tokenPoolSizeExpected = value1.add(value2);
-
-      expect(signer1StakeBalance).to.be.equals(tokenPoolSizeExpected);
-
-      expect(await token.balanceOf(stakeContract.address)).to.be.equals(
-        await stakeContract.totalSupply()
+      const tokenPoolSizeExpected = await token.balanceOf(
+        stakeContract.address
       );
 
       await waitForSubgraphToBeSynced();
@@ -268,7 +244,6 @@ describe.only("Stake queries - Test", function () {
           stakeERC20(id: "${stakeContract.address.toLowerCase()}") {
             totalSupply
             tokenPoolSize
-            initialRatio
             tokenToStakeTokenRatio
             stakeTokenToTokenRatio
             deposits {
@@ -292,16 +267,16 @@ describe.only("Stake queries - Test", function () {
 
       expect(data.totalSupply).to.be.equals(await stakeContract.totalSupply());
       expect(data.tokenPoolSize).to.be.equals(tokenPoolSizeExpected);
-      expect(data.initialRatio).to.be.equals(
-        _stakeConfig.initialRatio,
-        "InitialRatio should not changed after deposits"
-      );
 
-      expect(data.tokenToStakeTokenRatio).to.be.equals(
-        (await stakeContract.totalSupply()).div(tokenPoolSizeExpected)
+      expect(
+        FixedNumber.from(data.tokenToStakeTokenRatio).toString()
+      ).to.be.equals(
+        Util.divBNOrFixed(data.totalSupply, tokenPoolSizeExpected).toString()
       );
-      expect(data.stakeTokenToTokenRatio).to.be.equals(
-        tokenPoolSizeExpected.div(await stakeContract.totalSupply())
+      expect(
+        FixedNumber.from(data.stakeTokenToTokenRatio).toString()
+      ).to.be.equals(
+        Util.divBNOrFixed(tokenPoolSizeExpected, data.totalSupply).toString()
       );
 
       expect(data.withdraws).to.be.empty;
@@ -316,53 +291,46 @@ describe.only("Stake queries - Test", function () {
       });
     });
 
-    it.only("should update and query a StakeERC20 after withdraw", async () => {
-      //////////////
-      const {
-        _stake: stakeContract,
-        _reserveToken: token,
-        _stakeConfig,
-      } = await deployStake(deployer);
+    it("should update and query a StakeERC20 after withdraw", async () => {
+      const { _stake: stakeContract, _reserveToken: token } = await deployStake(
+        deployer
+      );
 
       // Give Alice some reserve tokens and deposit them
       await token.transfer(
         signer1.address,
-        ethers.BigNumber.from("1000" + Util.sixZeros)
+        BigNumber.from("1000" + Util.sixZeros)
       );
       const tokenBalanceSigner1 = await token.balanceOf(signer1.address);
       await token
         .connect(signer1)
         .approve(stakeContract.address, tokenBalanceSigner1);
-      await stakeContract.connect(signer1).deposit(tokenBalanceSigner1);
+      await stakeContract
+        .connect(signer1)
+        .deposit(tokenBalanceSigner1, signer1.address);
 
       // Give Bob some reserve tokens and deposit them
       await token.transfer(
         signer2.address,
-        ethers.BigNumber.from("1000" + Util.sixZeros)
+        BigNumber.from("1000" + Util.sixZeros)
       );
       const tokenBalanceSigner2 = await token.balanceOf(signer2.address);
       await token
         .connect(signer2)
         .approve(stakeContract.address, tokenBalanceSigner2);
-      await stakeContract.connect(signer2).deposit(tokenBalanceSigner2);
+      await stakeContract
+        .connect(signer2)
+        .deposit(tokenBalanceSigner2, signer2.address);
 
-      // Alice and Bob each own 50% of stToken supply
-      const stTokenBalanceSigner1 = await stakeContract.balanceOf(
-        signer1.address
-      );
+      // Signer1 and Signer2 each own 50% of stToken supply
+      const amountToWithdraw = await stakeContract.maxWithdraw(signer1.address);
 
       const withdrawTx = await stakeContract
         .connect(signer1)
-        .withdraw(stTokenBalanceSigner1.div(2));
+        .withdraw(amountToWithdraw, signer1.address, signer1.address);
 
-      const newTokenBalanceSigner1 = await stakeContract.balanceOf(
-        signer1.address
-      );
-
-      expect(newTokenBalanceSigner1.eq(stTokenBalanceSigner1.div(2)));
-
-      const tokenPoolSizeExpected = tokenBalanceSigner1.add(
-        newTokenBalanceSigner1
+      const tokenPoolSizeExpected = await token.balanceOf(
+        stakeContract.address
       );
 
       await waitForSubgraphToBeSynced();
@@ -372,7 +340,6 @@ describe.only("Stake queries - Test", function () {
           stakeERC20(id: "${stakeContract.address.toLowerCase()}") {
             totalSupply
             tokenPoolSize
-            initialRatio
             tokenToStakeTokenRatio
             stakeTokenToTokenRatio
             withdraws {
@@ -389,22 +356,20 @@ describe.only("Stake queries - Test", function () {
         query,
       })) as FetchResult;
 
-      // console.log(JSON.stringify(response, null, 2));
-
       const data = response.data.stakeERC20;
 
       expect(data.totalSupply).to.be.equals(await stakeContract.totalSupply());
       expect(data.tokenPoolSize).to.be.equals(tokenPoolSizeExpected);
-      expect(data.initialRatio).to.be.equals(
-        _stakeConfig.initialRatio,
-        "InitialRatio should not changed after withdraws"
-      );
 
-      expect(data.tokenToStakeTokenRatio).to.be.equals(
-        (await stakeContract.totalSupply()).div(tokenPoolSizeExpected)
+      expect(
+        FixedNumber.from(data.tokenToStakeTokenRatio).toString()
+      ).to.be.equals(
+        Util.divBNOrFixed(data.totalSupply, tokenPoolSizeExpected).toString()
       );
-      expect(data.stakeTokenToTokenRatio).to.be.equals(
-        tokenPoolSizeExpected.div(await stakeContract.totalSupply())
+      expect(
+        FixedNumber.from(data.stakeTokenToTokenRatio).toString()
+      ).to.be.equals(
+        Util.divBNOrFixed(tokenPoolSizeExpected, data.totalSupply).toString()
       );
 
       expect(data.withdraws).to.deep.include({
@@ -419,7 +384,7 @@ describe.only("Stake queries - Test", function () {
 
       const tokenPoolSize0_ = await _reserveToken.balanceOf(_stake.address);
       const totalSupply0_ = await _stake.totalSupply();
-      const amountToDeposit = ethers.BigNumber.from("1000" + Util.sixZeros);
+      const amountToDeposit = BigNumber.from("1000" + Util.sixZeros);
 
       // Checking init values
       expect(tokenPoolSize0_).to.be.equals(totalSupply0_);
@@ -430,7 +395,9 @@ describe.only("Stake queries - Test", function () {
       await _reserveToken
         .connect(signer1)
         .approve(_stake.address, amountToDeposit);
-      const depositTx = await _stake.connect(signer1).deposit(amountToDeposit);
+      const depositTx = await _stake
+        .connect(signer1)
+        .deposit(amountToDeposit, signer1.address);
 
       const { value } = (await Util.getEventArgs(
         depositTx,
