@@ -27,7 +27,7 @@ let
   '';
 
   init = pkgs.writeShellScriptBin "init" ''
-    mkdir -p contracts && cp -r node_modules/@beehiveinnovation/rain-protocol/contracts .
+    mkdir -p contracts && cp -r node_modules/@rainprotocol/rain-protocol/contracts .
     npx hardhat compile
   '';
   
