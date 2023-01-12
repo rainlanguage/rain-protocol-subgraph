@@ -28,34 +28,25 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.10",
+        version: "0.8.17",
         settings: {
           optimizer: {
             enabled: true,
-            runs: 100000,
+            runs: 1000000000,
+            details: {
+              peephole: true,
+              inliner: true,
+              jumpdestRemover: true,
+              orderLiterals: true,
+              deduplicate: true,
+              cse: true,
+              constantOptimizer: true,
+            },
           },
+          // viaIR: true,
           metadata: {
             useLiteralContent: true,
           },
-        },
-      },
-      {
-        version: "0.6.12",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 100000,
-          },
-        },
-      },
-      {
-        version: "0.5.12",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 100,
-          },
-          evmVersion: "byzantium",
         },
       },
     ],

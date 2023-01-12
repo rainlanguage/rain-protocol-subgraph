@@ -20,9 +20,8 @@ export function handleInitialize(event: Initialize): void {
     stakeERC20.symbol = event.params.config.symbol;
     stakeERC20.decimals = stakeContract.decimals();
     stakeERC20.totalSupply = stakeContract.totalSupply();
-    stakeERC20.initialRatio = event.params.config.initialRatio;
 
-    let token = getERC20(event.params.config.token, event.block);
+    let token = getERC20(event.params.config.asset, event.block);
     if (token) {
       stakeERC20.token = token.id;
       let stakeContracts = token.stakeContracts;

@@ -11,38 +11,17 @@ type StakeFactory @entity {
 }
 
 type StakeERC20 implements ERC20Interface @entity {
-  id: ID! #Stake contract address
-  "Address of this Stake contract"
-  address: Bytes! #Stake contract address
-  "Block number of contract deployment"
-  deployBlock: BigInt! #the block the contract was deployed
-  "Timestamp of contract deployment"
-  deployTimestamp: BigInt! #the timestamp the contract was deployed
-  "Address of deployer"
-  deployer: Bytes #address of the deployer - get from event Initialize.sender
-  "Address of the StakeFactory that is this contract's parent "
-  factory: StakeFactory! #the factory that deployed this contract
-  "Stake token name"
-  name: String #get from Initialize.config_.name
-  "Stake token symbol"
-  symbol: String #get from Initialize.config_.symbol
-  "Stake token decimals"
-  decimals: Int #get from Stake.decimals()
-  "Stake token totalSupply"
   totalSupply: BigInt! #get from Stake.totalSupply() after every Transfer event from or to the zero address (i.e. mint or burn)
-  "The token that is staked to receive the Stake token"
-  token: ERC20! # get from Initialize.config_.token
+
+  //////////////
+
   "The total pool size of token"
   tokenPoolSize: BigInt! # update for every Transfer event of token TO the Stake contract
   "The last indexed ratio of token to Stake token"
   tokenToStakeTokenRatio: BigDecimal! # totalSupply / tokenPoolSize - update every time either totalSupply or tokenPoolSize changes
   "The last indexed ratio of Stake token to token"
   stakeTokenToTokenRatio: BigDecimal! # tokenPoolSize / totalSupply - update every time either totalSupply or tokenPoolSize changes
-  deposits: [StakeDeposit!] @derivedFrom(field: "stakeToken")
-  "Withdraws"
   withdraws: [StakeWithdraw!] @derivedFrom(field: "stakeToken")
-  "Stake token holders"
-  holders: [StakeHolder!] @derivedFrom(field: "stakeToken")
 }
 
 # represents one holder of the Stake token

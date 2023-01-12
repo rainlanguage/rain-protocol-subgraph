@@ -25,7 +25,6 @@ export function handleNewChild(event: NewChild): void {
     stakeERC20.factory = stakeFactory.id;
     stakeERC20.token = ZERO_ADDRESS;
     stakeERC20.tokenPoolSize = ZERO_BI;
-    stakeERC20.initialRatio = ZERO_BI;
     stakeERC20.tokenToStakeTokenRatio = ZERO_BD;
     stakeERC20.stakeTokenToTokenRatio = ZERO_BD;
 

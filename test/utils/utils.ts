@@ -20,7 +20,6 @@ import type {
 
 // Typechain rain factories
 import { Sale__factory } from "../../typechain/factories/Sale__factory";
-import { EmissionsERC20__factory } from "../../typechain/factories/EmissionsERC20__factory";
 import { Verify__factory } from "../../typechain/factories/Verify__factory";
 import { VerifyTier__factory } from "../../typechain/factories/VerifyTier__factory";
 import { CombineTier__factory } from "../../typechain/factories/CombineTier__factory";
@@ -37,7 +36,7 @@ import type {
 } from "../../typechain/Factory";
 
 // VMState types
-import type { StateConfigStruct } from "../../typechain/VMStateBuilder";
+import type { StateConfigStruct } from "../../typechain/RainterpreterExpressionDeployer";
 export type VMState = StateConfigStruct;
 export type State = StateConfigStruct;
 
@@ -48,13 +47,6 @@ import type {
   SaleRedeemableERC20ConfigStruct,
 } from "../../typechain/SaleFactory";
 import type { Sale } from "../../typechain/Sale";
-
-// EmissionsERC20Factory types
-import type {
-  EmissionsERC20Factory,
-  EmissionsERC20ConfigStruct,
-} from "../../typechain/EmissionsERC20Factory";
-import type { EmissionsERC20 } from "../../typechain/EmissionsERC20";
 
 // VerifyFactory types
 import type {
@@ -103,6 +95,18 @@ export const RESERVE_ONE = ethers.BigNumber.from("1" + sixZeros);
 
 // Fixed number (Decimal)
 export const oneHundredFN = ethers.FixedNumber.from(100, "fixed128x32");
+
+export const divBNOrFixed = (
+  a_: BigNumber | FixedNumber,
+  b_: BigNumber | FixedNumber
+): FixedNumber => {
+  const a = ethers.FixedNumber.from(a_);
+  const b = ethers.FixedNumber.from(b_);
+
+  if (b.isZero()) return ethers.FixedNumber.from(0);
+
+  return a.divUnsafe(b);
+};
 
 export const CREATOR_FUNDS_RELEASE_TIMEOUT_TESTING = 100;
 export const MAX_RAISE_DURATION_TESTING = 100;
@@ -592,38 +596,6 @@ export const saleDeploy = async (
   sale.deployTransaction = txDeploy;
 
   return sale;
-};
-
-/**
- * Create a new EmissionsERC20 contract
- * @param emissionsERC20Factory The EmissionsERC20Factory that will create the child.
- * @param creator The signer that will create the child and will be connected to
- * @param config the emissionsERC20 configuration
- * @param override override (optional) an object that contain properties to edit in the call. For ex: gasLimit or value
- * @returns The EmissionsERC20 child
- */
-export const emissionsDeploy = async (
-  emissionsERC20Factory: EmissionsERC20Factory,
-  creator: SignerWithAddress | Signer,
-  config: EmissionsERC20ConfigStruct,
-  override: Overrides = {}
-): Promise<EmissionsERC20> => {
-  // Creating child
-  const txDeploy = await emissionsERC20Factory
-    .connect(creator)
-    .createChildTyped(config, override);
-
-  const emissionsERC20 = new EmissionsERC20__factory(creator).attach(
-    await getChild(emissionsERC20Factory, txDeploy)
-  );
-
-  await emissionsERC20.deployed();
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  emissionsERC20.deployTransaction = txDeploy;
-
-  return emissionsERC20;
 };
 
 /**

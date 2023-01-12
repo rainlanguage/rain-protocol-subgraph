@@ -111,15 +111,15 @@ export function getERC20(token: Address, block: ethereum.Block): ERC20 {
     let totalSupply = erc20Contract.try_totalSupply();
     let name = erc20Contract.try_name();
     let symbol = erc20Contract.try_symbol();
+
     erc20.decimals = !decimals.reverted ? decimals.value : 18;
     erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
     erc20.name = !name.reverted ? name.value : "NONE";
     erc20.symbol = !symbol.reverted ? symbol.value : "NONE";
+    erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
     erc20.stakeContracts = [];
     erc20.save();
     ERC20Template.create(token);
   }
-  let totalSupply = erc20Contract.try_totalSupply();
-  erc20.totalSupply = !totalSupply.reverted ? totalSupply.value : ZERO_BI;
   return erc20 as ERC20;
 }
