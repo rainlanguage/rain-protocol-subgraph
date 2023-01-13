@@ -642,8 +642,6 @@ describe("Stake queries - Test", function () {
         ).toString()
       );
 
-      console.log("After 1st withdraw: ", data1_.totalEntitlement);
-
       expect(data1_.withdraws).to.deep.include({
         id: withdrawTx1.hash,
       });
@@ -679,7 +677,6 @@ describe("Stake queries - Test", function () {
           await stakeContract.totalSupply()
         ).toString()
       );
-      console.log("After 2nd withdraw: ", data2_.totalEntitlement);
 
       expect(data2_.withdraws).to.deep.include({
         id: withdrawTx1.hash,
