@@ -393,6 +393,8 @@ describe("Stake queries - Test", function () {
         id: withdrawTx.hash,
       });
     });
+
+
   });
 
   describe("StakeHolder queries", () => {
@@ -707,7 +709,7 @@ describe("Stake queries - Test", function () {
       });
     });
 
-    xit("should update all the StakeHolders after multiples deposits", async () => {
+    it("should update all the StakeHolders after multiples deposits and withdraws", async () => {
       const { _stake: stake, _reserveToken: token } = await deployStake(
         deployer
       );
@@ -718,13 +720,15 @@ describe("Stake queries - Test", function () {
       const signer2Address = signer2.address.toLowerCase();
       const signer3Address = signer3.address.toLowerCase();
 
+      // ================== PART 0 =================================
+
       // 2.000.000
-      const amountToTransfer = BigNumber.from("2" + Util.sixZeros);
+      const amountToTransfer_0 = BigNumber.from("2" + Util.sixZeros);
 
       // Give signer1, signer2 and signer3 some reserve tokens
-      await token.transfer(signer1.address, amountToTransfer);
-      await token.transfer(signer2.address, amountToTransfer);
-      await token.transfer(signer3.address, amountToTransfer);
+      await token.transfer(signer1.address, amountToTransfer_0.mul(2));
+      await token.transfer(signer2.address, amountToTransfer_0);
+      await token.transfer(signer3.address, amountToTransfer_0.div(3));
 
       // Getting the balance of each user
       const tokenBalanceSigner1_0 = await token.balanceOf(signer1.address);
@@ -802,8 +806,14 @@ describe("Stake queries - Test", function () {
         query,
       })) as FetchResult;
 
+      const {
+        holder1: dataHolder1_0,
+        holder2: dataHolder2_0,
+        holder3: dataHolder3_0,
+      } = response_0.data;
+
       // Generating expected result - 0
-      // Getting values (amount deposit) from withdraws
+      // Getting values (amount deposit) from deposit
       const { value: valueDespositSigner1_0 } = await getTransferEvent(
         txDepositSigner1_0,
         stake
@@ -844,93 +854,270 @@ describe("Stake queries - Test", function () {
         stakeTotalSupply_0
       );
 
-      console.log(JSON.stringify(response_0, null, 2));
+      // Cecking values by each type of value
+      expect(dataHolder1_0.balance).to.be.equal(stakeBalanceSigner1_0);
+      expect(dataHolder2_0.balance).to.be.equal(stakeBalanceSigner2_0);
+      expect(dataHolder3_0.balance).to.be.equal(stakeBalanceSigner3_0);
 
-      // // Signer1 and Signer2 each own 50% of stToken supply. Withdraw 50% of signer1 available
-      // const maxWithdrawSigner1 = await stakeContract.maxWithdraw(
-      //   signer1.address
-      // );
-      // const amountToWithdraw1 = maxWithdrawSigner1.div(2);
-      // const amountToWithdraw2 = maxWithdrawSigner1.sub(amountToWithdraw1);
+      expect(dataHolder1_0.totalStake).to.equal(accumulatedTotalStakeSigner1);
+      expect(dataHolder2_0.totalStake).to.equal(accumulatedTotalStakeSigner2);
+      expect(dataHolder3_0.totalStake).to.equal(accumulatedTotalStakeSigner3);
 
-      // const stakeHolder = `${stakeContract.address.toLowerCase()}-${signer1.address.toLowerCase()}`;
-      // let totalStakeSigner1 = tokenBalanceSigner1_0;
+      expect(dataHolder1_0.withdraws).to.be.empty;
+      expect(dataHolder2_0.withdraws).to.be.empty;
+      expect(dataHolder3_0.withdraws).to.be.empty;
 
-      // const withdrawTx1 = await stakeContract
-      //   .connect(signer1)
-      //   .withdraw(amountToWithdraw1, signer1.address, signer1.address);
+      expect(dataHolder1_0.deposits).to.deep.include({
+        id: txDepositSigner1_0.hash,
+      });
+      expect(dataHolder2_0.deposits).to.deep.include({
+        id: txDepositSigner2_0.hash,
+      });
+      expect(dataHolder3_0.deposits).to.deep.include({
+        id: txDepositSigner3_0.hash,
+      });
 
-      // totalStakeSigner1 = totalStakeSigner1.sub(amountToWithdraw1);
+      expect(FixedNumber.from(dataHolder1_0.totalEntitlement).toString()).equal(
+        totalEntitlementSigner1_0.toString()
+      );
+      expect(FixedNumber.from(dataHolder2_0.totalEntitlement).toString()).equal(
+        totalEntitlementSigner2_0.toString()
+      );
+      expect(FixedNumber.from(dataHolder3_0.totalEntitlement).toString()).equal(
+        totalEntitlementSigner3_0.toString()
+      );
 
-      // // Wait after first withdraw
-      // await waitForSubgraphToBeSynced();
+      // ================== PART 1 =================================
+      // New deposits
+      // 6.000.000
+      const amountToTransfer_1 = BigNumber.from("6" + Util.sixZeros);
 
-      // const response1_ = (await subgraph({
-      //   query,
-      // })) as FetchResult;
+      // Give signer1, signer2 and signer3 some reserve tokens
+      await token.transfer(signer1.address, amountToTransfer_1.div(2));
+      await token.transfer(signer2.address, amountToTransfer_1);
+      await token.transfer(signer3.address, amountToTransfer_1.mul(2));
 
-      // const data1_ = response1_.data.stakeHolder;
+      // Getting the balance of each user
+      const tokenBalanceSigner1_1 = await token.balanceOf(signer1.address);
+      const tokenBalanceSigner2_1 = await token.balanceOf(signer2.address);
+      const tokenBalanceSigner3_1 = await token.balanceOf(signer3.address);
 
-      // expect(data1_.totalStake).to.be.equals(totalStakeSigner1);
-      // expect(data1_.balance).to.be.equals(
-      //   await stakeContract.balanceOf(signer1.address)
-      // );
+      // Approve token to be use by the StakeContract
+      await token
+        .connect(signer1)
+        .approve(stake.address, tokenBalanceSigner1_1);
+      await token
+        .connect(signer2)
+        .approve(stake.address, tokenBalanceSigner2_1);
+      await token
+        .connect(signer3)
+        .approve(stake.address, tokenBalanceSigner3_1);
 
-      // // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
-      // expect(FixedNumber.from(data1_.totalEntitlement).toString()).to.be.equals(
-      //   divBNOrFixed(
-      //     (await stakeContract.balanceOf(signer1.address)).mul(
-      //       await token.balanceOf(stakeContract.address)
-      //     ),
-      //     await stakeContract.totalSupply()
-      //   ).toString()
-      // );
+      // Deposit all tokens to stake contract (each user)
+      const txDepositSigner1_1 = await stake
+        .connect(signer1)
+        .deposit(tokenBalanceSigner1_1, signer1.address);
+      const txDepositSigner2_1 = await stake
+        .connect(signer2)
+        .deposit(tokenBalanceSigner2_1, signer2.address);
+      const txDepositSigner3_1 = await stake
+        .connect(signer3)
+        .deposit(tokenBalanceSigner3_1, signer3.address);
 
-      // expect(data1_.withdraws).to.deep.include({
-      //   id: withdrawTx1.hash,
-      // });
-      // ///
+      await waitForSubgraphToBeSynced();
 
-      // const withdrawTx2 = await stakeContract
-      //   .connect(signer1)
-      //   .withdraw(amountToWithdraw2, signer1.address, signer1.address);
+      const response_1 = (await subgraph({
+        query,
+      })) as FetchResult;
 
-      // totalStakeSigner1 = totalStakeSigner1.sub(amountToWithdraw2);
+      const {
+        holder1: dataHolder1_1,
+        holder2: dataHolder2_1,
+        holder3: dataHolder3_1,
+      } = response_1.data;
 
-      // // Wait after second withdraw
-      // await waitForSubgraphToBeSynced();
+      // Generating expected result - 1
+      // Getting values (amount deposit) from deposit
+      const { value: valueDespositSigner1_1 } = await getTransferEvent(
+        txDepositSigner1_1,
+        stake
+      );
+      const { value: valueDespositSigner2_1 } = await getTransferEvent(
+        txDepositSigner2_1,
+        stake
+      );
+      const { value: valueDespositSigner3_1 } = await getTransferEvent(
+        txDepositSigner3_1,
+        stake
+      );
 
-      // const response2_ = (await subgraph({
-      //   query,
-      // })) as FetchResult;
+      // Updating the totalStake for each signer
+      accumulatedTotalStakeSigner1 = accumulatedTotalStakeSigner1.add(
+        valueDespositSigner1_1
+      );
+      accumulatedTotalStakeSigner2 = accumulatedTotalStakeSigner2.add(
+        valueDespositSigner2_1
+      );
+      accumulatedTotalStakeSigner3 = accumulatedTotalStakeSigner3.add(
+        valueDespositSigner3_1
+      );
 
-      // const data2_ = response2_.data.stakeHolder;
+      // Balances_1
+      const stakeBalanceSigner1_1 = await stake.balanceOf(signer1.address);
+      const stakeBalanceSigner2_1 = await stake.balanceOf(signer2.address);
+      const stakeBalanceSigner3_1 = await stake.balanceOf(signer3.address);
 
-      // expect(data2_.balance).to.be.equals(
-      //   await stakeContract.balanceOf(signer1.address)
-      // );
+      const stakeTokenPoolSize_1 = await token.balanceOf(stake.address);
+      const stakeTotalSupply_1 = await stake.totalSupply();
 
-      // expect(data2_.totalStake).to.be.equals(totalStakeSigner1);
+      // TotalEntitlement_1: (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+      const totalEntitlementSigner1_1 = divBNOrFixed(
+        stakeBalanceSigner1_1.mul(stakeTokenPoolSize_1),
+        stakeTotalSupply_1
+      );
+      const totalEntitlementSigner2_1 = divBNOrFixed(
+        stakeBalanceSigner2_1.mul(stakeTokenPoolSize_1),
+        stakeTotalSupply_1
+      );
+      const totalEntitlementSigner3_1 = divBNOrFixed(
+        stakeBalanceSigner3_1.mul(stakeTokenPoolSize_1),
+        stakeTotalSupply_1
+      );
 
-      // // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
-      // expect(FixedNumber.from(data2_.totalEntitlement).toString()).to.be.equals(
-      //   divBNOrFixed(
-      //     (await stakeContract.balanceOf(signer1.address)).mul(
-      //       await token.balanceOf(stakeContract.address)
-      //     ),
-      //     await stakeContract.totalSupply()
-      //   ).toString()
-      // );
+      // Cecking values by each type of value
+      expect(dataHolder1_1.balance).to.be.equal(stakeBalanceSigner1_1);
+      expect(dataHolder2_1.balance).to.be.equal(stakeBalanceSigner2_1);
+      expect(dataHolder3_1.balance).to.be.equal(stakeBalanceSigner3_1);
 
-      // expect(data2_.withdraws).to.deep.include({
-      //   id: withdrawTx1.hash,
-      // });
-      // expect(data2_.withdraws).to.deep.include({
-      //   id: withdrawTx2.hash,
-      // });
+      expect(dataHolder1_1.totalStake).to.equal(accumulatedTotalStakeSigner1);
+      expect(dataHolder2_1.totalStake).to.equal(accumulatedTotalStakeSigner2);
+      expect(dataHolder3_1.totalStake).to.equal(accumulatedTotalStakeSigner3);
+
+      expect(dataHolder1_1.withdraws).to.be.empty;
+      expect(dataHolder2_1.withdraws).to.be.empty;
+      expect(dataHolder3_1.withdraws).to.be.empty;
+
+      expect(dataHolder1_1.deposits).to.deep.include({
+        id: txDepositSigner1_1.hash,
+      });
+      expect(dataHolder2_1.deposits).to.deep.include({
+        id: txDepositSigner2_1.hash,
+      });
+      expect(dataHolder3_1.deposits).to.deep.include({
+        id: txDepositSigner3_1.hash,
+      });
+
+      expect(FixedNumber.from(dataHolder1_1.totalEntitlement).toString()).equal(
+        totalEntitlementSigner1_1.toString()
+      );
+      expect(FixedNumber.from(dataHolder2_1.totalEntitlement).toString()).equal(
+        totalEntitlementSigner2_1.toString()
+      );
+      expect(FixedNumber.from(dataHolder3_1.totalEntitlement).toString()).equal(
+        totalEntitlementSigner3_1.toString()
+      );
+
+      // ================== PART 2 =================================
+
+      // Signer2 withdraws a quarter of its maximum Withdrawal
+      const maxWithdrawSigner2_2 = await stake.maxWithdraw(signer2.address);
+      const amountToWithdrawSigner2_2 = maxWithdrawSigner2_2.div(4);
+      const txWithdrawSigner2_2 = await stake
+        .connect(signer2)
+        .withdraw(amountToWithdrawSigner2_2, signer2.address, signer2.address);
+
+      // Signer3 withdraws half of his maximum Withdrawal
+      const maxWithdrawSigner3_2 = await stake.maxWithdraw(signer3.address);
+      const amountToWithdrawSigner3_2 = maxWithdrawSigner3_2.div(2);
+      const txWithdrawSigner3_2 = await stake
+        .connect(signer3)
+        .withdraw(amountToWithdrawSigner3_2, signer3.address, signer3.address);
+
+      await waitForSubgraphToBeSynced();
+
+      const response_2 = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const {
+        holder1: dataHolder1_2,
+        holder2: dataHolder2_2,
+        holder3: dataHolder3_2,
+      } = response_2.data;
+
+      //////////////////////////////
+
+      // Generating expected result - 2
+      // Getting value (amount withdraw) from withdraw
+      const { value: valueWithdrawSigner2_2 } = await getTransferEvent(
+        txWithdrawSigner2_2,
+        stake
+      );
+      const { value: valueWithdrawSigner3_2 } = await getTransferEvent(
+        txWithdrawSigner3_2,
+        stake
+      );
+
+      // Updating the totalStake
+      accumulatedTotalStakeSigner2 = accumulatedTotalStakeSigner2.sub(
+        valueWithdrawSigner2_2
+      );
+      accumulatedTotalStakeSigner3 = accumulatedTotalStakeSigner3.sub(
+        valueWithdrawSigner3_2
+      );
+
+      // Balances_2
+      const stakeBalanceSigner1_2 = await stake.balanceOf(signer1.address);
+      const stakeBalanceSigner2_2 = await stake.balanceOf(signer2.address);
+      const stakeBalanceSigner3_2 = await stake.balanceOf(signer3.address);
+
+      const stakeTokenPoolSize_2 = await token.balanceOf(stake.address);
+      const stakeTotalSupply_2 = await stake.totalSupply();
+
+      // TotalEntitlement_2: (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+      const totalEntitlementSigner1_2 = divBNOrFixed(
+        stakeBalanceSigner1_2.mul(stakeTokenPoolSize_2),
+        stakeTotalSupply_2
+      );
+      const totalEntitlementSigner2_2 = divBNOrFixed(
+        stakeBalanceSigner2_2.mul(stakeTokenPoolSize_2),
+        stakeTotalSupply_2
+      );
+      const totalEntitlementSigner3_2 = divBNOrFixed(
+        stakeBalanceSigner3_2.mul(stakeTokenPoolSize_2),
+        stakeTotalSupply_2
+      );
+
+      // Cecking values by each type of value
+      expect(dataHolder1_2.balance).to.be.equal(stakeBalanceSigner1_2);
+      // expect(dataHolder2_2.balance).to.be.equal(stakeBalanceSigner2_2);
+      expect(dataHolder3_2.balance).to.be.equal(stakeBalanceSigner3_2);
+
+      expect(dataHolder1_2.totalStake).to.equal(accumulatedTotalStakeSigner1);
+      expect(dataHolder2_2.totalStake).to.equal(accumulatedTotalStakeSigner2);
+      expect(dataHolder3_2.totalStake).to.equal(accumulatedTotalStakeSigner3);
+
+      // Only Holder3/Signer3 should have withdraws at this point
+      expect(dataHolder1_2.withdraws).to.be.empty;
+      expect(dataHolder2_2.withdraws).to.deep.include({
+        id: txWithdrawSigner2_2.hash,
+      });
+      expect(dataHolder3_2.withdraws).to.deep.include({
+        id: txWithdrawSigner3_2.hash,
+      });
+
+      expect(FixedNumber.from(dataHolder1_2.totalEntitlement).toString()).equal(
+        totalEntitlementSigner1_2.toString()
+      );
+      expect(FixedNumber.from(dataHolder2_2.totalEntitlement).toString()).equal(
+        totalEntitlementSigner2_2.toString()
+      );
+      expect(FixedNumber.from(dataHolder3_2.totalEntitlement).toString()).equal(
+        totalEntitlementSigner3_2.toString()
+      );
     });
 
-    it("should update all StakeHolder after multiples deposits and withdraws - Replicating XORD", async () => {
+    it("should update StakeHolder after multiples deposits and withdraws - Replicating XORD", async () => {
       type StakeDepositData = {
         stakeTokenMinted: string;
         tokenPoolSize: string;
