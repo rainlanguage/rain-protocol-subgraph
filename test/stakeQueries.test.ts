@@ -394,7 +394,94 @@ describe("Stake queries - Test", function () {
       });
     });
 
+    it("should update StakeERC20 after User/Anon send reserve token to Stake directly", async () => {
+      const { _stake: stake, _reserveToken: token } = await deployStake(
+        deployer
+      );
 
+      // ================== PART 0 =================================
+
+      const tokenPoolSize0_ = await token.balanceOf(stake.address);
+      const totalSupply0_ = await stake.totalSupply();
+      const amountToDeposit_0 = BigNumber.from("1000" + Util.sixZeros);
+
+      // Checking init values
+      expect(tokenPoolSize0_).to.be.equals(totalSupply0_);
+      expect(tokenPoolSize0_).to.be.equals("0");
+
+      // signer1 deposits reserve tokens
+      await token.transfer(signer1.address, amountToDeposit_0.mul(2));
+      await token
+        .connect(signer1)
+        .approve(stake.address, amountToDeposit_0.mul(2));
+
+      // First deposit
+      await stake.connect(signer1).deposit(amountToDeposit_0, signer1.address);
+
+      // Second deposit
+      await stake.connect(signer1).deposit(amountToDeposit_0, signer1.address);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          stakeERC20(id: "${stake.address.toLowerCase()}") {
+            totalSupply
+            tokenPoolSize
+            tokenToStakeTokenRatio
+            stakeTokenToTokenRatio
+          }
+        }
+      `;
+
+      const response_0 = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data_0 = response_0.data.stakeERC20;
+
+      const tokenPoolSize_0 = await token.balanceOf(stake.address);
+      const totalSupply_0 = await stake.totalSupply();
+
+      expect(data_0.tokenPoolSize).to.be.equals(tokenPoolSize_0);
+      expect(data_0.totalSupply).to.be.equals(totalSupply_0);
+
+      expect(
+        FixedNumber.from(data_0.tokenToStakeTokenRatio).toString()
+      ).to.be.equals(divBNOrFixed(totalSupply_0, tokenPoolSize_0).toString());
+
+      expect(
+        FixedNumber.from(data_0.stakeTokenToTokenRatio).toString()
+      ).to.be.equals(divBNOrFixed(tokenPoolSize_0, totalSupply_0).toString());
+
+      // ================== PART 1 =================================
+
+      // Some user send the Reserve Token directly to the Stake Contract
+      const amountToDeposit_1 = BigNumber.from("2000" + Util.sixZeros);
+      await token.transfer(stake.address, amountToDeposit_1);
+
+      await waitForSubgraphToBeSynced();
+
+      const response_1 = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data_1 = response_1.data.stakeERC20;
+
+      const tokenPoolSize_1 = await token.balanceOf(stake.address);
+      const totalSupply_1 = await stake.totalSupply();
+
+      expect(data_1.tokenPoolSize).to.be.equals(tokenPoolSize_1);
+      expect(data_1.totalSupply).to.be.equals(totalSupply_1);
+
+      expect(
+        FixedNumber.from(data_1.tokenToStakeTokenRatio).toString()
+      ).to.be.equals(divBNOrFixed(totalSupply_1, tokenPoolSize_1).toString());
+
+      expect(
+        FixedNumber.from(data_1.stakeTokenToTokenRatio).toString()
+      ).to.be.equals(divBNOrFixed(tokenPoolSize_1, totalSupply_1).toString());
+    });
   });
 
   describe("StakeHolder queries", () => {
@@ -1270,6 +1357,94 @@ describe("Stake queries - Test", function () {
           );
         }
       }
+    });
+
+    it("should update StakeHolder after User/Anon send reserve token to Stake directly", async () => {
+      const { _stake: stake, _reserveToken: token } = await deployStake(
+        deployer
+      );
+
+      // ================== PART 0 =================================
+      const tokenPoolSize0_ = await token.balanceOf(stake.address);
+      const totalSupply0_ = await stake.totalSupply();
+      const amountToDeposit_0 = BigNumber.from("1000" + Util.sixZeros);
+
+      // Checking init values
+      expect(tokenPoolSize0_).to.be.equals(totalSupply0_);
+      expect(tokenPoolSize0_).to.be.equals("0");
+
+      // signer1 deposits reserve tokens
+      await token.transfer(signer1.address, amountToDeposit_0.mul(2));
+      await token
+        .connect(signer1)
+        .approve(stake.address, amountToDeposit_0.mul(2));
+
+      // First deposit
+      await stake.connect(signer1).deposit(amountToDeposit_0, signer1.address);
+
+      // Second deposit
+      await stake.connect(signer1).deposit(amountToDeposit_0, signer1.address);
+
+      await waitForSubgraphToBeSynced();
+
+      const query = `
+        {
+          stakeERC20(id: "${stake.address.toLowerCase()}") {
+            totalSupply
+            tokenPoolSize
+            tokenToStakeTokenRatio
+            stakeTokenToTokenRatio
+          }
+        }
+      `;
+
+      const response_0 = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data_0 = response_0.data.stakeERC20;
+
+      const tokenPoolSize_0 = await token.balanceOf(stake.address);
+      const totalSupply_0 = await stake.totalSupply();
+
+      expect(data_0.tokenPoolSize).to.be.equals(tokenPoolSize_0);
+      expect(data_0.totalSupply).to.be.equals(totalSupply_0);
+
+      expect(
+        FixedNumber.from(data_0.tokenToStakeTokenRatio).toString()
+      ).to.be.equals(divBNOrFixed(totalSupply_0, tokenPoolSize_0).toString());
+
+      expect(
+        FixedNumber.from(data_0.stakeTokenToTokenRatio).toString()
+      ).to.be.equals(divBNOrFixed(tokenPoolSize_0, totalSupply_0).toString());
+
+      // ================== PART 1 =================================
+
+      // Some user send the Reserve Token directly to the Stake Contract
+      const amountToDeposit_1 = BigNumber.from("2000" + Util.sixZeros);
+      await token.transfer(stake.address, amountToDeposit_1);
+
+      await waitForSubgraphToBeSynced();
+
+      const response_1 = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      const data_1 = response_1.data.stakeERC20;
+
+      const tokenPoolSize_1 = await token.balanceOf(stake.address);
+      const totalSupply_1 = await stake.totalSupply();
+
+      expect(data_1.tokenPoolSize).to.be.equals(tokenPoolSize_1);
+      expect(data_1.totalSupply).to.be.equals(totalSupply_1);
+
+      expect(
+        FixedNumber.from(data_1.tokenToStakeTokenRatio).toString()
+      ).to.be.equals(divBNOrFixed(totalSupply_1, tokenPoolSize_1).toString());
+
+      expect(
+        FixedNumber.from(data_1.stakeTokenToTokenRatio).toString()
+      ).to.be.equals(divBNOrFixed(tokenPoolSize_1, totalSupply_1).toString());
     });
   });
 });
