@@ -1,7 +1,12 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import * as Util from "./utils/utils";
-import { waitForSubgraphToBeSynced } from "./utils/utils";
+import {
+  waitForSubgraphToBeSynced,
+  ZERO_BN,
+  divBNOrFixed,
+} from "./utils/utils";
+import * as path from "path";
 
 import {
   // Subgraph
@@ -9,20 +14,26 @@ import {
   // Signers
   deployer,
   signer1,
+  signer2,
+  signer3,
   // Contracts factories
   stakeFactory,
-  signer2,
 } from "./initialization.test";
 
 // Typechain Factories
-import { ReserveToken__factory } from "../typechain/factories/ReserveToken__factory";
+import { ReserveToken18__factory } from "../typechain/factories/ReserveToken18__factory";
 
 // Types
 import type { FetchResult } from "apollo-fetch";
-import type { ReserveToken } from "../typechain/ReserveToken";
-import type { Stake, StakeConfigStruct } from "../typechain/Stake";
+import type { ReserveToken18 } from "../typechain/ReserveToken18";
+import type {
+  Stake,
+  StakeConfigStruct,
+  TransferEvent,
+} from "../typechain/Stake";
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Contract, ContractTransaction } from "ethers";
 
 const { BigNumber, FixedNumber } = ethers;
 
@@ -31,14 +42,14 @@ async function deployStake(
   config?: StakeConfigStruct
 ): Promise<{
   _stake: Stake;
-  _reserveToken: ReserveToken;
+  _reserveToken: ReserveToken18;
   _stakeConfig: StakeConfigStruct;
 }> {
   let _stakeConfig: StakeConfigStruct = config;
-  let _reserveToken: ReserveToken;
+  let _reserveToken: ReserveToken18;
 
   if (!config) {
-    _reserveToken = await new ReserveToken__factory(deployerAccount).deploy();
+    _reserveToken = await new ReserveToken18__factory(deployerAccount).deploy();
     await _reserveToken.initialize();
 
     _stakeConfig = {
@@ -47,7 +58,6 @@ async function deployStake(
       asset: _reserveToken.address,
     };
   }
-
   const _stake = await Util.stakeDeploy(
     stakeFactory,
     deployerAccount,
@@ -55,6 +65,17 @@ async function deployStake(
   );
 
   return { _stake, _reserveToken, _stakeConfig };
+}
+
+async function getTransferEvent(
+  tx_: ContractTransaction,
+  stake_: Contract
+): Promise<TransferEvent["args"]> {
+  return (await Util.getEventArgs(
+    tx_,
+    "Transfer",
+    stake_
+  )) as TransferEvent["args"];
 }
 
 describe("Stake queries - Test", function () {
@@ -267,12 +288,12 @@ describe("Stake queries - Test", function () {
       expect(
         FixedNumber.from(data.tokenToStakeTokenRatio).toString()
       ).to.be.equals(
-        Util.divBNOrFixed(data.totalSupply, tokenPoolSizeExpected).toString()
+        divBNOrFixed(data.totalSupply, tokenPoolSizeExpected).toString()
       );
       expect(
         FixedNumber.from(data.stakeTokenToTokenRatio).toString()
       ).to.be.equals(
-        Util.divBNOrFixed(tokenPoolSizeExpected, data.totalSupply).toString()
+        divBNOrFixed(tokenPoolSizeExpected, data.totalSupply).toString()
       );
 
       expect(data.withdraws).to.be.empty;
@@ -360,12 +381,12 @@ describe("Stake queries - Test", function () {
       expect(
         FixedNumber.from(data.tokenToStakeTokenRatio).toString()
       ).to.be.equals(
-        Util.divBNOrFixed(data.totalSupply, tokenPoolSizeExpected).toString()
+        divBNOrFixed(data.totalSupply, tokenPoolSizeExpected).toString()
       );
       expect(
         FixedNumber.from(data.stakeTokenToTokenRatio).toString()
       ).to.be.equals(
-        Util.divBNOrFixed(tokenPoolSizeExpected, data.totalSupply).toString()
+        divBNOrFixed(tokenPoolSizeExpected, data.totalSupply).toString()
       );
 
       expect(data.withdraws).to.deep.include({
@@ -374,7 +395,7 @@ describe("Stake queries - Test", function () {
     });
   });
 
-  describe.only("StakeHolder queries", () => {
+  describe("StakeHolder queries", () => {
     it("should query a StakeHolder after deposits", async () => {
       const { _stake: stakeContract, _reserveToken: token } = await deployStake(
         deployer
@@ -456,7 +477,7 @@ describe("Stake queries - Test", function () {
 
       // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
       expect(FixedNumber.from(data.totalEntitlement).toString()).to.be.equals(
-        Util.divBNOrFixed(
+        divBNOrFixed(
           (await stakeContract.balanceOf(signer1.address)).mul(
             await token.balanceOf(stakeContract.address)
           ),
@@ -549,7 +570,7 @@ describe("Stake queries - Test", function () {
 
       // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
       expect(FixedNumber.from(data.totalEntitlement).toString()).to.be.equals(
-        Util.divBNOrFixed(
+        divBNOrFixed(
           (await stakeContract.balanceOf(signer1.address)).mul(
             await token.balanceOf(stakeContract.address)
           ),
@@ -562,7 +583,7 @@ describe("Stake queries - Test", function () {
       });
     });
 
-    it.only("should update and query a StakeHolder info after multiples withdraws", async () => {
+    it("should update and query a StakeHolder info after multiples withdraws", async () => {
       const { _stake: stakeContract, _reserveToken: token } = await deployStake(
         deployer
       );
@@ -634,7 +655,7 @@ describe("Stake queries - Test", function () {
 
       // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
       expect(FixedNumber.from(data1_.totalEntitlement).toString()).to.be.equals(
-        Util.divBNOrFixed(
+        divBNOrFixed(
           (await stakeContract.balanceOf(signer1.address)).mul(
             await token.balanceOf(stakeContract.address)
           ),
@@ -670,7 +691,7 @@ describe("Stake queries - Test", function () {
 
       // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
       expect(FixedNumber.from(data2_.totalEntitlement).toString()).to.be.equals(
-        Util.divBNOrFixed(
+        divBNOrFixed(
           (await stakeContract.balanceOf(signer1.address)).mul(
             await token.balanceOf(stakeContract.address)
           ),
@@ -684,6 +705,384 @@ describe("Stake queries - Test", function () {
       expect(data2_.withdraws).to.deep.include({
         id: withdrawTx2.hash,
       });
+    });
+
+    xit("should update all the StakeHolders after multiples deposits", async () => {
+      const { _stake: stake, _reserveToken: token } = await deployStake(
+        deployer
+      );
+
+      // Save variable to more readables queries
+      const stakeAddress = stake.address.toLowerCase();
+      const signer1Address = signer1.address.toLowerCase();
+      const signer2Address = signer2.address.toLowerCase();
+      const signer3Address = signer3.address.toLowerCase();
+
+      // 2.000.000
+      const amountToTransfer = BigNumber.from("2" + Util.sixZeros);
+
+      // Give signer1, signer2 and signer3 some reserve tokens
+      await token.transfer(signer1.address, amountToTransfer);
+      await token.transfer(signer2.address, amountToTransfer);
+      await token.transfer(signer3.address, amountToTransfer);
+
+      // Getting the balance of each user
+      const tokenBalanceSigner1_0 = await token.balanceOf(signer1.address);
+      const tokenBalanceSigner2_0 = await token.balanceOf(signer2.address);
+      const tokenBalanceSigner3_0 = await token.balanceOf(signer3.address);
+
+      // Approve token to be use by the StakeContract
+      await token
+        .connect(signer1)
+        .approve(stake.address, tokenBalanceSigner1_0);
+      await token
+        .connect(signer2)
+        .approve(stake.address, tokenBalanceSigner2_0);
+      await token
+        .connect(signer3)
+        .approve(stake.address, tokenBalanceSigner3_0);
+
+      // Deposit all tokens to stake contract (each user)
+      const txDepositSigner1_0 = await stake
+        .connect(signer1)
+        .deposit(tokenBalanceSigner1_0, signer1.address);
+      const txDepositSigner2_0 = await stake
+        .connect(signer2)
+        .deposit(tokenBalanceSigner2_0, signer2.address);
+      const txDepositSigner3_0 = await stake
+        .connect(signer3)
+        .deposit(tokenBalanceSigner3_0, signer3.address);
+
+      // Then StakeHolder IDs
+      const stakeHolder1 = `${stakeAddress}-${signer1Address}`;
+      const stakeHolder2 = `${stakeAddress}-${signer2Address}`;
+      const stakeHolder3 = `${stakeAddress}-${signer3Address}`;
+
+      const query = `
+        {
+          holder1: stakeHolder(id: "${stakeHolder1}") {
+            balance
+            totalStake
+            totalEntitlement
+            deposits {
+              id
+            }
+            withdraws {
+              id
+            }
+          }
+          holder2: stakeHolder(id: "${stakeHolder2}") {
+            balance
+            totalStake
+            totalEntitlement
+            deposits {
+              id
+            }
+            withdraws {
+              id
+            }
+          }
+          holder3: stakeHolder(id: "${stakeHolder3}") {
+            balance
+            totalStake
+            totalEntitlement
+            deposits {
+              id
+            }
+            withdraws {
+              id
+            }
+          }
+        }
+      `;
+
+      await waitForSubgraphToBeSynced();
+
+      const response_0 = (await subgraph({
+        query,
+      })) as FetchResult;
+
+      // Generating expected result - 0
+      // Getting values (amount deposit) from withdraws
+      const { value: valueDespositSigner1_0 } = await getTransferEvent(
+        txDepositSigner1_0,
+        stake
+      );
+      const { value: valueDespositSigner2_0 } = await getTransferEvent(
+        txDepositSigner2_0,
+        stake
+      );
+      const { value: valueDespositSigner3_0 } = await getTransferEvent(
+        txDepositSigner3_0,
+        stake
+      );
+
+      // TotalStake_0: Accumulate total deposits started + deposit
+      let accumulatedTotalStakeSigner1 = ZERO_BN.add(valueDespositSigner1_0);
+      let accumulatedTotalStakeSigner2 = ZERO_BN.add(valueDespositSigner2_0);
+      let accumulatedTotalStakeSigner3 = ZERO_BN.add(valueDespositSigner3_0);
+
+      // Balances_0
+      const stakeBalanceSigner1_0 = await stake.balanceOf(signer1.address);
+      const stakeBalanceSigner2_0 = await stake.balanceOf(signer2.address);
+      const stakeBalanceSigner3_0 = await stake.balanceOf(signer3.address);
+
+      const stakeTokenPoolSize_0 = await token.balanceOf(stake.address);
+      const stakeTotalSupply_0 = await stake.totalSupply();
+
+      // TotalEntitlement_0: (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+      const totalEntitlementSigner1_0 = divBNOrFixed(
+        stakeBalanceSigner1_0.mul(stakeTokenPoolSize_0),
+        stakeTotalSupply_0
+      );
+      const totalEntitlementSigner2_0 = divBNOrFixed(
+        stakeBalanceSigner2_0.mul(stakeTokenPoolSize_0),
+        stakeTotalSupply_0
+      );
+      const totalEntitlementSigner3_0 = divBNOrFixed(
+        stakeBalanceSigner3_0.mul(stakeTokenPoolSize_0),
+        stakeTotalSupply_0
+      );
+
+      console.log(JSON.stringify(response_0, null, 2));
+
+      // // Signer1 and Signer2 each own 50% of stToken supply. Withdraw 50% of signer1 available
+      // const maxWithdrawSigner1 = await stakeContract.maxWithdraw(
+      //   signer1.address
+      // );
+      // const amountToWithdraw1 = maxWithdrawSigner1.div(2);
+      // const amountToWithdraw2 = maxWithdrawSigner1.sub(amountToWithdraw1);
+
+      // const stakeHolder = `${stakeContract.address.toLowerCase()}-${signer1.address.toLowerCase()}`;
+      // let totalStakeSigner1 = tokenBalanceSigner1_0;
+
+      // const withdrawTx1 = await stakeContract
+      //   .connect(signer1)
+      //   .withdraw(amountToWithdraw1, signer1.address, signer1.address);
+
+      // totalStakeSigner1 = totalStakeSigner1.sub(amountToWithdraw1);
+
+      // // Wait after first withdraw
+      // await waitForSubgraphToBeSynced();
+
+      // const response1_ = (await subgraph({
+      //   query,
+      // })) as FetchResult;
+
+      // const data1_ = response1_.data.stakeHolder;
+
+      // expect(data1_.totalStake).to.be.equals(totalStakeSigner1);
+      // expect(data1_.balance).to.be.equals(
+      //   await stakeContract.balanceOf(signer1.address)
+      // );
+
+      // // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+      // expect(FixedNumber.from(data1_.totalEntitlement).toString()).to.be.equals(
+      //   divBNOrFixed(
+      //     (await stakeContract.balanceOf(signer1.address)).mul(
+      //       await token.balanceOf(stakeContract.address)
+      //     ),
+      //     await stakeContract.totalSupply()
+      //   ).toString()
+      // );
+
+      // expect(data1_.withdraws).to.deep.include({
+      //   id: withdrawTx1.hash,
+      // });
+      // ///
+
+      // const withdrawTx2 = await stakeContract
+      //   .connect(signer1)
+      //   .withdraw(amountToWithdraw2, signer1.address, signer1.address);
+
+      // totalStakeSigner1 = totalStakeSigner1.sub(amountToWithdraw2);
+
+      // // Wait after second withdraw
+      // await waitForSubgraphToBeSynced();
+
+      // const response2_ = (await subgraph({
+      //   query,
+      // })) as FetchResult;
+
+      // const data2_ = response2_.data.stakeHolder;
+
+      // expect(data2_.balance).to.be.equals(
+      //   await stakeContract.balanceOf(signer1.address)
+      // );
+
+      // expect(data2_.totalStake).to.be.equals(totalStakeSigner1);
+
+      // // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+      // expect(FixedNumber.from(data2_.totalEntitlement).toString()).to.be.equals(
+      //   divBNOrFixed(
+      //     (await stakeContract.balanceOf(signer1.address)).mul(
+      //       await token.balanceOf(stakeContract.address)
+      //     ),
+      //     await stakeContract.totalSupply()
+      //   ).toString()
+      // );
+
+      // expect(data2_.withdraws).to.deep.include({
+      //   id: withdrawTx1.hash,
+      // });
+      // expect(data2_.withdraws).to.deep.include({
+      //   id: withdrawTx2.hash,
+      // });
+    });
+
+    it("should update all StakeHolder after multiples deposits and withdraws - Replicating XORD", async () => {
+      type StakeDepositData = {
+        stakeTokenMinted: string;
+        tokenPoolSize: string;
+        value: string;
+        depositedAmount: string;
+        timestamp: string;
+        __typename: "StakeDeposit";
+      };
+
+      type StakeWithdrawData = {
+        stakeTokenBurned: string;
+        tokenPoolSize: string;
+        value: string;
+        returnedAmount: string;
+        timestamp: string;
+        __typename: "StakeWithdraw";
+      };
+
+      const txsSorted = JSON.parse(
+        Util.fetchFile(path.resolve(__dirname, "./mocks/dataTxSorted_1.json"))
+      ) as (StakeDepositData | StakeWithdrawData)[];
+
+      const { _stake: stake, _reserveToken: token } = await deployStake(
+        deployer
+      );
+
+      // Giving all the tokens to signer1 and pre-approving to the stake
+      await token.transfer(signer1.address, await token.totalSupply());
+      await token
+        .connect(signer1)
+        .approve(stake.address, await token.balanceOf(signer1.address));
+
+      // SG info constants
+      const stakeHolder = `${stake.address.toLowerCase()}-${signer1.address.toLowerCase()}`;
+      const query = `
+        {
+          stakeHolder(id: "${stakeHolder}") {
+            address
+            balance
+            totalStake
+            totalDeposited
+            totalEntitlement
+            deposits {
+              id
+            }
+            withdraws {
+              id
+            }
+          }
+        }
+      `;
+
+      // SG info variables
+      let totalDeposits = 0;
+      let totalWithdraws = 0;
+      let totalStaked = ZERO_BN;
+      let totalDeposited = ZERO_BN;
+
+      for (let i = 0; i < txsSorted.length; i++) {
+        const txData = txsSorted[i];
+
+        if (txData.__typename == "StakeDeposit") {
+          // Deposit tx
+          const depositTx = await stake
+            .connect(signer1)
+            .deposit(txData.value, signer1.address);
+
+          // Updating SG info variables
+          totalDeposits += 1;
+          totalStaked = totalStaked.add(txData.value);
+          totalDeposited = totalDeposited.add(txData.value);
+
+          // Wait for sync
+          await waitForSubgraphToBeSynced();
+
+          const response = (await subgraph({
+            query,
+          })) as FetchResult;
+
+          const data = response.data.stakeHolder;
+
+          const holderBalance = await stake.balanceOf(signer1.address);
+          const tokenPoolSize = await token.balanceOf(stake.address);
+          const stakeTotalSupply = await stake.totalSupply();
+
+          expect(data.balance).equal(holderBalance);
+          expect(data.totalStake).equal(totalStaked);
+          expect(data.deposits).to.deep.include({
+            id: depositTx.hash,
+          });
+
+          // Making sure that any tx is removed
+          expect(data.deposits).to.have.lengthOf(totalDeposits);
+          expect(data.withdraws).to.have.lengthOf(totalWithdraws);
+
+          // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+          expect(FixedNumber.from(data.totalEntitlement).toString()).equal(
+            divBNOrFixed(
+              holderBalance.mul(tokenPoolSize),
+              stakeTotalSupply
+            ).toString()
+          );
+        } else {
+          // Withdraw tx;
+          const withdrawTx = await stake
+            .connect(signer1)
+            .withdraw(txData.value, signer1.address, signer1.address);
+
+          // Updating SG info variables
+          totalWithdraws += 1;
+          totalStaked = totalStaked.sub(txData.value);
+
+          // Wait for sync
+          await waitForSubgraphToBeSynced();
+
+          const response = (await subgraph({
+            query,
+          })) as FetchResult;
+
+          const data = response.data.stakeHolder;
+
+          const holderBalance = await stake.balanceOf(signer1.address);
+          const tokenPoolSize = await token.balanceOf(stake.address);
+          const stakeTotalSupply = await stake.totalSupply();
+
+          // if (i == 7 || i == 8) {
+          //   //
+          //   console.log(JSON.stringify(response, null, 2));
+          //   console.log("holderBalance: ", holderBalance);
+          //   console.log("tokenPoolSize: ", tokenPoolSize);
+          //   console.log("stakeTotalSupply: ", stakeTotalSupply);
+          // }
+
+          expect(data.balance).equal(holderBalance);
+          expect(data.totalStake).equal(totalStaked);
+          expect(data.withdraws).to.deep.include({
+            id: withdrawTx.hash,
+          });
+
+          // Making sure that any tx is removed
+          expect(data.deposits).to.have.lengthOf(totalDeposits);
+          expect(data.withdraws).to.have.lengthOf(totalWithdraws);
+
+          // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+          expect(FixedNumber.from(data.totalEntitlement).toString()).equal(
+            divBNOrFixed(
+              holderBalance.mul(tokenPoolSize),
+              stakeTotalSupply
+            ).toString()
+          );
+        }
+      }
     });
   });
 });

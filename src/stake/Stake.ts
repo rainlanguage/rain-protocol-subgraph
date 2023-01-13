@@ -1,6 +1,5 @@
-import { Address, log } from "@graphprotocol/graph-ts";
+import { Address } from "@graphprotocol/graph-ts";
 import {
-  ERC20,
   StakeDeposit,
   StakeERC20,
   StakeHolder,
@@ -39,6 +38,7 @@ export function handleInitialize(event: Initialize): void {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function handleApproval(event: Approval): void {
   //
 }
@@ -119,6 +119,8 @@ export function handleTransfer(event: Transfer): void {
         stakeHolder.totalEntitlement = stakeHolder.balance
           .times(stakeERC20.tokenPoolSize)
           .div(stakeERC20.totalSupply);
+      } else {
+        stakeHolder.totalEntitlement = ZERO_BI;
       }
 
       stakeHolder.save();
@@ -133,7 +135,10 @@ export function handleTransfer(event: Transfer): void {
         stakeHolder.totalEntitlement = stakeHolder.balance
           .times(stakeERC20.tokenPoolSize)
           .div(stakeERC20.totalSupply);
+      } else {
+        stakeHolder.totalEntitlement = ZERO_BI;
       }
+
       stakeHolder.save();
     }
   }

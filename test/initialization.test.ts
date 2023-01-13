@@ -8,7 +8,7 @@ import { waitForSubgraphToBeSynced } from "./utils/utils";
 import { StakeFactory__factory } from "../typechain/factories/StakeFactory__factory";
 
 // Types
-import type { ApolloFetch } from "apollo-fetch";
+import { ApolloFetch } from "apollo-fetch";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import type { StakeFactory } from "../typechain/StakeFactory";
 
