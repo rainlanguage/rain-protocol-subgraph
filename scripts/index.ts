@@ -6,14 +6,6 @@ import { program } from "commander";
 
 dotenv.config();
 
-interface DeployConfig {
-  configPath: string;
-  subgraphName: string;
-  versionLabel: string;
-  endpoint: string;
-  ipfsEndpoint: string;
-}
-
 /**
  * Execute Child Processes
  * @param cmd Command to execute

@@ -27,6 +27,7 @@ export function handleNewChild(event: NewChild): void {
     stakeERC20.tokenPoolSize = ZERO_BI;
     stakeERC20.tokenToStakeTokenRatio = ZERO_BD;
     stakeERC20.stakeTokenToTokenRatio = ZERO_BD;
+    stakeERC20.holdersAddresses = [];
 
     stakeERC20.save();
 

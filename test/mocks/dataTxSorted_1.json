@@ -1,0 +1,226 @@
+[
+  {
+    "stakeTokenMinted": "1",
+    "tokenPoolSize": "1",
+    "value": "1",
+    "depositedAmount": "1",
+    "timestamp": "1673436228",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "1",
+    "tokenPoolSize": "2",
+    "value": "1",
+    "depositedAmount": "1",
+    "timestamp": "1673436792",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "1",
+    "tokenPoolSize": "3",
+    "value": "1",
+    "depositedAmount": "1",
+    "timestamp": "1673436924",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "1",
+    "tokenPoolSize": "4",
+    "value": "1",
+    "depositedAmount": "1",
+    "timestamp": "1673437056",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "1",
+    "tokenPoolSize": "5",
+    "value": "1",
+    "depositedAmount": "1",
+    "timestamp": "1673437104",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "1000000000000000000",
+    "tokenPoolSize": "1000000000000000005",
+    "value": "1000000000000000000",
+    "depositedAmount": "1000000000000000000",
+    "timestamp": "1673437176",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "1000000000000000000",
+    "tokenPoolSize": "2000000000000000005",
+    "value": "1000000000000000000",
+    "depositedAmount": "1000000000000000000",
+    "timestamp": "1673437344",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenBurned": "1000000000000000000",
+    "tokenPoolSize": "1000000000000000005",
+    "value": "1000000000000000000",
+    "returnedAmount": "1000000000000000000",
+    "timestamp": "1673442408",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenBurned": "1000000000000000005",
+    "tokenPoolSize": "0",
+    "value": "1000000000000000005",
+    "returnedAmount": "1000000000000000005",
+    "timestamp": "1673442480",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenMinted": "1000000000000000000",
+    "tokenPoolSize": "1000000000000000000",
+    "value": "1000000000000000000",
+    "depositedAmount": "1000000000000000000",
+    "timestamp": "1673448744",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "10000000000000000000",
+    "tokenPoolSize": "11000000000000000000",
+    "value": "10000000000000000000",
+    "depositedAmount": "10000000000000000000",
+    "timestamp": "1673502480",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "21000000000000000000",
+    "tokenPoolSize": "32000000000000000000",
+    "value": "21000000000000000000",
+    "depositedAmount": "21000000000000000000",
+    "timestamp": "1673511000",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenBurned": "32000000000000000000",
+    "tokenPoolSize": "0",
+    "value": "32000000000000000000",
+    "returnedAmount": "32000000000000000000",
+    "timestamp": "1673511108",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenMinted": "10000000000000000000",
+    "tokenPoolSize": "10000000000000000000",
+    "value": "10000000000000000000",
+    "depositedAmount": "10000000000000000000",
+    "timestamp": "1673511564",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenBurned": "10000000000000000000",
+    "tokenPoolSize": "0",
+    "value": "10000000000000000000",
+    "returnedAmount": "10000000000000000000",
+    "timestamp": "1673511624",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenMinted": "8000000000000000000",
+    "tokenPoolSize": "8000000000000000000",
+    "value": "8000000000000000000",
+    "depositedAmount": "8000000000000000000",
+    "timestamp": "1673511684",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenBurned": "4000000000000000000",
+    "tokenPoolSize": "4000000000000000000",
+    "value": "4000000000000000000",
+    "returnedAmount": "4000000000000000000",
+    "timestamp": "1673511720",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenMinted": "1000000000000000000",
+    "tokenPoolSize": "5000000000000000000",
+    "value": "1000000000000000000",
+    "depositedAmount": "1000000000000000000",
+    "timestamp": "1673511960",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenMinted": "1000000000000000000",
+    "tokenPoolSize": "6000000000000000000",
+    "value": "1000000000000000000",
+    "depositedAmount": "1000000000000000000",
+    "timestamp": "1673586408",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenBurned": "2000000000000000000",
+    "tokenPoolSize": "4000000000000000000",
+    "value": "2000000000000000000",
+    "returnedAmount": "2000000000000000000",
+    "timestamp": "1673586456",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenBurned": "4000000000000000000",
+    "tokenPoolSize": "0",
+    "value": "4000000000000000000",
+    "returnedAmount": "4000000000000000000",
+    "timestamp": "1673587716",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenMinted": "5000000000000000000",
+    "tokenPoolSize": "5000000000000000000",
+    "value": "5000000000000000000",
+    "depositedAmount": "5000000000000000000",
+    "timestamp": "1673588004",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenBurned": "2000000000000000000",
+    "tokenPoolSize": "3000000000000000000",
+    "value": "2000000000000000000",
+    "returnedAmount": "2000000000000000000",
+    "timestamp": "1673588064",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenBurned": "3000000000000000000",
+    "tokenPoolSize": "0",
+    "value": "3000000000000000000",
+    "returnedAmount": "3000000000000000000",
+    "timestamp": "1673588136",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenMinted": "5000000000000000000",
+    "tokenPoolSize": "5000000000000000000",
+    "value": "5000000000000000000",
+    "depositedAmount": "5000000000000000000",
+    "timestamp": "1673588196",
+    "__typename": "StakeDeposit"
+  },
+  {
+    "stakeTokenBurned": "2000000000000000000",
+    "tokenPoolSize": "3000000000000000000",
+    "value": "2000000000000000000",
+    "returnedAmount": "2000000000000000000",
+    "timestamp": "1673588232",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenBurned": "1000000000000000000",
+    "tokenPoolSize": "2000000000000000000",
+    "value": "1000000000000000000",
+    "returnedAmount": "1000000000000000000",
+    "timestamp": "1673588436",
+    "__typename": "StakeWithdraw"
+  },
+  {
+    "stakeTokenBurned": "2000000000000000000",
+    "tokenPoolSize": "0",
+    "value": "2000000000000000000",
+    "returnedAmount": "2000000000000000000",
+    "timestamp": "1673588508",
+    "__typename": "StakeWithdraw"
+  }
+]

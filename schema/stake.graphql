@@ -43,6 +43,8 @@ type StakeERC20 implements ERC20Interface @entity {
   withdraws: [StakeWithdraw!] @derivedFrom(field: "stakeToken")
   "Stake token holders"
   holders: [StakeHolder!] @derivedFrom(field: "stakeToken")
+  "Stake token holders addresses"
+  holdersAddresses: [Bytes!]
 }
 
 # represents one holder of the Stake token

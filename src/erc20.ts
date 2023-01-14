@@ -39,6 +39,33 @@ export function handleTransfer(event: Transfer): void {
             .toBigDecimal()
             .div(stakeERC20.totalSupply.toBigDecimal());
         }
+
+        // Update all the holders
+        let holders = stakeERC20.holdersAddresses;
+        if (holders) {
+          for (let i = 0; i < holders.length; i++) {
+            // Get StakeHolder[i]
+            let stakeHolder_ = getStakeHolder(
+              event.params.to.toHex() + "-" + holders[i].toHexString()
+            );
+
+            let _balance = stakeContract.balanceOf(
+              Address.fromBytes(stakeHolder_.address)
+            );
+
+            if (stakeERC20.totalSupply.isZero()) {
+              stakeHolder_.totalEntitlement = ZERO_BI;
+            } else {
+              // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+              stakeHolder_.totalEntitlement = _balance
+                .times(stakeERC20.tokenPoolSize)
+                .div(stakeERC20.totalSupply);
+            }
+
+            stakeHolder_.save();
+          }
+        }
+
         stakeERC20.save();
       }
 
@@ -84,6 +111,33 @@ export function handleTransfer(event: Transfer): void {
             .toBigDecimal()
             .div(stakeERC20.totalSupply.toBigDecimal());
         }
+
+        // Update all the holders
+        let holders = stakeERC20.holdersAddresses;
+        if (holders) {
+          for (let i = 0; i < holders.length; i++) {
+            // Get StakeHolder[i]
+            let stakeHolder_ = getStakeHolder(
+              event.params.from.toHex() + "-" + holders[i].toHexString()
+            );
+
+            let _balance = stakeContract.balanceOf(
+              Address.fromBytes(stakeHolder_.address)
+            );
+
+            if (stakeERC20.totalSupply.isZero()) {
+              stakeHolder_.totalEntitlement = ZERO_BI;
+            } else {
+              // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+              stakeHolder_.totalEntitlement = _balance
+                .times(stakeERC20.tokenPoolSize)
+                .div(stakeERC20.totalSupply);
+            }
+
+            stakeHolder_.save();
+          }
+        }
+
         stakeERC20.save();
       }
 

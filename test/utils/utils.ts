@@ -92,6 +92,7 @@ export const zeroAddress = ethers.constants.AddressZero;
 // BigNumbers
 export const ONE = ethers.BigNumber.from("1" + eighteenZeros);
 export const RESERVE_ONE = ethers.BigNumber.from("1" + sixZeros);
+export const ZERO_BN = ethers.BigNumber.from("0");
 
 // Fixed number (Decimal)
 export const oneHundredFN = ethers.FixedNumber.from(100, "fixed128x32");
@@ -344,10 +345,9 @@ export const amountToLevel = (
   const BN = ethers.BigNumber;
 
   let valueFrom =
-    currentLevel == 0 ? BN.from("0") : BN.from(LEVELS[currentLevel - 1]);
+    currentLevel == 0 ? ZERO_BN : BN.from(LEVELS[currentLevel - 1]);
 
-  let valueTo =
-    desiredLvl == 0 ? BN.from("0") : BN.from(LEVELS[desiredLvl - 1]);
+  let valueTo = desiredLvl == 0 ? ZERO_BN : BN.from(LEVELS[desiredLvl - 1]);
 
   if (valueFrom.gt(valueTo)) {
     [valueFrom, valueTo] = [valueTo, valueFrom];

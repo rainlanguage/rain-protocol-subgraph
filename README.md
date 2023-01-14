@@ -1,4 +1,5 @@
 // TODO Improve this documentation
+
 ## Development setup (for contributors)
 
 ### Nix Shell
@@ -28,9 +29,9 @@ To complete the setup, you need to run the necessary local nodes (Hardhat and Th
 You can see GUI of the local subgraph on: `http://localhost:8000/subgraphs/name/vishalkale151071/rain-protocol/graphql`
 
 ### Running Graph Node on an Macbook M1
-  
+
 We do not currently build native images for Macbook M1, which can lead to processes being killed due to out-of-memory errors (code 137). Based on the example `docker-compose.yml` is possible to rebuild the image for your M1 by running the following, then running `docker-compose up` as normal:
- 
+
 ```
 # Remove the original image
 docker rmi graphprotocol/graph-node:latest
