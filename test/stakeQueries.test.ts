@@ -1330,14 +1330,6 @@ describe("Stake queries - Test", function () {
           const tokenPoolSize = await token.balanceOf(stake.address);
           const stakeTotalSupply = await stake.totalSupply();
 
-          // if (i == 7 || i == 8) {
-          //   //
-          //   console.log(JSON.stringify(response, null, 2));
-          //   console.log("holderBalance: ", holderBalance);
-          //   console.log("tokenPoolSize: ", tokenPoolSize);
-          //   console.log("stakeTotalSupply: ", stakeTotalSupply);
-          // }
-
           expect(data.balance).equal(holderBalance);
           expect(data.totalStake).equal(totalStaked);
           expect(data.withdraws).to.deep.include({
@@ -1381,12 +1373,13 @@ describe("Stake queries - Test", function () {
 
       // First deposit
       await stake.connect(signer1).deposit(amountToDeposit_0, signer1.address);
-
       // Second deposit
       await stake.connect(signer1).deposit(amountToDeposit_0, signer1.address);
 
       await waitForSubgraphToBeSynced();
 
+      // SG info constants
+      const stakeHolder = `${stake.address.toLowerCase()}-${signer1.address.toLowerCase()}`;
       const query = `
         {
           stakeERC20(id: "${stake.address.toLowerCase()}") {
@@ -1395,28 +1388,38 @@ describe("Stake queries - Test", function () {
             tokenToStakeTokenRatio
             stakeTokenToTokenRatio
           }
+          stakeHolder(id: "${stakeHolder}") {
+            balance
+            totalStake
+            totalDeposited
+            totalEntitlement
+          }
         }
       `;
 
       const response_0 = (await subgraph({
         query,
       })) as FetchResult;
+      const data_0 = response_0.data.stakeHolder;
 
-      const data_0 = response_0.data.stakeERC20;
-
+      const balance_0 = await stake.balanceOf(signer1.address);
+      const totalStaked_0 = amountToDeposit_0.mul(2);
+      const totalDeposited_0 = totalStaked_0;
       const tokenPoolSize_0 = await token.balanceOf(stake.address);
       const totalSupply_0 = await stake.totalSupply();
 
-      expect(data_0.tokenPoolSize).to.be.equals(tokenPoolSize_0);
-      expect(data_0.totalSupply).to.be.equals(totalSupply_0);
+      // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+      const totalEntitlement_0 = divBNOrFixed(
+        balance_0.mul(tokenPoolSize_0),
+        totalSupply_0
+      );
 
-      expect(
-        FixedNumber.from(data_0.tokenToStakeTokenRatio).toString()
-      ).to.be.equals(divBNOrFixed(totalSupply_0, tokenPoolSize_0).toString());
-
-      expect(
-        FixedNumber.from(data_0.stakeTokenToTokenRatio).toString()
-      ).to.be.equals(divBNOrFixed(tokenPoolSize_0, totalSupply_0).toString());
+      expect(data_0.balance).to.equal(balance_0);
+      expect(data_0.totalStake).to.equal(totalStaked_0);
+      expect(data_0.totalDeposited).to.equal(totalDeposited_0);
+      expect(FixedNumber.from(data_0.totalEntitlement).toString()).equal(
+        totalEntitlement_0.toString()
+      );
 
       // ================== PART 1 =================================
 
@@ -1429,22 +1432,36 @@ describe("Stake queries - Test", function () {
       const response_1 = (await subgraph({
         query,
       })) as FetchResult;
+      const data_1 = response_1.data.stakeHolder;
 
-      const data_1 = response_1.data.stakeERC20;
-
-      const tokenPoolSize_1 = await token.balanceOf(stake.address);
+      // It should no be changed on these
+      const balance_1 = await stake.balanceOf(signer1.address);
+      const totalStaked_1 = totalStaked_0;
+      const totalDeposited_1 = totalDeposited_0;
       const totalSupply_1 = await stake.totalSupply();
 
-      expect(data_1.tokenPoolSize).to.be.equals(tokenPoolSize_1);
-      expect(data_1.totalSupply).to.be.equals(totalSupply_1);
+      expect(balance_1).to.be.equal(balance_0);
+      expect(totalSupply_1).to.be.equal(totalSupply_0);
 
-      expect(
-        FixedNumber.from(data_1.tokenToStakeTokenRatio).toString()
-      ).to.be.equals(divBNOrFixed(totalSupply_1, tokenPoolSize_1).toString());
+      // The tokenPool should be increased
+      const tokenPoolSize_1 = await token.balanceOf(stake.address);
 
-      expect(
-        FixedNumber.from(data_1.stakeTokenToTokenRatio).toString()
-      ).to.be.equals(divBNOrFixed(tokenPoolSize_1, totalSupply_1).toString());
+      expect(tokenPoolSize_1).to.be.equal(
+        tokenPoolSize_0.add(amountToDeposit_1)
+      );
+
+      // (balance * StakeToken.tokenPoolSize) / StakeToken.totalSupply
+      const totalEntitlement_1 = divBNOrFixed(
+        balance_1.mul(tokenPoolSize_1),
+        totalSupply_1
+      );
+
+      expect(data_1.balance).to.equal(balance_1);
+      expect(data_1.totalStake).to.equal(totalStaked_1);
+      expect(data_1.totalDeposited).to.equal(totalDeposited_1);
+      expect(FixedNumber.from(data_1.totalEntitlement).toString()).equal(
+        totalEntitlement_1.toString()
+      );
     });
   });
 });

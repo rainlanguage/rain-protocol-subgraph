@@ -110,6 +110,14 @@ export function handleTransfer(event: Transfer): void {
       let stakeHolder = getStakeHolder(
         event.address.toHex() + "-" + event.params.to.toHex()
       );
+
+      let holdersAddr_ = stakeERC20.holdersAddresses;
+      if (holdersAddr_ && !holdersAddr_.includes(event.params.to)) {
+        holdersAddr_.push(event.params.to);
+      }
+      stakeERC20.holdersAddresses = holdersAddr_;
+      stakeERC20.save();
+
       stakeHolder.address = event.params.to;
       stakeHolder.token = stakeERC20.token;
       stakeHolder.stakeToken = stakeERC20.id;
@@ -130,6 +138,14 @@ export function handleTransfer(event: Transfer): void {
       let stakeHolder = getStakeHolder(
         event.address.toHex() + "-" + event.params.from.toHex()
       );
+
+      let holdersAddr_ = stakeERC20.holdersAddresses;
+      if (holdersAddr_ && !holdersAddr_.includes(event.params.from)) {
+        holdersAddr_.push(event.params.from);
+      }
+      stakeERC20.holdersAddresses = holdersAddr_;
+      stakeERC20.save();
+
       stakeHolder.balance = stakeHolder.balance.minus(event.params.value);
       if (stakeERC20.totalSupply != ZERO_BI) {
         stakeHolder.totalEntitlement = stakeHolder.balance
