@@ -154,9 +154,13 @@ export function handleTransfer(event: Transfer): void {
       );
 
       if (stakeHolder) {
-        stakeHolder.totalStake = stakeHolder.totalStake.minus(
-          event.params.value
-        );
+        let _aux = stakeHolder.totalStake.minus(event.params.value);
+
+        if (_aux.lt(ZERO_BI) || _aux.isZero()) {
+          stakeHolder.totalStake = ZERO_BI;
+        } else {
+          stakeHolder.totalStake = _aux;
+        }
 
         stakeHolder.save();
       }
