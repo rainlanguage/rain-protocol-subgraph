@@ -49,7 +49,7 @@
     "mustache": "^3.2.1"
   },
   "devDependencies": {
-    "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#eab3594c4ba623d6b3a0e36fb22aa3c705da3094",
+    "@beehiveinnovation/rain-protocol": "git+https://github.com/beehive-innovation/rain-protocol.git#0811373919b0dc4da6a2bd5edb0ad4470796f9dc",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@typechain/ethers-v5": "^8.0.5",

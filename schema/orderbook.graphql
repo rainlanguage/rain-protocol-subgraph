@@ -15,7 +15,9 @@ type Order @entity {
   "Owner of the Order"
   owner: Bytes!
 
-  transactionHash: Bytes!
+  transactionHash: Bytes! 
+
+  expressionDeployer: Bytes!
 
   "validInputs"
   validInputs: [IO!]
@@ -199,7 +201,8 @@ type Bounty @entity {
 
 # Create when an OrderClear entity is created
 type OrderClearStateChange @entity {
-  id: ID! # create a unqiue ID when OrderClear entity is created
+  id: ID! # create a unqiue ID when OrderClear entity is created 
+  sender: Bytes!
   aOutput: BigInt! # AfterClear.stateChange.aOutput
   bOutput: BigInt! # AfterClear.stateChange.bOutput
   aInput: BigInt! # AfterClear.stateChange.aInput

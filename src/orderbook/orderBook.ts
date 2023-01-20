@@ -143,6 +143,8 @@ export function handleAfterClear(event: AfterClear): void {
   orderClearStateChange.aOutput = event.params.clearStateChange.aOutput;
   orderClearStateChange.bInput = event.params.clearStateChange.bInput;
   orderClearStateChange.bOutput = event.params.clearStateChange.aInput;
+  orderClearStateChange.sender = event.params.sender;
+
 
   orderClearStateChange.save();
 
@@ -531,6 +533,8 @@ function getOrderAdd(event: AddOrder): Order {
     order = new Order(event.params.orderHash.toHex());
     order.owner = event.params.order.owner;
     order.interpreter = event.params.order.interpreter;
+    order.expressionDeployer = event.params.expressionDeployer;
+
 
     order.transactionHash = event.transaction.hash;
 
